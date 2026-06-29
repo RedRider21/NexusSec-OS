@@ -19,16 +19,22 @@ Forensics/Web), boot dall'ISO.
 
 ## Screenshot
 
-| Base | Pen Testing | Forensics |
-|---|---|---|
-| ![base](screenshots/wallpaper-nebula.png) | ![pentest](screenshots/wallpaper-pentest.png) | ![forensics](screenshots/wallpaper-forensics.png) |
+Desktop reali della live (QEMU/KVM). Cambiando profilo cambiano **sfondo,
+accent del pannello e tema delle icone** (anche cartelle e browser).
 
-| OSINT | Web |
+| Base | Pen Testing |
 |---|---|
-| ![osint](screenshots/wallpaper-osint.png) | ![web](screenshots/wallpaper-web.png) |
+| ![base](screenshots/desktop-base.png) | ![pentest](screenshots/desktop-pentest.png) |
 
-> Anteprime degli sfondi per profilo. Screenshot del desktop (pannello, menu,
-> icone per profilo) in arrivo.
+| Digital Forensics | OSINT | Web Pentest |
+|---|---|---|
+| ![forensics](screenshots/desktop-forensics.png) | ![osint](screenshots/desktop-osint.png) | ![web](screenshots/desktop-web.png) |
+
+Menu start con ricerca, strumenti raggruppati per categoria e stato installato:
+
+| Menu (Base) | Menu (Pen Testing) |
+|---|---|
+| ![menu-base](screenshots/menu-base.png) | ![menu-pentest](screenshots/menu-pentest.png) |
 
 ## Repository pacchetti (apk)
 
