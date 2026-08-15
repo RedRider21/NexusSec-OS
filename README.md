@@ -42,6 +42,13 @@ grafico** per creare **wizard personalizzati** (scegli i tool dal catalogo,
 definisci modalità, opzioni, comportamento stealth per step e la catena dati)
 che si aggiungono all'elenco **senza scrivere codice**.
 
+## Documentazione
+
+- **[Manuale utente](docs/manuale.html)** — avvio, profili, menu, metodi dei tool,
+  procedure guidate, browser stealth, persistenza e comandi CLI.
+- **[Copertura dell'arsenale](docs/copertura-arsenale.html)** — confronto riga per
+  riga con `kali-linux-everything` / `parrot-tools-full`.
+
 ## Download ISO
 
 L'immagine ISO (~0.5 GB, boot BIOS+EFI) è pubblicata nella sezione
