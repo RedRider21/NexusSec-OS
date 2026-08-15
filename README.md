@@ -283,223 +283,470 @@ Confronto riga per riga della tabella metapacchetti `kali-linux-everything` /
 container Podman · `git` clone+venv.
 
 <details>
-<summary><b>Mostra la tabella comparativa completa</b> (154 strumenti)</summary>
+<summary><b>Mostra tutti i 443 strumenti del catalogo</b> (per categoria, con metodo e presenza in Kali/Parrot)</summary>
 
-| Strumento | Kali | Parrot | NexusSec | Come su NexusSec |
-|---|:--:|:--:|:--:|---|
-| **Information Gathering** | | | | |
-| `0trace` | ✅ | ✅ | ✅ | `kali` |
-| `2ping` | ✅ | ✅ | ✅ | `kali` |
-| `aadict` | ✅ | ✅ | lib | _libreria/CLI di base_ |
-| `aardwolf` | ✅ | ✅ | lib | _libreria/CLI di base_ |
-| `aesedb` | ✅ | ✅ | lib | _libreria/CLI di base_ |
-| `afflib-tools` | ✅ | ✅ | ✅ | `kali` |
-| `afl++` | ✅ | ✅ | ✅ | `kali` |
-| `aiocmd` | ✅ | ✅ | lib | _libreria/CLI di base_ |
-| `aioconsole` | ✅ | ✅ | lib | _libreria/CLI di base_ |
-| `aiohttp-apispec` | ✅ | ✅ | lib | _libreria/CLI di base_ |
-| `aiomultiprocess` | ✅ | ✅ | lib | _libreria/CLI di base_ |
-| `aiosmb` | ✅ | ✅ | lib | _libreria/CLI di base_ |
-| `aiowinreg` | ✅ | ✅ | lib | _libreria/CLI di base_ |
-| `aircrack-ng` | ✅ | ✅ | ✅ | `apk` |
-| `airgeddon` | ✅ | ✅ | ✅ | `kali` |
-| `altdns` | ✅ | ✅ | ✅ | `kali` |
-| `amap` | ✅ | ✅ | ✅ | `kali` |
-| `amass` | ✅ | ✅ | ✅ | `ctr` |
-| `arpwatch` | ✅ | ✅ | ✅ | `kali` |
-| `arjun` | ✅ | ✅ | ✅ | `kali` |
-| `assetfinder` | ✅ | ✅ | ✅ | `kali` |
-| `autorecon` | ✅ | ✅ | ✅ | `pip` |
-| `bettercap` | ✅ | ✅ | ✅ | `apk` |
-| `bluelog` | ✅ | ✅ | ✅ | `kali` |
-| `bluesnarfer` | ✅ | ✅ | ✅ | `kali` |
-| `btscanner` | ✅ | ✅ | ✅ | `kali` |
-| `blueranger` | ✅ | ✅ | ✅ | `kali` |
-| `burpsuite` | ✅ | ✅ | ✅ | `kali` |
-| `caido` | ✅ | ✅ | ✅ | `kali` |
-| `caido-cli` | ✅ | ✅ | ✅ | `kali` · incluso in caido |
-| `crlfuzz` | ✅ | ✅ | ✅ | `kali` |
-| `davtest` | ✅ | ✅ | ✅ | `kali` |
-| `dirb` | ✅ | ✅ | ✅ | `kali` |
-| `dirbuster` | ✅ | ✅ | ✅ | `kali` |
-| `dirsearch` | ✅ | ✅ | ✅ | `kali` |
-| `dmitry` | ✅ | ✅ | ✅ | `apk` |
-| `dnsenum` | ✅ | ✅ | ✅ | `kali` |
-| `dnsmap` | ✅ | ✅ | ✅ | `kali` |
-| `dnsrecon` | ✅ | ✅ | ✅ | `apk` |
-| `dnstracer` | ✅ | ✅ | ✅ | `kali` |
-| `dnswalk` | ✅ | ✅ | ✅ | `kali` |
-| `emailharvester` | ✅ | ✅ | ✅ | `kali` |
-| `email2phonenumber` | ✅ | ✅ | ✅ | `kali` |
-| `feroxbuster` | ✅ | ✅ | ✅ | `kali` |
-| `ffuf` | ✅ | ✅ | ✅ | `apk` |
-| `findomain` | ✅ | ✅ | ✅ | `kali` |
-| `gobuster` | ✅ | ✅ | ✅ | `apk` |
-| `gospider` | ✅ | ✅ | ✅ | `kali` |
-| `heartleech` | ✅ | ✅ | ✅ | `kali` |
-| `instaloader` | ✅ | ✅ | ✅ | `kali` |
-| `joomscan` | ✅ | ✅ | ✅ | `kali` |
-| `kismet` | ✅ | ✅ | ✅ | `apk` |
-| `lbd` | ✅ | ✅ | ✅ | `kali` |
-| `legion` | ✅ | ✅ | ✅ | `kali` |
-| `linkedin2username` | ✅ | ✅ | ✅ | `kali` |
-| `massdns` | ✅ | ✅ | ✅ | `kali` |
-| `metagoofil` | ✅ | ✅ | ✅ | `git` |
-| `nmap` | ✅ | ✅ | ✅ | `apk` |
-| `nikto` | ✅ | ✅ | ✅ | `apk` |
-| `nuclei` | ✅ | ✅ | ✅ | `apk` |
-| `owasp-mantra-ff` | ✅ | ✅ | ✅ | `kali` |
-| `parsero` | ✅ | ✅ | ✅ | `kali` |
-| `paros` | ✅ | ✅ | ✅ | `kali` |
-| `photon` | ✅ | ✅ | ✅ | `kali` |
-| `recon-ng` | ✅ | ✅ | ✅ | `apk` |
-| `sherlock` | ✅ | ✅ | ✅ | `ctr` |
-| `skipfish` | ✅ | ✅ | ✅ | `kali` |
-| `sparrow-wifi` | ✅ | ✅ | ✅ | `kali` |
-| `spiderfoot` | ✅ | ✅ | ✅ | `kali` |
-| `spiderfoot-cli` | ✅ | ✅ | ✅ | `kali` · incluso in spiderfoot |
-| `subfinder` | ✅ | ✅ | ✅ | `ctr` |
-| `sublist3r` | ✅ | ✅ | ✅ | `kali` |
-| `sstimap` | ✅ | ✅ | ✅ | `kali` |
-| `subjack` | ✅ | ✅ | ✅ | `kali` |
-| `theHarvester` | ✅ | ✅ | ✅ | `ctr` |
-| `tinja` | ✅ | ✅ | ✅ | `kali` |
-| `tookie-osint` | ✅ | ✅ | ✅ | `kali` |
-| `unicornscan` | ✅ | ✅ | ✅ | `kali` |
-| `uniscan-gui` | ✅ | ✅ | ✅ | `kali` |
-| `urlcrazy` | ✅ | ✅ | ✅ | `kali` |
-| `uro` | ✅ | ✅ | ✅ | `kali` |
-| `wapiti` | ✅ | ✅ | ✅ | `kali` |
-| `wash` | ✅ | ✅ | ✅ | `kali` |
-| `watobo` | ✅ | ✅ | ✅ | `kali` |
-| `wcvs` | ✅ | ✅ | ✅ | `kali` |
-| `webscarab` | ✅ | ✅ | ✅ | `kali` |
-| `whatweb` | ✅ | ✅ | ✅ | `ctr` |
-| `wfuzz` | ✅ | ✅ | ✅ | `kali` |
-| `wpprobe` | ✅ | ✅ | ✅ | `kali` |
-| `wpscan` | ✅ | ✅ | ✅ | `ctr` |
-| `zenmap` | ✅ | ✅ | ✅ | `kali` |
-| `zaproxy` | ✅ | ✅ | ✅ | `apk` |
-| **Vulnerability Analysis** | | | | |
-| `CAT` | ✅ | ✅ | ✅ | `kali` |
-| `gvm-start` | ✅ | ✅ | — |  |
-| `openvas` | ✅ | ✅ | ✅ | `kali` · incluso in gvm |
-| `sqlmap` | ✅ | ✅ | ✅ | `apk` |
-| **Web Application Analysis** | | | | |
-| `armitage` | ✅ | ✅ | ✅ | `kali` |
-| `beef-xss` | ✅ | ✅ | ✅ | `kali` |
-| `burpsuite` | ✅ | ✅ | ✅ | `kali` |
-| `commix` | ✅ | ✅ | ✅ | `pip` |
-| `crackmapexec` | ✅ | ✅ | ✅ | `kali` |
-| `empire` | ✅ | ✅ | ✅ | `kali` |
-| `metasploit-framework` | ✅ | ✅ | ✅ | `kali` |
-| `msfpc` | ✅ | ✅ | ✅ | `kali` |
-| `set` | ✅ | ✅ | ✅ | `kali` |
-| `setoolkit` | ✅ | ✅ | ✅ | `kali` |
-| **Password Attacks** | | | | |
-| `cewl` | ✅ | ✅ | ✅ | `kali` |
-| `crunch` | ✅ | ✅ | ✅ | `kali` |
-| `hashcat` | ✅ | ✅ | ✅ | `apk` |
-| `hydra` | ✅ | ✅ | ✅ | `apk` |
-| `john` | ✅ | ✅ | ✅ | `apk` |
-| `medusa` | ✅ | ✅ | ✅ | `apk` |
-| `ncrack` | ✅ | ✅ | ✅ | `kali` |
-| `patator` | ✅ | ✅ | ✅ | `kali` |
-| `thc-hydra` | ✅ | ✅ | ✅ | `apk` · incluso in hydra |
-| **Wireless Attacks** | | | | |
-| `asleap` | ✅ | ✅ | ✅ | `kali` |
-| `aircrack-ng` | ✅ | ✅ | ✅ | `apk` |
-| `airgeddon` | ✅ | ✅ | ✅ | `kali` |
-| `bettercap` | ✅ | ✅ | ✅ | `apk` |
-| `bluelog` | ✅ | ✅ | ✅ | `kali` |
-| `bluesnarfer` | ✅ | ✅ | ✅ | `kali` |
-| `btscanner` | ✅ | ✅ | ✅ | `kali` |
-| `blueranger` | ✅ | ✅ | ✅ | `kali` |
-| `fang` | ✅ | ✅ | ✅ | `kali` |
-| `kismet` | ✅ | ✅ | ✅ | `apk` |
-| `sparrow-wifi` | ✅ | ✅ | ✅ | `kali` |
-| `spooftooph` | ✅ | ✅ | ✅ | `kali` |
-| `ubertooth-util` | ✅ | ✅ | ✅ | `kali` · incluso in ubertooth |
-| `wash` | ✅ | ✅ | ✅ | `kali` |
-| **Reverse Engineering** | | | | |
-| `edb-debugger` | ✅ | ✅ | ✅ | `kali` |
-| `ghidra` | ✅ | ✅ | ✅ | `apk` |
-| `radare2` | ✅ | ✅ | ✅ | `apk` |
-| `retdec` | ✅ | ✅ | ✅ | `kali` |
-| `rizin` | ✅ | ✅ | ✅ | `kali` |
-| **Exploitation Tools** | | | | |
-| `armitage` | ✅ | ✅ | ✅ | `kali` |
-| `beef-xss` | ✅ | ✅ | ✅ | `kali` |
-| `commix` | ✅ | ✅ | ✅ | `pip` |
-| `crackmapexec` | ✅ | ✅ | ✅ | `kali` |
-| `empire` | ✅ | ✅ | ✅ | `kali` |
-| `evil-winrm` | ✅ | ✅ | ✅ | `ctr` |
-| `metasploit-framework` | ✅ | ✅ | ✅ | `kali` |
-| `msfpc` | ✅ | ✅ | ✅ | `kali` |
-| `set` | ✅ | ✅ | ✅ | `kali` |
-| `setoolkit` | ✅ | ✅ | ✅ | `kali` |
-| **Sniffing & Spoofing** | | | | |
-| `arpspoof` | ✅ | ✅ | ✅ | `kali` |
-| `bettercap` | ✅ | ✅ | ✅ | `apk` |
-| `dsniff` | ✅ | ✅ | ✅ | `kali` |
-| `ettercap` | ✅ | ✅ | ✅ | `apk` |
-| `macchanger` | ✅ | ✅ | ✅ | `apk` |
-| `msgsnarf` | ✅ | ✅ | ✅ | `kali` |
-| `urlsnarf` | ✅ | ✅ | ✅ | `kali` |
-| `webspy` | ✅ | ✅ | ✅ | `kali` |
-| **Post Exploitation** | | | | |
-| `bloodhound` | ✅ | ✅ | ✅ | `kali` |
-| `crackmapexec` | ✅ | ✅ | ✅ | `kali` |
-| `evil-winrm` | ✅ | ✅ | ✅ | `ctr` |
-| `mimikatz` | ✅ | ✅ | ✅ | `kali` |
-| `powersploit` | ✅ | ✅ | ✅ | `kali` |
-| **Forensics** | | | | |
-| `autopsy` | ✅ | ✅ | ✅ | `kali` |
-| `bulk_extractor` | ✅ | ✅ | ✅ | `apk` |
-| `foremost` | ✅ | ✅ | ✅ | `apk` |
-| `rekall` | ✅ | ✅ | ✅ | `kali` |
-| `sleuthkit` | ✅ | ✅ | ✅ | `apk` |
-| `volatility` | ✅ | ✅ | ✅ | `apk` · incluso in volatility3 |
-| **Reporting Tools** | | | | |
-| `cherrytree` | ✅ | ✅ | ✅ | `apk` |
-| `cutycapt` | ✅ | ✅ | ✅ | `kali` |
-| `freemind` | ✅ | ✅ | ✅ | `kali` |
-| `recordmydesktop` | ✅ | ✅ | ✅ | `kali` |
-| **Hardware Hacking** | | | | |
-| `arduino` | ✅ | ✅ | ✅ | `kali` |
-| `gtkterm` | ✅ | ✅ | ✅ | `kali` |
-| `minicom` | ✅ | ✅ | ✅ | `kali` |
-| `rfcat` | ✅ | ✅ | ✅ | `kali` |
-| `simtrace` | ✅ | ✅ | ✅ | `kali` |
-| **Cryptography & Steganography** | | | | |
-| `cryptcat` | ✅ | ✅ | ✅ | `kali` |
-| `gpa` | ✅ | ✅ | ✅ | `kali` |
-| `openssl` | ✅ | ✅ | lib | _libreria/CLI di base_ |
-| `outguess` | ✅ | ✅ | ✅ | `kali` |
-| `seahorse` | ✅ | ✅ | ✅ | `kali` |
-| `stegcracker` | ✅ | ✅ | ✅ | `kali` |
-| `steghide` | ✅ | ✅ | ✅ | `apk` |
-| `veracrypt` | ✅ | ✅ | ✅ | `kali` |
-| **Social Engineering** | | | | |
-| `set` | ✅ | ✅ | ✅ | `kali` |
-| `setoolkit` | ✅ | ✅ | ✅ | `kali` |
-| **Fuzzing** | | | | |
-| `afl++` | ✅ | ✅ | ✅ | `kali` |
-| `honggfuzz` | ✅ | ✅ | ✅ | `kali` |
-| `libfuzzer` | ✅ | ✅ | lib | _libreria/CLI di base_ |
-| **VoIP** | | | | |
-| `sipvicious` | ✅ | ✅ | ✅ | `kali` |
-| `voiper` | ✅ | ✅ | ✅ | `kali` |
-| **RFID / NFC** | | | | |
-| `libnfc` | ✅ | ✅ | ✅ | `kali` |
-| `rfcat` | ✅ | ✅ | ✅ | `kali` |
-| **SDR (Software Defined Radio)** | | | | |
-| `gnuradio` | ✅ | ✅ | ✅ | `kali` |
-| `gqrx` | ✅ | ✅ | ✅ | `kali` |
-| `hackrf` | ✅ | ✅ | ✅ | `kali` |
-| **Windows Resources** | | | | |
-| `mimikatz` | ✅ | ✅ | ✅ | `kali` |
-| `powersploit` | ✅ | ✅ | ✅ | `kali` |
+| Categoria / Strumento | Metodo | Kali | Parrot |
+|---|---|:--:|:--:|
+| **Ricognizione** (30) | | | |
+| `0trace` | container Kali | ✅ | ✅ |
+| `2ping` | container Kali | ✅ | ✅ |
+| `amap` | container Kali | ✅ | ✅ |
+| `arp-scan` | apk nativo | ✅ | ✅ |
+| `arping` | container Kali | ✅ | ✅ |
+| `autorecon` | pip/pipx | ✅ | ✅ |
+| `braa` | container Kali | ✅ | ✅ |
+| `dnswalk` | container Kali | ✅ | ✅ |
+| `enum4linux` | pip/pipx | ✅ | ✅ |
+| `firewalk` | container Kali | ✅ | ✅ |
+| `fping` | apk nativo | ✅ | ✅ |
+| `fragrouter` | container Kali | ✅ | ✅ |
+| `hping3` | apk nativo | ✅ | ✅ |
+| `ike-scan` | container Kali | ✅ | ✅ |
+| `intrace` | container Kali | ✅ | ✅ |
+| `irpas` | container Kali | ✅ | ✅ |
+| `masscan` | apk nativo | ✅ | ✅ |
+| `massdns` | container Kali | ✅ | ✅ |
+| `naabu` | apk nativo | ✅ | ✅ |
+| `nbtscan` | apk nativo | ✅ | ✅ |
+| `netdiscover` | apk nativo | ✅ | ✅ |
+| `nmap` | apk nativo | ✅ | ✅ |
+| `onesixtyone` | container Kali | ✅ | ✅ |
+| `p0f` | container Kali | ✅ | ✅ |
+| `sipvicious` | container Kali | ✅ | ✅ |
+| `smbmap` | pip/pipx | ✅ | ✅ |
+| `snmpwalk` | apk nativo | ✅ | ✅ |
+| `thc-ipv6` | container Kali | ✅ | ✅ |
+| `unicornscan` | container Kali | ✅ | ✅ |
+| `zenmap` | container Kali | ✅ | ✅ |
+| **OSINT** (32) | | | |
+| `altdns` | container Kali | ✅ | ✅ |
+| `amass` | container Podman | ✅ | ✅ |
+| `assetfinder` | container Kali | ✅ | ✅ |
+| `dmitry` | apk nativo | ✅ | ✅ |
+| `dnsenum` | container Kali | ✅ | ✅ |
+| `dnsmap` | container Kali | ✅ | ✅ |
+| `dnsrecon` | apk nativo | ✅ | ✅ |
+| `dnstracer` | container Kali | ✅ | ✅ |
+| `email2phonenumber` | container Kali | ✅ | ✅ |
+| `emailharvester` | container Kali | ✅ | ✅ |
+| `fierce` | container Kali | ✅ | ✅ |
+| `findomain` | container Kali | ✅ | ✅ |
+| `holehe` | pip/pipx | ✅ | ✅ |
+| `instaloader` | container Kali | ✅ | ✅ |
+| `linkedin2username` | container Kali | ✅ | ✅ |
+| `metagoofil` | git+venv | ✅ | ✅ |
+| `netmask` | container Kali | ✅ | ✅ |
+| `photon` | container Kali | ✅ | ✅ |
+| `recon-ng` | apk nativo | ✅ | ✅ |
+| `sherlock` | container Podman | ✅ | ✅ |
+| `shodan` | apk nativo | ✅ | ✅ |
+| `smtp-user-enum` | container Kali | ✅ | ✅ |
+| `snmp-check` | container Kali | ✅ | ✅ |
+| `spiderfoot` | container Kali | ✅ | ✅ |
+| `subfinder` | container Podman | ✅ | ✅ |
+| `sublist3r` | container Kali | ✅ | ✅ |
+| `swaks` | container Kali | ✅ | ✅ |
+| `theharvester` | container Podman | ✅ | ✅ |
+| `tookie-osint` | container Kali | ✅ | ✅ |
+| `twofi` | container Kali | ✅ | ✅ |
+| `urlcrazy` | container Kali | ✅ | ✅ |
+| `whois` | apk nativo | ✅ | ✅ |
+| **Web** (69) | | | |
+| `apache-users` | container Kali | ✅ | ✅ |
+| `arjun` | container Kali | ✅ | ✅ |
+| `burpsuite` | container Kali | ✅ | ✅ |
+| `cadaver` | container Kali | ✅ | ✅ |
+| `caido` | container Kali | ✅ | ✅ |
+| `commix` | pip/pipx | ✅ | ✅ |
+| `crlfuzz` | container Kali | ✅ | ✅ |
+| `cutycapt` | container Kali | ✅ | ✅ |
+| `dalfox` | container Podman | ✅ | ✅ |
+| `davtest` | container Kali | ✅ | ✅ |
+| `dirb` | container Kali | ✅ | ✅ |
+| `dirbuster` | container Kali | ✅ | ✅ |
+| `dirsearch` | container Kali | ✅ | ✅ |
+| `dotdotpwn` | container Kali | ✅ | ✅ |
+| `feroxbuster` | container Kali | ✅ | ✅ |
+| `ffuf` | apk nativo | ✅ | ✅ |
+| `ftester` | container Kali | ✅ | ✅ |
+| `gobuster` | apk nativo | ✅ | ✅ |
+| `gospider` | container Kali | ✅ | ✅ |
+| `hakrawler` | container Kali | ✅ | ✅ |
+| `heartleech` | container Kali | ✅ | ✅ |
+| `httprint` | container Kali | ✅ | ✅ |
+| `httrack` | apk nativo | ✅ | ✅ |
+| `jboss-autopwn` | container Kali | ✅ | ✅ |
+| `joomscan` | container Kali | ✅ | ✅ |
+| `jsql-injection` | container Kali | ✅ | ✅ |
+| `lbd` | container Kali | ✅ | ✅ |
+| `nikto` | apk nativo | ✅ | ✅ |
+| `nuclei` | apk nativo | ✅ | ✅ |
+| `oscanner` | container Kali | ✅ | ✅ |
+| `owasp-mantra-ff` | container Kali | ✅ | ✅ |
+| `padbuster` | container Kali | ✅ | ✅ |
+| `paros` | container Kali | ✅ | ✅ |
+| `parsero` | container Kali | ✅ | ✅ |
+| `proxytunnel` | container Kali | ✅ | ✅ |
+| `qsslcaudit` | container Kali | ✅ | ✅ |
+| `redsocks` | container Kali | ✅ | ✅ |
+| `sidguesser` | container Kali | ✅ | ✅ |
+| `siege` | container Kali | ✅ | ✅ |
+| `skipfish` | container Kali | ✅ | ✅ |
+| `slowhttptest` | container Kali | ✅ | ✅ |
+| `sqlmap` | apk nativo | ✅ | ✅ |
+| `sqlninja` | container Kali | ✅ | ✅ |
+| `sqlsus` | container Kali | ✅ | ✅ |
+| `ssldump` | container Kali | ✅ | ✅ |
+| `sslscan` | apk nativo | ✅ | ✅ |
+| `sslyze` | container Kali | ✅ | ✅ |
+| `sstimap` | container Kali | ✅ | ✅ |
+| `subjack` | container Kali | ✅ | ✅ |
+| `thc-ssl-dos` | container Kali | ✅ | ✅ |
+| `tinja` | container Kali | ✅ | ✅ |
+| `tlssled` | container Kali | ✅ | ✅ |
+| `tnscmd10g` | container Kali | ✅ | ✅ |
+| `uniscan` | container Kali | ✅ | ✅ |
+| `uniscan-gui` | container Kali | ✅ | ✅ |
+| `uro` | container Kali | ✅ | ✅ |
+| `wafw00f` | pip/pipx | ✅ | ✅ |
+| `wapiti` | container Kali | ✅ | ✅ |
+| `watobo` | container Kali | ✅ | ✅ |
+| `wcvs` | container Kali | ✅ | ✅ |
+| `webscarab` | container Kali | ✅ | ✅ |
+| `webshells` | container Kali | ✅ | ✅ |
+| `weevely` | container Kali | ✅ | ✅ |
+| `wfuzz` | container Kali | ✅ | ✅ |
+| `whatweb` | container Podman | ✅ | ✅ |
+| `wpprobe` | container Kali | ✅ | ✅ |
+| `wpscan` | container Podman | ✅ | ✅ |
+| `xsser` | container Kali | ✅ | ✅ |
+| `zaproxy` | apk nativo | ✅ | ✅ |
+| **Password** (35) | | | |
+| `cewl` | container Kali | ✅ | ✅ |
+| `chntpw` | container Kali | ✅ | ✅ |
+| `cisco-auditing-tool` | container Kali | ✅ | ✅ |
+| `cmospwd` | container Kali | ✅ | ✅ |
+| `crunch` | container Kali | ✅ | ✅ |
+| `fcrackzip` | container Kali | ✅ | ✅ |
+| `freerdp3-x11` | container Kali | ✅ | ✅ |
+| `gpp-decrypt` | container Kali | ✅ | ✅ |
+| `hash-identifier` | container Kali | ✅ | ✅ |
+| `hashcat` | apk nativo | ✅ | ✅ |
+| `hashid` | container Kali | ✅ | ✅ |
+| `hydra-gtk` | container Kali | ✅ | ✅ |
+| `john` | apk nativo | ✅ | ✅ |
+| `johnny` | container Kali | ✅ | ✅ |
+| `maskprocessor` | container Kali | ✅ | ✅ |
+| `oclgausscrack` | container Kali | ✅ | ✅ |
+| `ophcrack` | container Kali | ✅ | ✅ |
+| `pack` | container Kali | ✅ | ✅ |
+| `pack2` | container Kali | ✅ | ✅ |
+| `passing-the-hash` | container Kali | ✅ | ✅ |
+| `pdfcrack` | apk nativo | ✅ | ✅ |
+| `pipal` | container Kali | ✅ | ✅ |
+| `rainbowcrack` | container Kali | ✅ | ✅ |
+| `rarcrack` | container Kali | ✅ | ✅ |
+| `rcracki-mt` | container Kali | ✅ | ✅ |
+| `rsmangler` | container Kali | ✅ | ✅ |
+| `samdump2` | container Kali | ✅ | ✅ |
+| `seclists` | container Kali | ✅ | ✅ |
+| `sipcrack` | container Kali | ✅ | ✅ |
+| `sqldict` | container Kali | ✅ | ✅ |
+| `statsprocessor` | container Kali | ✅ | ✅ |
+| `sucrack` | container Kali | ✅ | ✅ |
+| `thc-pptp-bruter` | container Kali | ✅ | ✅ |
+| `truecrack` | container Kali | ✅ | ✅ |
+| `wordlists` | container Kali | ✅ | ✅ |
+| **Brute force** (5) | | | |
+| `crowbar` | container Kali | ✅ | ✅ |
+| `hydra` | apk nativo | ✅ | ✅ |
+| `medusa` | apk nativo | ✅ | ✅ |
+| `ncrack` | container Kali | ✅ | ✅ |
+| `patator` | container Kali | ✅ | ✅ |
+| **Wireless** (43) | | | |
+| `aircrack-ng` | apk nativo | ✅ | ✅ |
+| `airgeddon` | container Kali | ✅ | ✅ |
+| `asleap` | container Kali | ✅ | ✅ |
+| `blue-hydra` | container Kali | ✅ | ✅ |
+| `bluelog` | container Kali | ✅ | ✅ |
+| `blueranger` | container Kali | ✅ | ✅ |
+| `bluesnarfer` | container Kali | ✅ | ✅ |
+| `btscanner` | container Kali | ✅ | ✅ |
+| `bully` | container Kali | ✅ | ✅ |
+| `chirp` | container Kali | ✅ | ✅ |
+| `cowpatty` | container Kali | ✅ | ✅ |
+| `crackle` | container Kali | ✅ | ✅ |
+| `eapmd5pass` | container Kali | ✅ | ✅ |
+| `fern-wifi-cracker` | container Kali | ✅ | ✅ |
+| `freeradius-wpe` | container Kali | ✅ | ✅ |
+| `gnuradio` | container Kali | ✅ | ✅ |
+| `gqrx-sdr` | container Kali | ✅ | ✅ |
+| `gr-air-modes` | container Kali | ✅ | ✅ |
+| `gr-osmosdr` | container Kali | ✅ | ✅ |
+| `hackrf` | container Kali | ✅ | ✅ |
+| `hostapd-wpe` | container Kali | ✅ | ✅ |
+| `inspectrum` | container Kali | ✅ | ✅ |
+| `iw` | container Kali | ✅ | ✅ |
+| `kalibrate-rtl` | container Kali | ✅ | ✅ |
+| `kismet` | apk nativo | ✅ | ✅ |
+| `mdk3` | container Kali | ✅ | ✅ |
+| `mdk4` | container Kali | ✅ | ✅ |
+| `multimon-ng` | container Kali | ✅ | ✅ |
+| `pixiewps` | apk nativo | ✅ | ✅ |
+| `proxmark3` | container Kali | ✅ | ✅ |
+| `reaver` | container Kali | ✅ | ✅ |
+| `redfang` | container Kali | ✅ | ✅ |
+| `rfcat` | container Kali | ✅ | ✅ |
+| `rfdump` | container Kali | ✅ | ✅ |
+| `rfkill` | container Kali | ✅ | ✅ |
+| `sakis3g` | container Kali | ✅ | ✅ |
+| `sparrow-wifi` | container Kali | ✅ | ✅ |
+| `spooftooph` | container Kali | ✅ | ✅ |
+| `ubertooth` | container Kali | ✅ | ✅ |
+| `uhd-host` | container Kali | ✅ | ✅ |
+| `wash` | container Kali | ✅ | ✅ |
+| `wifiphisher` | container Kali | ✅ | ✅ |
+| `wifite` | pip/pipx | ✅ | ✅ |
+| **Sniffing/Spoofing** (32) | | | |
+| `above` | container Kali | ✅ | ✅ |
+| `arpspoof` | container Kali | ✅ | ✅ |
+| `arpwatch` | container Kali | ✅ | ✅ |
+| `bettercap` | apk nativo | ✅ | ✅ |
+| `darkstat` | container Kali | ✅ | ✅ |
+| `dnschef` | container Kali | ✅ | ✅ |
+| `driftnet` | container Kali | ✅ | ✅ |
+| `dsniff` | container Kali | ✅ | ✅ |
+| `ettercap` | apk nativo | ✅ | ✅ |
+| `ettercap-graphical` | container Kali | ✅ | ✅ |
+| `ferret-sidejack` | container Kali | ✅ | ✅ |
+| `fiked` | container Kali | ✅ | ✅ |
+| `hamster-sidejack` | container Kali | ✅ | ✅ |
+| `hexinject` | container Kali | ✅ | ✅ |
+| `isr-evilgrade` | container Kali | ✅ | ✅ |
+| `mitmproxy` | apk nativo | ✅ | ✅ |
+| `msgsnarf` | container Kali | ✅ | ✅ |
+| `netsniff-ng` | container Kali | ✅ | ✅ |
+| `ngrep` | apk nativo | ✅ | ✅ |
+| `rebind` | container Kali | ✅ | ✅ |
+| `responder` | apk nativo | ✅ | ✅ |
+| `sniffjoke` | container Kali | ✅ | ✅ |
+| `sslsniff` | container Kali | ✅ | ✅ |
+| `sslsplit` | container Kali | ✅ | ✅ |
+| `tcpdump` | apk nativo | ✅ | ✅ |
+| `tcpflow` | container Kali | ✅ | ✅ |
+| `tcpreplay` | container Kali | ✅ | ✅ |
+| `tshark` | apk nativo | ✅ | ✅ |
+| `urlsnarf` | container Kali | ✅ | ✅ |
+| `webspy` | container Kali | ✅ | ✅ |
+| `wifi-honey` | container Kali | ✅ | ✅ |
+| `wireshark` | apk nativo | ✅ | ✅ |
+| **Analisi vulnerabilita** (29) | | | |
+| `afl++` | container Kali | ✅ | ✅ |
+| `bed` | container Kali | ✅ | ✅ |
+| `cisco-global-exploiter` | container Kali | ✅ | ✅ |
+| `cisco-ocs` | container Kali | ✅ | ✅ |
+| `cisco-torch` | container Kali | ✅ | ✅ |
+| `copy-router-config` | container Kali | ✅ | ✅ |
+| `dhcpig` | container Kali | ✅ | ✅ |
+| `enumiax` | container Kali | ✅ | ✅ |
+| `iaxflood` | container Kali | ✅ | ✅ |
+| `inviteflood` | container Kali | ✅ | ✅ |
+| `legion` | container Kali | ✅ | ✅ |
+| `lynis` | apk nativo | ✅ | ✅ |
+| `ohrwurm` | container Kali | ✅ | ✅ |
+| `peass` | container Kali | ✅ | ✅ |
+| `protos-sip` | container Kali | ✅ | ✅ |
+| `rtpbreak` | container Kali | ✅ | ✅ |
+| `rtpflood` | container Kali | ✅ | ✅ |
+| `rtpinsertsound` | container Kali | ✅ | ✅ |
+| `rtpmixsound` | container Kali | ✅ | ✅ |
+| `sctpscan` | container Kali | ✅ | ✅ |
+| `sfuzz` | container Kali | ✅ | ✅ |
+| `siparmyknife` | container Kali | ✅ | ✅ |
+| `sipp` | container Kali | ✅ | ✅ |
+| `sipsak` | container Kali | ✅ | ✅ |
+| `spike` | container Kali | ✅ | ✅ |
+| `t50` | container Kali | ✅ | ✅ |
+| `unix-privesc-check` | container Kali | ✅ | ✅ |
+| `voiphopper` | container Kali | ✅ | ✅ |
+| `yersinia` | container Kali | ✅ | ✅ |
+| **Exploitation** (21) | | | |
+| `armitage` | container Kali | ✅ | ✅ |
+| `beef-xss` | container Kali | ✅ | ✅ |
+| `bloodhound` | container Kali | ✅ | ✅ |
+| `bloodhound-python` | pip/pipx | ✅ | ✅ |
+| `crackmapexec` | container Kali | ✅ | ✅ |
+| `empire` | container Kali | ✅ | ✅ |
+| `evil-winrm` | container Podman | ✅ | ✅ |
+| `exploitdb` | container Kali | ✅ | ✅ |
+| `impacket` | container Kali | ✅ | ✅ |
+| `metasploit` | container Podman | ✅ | ✅ |
+| `msfpc` | container Kali | ✅ | ✅ |
+| `netexec` | container Podman | ✅ | ✅ |
+| `nishang` | container Kali | ✅ | ✅ |
+| `powersploit` | container Kali | ✅ | ✅ |
+| `pupy` | pip/pipx | ✅ | ✅ |
+| `routersploit` | container Kali | ✅ | ✅ |
+| `set` | container Kali | ✅ | ✅ |
+| `shellnoob` | container Kali | ✅ | ✅ |
+| `shellter` | container Kali | ✅ | ✅ |
+| `termineter` | container Kali | ✅ | ✅ |
+| `veil` | container Kali | ✅ | ✅ |
+| **Pivoting/Tunnel** (18) | | | |
+| `cymothoa` | container Kali | ✅ | ✅ |
+| `dbd` | container Kali | ✅ | ✅ |
+| `dns2tcp` | container Kali | ✅ | ✅ |
+| `exe2hexbat` | container Kali | ✅ | ✅ |
+| `iodine` | container Kali | ✅ | ✅ |
+| `laudanum` | container Kali | ✅ | ✅ |
+| `mimikatz` | container Kali | ✅ | ✅ |
+| `miredo` | container Kali | ✅ | ✅ |
+| `ncat` | apk nativo | ✅ | ✅ |
+| `netcat` | apk nativo | ✅ | ✅ |
+| `proxychains4` | container Kali | ✅ | ✅ |
+| `ptunnel` | container Kali | ✅ | ✅ |
+| `pwnat` | container Kali | ✅ | ✅ |
+| `sbd` | container Kali | ✅ | ✅ |
+| `socat` | apk nativo | ✅ | ✅ |
+| `sslh` | container Kali | ✅ | ✅ |
+| `udptunnel` | container Kali | ✅ | ✅ |
+| `webacoo` | container Kali | ✅ | ✅ |
+| **Reverse engineering** (17) | | | |
+| `apktool` | container Kali | ✅ | ✅ |
+| `binutils` | apk nativo | ✅ | ✅ |
+| `clang` | container Kali | ✅ | ✅ |
+| `dex2jar` | container Kali | ✅ | ✅ |
+| `flare-floss` | pip/pipx | ✅ | ✅ |
+| `gdb` | apk nativo | ✅ | ✅ |
+| `ghidra` | apk nativo | ✅ | ✅ |
+| `honggfuzz` | container Kali | ✅ | ✅ |
+| `jadx` | apk nativo | ✅ | ✅ |
+| `jd-gui` | container Kali | ✅ | ✅ |
+| `ltrace` | apk nativo | ✅ | ✅ |
+| `pev` | apk nativo | ✅ | ✅ |
+| `radare2` | apk nativo | ✅ | ✅ |
+| `retdec` | container Kali | ✅ | ✅ |
+| `rizin` | container Kali | ✅ | ✅ |
+| `strace` | apk nativo | ✅ | ✅ |
+| `upx` | container Kali | ✅ | ✅ |
+| **Crypto/Stego** (6) | | | |
+| `cryptcat` | container Kali | ✅ | ✅ |
+| `gpa` | container Kali | ✅ | ✅ |
+| `outguess` | container Kali | ✅ | ✅ |
+| `seahorse` | container Kali | ✅ | ✅ |
+| `stegcracker` | container Kali | ✅ | ✅ |
+| `veracrypt` | container Kali | ✅ | ✅ |
+| **Hardware/SDR** (5) | | | |
+| `arduino` | container Kali | ✅ | ✅ |
+| `gtkterm` | container Kali | ✅ | ✅ |
+| `libnfc` | container Kali | ✅ | ✅ |
+| `minicom` | container Kali | ✅ | ✅ |
+| `simtrace` | container Kali | ✅ | ✅ |
+| **Forensics** (89) | | | |
+| `7zip` | container Kali | ✅ | ✅ |
+| `aesfix` | container Kali | ✅ | ✅ |
+| `aeskeyfind` | container Kali | ✅ | ✅ |
+| `afflib-tools` | container Kali | ✅ | ✅ |
+| `autopsy` | container Kali | ✅ | ✅ |
+| `binwalk` | apk nativo | ✅ | ✅ |
+| `binwalk3` | container Kali | ✅ | ✅ |
+| `bulk-extractor` | apk nativo | ✅ | ✅ |
+| `bytecode-viewer` | container Kali | ✅ | ✅ |
+| `cabextract` | container Kali | ✅ | ✅ |
+| `ccrypt` | container Kali | ✅ | ✅ |
+| `chkrootkit` | apk nativo | ✅ | ✅ |
+| `clamav` | apk nativo | ✅ | ✅ |
+| `creddump7` | container Kali | ✅ | ✅ |
+| `dc3dd` | container Kali | ✅ | ✅ |
+| `dcfldd` | container Kali | ✅ | ✅ |
+| `ddrescue` | apk nativo | ✅ | ✅ |
+| `dumpzilla` | container Kali | ✅ | ✅ |
+| `edb-debugger` | container Kali | ✅ | ✅ |
+| `ewf-tools` | container Kali | ✅ | ✅ |
+| `exifprobe` | container Kali | ✅ | ✅ |
+| `exiftool` | apk nativo | ✅ | ✅ |
+| `exiv2` | container Kali | ✅ | ✅ |
+| `ext3grep` | container Kali | ✅ | ✅ |
+| `ext4magic` | container Kali | ✅ | ✅ |
+| `extundelete` | apk nativo | ✅ | ✅ |
+| `foremost` | apk nativo | ✅ | ✅ |
+| `forensics-colorize` | container Kali | ✅ | ✅ |
+| `galleta` | container Kali | ✅ | ✅ |
+| `ghex` | apk nativo | ✅ | ✅ |
+| `gpart` | container Kali | ✅ | ✅ |
+| `gparted` | container Kali | ✅ | ✅ |
+| `grokevt` | container Kali | ✅ | ✅ |
+| `guymager` | container Kali | ✅ | ✅ |
+| `hashdeep` | container Kali | ✅ | ✅ |
+| `hexedit` | apk nativo | ✅ | ✅ |
+| `inetsim` | container Kali | ✅ | ✅ |
+| `javasnoop` | container Kali | ✅ | ✅ |
+| `lvm2` | container Kali | ✅ | ✅ |
+| `mac-robber` | container Kali | ✅ | ✅ |
+| `magicrescue` | container Kali | ✅ | ✅ |
+| `mdbtools` | container Kali | ✅ | ✅ |
+| `memdump` | container Kali | ✅ | ✅ |
+| `metacam` | container Kali | ✅ | ✅ |
+| `missidentify` | container Kali | ✅ | ✅ |
+| `myrescue` | container Kali | ✅ | ✅ |
+| `nasm` | container Kali | ✅ | ✅ |
+| `nasty` | container Kali | ✅ | ✅ |
+| `ollydbg` | container Kali | ✅ | ✅ |
+| `parted` | container Kali | ✅ | ✅ |
+| `pasco` | container Kali | ✅ | ✅ |
+| `pdf-parser` | container Kali | ✅ | ✅ |
+| `pdfid` | container Kali | ✅ | ✅ |
+| `polenum` | container Kali | ✅ | ✅ |
+| `pst-utils` | container Kali | ✅ | ✅ |
+| `readpe` | container Kali | ✅ | ✅ |
+| `recoverdm` | container Kali | ✅ | ✅ |
+| `recoverjpeg` | container Kali | ✅ | ✅ |
+| `reglookup` | container Kali | ✅ | ✅ |
+| `regripper` | container Kali | ✅ | ✅ |
+| `rekall` | container Kali | ✅ | ✅ |
+| `rephrase` | container Kali | ✅ | ✅ |
+| `rifiuti` | container Kali | ✅ | ✅ |
+| `rifiuti2` | container Kali | ✅ | ✅ |
+| `rizin-cutter` | container Kali | ✅ | ✅ |
+| `rkhunter` | apk nativo | ✅ | ✅ |
+| `rsakeyfind` | container Kali | ✅ | ✅ |
+| `safecopy` | container Kali | ✅ | ✅ |
+| `scalpel` | container Kali | ✅ | ✅ |
+| `scrounge-ntfs` | container Kali | ✅ | ✅ |
+| `sleuthkit` | apk nativo | ✅ | ✅ |
+| `sqlitebrowser` | container Kali | ✅ | ✅ |
+| `ssdeep` | container Kali | ✅ | ✅ |
+| `steghide` | apk nativo | ✅ | ✅ |
+| `stegosuite` | container Kali | ✅ | ✅ |
+| `stegseek` | container Podman | ✅ | ✅ |
+| `stegsnow` | container Kali | ✅ | ✅ |
+| `tcpick` | container Kali | ✅ | ✅ |
+| `testdisk` | apk nativo | ✅ | ✅ |
+| `undbx` | container Kali | ✅ | ✅ |
+| `unhide` | container Kali | ✅ | ✅ |
+| `unrar` | container Kali | ✅ | ✅ |
+| `vinetto` | container Kali | ✅ | ✅ |
+| `volatility3` | apk nativo | ✅ | ✅ |
+| `wce` | container Kali | ✅ | ✅ |
+| `winregfs` | container Kali | ✅ | ✅ |
+| `xmount` | container Kali | ✅ | ✅ |
+| `xplico` | container Kali | ✅ | ✅ |
+| `yara` | apk nativo | ✅ | ✅ |
+| **Reporting** (7) | | | |
+| `cherrytree` | apk nativo | ✅ | ✅ |
+| `dradis` | container Kali | ✅ | ✅ |
+| `eyewitness` | container Kali | ✅ | ✅ |
+| `faraday` | container Kali | ✅ | ✅ |
+| `freemind` | container Kali | ✅ | ✅ |
+| `maltego` | container Kali | ✅ | ✅ |
+| `recordmydesktop` | container Kali | ✅ | ✅ |
+| **Anonimato** (4) | | | |
+| `macchanger` | apk nativo | ✅ | ✅ |
+| `proxychains-ng` | apk nativo | ✅ | ✅ |
+| `tor` | apk nativo | ✅ | ✅ |
+| `torsocks` | apk nativo | ✅ | ✅ |
+| **Altri strumenti** (1) | | | |
+| `voiper` | container Kali | ✅ | ✅ |
 
 </details>
 
