@@ -1,0 +1,325 @@
+<title>NexusSec OS &mdash; Copertura Arsenale vs Kali / Parrot</title>
+<style>
+:root {
+  --bg:#f4f8fb; --panel:#ffffff; --ink:#0b1a24; --muted:#5a7382;
+  --line:#d5e2ea; --accent:#0088a8; --accent-ink:#006b82;
+  --y:#0a8f6a; --n:#b23a5a; --lib:#9a7a1a; --sec-bg:#eaf3f7; --chip:#eef4f7;
+  --mono:"SFMono-Regular",ui-monospace,"Cascadia Mono","Roboto Mono",Menlo,Consolas,monospace;
+  --sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif;
+}
+:root:not([data-theme="light"]) {}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg:#050a14; --panel:#0a1a26; --ink:#c8f5ff; --muted:#5a8a9a;
+    --line:#1a3a52; --accent:#00e5ff; --accent-ink:#8fe9ff;
+    --y:#00e5a8; --n:#ff5a8a; --lib:#e0b83a; --sec-bg:#0d2432; --chip:#0e2230;
+  }
+}
+:root[data-theme="dark"] {
+  --bg:#050a14; --panel:#0a1a26; --ink:#c8f5ff; --muted:#5a8a9a;
+  --line:#1a3a52; --accent:#00e5ff; --accent-ink:#8fe9ff;
+  --y:#00e5a8; --n:#ff5a8a; --lib:#e0b83a; --sec-bg:#0d2432; --chip:#0e2230;
+}
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink); font-family:var(--sans);
+  line-height:1.5; -webkit-font-smoothing:antialiased; }
+.wrap { max-width:1000px; margin:0 auto; padding:48px 24px 96px; }
+header { border-bottom:2px solid var(--accent); padding-bottom:24px; margin-bottom:8px; }
+.eyebrow { font-family:var(--mono); font-size:12px; letter-spacing:.22em; text-transform:uppercase;
+  color:var(--accent-ink); margin:0 0 12px; }
+h1 { font-size:clamp(28px,4vw,42px); line-height:1.1; margin:0 0 12px; text-wrap:balance;
+  letter-spacing:-.01em; font-weight:700; }
+.lede { color:var(--muted); max-width:60ch; margin:0; font-size:15px; }
+.stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px;
+  margin:32px 0; }
+.stat { background:var(--panel); border:1px solid var(--line); border-radius:10px;
+  padding:18px 20px; }
+.stat .num { font-family:var(--mono); font-size:30px; font-weight:600; color:var(--accent-ink);
+  font-variant-numeric:tabular-nums; line-height:1; }
+.stat .lab { font-size:12.5px; color:var(--muted); margin-top:8px; }
+.legend { display:flex; flex-wrap:wrap; gap:16px 24px; margin:24px 0 8px; font-size:13px;
+  color:var(--muted); }
+.legend b { color:var(--ink); font-weight:600; }
+.tbox { overflow-x:auto; border:1px solid var(--line); border-radius:12px; margin-top:16px;
+  background:var(--panel); }
+table { width:100%; border-collapse:collapse; font-size:14px; min-width:640px; }
+th { position:sticky; top:0; background:var(--panel); text-align:left; font-size:11px;
+  letter-spacing:.12em; text-transform:uppercase; color:var(--muted); font-weight:600;
+  padding:14px 14px; border-bottom:1.5px solid var(--line); z-index:2; }
+th.c { text-align:center; }
+td { padding:9px 14px; border-bottom:1px solid var(--line); vertical-align:middle; }
+td.c { text-align:center; width:64px; }
+tr.sec td { background:var(--sec-bg); font-family:var(--mono); font-size:11.5px;
+  letter-spacing:.14em; text-transform:uppercase; color:var(--accent-ink); font-weight:600;
+  padding:11px 14px; position:sticky; }
+td.tool { font-family:var(--mono); font-size:13px; }
+.y { color:var(--y); font-weight:700; }
+.n { color:var(--n); font-weight:700; opacity:.7; }
+.lib { font-family:var(--mono); font-size:10.5px; color:var(--lib); border:1px solid var(--lib);
+  border-radius:4px; padding:1px 5px; }
+.info { font-size:12px; color:var(--muted); }
+.meth { display:inline-block; font-family:var(--mono); font-size:11px; background:var(--chip);
+  border:1px solid var(--line); border-radius:5px; padding:1px 7px; color:var(--accent-ink); }
+.meth.alias { color:var(--muted); }
+.meth.muted { background:transparent; border:none; padding:0; color:var(--muted); font-family:var(--sans); }
+footer { margin-top:40px; color:var(--muted); font-size:13px; border-top:1px solid var(--line);
+  padding-top:20px; }
+tbody tr:not(.sec):hover td { background:var(--sec-bg); }
+</style>
+<div class="wrap">
+  <header>
+    <p class="eyebrow">NexusSec OS &middot; Arsenale</p>
+    <h1>Copertura arsenale vs Kali &amp; Parrot</h1>
+    <p class="lede">Confronto della tabella metapacchetti <code>kali-linux-everything</code> /
+    <code>parrot-tools-full</code> con il catalogo NexusSec. Ogni voce coperta indica anche
+    <em>come</em> viene fornita: pacchetto apk nativo, container Kali on-demand, pip/pipx o git.
+    La filosofia resta invariata &mdash; il tool e' in menu; al primo avvio viene installato al volo ed eseguito.</p>
+  </header>
+
+  <div class="stats">
+    <div class="stat"><div class="num">153/154</div><div class="lab">tool reali della tabella coperti da NexusSec</div></div>
+    <div class="stat"><div class="num">443</div><div class="lab">tool totali nel catalogo (repo.json)</div></div>
+    <div class="stat"><div class="num">+53</div><div class="lab">aggiunti in questo aggiornamento</div></div>
+    <div class="stat"><div class="num">11</div><div class="lab">voci-libreria escluse (non lanciabili)</div></div>
+  </div>
+
+  <div class="legend">
+    <span><b class="y">&#10003;</b> presente</span>
+    <span><b class="n">&#8211;</b> assente</span>
+    <span><b class="lib" style="color:var(--lib)">lib</b> libreria/CLI di base &mdash; esclusa di proposito</span>
+    <span><b>container Kali</b> = on-demand nell'ambiente Kali condiviso</span>
+  </div>
+
+  <div class="tbox">
+    <table>
+      <thead><tr>
+        <th>Strumento</th><th class="c">Kali</th><th class="c">Parrot</th>
+        <th class="c">NexusSec</th><th>Come, su NexusSec</th>
+      </tr></thead>
+      <tbody>
+      <tr class="sec"><td colspan="5">Information Gathering</td></tr>
+<tr><td class="tool">0trace</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">2ping</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">aadict</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="lib">lib</span></td><td class="info"><span class="meth muted">libreria/CLI di base — non e&#x27; un tool da menu</span></td></tr>
+<tr><td class="tool">aardwolf</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="lib">lib</span></td><td class="info"><span class="meth muted">libreria/CLI di base — non e&#x27; un tool da menu</span></td></tr>
+<tr><td class="tool">aesedb</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="lib">lib</span></td><td class="info"><span class="meth muted">libreria/CLI di base — non e&#x27; un tool da menu</span></td></tr>
+<tr><td class="tool">afflib-tools</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">afl++</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">aiocmd</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="lib">lib</span></td><td class="info"><span class="meth muted">libreria/CLI di base — non e&#x27; un tool da menu</span></td></tr>
+<tr><td class="tool">aioconsole</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="lib">lib</span></td><td class="info"><span class="meth muted">libreria/CLI di base — non e&#x27; un tool da menu</span></td></tr>
+<tr><td class="tool">aiohttp-apispec</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="lib">lib</span></td><td class="info"><span class="meth muted">libreria/CLI di base — non e&#x27; un tool da menu</span></td></tr>
+<tr><td class="tool">aiomultiprocess</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="lib">lib</span></td><td class="info"><span class="meth muted">libreria/CLI di base — non e&#x27; un tool da menu</span></td></tr>
+<tr><td class="tool">aiosmb</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="lib">lib</span></td><td class="info"><span class="meth muted">libreria/CLI di base — non e&#x27; un tool da menu</span></td></tr>
+<tr><td class="tool">aiowinreg</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="lib">lib</span></td><td class="info"><span class="meth muted">libreria/CLI di base — non e&#x27; un tool da menu</span></td></tr>
+<tr><td class="tool">aircrack-ng</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">apk nativo</span></td></tr>
+<tr><td class="tool">airgeddon</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">altdns</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">amap</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">amass</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container</span></td></tr>
+<tr><td class="tool">arpwatch</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">arjun</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">assetfinder</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">autorecon</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">pip/pipx</span></td></tr>
+<tr><td class="tool">bettercap</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">apk nativo</span></td></tr>
+<tr><td class="tool">bluelog</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">bluesnarfer</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">btscanner</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">blueranger</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">burpsuite</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">caido</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">caido-cli</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth alias">container Kali &middot; incluso in caido</span></td></tr>
+<tr><td class="tool">crlfuzz</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">davtest</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">dirb</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">dirbuster</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">dirsearch</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">dmitry</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">apk nativo</span></td></tr>
+<tr><td class="tool">dnsenum</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">dnsmap</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">dnsrecon</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">apk nativo</span></td></tr>
+<tr><td class="tool">dnstracer</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">dnswalk</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">emailharvester</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">email2phonenumber</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">feroxbuster</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">ffuf</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">apk nativo</span></td></tr>
+<tr><td class="tool">findomain</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">gobuster</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">apk nativo</span></td></tr>
+<tr><td class="tool">gospider</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">heartleech</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">instaloader</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">joomscan</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">kismet</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">apk nativo</span></td></tr>
+<tr><td class="tool">lbd</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">legion</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">linkedin2username</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">massdns</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">metagoofil</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">git+venv</span></td></tr>
+<tr><td class="tool">nmap</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">apk nativo</span></td></tr>
+<tr><td class="tool">nikto</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">apk nativo</span></td></tr>
+<tr><td class="tool">nuclei</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">apk nativo</span></td></tr>
+<tr><td class="tool">owasp-mantra-ff</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">parsero</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">paros</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">photon</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">recon-ng</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">apk nativo</span></td></tr>
+<tr><td class="tool">sherlock</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container</span></td></tr>
+<tr><td class="tool">skipfish</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">sparrow-wifi</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">spiderfoot</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">spiderfoot-cli</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth alias">container Kali &middot; incluso in spiderfoot</span></td></tr>
+<tr><td class="tool">subfinder</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container</span></td></tr>
+<tr><td class="tool">sublist3r</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">sstimap</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">subjack</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">theHarvester</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container</span></td></tr>
+<tr><td class="tool">tinja</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">tookie-osint</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">unicornscan</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">uniscan-gui</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">urlcrazy</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">uro</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">wapiti</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">wash</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">watobo</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">wcvs</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">webscarab</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">whatweb</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container</span></td></tr>
+<tr><td class="tool">wfuzz</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">wpprobe</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">wpscan</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container</span></td></tr>
+<tr><td class="tool">zenmap</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">zaproxy</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">apk nativo</span></td></tr>
+<tr class="sec"><td colspan="5">Vulnerability Analysis</td></tr>
+<tr><td class="tool">CAT</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">gvm-start</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="n">&#8211;</span></td><td class="info"></td></tr>
+<tr><td class="tool">openvas</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth alias">container Kali &middot; incluso in gvm</span></td></tr>
+<tr><td class="tool">sqlmap</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">apk nativo</span></td></tr>
+<tr class="sec"><td colspan="5">Web Application Analysis</td></tr>
+<tr><td class="tool">armitage</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">beef-xss</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">burpsuite</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">commix</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">pip/pipx</span></td></tr>
+<tr><td class="tool">crackmapexec</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">empire</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">metasploit-framework</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">msfpc</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">set</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">setoolkit</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr class="sec"><td colspan="5">Password Attacks</td></tr>
+<tr><td class="tool">cewl</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">crunch</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">hashcat</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">apk nativo</span></td></tr>
+<tr><td class="tool">hydra</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">apk nativo</span></td></tr>
+<tr><td class="tool">john</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">apk nativo</span></td></tr>
+<tr><td class="tool">medusa</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">apk nativo</span></td></tr>
+<tr><td class="tool">ncrack</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">patator</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">thc-hydra</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth alias">apk nativo &middot; incluso in hydra</span></td></tr>
+<tr class="sec"><td colspan="5">Wireless Attacks</td></tr>
+<tr><td class="tool">asleap</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">aircrack-ng</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">apk nativo</span></td></tr>
+<tr><td class="tool">airgeddon</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">bettercap</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">apk nativo</span></td></tr>
+<tr><td class="tool">bluelog</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">bluesnarfer</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">btscanner</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">blueranger</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">fang</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">kismet</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">apk nativo</span></td></tr>
+<tr><td class="tool">sparrow-wifi</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">spooftooph</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">ubertooth-util</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth alias">container Kali &middot; incluso in ubertooth</span></td></tr>
+<tr><td class="tool">wash</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr class="sec"><td colspan="5">Reverse Engineering</td></tr>
+<tr><td class="tool">edb-debugger</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">ghidra</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">apk nativo</span></td></tr>
+<tr><td class="tool">radare2</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">apk nativo</span></td></tr>
+<tr><td class="tool">retdec</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">rizin</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr class="sec"><td colspan="5">Exploitation Tools</td></tr>
+<tr><td class="tool">armitage</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">beef-xss</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">commix</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">pip/pipx</span></td></tr>
+<tr><td class="tool">crackmapexec</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">empire</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">evil-winrm</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container</span></td></tr>
+<tr><td class="tool">metasploit-framework</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">msfpc</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">set</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">setoolkit</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr class="sec"><td colspan="5">Sniffing &amp; Spoofing</td></tr>
+<tr><td class="tool">arpspoof</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">bettercap</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">apk nativo</span></td></tr>
+<tr><td class="tool">dsniff</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">ettercap</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">apk nativo</span></td></tr>
+<tr><td class="tool">macchanger</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">apk nativo</span></td></tr>
+<tr><td class="tool">msgsnarf</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">urlsnarf</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">webspy</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr class="sec"><td colspan="5">Post Exploitation</td></tr>
+<tr><td class="tool">bloodhound</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">crackmapexec</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">evil-winrm</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container</span></td></tr>
+<tr><td class="tool">mimikatz</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">powersploit</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr class="sec"><td colspan="5">Forensics</td></tr>
+<tr><td class="tool">autopsy</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">bulk_extractor</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">apk nativo</span></td></tr>
+<tr><td class="tool">foremost</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">apk nativo</span></td></tr>
+<tr><td class="tool">rekall</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">sleuthkit</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">apk nativo</span></td></tr>
+<tr><td class="tool">volatility</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth alias">apk nativo &middot; incluso in volatility3</span></td></tr>
+<tr class="sec"><td colspan="5">Reporting Tools</td></tr>
+<tr><td class="tool">cherrytree</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">apk nativo</span></td></tr>
+<tr><td class="tool">cutycapt</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">freemind</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">recordmydesktop</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr class="sec"><td colspan="5">Hardware Hacking</td></tr>
+<tr><td class="tool">arduino</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">gtkterm</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">minicom</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">rfcat</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">simtrace</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr class="sec"><td colspan="5">Cryptography &amp; Steganography</td></tr>
+<tr><td class="tool">cryptcat</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">gpa</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">openssl</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="lib">lib</span></td><td class="info"><span class="meth muted">libreria/CLI di base — non e&#x27; un tool da menu</span></td></tr>
+<tr><td class="tool">outguess</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">seahorse</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">stegcracker</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">steghide</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">apk nativo</span></td></tr>
+<tr><td class="tool">veracrypt</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr class="sec"><td colspan="5">Social Engineering</td></tr>
+<tr><td class="tool">set</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">setoolkit</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr class="sec"><td colspan="5">Fuzzing</td></tr>
+<tr><td class="tool">afl++</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">honggfuzz</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">libfuzzer</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="lib">lib</span></td><td class="info"><span class="meth muted">libreria/CLI di base — non e&#x27; un tool da menu</span></td></tr>
+<tr class="sec"><td colspan="5">VoIP</td></tr>
+<tr><td class="tool">sipvicious</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">voiper</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr class="sec"><td colspan="5">RFID / NFC</td></tr>
+<tr><td class="tool">libnfc</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">rfcat</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr class="sec"><td colspan="5">SDR (Software Defined Radio)</td></tr>
+<tr><td class="tool">gnuradio</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">gqrx</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">hackrf</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr class="sec"><td colspan="5">Windows Resources</td></tr>
+<tr><td class="tool">mimikatz</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+<tr><td class="tool">powersploit</td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="c"><span class="y">&#10003;</span></td><td class="info"><span class="meth">container Kali</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <footer>
+    Le voci contrassegnate <b>lib</b> (aadict, aardwolf, aesedb, aio*, libfuzzer, openssl) sono
+    librerie Python o CLI di base incluse nei metapacchetti Kali per dipendenza: non sono
+    programmi con interfaccia propria, quindi non compaiono nei menu. <code>openssl</code> e'
+    comunque gia' presente nel sistema base Alpine. I metapacchetti aggregati
+    (<code>kali-linux-*</code>, <code>parrot-tools-full</code>) non hanno equivalente: su NexusSec
+    la stessa funzione la svolgono i profili dinamici <em>Pen&nbsp;Testing / Forensics / OSINT / Web</em>.
+  </footer>
+</div>

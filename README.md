@@ -11,7 +11,36 @@ tool **on-demand** (apk · container Podman · pip), ciascuno in **sandbox**.
 Include un **browser integrato stealth**: di default naviga in modo **anonimo**
 (traffico via **Tor**, IP nascosto) e **senza lasciare tracce** locali
 (cookie/cronologia/cache solo in RAM), con **interruttore** in barra per passare
-al volo alla navigazione normale.
+al volo alla navigazione normale. Interfaccia a schede con **preferiti** (mostra
+la **favicon** reale dei siti, anche nella barra laterale ridotta) e **tema
+scuro** coerente con l'ambiente NexusSec.
+
+## Procedure guidate (Wizard)
+
+Oltre ai tool singoli, NexusSec include **procedure guidate**: catene di
+strumenti **orchestrate** che trasformano un'operazione complessa in pochi clic.
+Non sostituiscono l'esperienza dell'esperto — la **incapsulano** in flussi
+ripetibili, versatili e trasparenti. Ogni procedura (Pentest di rete, OSINT su
+dominio, Scan web, Forensics) si configura al volo dall'interfaccia:
+
+- **Modalità** (intensità): *Leggero* / *Approfondito* — regola profondità e
+  ampiezza (es. porte comuni vs tutte le porte, crawl minimo vs esteso).
+- **Opzioni** a spunta: attivi/disattivi singole fasi (rilevamento OS, script
+  vulnerabilità NSE, UDP, enumerazione SMB, WAF, ...), con il **conteggio degli
+  step** aggiornato in tempo reale.
+- **Stealth ON/OFF** (mostrato solo dove ha senso): dove praticabile instrada i
+  tool **via Tor** (torsocks/proxychains) per nascondere l'IP, con **esito
+  onesto per step** — *via Tor* / *non anonimizzabile (pacchetti raw)* / *gira in
+  container* / *locale*. Niente false promesse: se Tor non è disponibile, gli
+  step anonimizzabili vengono **saltati** per non esporre l'IP reale.
+- **Catena dati**: l'output di un tool diventa l'input del successivo
+  (es. *ping sweep → estrai host vivi → scansiona solo quelli*), con salto
+  automatico degli step il cui input è vuoto.
+
+Risultati e log finiscono in `~/NexusSec-loot/`. È incluso un **costruttore
+grafico** per creare **wizard personalizzati** (scegli i tool dal catalogo,
+definisci modalità, opzioni, comportamento stealth per step e la catena dati)
+che si aggiungono all'elenco **senza scrivere codice**.
 
 ## Download ISO
 
@@ -23,6 +52,11 @@ In VirtualBox: VM Linux 64-bit, ≥ 2 GB RAM (3–4 GB se usi i container
 Forensics/Web), boot dall'ISO.
 
 ## Screenshot
+
+All'avvio una **splashscreen flat** con barra di caricamento accompagna la
+preparazione del desktop:
+
+![splash](screenshots/splash.png)
 
 Desktop reali della live (QEMU/KVM). Cambiando profilo cambiano **sfondo,
 accent del pannello e tema delle icone** (anche cartelle e browser).
@@ -74,6 +108,16 @@ repo è aggiunto all'avvio, quindi `nxs-tool install <tool>` li scarica da qui.
 Catalogo **curato**: **127 strumenti**, uno o piu' per ogni fase operativa, scelti tra i migliori/piu' efficienti ed evitando i doppioni superati (es. un solo fork di *foremost*, *ffuf*/*feroxbuster* al posto dei vecchi dir-buster). Tutti **on-demand** (`nxs-tool install <nome>` o le procedure guidate); fonti verificate vive (0 rotte).
 
 **Copertura:** 127/127 strumenti fanno parte dell'arsenale di **Kali** e **Parrot** — il catalogo e' costruito apposta come sottoinsieme del loro set. La differenza non e' *quali* strumenti, ma **come**: NexusSec li scarica **al bisogno** su una ISO di **~0.5 GB** (Kali ~4 GB, Parrot ~5-6 GB), ciascuno in sandbox.
+
+> **Arsenale esteso (on-demand):** oltre a questo nucleo curato, il catalogo
+> completo conta ora **443 strumenti** su 16 categorie (incluse **Crypto/Stego**
+> e **Hardware/SDR**). I ~300 tool aggiuntivi sono raggiunti al volo tramite il
+> **container Kali condiviso** (`kali-rolling`): compaiono gia' nei menu e, al
+> primo avvio, vengono installati ed eseguiti. Rispetto ai metapacchetti
+> `kali-linux-everything` / `parrot-tools-full` la copertura sugli strumenti
+> reali e' **153/154** — le uniche voci escluse sono librerie Python o CLI di
+> base (non programmi da menu). Confronto completo, riga per riga, in fondo a
+> questa sezione e nella vista HTML [`docs/copertura-arsenale.html`](docs/copertura-arsenale.html).
 
 Legenda canale: **Alpine apk** = pacchetto nativo Alpine · **Arsenal** = .apk compilato da noi (GitHub Pages) · **Container** / **Kali (container)** = Podman (immagine upstream o `kali-rolling`) · **PyPI** / **Git** = pipx. Kali/Parrot: ✓ = incluso nell'arsenale.
 
@@ -222,6 +266,235 @@ Legenda canale: **Alpine apk** = pacchetto nativo Alpine · **Arsenal** = .apk c
 | 127 | `cherrytree` | Note gerarchiche per report/appunti di pentest | Alpine apk | ✓ | ✓ |
 
 > Presenza in Kali cross-verificata sull'indice `Packages` di `kali-rolling` unito alla base Debian *bookworm* (su cui Kali e Parrot 6 sono costruiti) e alla lista ufficiale `kali.org/tools`; Parrot importa l'intero arsenale Kali oltre alla base Debian, quindi la copertura coincide.
+
+
+### Copertura completa dell'arsenale Kali / Parrot
+
+Confronto riga per riga della tabella metapacchetti `kali-linux-everything` /
+`parrot-tools-full` con il catalogo NexusSec (443 tool). Metodo su NexusSec:
+`apk` nativo Alpine · `kali` container Kali condiviso · `pip` (pipx) · `ctr`
+container Podman · `git` clone+venv.
+
+<details>
+<summary><b>Mostra la tabella comparativa completa</b> (154 strumenti)</summary>
+
+| Strumento | Kali | Parrot | NexusSec | Come su NexusSec |
+|---|:--:|:--:|:--:|---|
+| **Information Gathering** | | | | |
+| `0trace` | ✅ | ✅ | ✅ | `kali` |
+| `2ping` | ✅ | ✅ | ✅ | `kali` |
+| `aadict` | ✅ | ✅ | lib | _libreria/CLI di base_ |
+| `aardwolf` | ✅ | ✅ | lib | _libreria/CLI di base_ |
+| `aesedb` | ✅ | ✅ | lib | _libreria/CLI di base_ |
+| `afflib-tools` | ✅ | ✅ | ✅ | `kali` |
+| `afl++` | ✅ | ✅ | ✅ | `kali` |
+| `aiocmd` | ✅ | ✅ | lib | _libreria/CLI di base_ |
+| `aioconsole` | ✅ | ✅ | lib | _libreria/CLI di base_ |
+| `aiohttp-apispec` | ✅ | ✅ | lib | _libreria/CLI di base_ |
+| `aiomultiprocess` | ✅ | ✅ | lib | _libreria/CLI di base_ |
+| `aiosmb` | ✅ | ✅ | lib | _libreria/CLI di base_ |
+| `aiowinreg` | ✅ | ✅ | lib | _libreria/CLI di base_ |
+| `aircrack-ng` | ✅ | ✅ | ✅ | `apk` |
+| `airgeddon` | ✅ | ✅ | ✅ | `kali` |
+| `altdns` | ✅ | ✅ | ✅ | `kali` |
+| `amap` | ✅ | ✅ | ✅ | `kali` |
+| `amass` | ✅ | ✅ | ✅ | `ctr` |
+| `arpwatch` | ✅ | ✅ | ✅ | `kali` |
+| `arjun` | ✅ | ✅ | ✅ | `kali` |
+| `assetfinder` | ✅ | ✅ | ✅ | `kali` |
+| `autorecon` | ✅ | ✅ | ✅ | `pip` |
+| `bettercap` | ✅ | ✅ | ✅ | `apk` |
+| `bluelog` | ✅ | ✅ | ✅ | `kali` |
+| `bluesnarfer` | ✅ | ✅ | ✅ | `kali` |
+| `btscanner` | ✅ | ✅ | ✅ | `kali` |
+| `blueranger` | ✅ | ✅ | ✅ | `kali` |
+| `burpsuite` | ✅ | ✅ | ✅ | `kali` |
+| `caido` | ✅ | ✅ | ✅ | `kali` |
+| `caido-cli` | ✅ | ✅ | ✅ | `kali` · incluso in caido |
+| `crlfuzz` | ✅ | ✅ | ✅ | `kali` |
+| `davtest` | ✅ | ✅ | ✅ | `kali` |
+| `dirb` | ✅ | ✅ | ✅ | `kali` |
+| `dirbuster` | ✅ | ✅ | ✅ | `kali` |
+| `dirsearch` | ✅ | ✅ | ✅ | `kali` |
+| `dmitry` | ✅ | ✅ | ✅ | `apk` |
+| `dnsenum` | ✅ | ✅ | ✅ | `kali` |
+| `dnsmap` | ✅ | ✅ | ✅ | `kali` |
+| `dnsrecon` | ✅ | ✅ | ✅ | `apk` |
+| `dnstracer` | ✅ | ✅ | ✅ | `kali` |
+| `dnswalk` | ✅ | ✅ | ✅ | `kali` |
+| `emailharvester` | ✅ | ✅ | ✅ | `kali` |
+| `email2phonenumber` | ✅ | ✅ | ✅ | `kali` |
+| `feroxbuster` | ✅ | ✅ | ✅ | `kali` |
+| `ffuf` | ✅ | ✅ | ✅ | `apk` |
+| `findomain` | ✅ | ✅ | ✅ | `kali` |
+| `gobuster` | ✅ | ✅ | ✅ | `apk` |
+| `gospider` | ✅ | ✅ | ✅ | `kali` |
+| `heartleech` | ✅ | ✅ | ✅ | `kali` |
+| `instaloader` | ✅ | ✅ | ✅ | `kali` |
+| `joomscan` | ✅ | ✅ | ✅ | `kali` |
+| `kismet` | ✅ | ✅ | ✅ | `apk` |
+| `lbd` | ✅ | ✅ | ✅ | `kali` |
+| `legion` | ✅ | ✅ | ✅ | `kali` |
+| `linkedin2username` | ✅ | ✅ | ✅ | `kali` |
+| `massdns` | ✅ | ✅ | ✅ | `kali` |
+| `metagoofil` | ✅ | ✅ | ✅ | `git` |
+| `nmap` | ✅ | ✅ | ✅ | `apk` |
+| `nikto` | ✅ | ✅ | ✅ | `apk` |
+| `nuclei` | ✅ | ✅ | ✅ | `apk` |
+| `owasp-mantra-ff` | ✅ | ✅ | ✅ | `kali` |
+| `parsero` | ✅ | ✅ | ✅ | `kali` |
+| `paros` | ✅ | ✅ | ✅ | `kali` |
+| `photon` | ✅ | ✅ | ✅ | `kali` |
+| `recon-ng` | ✅ | ✅ | ✅ | `apk` |
+| `sherlock` | ✅ | ✅ | ✅ | `ctr` |
+| `skipfish` | ✅ | ✅ | ✅ | `kali` |
+| `sparrow-wifi` | ✅ | ✅ | ✅ | `kali` |
+| `spiderfoot` | ✅ | ✅ | ✅ | `kali` |
+| `spiderfoot-cli` | ✅ | ✅ | ✅ | `kali` · incluso in spiderfoot |
+| `subfinder` | ✅ | ✅ | ✅ | `ctr` |
+| `sublist3r` | ✅ | ✅ | ✅ | `kali` |
+| `sstimap` | ✅ | ✅ | ✅ | `kali` |
+| `subjack` | ✅ | ✅ | ✅ | `kali` |
+| `theHarvester` | ✅ | ✅ | ✅ | `ctr` |
+| `tinja` | ✅ | ✅ | ✅ | `kali` |
+| `tookie-osint` | ✅ | ✅ | ✅ | `kali` |
+| `unicornscan` | ✅ | ✅ | ✅ | `kali` |
+| `uniscan-gui` | ✅ | ✅ | ✅ | `kali` |
+| `urlcrazy` | ✅ | ✅ | ✅ | `kali` |
+| `uro` | ✅ | ✅ | ✅ | `kali` |
+| `wapiti` | ✅ | ✅ | ✅ | `kali` |
+| `wash` | ✅ | ✅ | ✅ | `kali` |
+| `watobo` | ✅ | ✅ | ✅ | `kali` |
+| `wcvs` | ✅ | ✅ | ✅ | `kali` |
+| `webscarab` | ✅ | ✅ | ✅ | `kali` |
+| `whatweb` | ✅ | ✅ | ✅ | `ctr` |
+| `wfuzz` | ✅ | ✅ | ✅ | `kali` |
+| `wpprobe` | ✅ | ✅ | ✅ | `kali` |
+| `wpscan` | ✅ | ✅ | ✅ | `ctr` |
+| `zenmap` | ✅ | ✅ | ✅ | `kali` |
+| `zaproxy` | ✅ | ✅ | ✅ | `apk` |
+| **Vulnerability Analysis** | | | | |
+| `CAT` | ✅ | ✅ | ✅ | `kali` |
+| `gvm-start` | ✅ | ✅ | — |  |
+| `openvas` | ✅ | ✅ | ✅ | `kali` · incluso in gvm |
+| `sqlmap` | ✅ | ✅ | ✅ | `apk` |
+| **Web Application Analysis** | | | | |
+| `armitage` | ✅ | ✅ | ✅ | `kali` |
+| `beef-xss` | ✅ | ✅ | ✅ | `kali` |
+| `burpsuite` | ✅ | ✅ | ✅ | `kali` |
+| `commix` | ✅ | ✅ | ✅ | `pip` |
+| `crackmapexec` | ✅ | ✅ | ✅ | `kali` |
+| `empire` | ✅ | ✅ | ✅ | `kali` |
+| `metasploit-framework` | ✅ | ✅ | ✅ | `kali` |
+| `msfpc` | ✅ | ✅ | ✅ | `kali` |
+| `set` | ✅ | ✅ | ✅ | `kali` |
+| `setoolkit` | ✅ | ✅ | ✅ | `kali` |
+| **Password Attacks** | | | | |
+| `cewl` | ✅ | ✅ | ✅ | `kali` |
+| `crunch` | ✅ | ✅ | ✅ | `kali` |
+| `hashcat` | ✅ | ✅ | ✅ | `apk` |
+| `hydra` | ✅ | ✅ | ✅ | `apk` |
+| `john` | ✅ | ✅ | ✅ | `apk` |
+| `medusa` | ✅ | ✅ | ✅ | `apk` |
+| `ncrack` | ✅ | ✅ | ✅ | `kali` |
+| `patator` | ✅ | ✅ | ✅ | `kali` |
+| `thc-hydra` | ✅ | ✅ | ✅ | `apk` · incluso in hydra |
+| **Wireless Attacks** | | | | |
+| `asleap` | ✅ | ✅ | ✅ | `kali` |
+| `aircrack-ng` | ✅ | ✅ | ✅ | `apk` |
+| `airgeddon` | ✅ | ✅ | ✅ | `kali` |
+| `bettercap` | ✅ | ✅ | ✅ | `apk` |
+| `bluelog` | ✅ | ✅ | ✅ | `kali` |
+| `bluesnarfer` | ✅ | ✅ | ✅ | `kali` |
+| `btscanner` | ✅ | ✅ | ✅ | `kali` |
+| `blueranger` | ✅ | ✅ | ✅ | `kali` |
+| `fang` | ✅ | ✅ | ✅ | `kali` |
+| `kismet` | ✅ | ✅ | ✅ | `apk` |
+| `sparrow-wifi` | ✅ | ✅ | ✅ | `kali` |
+| `spooftooph` | ✅ | ✅ | ✅ | `kali` |
+| `ubertooth-util` | ✅ | ✅ | ✅ | `kali` · incluso in ubertooth |
+| `wash` | ✅ | ✅ | ✅ | `kali` |
+| **Reverse Engineering** | | | | |
+| `edb-debugger` | ✅ | ✅ | ✅ | `kali` |
+| `ghidra` | ✅ | ✅ | ✅ | `apk` |
+| `radare2` | ✅ | ✅ | ✅ | `apk` |
+| `retdec` | ✅ | ✅ | ✅ | `kali` |
+| `rizin` | ✅ | ✅ | ✅ | `kali` |
+| **Exploitation Tools** | | | | |
+| `armitage` | ✅ | ✅ | ✅ | `kali` |
+| `beef-xss` | ✅ | ✅ | ✅ | `kali` |
+| `commix` | ✅ | ✅ | ✅ | `pip` |
+| `crackmapexec` | ✅ | ✅ | ✅ | `kali` |
+| `empire` | ✅ | ✅ | ✅ | `kali` |
+| `evil-winrm` | ✅ | ✅ | ✅ | `ctr` |
+| `metasploit-framework` | ✅ | ✅ | ✅ | `kali` |
+| `msfpc` | ✅ | ✅ | ✅ | `kali` |
+| `set` | ✅ | ✅ | ✅ | `kali` |
+| `setoolkit` | ✅ | ✅ | ✅ | `kali` |
+| **Sniffing & Spoofing** | | | | |
+| `arpspoof` | ✅ | ✅ | ✅ | `kali` |
+| `bettercap` | ✅ | ✅ | ✅ | `apk` |
+| `dsniff` | ✅ | ✅ | ✅ | `kali` |
+| `ettercap` | ✅ | ✅ | ✅ | `apk` |
+| `macchanger` | ✅ | ✅ | ✅ | `apk` |
+| `msgsnarf` | ✅ | ✅ | ✅ | `kali` |
+| `urlsnarf` | ✅ | ✅ | ✅ | `kali` |
+| `webspy` | ✅ | ✅ | ✅ | `kali` |
+| **Post Exploitation** | | | | |
+| `bloodhound` | ✅ | ✅ | ✅ | `kali` |
+| `crackmapexec` | ✅ | ✅ | ✅ | `kali` |
+| `evil-winrm` | ✅ | ✅ | ✅ | `ctr` |
+| `mimikatz` | ✅ | ✅ | ✅ | `kali` |
+| `powersploit` | ✅ | ✅ | ✅ | `kali` |
+| **Forensics** | | | | |
+| `autopsy` | ✅ | ✅ | ✅ | `kali` |
+| `bulk_extractor` | ✅ | ✅ | ✅ | `apk` |
+| `foremost` | ✅ | ✅ | ✅ | `apk` |
+| `rekall` | ✅ | ✅ | ✅ | `kali` |
+| `sleuthkit` | ✅ | ✅ | ✅ | `apk` |
+| `volatility` | ✅ | ✅ | ✅ | `apk` · incluso in volatility3 |
+| **Reporting Tools** | | | | |
+| `cherrytree` | ✅ | ✅ | ✅ | `apk` |
+| `cutycapt` | ✅ | ✅ | ✅ | `kali` |
+| `freemind` | ✅ | ✅ | ✅ | `kali` |
+| `recordmydesktop` | ✅ | ✅ | ✅ | `kali` |
+| **Hardware Hacking** | | | | |
+| `arduino` | ✅ | ✅ | ✅ | `kali` |
+| `gtkterm` | ✅ | ✅ | ✅ | `kali` |
+| `minicom` | ✅ | ✅ | ✅ | `kali` |
+| `rfcat` | ✅ | ✅ | ✅ | `kali` |
+| `simtrace` | ✅ | ✅ | ✅ | `kali` |
+| **Cryptography & Steganography** | | | | |
+| `cryptcat` | ✅ | ✅ | ✅ | `kali` |
+| `gpa` | ✅ | ✅ | ✅ | `kali` |
+| `openssl` | ✅ | ✅ | lib | _libreria/CLI di base_ |
+| `outguess` | ✅ | ✅ | ✅ | `kali` |
+| `seahorse` | ✅ | ✅ | ✅ | `kali` |
+| `stegcracker` | ✅ | ✅ | ✅ | `kali` |
+| `steghide` | ✅ | ✅ | ✅ | `apk` |
+| `veracrypt` | ✅ | ✅ | ✅ | `kali` |
+| **Social Engineering** | | | | |
+| `set` | ✅ | ✅ | ✅ | `kali` |
+| `setoolkit` | ✅ | ✅ | ✅ | `kali` |
+| **Fuzzing** | | | | |
+| `afl++` | ✅ | ✅ | ✅ | `kali` |
+| `honggfuzz` | ✅ | ✅ | ✅ | `kali` |
+| `libfuzzer` | ✅ | ✅ | lib | _libreria/CLI di base_ |
+| **VoIP** | | | | |
+| `sipvicious` | ✅ | ✅ | ✅ | `kali` |
+| `voiper` | ✅ | ✅ | ✅ | `kali` |
+| **RFID / NFC** | | | | |
+| `libnfc` | ✅ | ✅ | ✅ | `kali` |
+| `rfcat` | ✅ | ✅ | ✅ | `kali` |
+| **SDR (Software Defined Radio)** | | | | |
+| `gnuradio` | ✅ | ✅ | ✅ | `kali` |
+| `gqrx` | ✅ | ✅ | ✅ | `kali` |
+| `hackrf` | ✅ | ✅ | ✅ | `kali` |
+| **Windows Resources** | | | | |
+| `mimikatz` | ✅ | ✅ | ✅ | `kali` |
+| `powersploit` | ✅ | ✅ | ✅ | `kali` |
+
+</details>
 
 ## Licenza
 
