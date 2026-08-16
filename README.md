@@ -97,7 +97,7 @@ I pacchetti compilati per NexusSec OS non presenti nei repo Alpine (`dmitry`,
 serviti via **GitHub Pages**:
 
 ```
-https://dplusos21.github.io/NexusSecOS-Arsenal/
+https://dplusos21.github.io/NexusSec-OS/
 ```
 
 Per usarlo su un sistema Alpine/NexusSec:
@@ -105,10 +105,10 @@ Per usarlo su un sistema Alpine/NexusSec:
 ```sh
 # 1) fidati della chiave pubblica del repo
 wget -O /etc/apk/keys/nexussecos-arsenal.rsa.pub \
-  https://dplusos21.github.io/NexusSecOS-Arsenal/nexussecos-arsenal.rsa.pub
+  https://dplusos21.github.io/NexusSec-OS/nexussecos-arsenal.rsa.pub
 
 # 2) aggiungi il repo
-echo "https://dplusos21.github.io/NexusSecOS-Arsenal" >> /etc/apk/repositories
+echo "https://dplusos21.github.io/NexusSec-OS" >> /etc/apk/repositories
 
 # 3) aggiorna e installa
 apk update
@@ -125,7 +125,7 @@ Catalogo **curato**: **127 strumenti**, uno o piu' per ogni fase operativa, scel
 **Copertura:** 127/127 strumenti fanno parte dell'arsenale di **Kali** e **Parrot** — il catalogo e' costruito apposta come sottoinsieme del loro set. La differenza non e' *quali* strumenti, ma **come**: NexusSec li scarica **al bisogno** su una ISO di **~0.5 GB** (Kali ~4 GB, Parrot ~5-6 GB), ciascuno in sandbox.
 
 > **Arsenale esteso (on-demand):** oltre a questo nucleo curato, il catalogo
-> completo conta ora **443 strumenti** su 16 categorie (incluse **Crypto/Stego**
+> completo conta ora **440 strumenti** su 16 categorie (incluse **Crypto/Stego**
 > e **Hardware/SDR**). I ~300 tool aggiuntivi sono raggiunti al volo tramite il
 > **container Kali condiviso** (`kali-rolling`): compaiono gia' nei menu e, al
 > primo avvio, vengono installati ed eseguiti. Rispetto ai metapacchetti
@@ -286,16 +286,16 @@ Legenda canale: **Alpine apk** = pacchetto nativo Alpine · **Arsenal** = .apk c
 ### Copertura completa dell'arsenale Kali / Parrot
 
 Confronto riga per riga della tabella metapacchetti `kali-linux-everything` /
-`parrot-tools-full` con il catalogo NexusSec (443 tool). Metodo su NexusSec:
+`parrot-tools-full` con il catalogo NexusSec (440 tool). Metodo su NexusSec:
 `apk` nativo Alpine · `kali` container Kali condiviso · `pip` (pipx) · `ctr`
 container Podman · `git` clone+venv.
 
 <details>
-<summary><b>Mostra tutti i 443 strumenti del catalogo</b> (per categoria, con metodo e presenza in Kali/Parrot)</summary>
+<summary><b>Mostra tutti i 440 strumenti del catalogo</b> (per categoria, con metodo e presenza in Kali/Parrot)</summary>
 
 | Categoria / Strumento | Metodo | Kali | Parrot |
 |---|---|:--:|:--:|
-| **Ricognizione** (30) | | | |
+| **Ricognizione** (32) | | | |
 | `0trace` | container Kali | ✅ | ✅ |
 | `2ping` | container Kali | ✅ | ✅ |
 | `amap` | container Kali | ✅ | ✅ |
@@ -312,6 +312,7 @@ container Podman · `git` clone+venv.
 | `ike-scan` | container Kali | ✅ | ✅ |
 | `intrace` | container Kali | ✅ | ✅ |
 | `irpas` | container Kali | ✅ | ✅ |
+| `ldapdomaindump` | pip/pipx | ✅ | ✅ |
 | `masscan` | apk nativo | ✅ | ✅ |
 | `massdns` | container Kali | ✅ | ✅ |
 | `naabu` | apk nativo | ✅ | ✅ |
@@ -320,6 +321,7 @@ container Podman · `git` clone+venv.
 | `nmap` | apk nativo | ✅ | ✅ |
 | `onesixtyone` | container Kali | ✅ | ✅ |
 | `p0f` | container Kali | ✅ | ✅ |
+| `pywerview` | pip/pipx | ✅ | ✅ |
 | `sipvicious` | container Kali | ✅ | ✅ |
 | `smbmap` | pip/pipx | ✅ | ✅ |
 | `snmpwalk` | apk nativo | ✅ | ✅ |
@@ -342,7 +344,7 @@ container Podman · `git` clone+venv.
 | `holehe` | pip/pipx | ✅ | ✅ |
 | `instaloader` | container Kali | ✅ | ✅ |
 | `linkedin2username` | container Kali | ✅ | ✅ |
-| `metagoofil` | git+venv | ✅ | ✅ |
+| `metagoofil` | git clone+venv | ✅ | ✅ |
 | `netmask` | container Kali | ✅ | ✅ |
 | `photon` | container Kali | ✅ | ✅ |
 | `recon-ng` | apk nativo | ✅ | ✅ |
@@ -359,7 +361,7 @@ container Podman · `git` clone+venv.
 | `twofi` | container Kali | ✅ | ✅ |
 | `urlcrazy` | container Kali | ✅ | ✅ |
 | `whois` | apk nativo | ✅ | ✅ |
-| **Web** (69) | | | |
+| **Web** (68) | | | |
 | `apache-users` | container Kali | ✅ | ✅ |
 | `arjun` | container Kali | ✅ | ✅ |
 | `burpsuite` | container Kali | ✅ | ✅ |
@@ -419,7 +421,6 @@ container Podman · `git` clone+venv.
 | `wafw00f` | pip/pipx | ✅ | ✅ |
 | `wapiti` | container Kali | ✅ | ✅ |
 | `watobo` | container Kali | ✅ | ✅ |
-| `wcvs` | container Kali | ✅ | ✅ |
 | `webscarab` | container Kali | ✅ | ✅ |
 | `webshells` | container Kali | ✅ | ✅ |
 | `weevely` | container Kali | ✅ | ✅ |
@@ -515,7 +516,7 @@ container Podman · `git` clone+venv.
 | `wash` | container Kali | ✅ | ✅ |
 | `wifiphisher` | container Kali | ✅ | ✅ |
 | `wifite` | pip/pipx | ✅ | ✅ |
-| **Sniffing/Spoofing** (32) | | | |
+| **Sniffing/Spoofing** (33) | | | |
 | `above` | container Kali | ✅ | ✅ |
 | `arpspoof` | container Kali | ✅ | ✅ |
 | `arpwatch` | container Kali | ✅ | ✅ |
@@ -531,6 +532,7 @@ container Podman · `git` clone+venv.
 | `hamster-sidejack` | container Kali | ✅ | ✅ |
 | `hexinject` | container Kali | ✅ | ✅ |
 | `isr-evilgrade` | container Kali | ✅ | ✅ |
+| `mitm6` | pip/pipx | ✅ | ✅ |
 | `mitmproxy` | apk nativo | ✅ | ✅ |
 | `msgsnarf` | container Kali | ✅ | ✅ |
 | `netsniff-ng` | container Kali | ✅ | ✅ |
@@ -578,11 +580,14 @@ container Podman · `git` clone+venv.
 | `unix-privesc-check` | container Kali | ✅ | ✅ |
 | `voiphopper` | container Kali | ✅ | ✅ |
 | `yersinia` | container Kali | ✅ | ✅ |
-| **Exploitation** (21) | | | |
+| **Exploitation** (25) | | | |
 | `armitage` | container Kali | ✅ | ✅ |
 | `beef-xss` | container Kali | ✅ | ✅ |
 | `bloodhound` | container Kali | ✅ | ✅ |
 | `bloodhound-python` | pip/pipx | ✅ | ✅ |
+| `bloodyAD` | pip/pipx | ✅ | ✅ |
+| `certipy` | pip/pipx | ✅ | ✅ |
+| `coercer` | pip/pipx | ✅ | ✅ |
 | `crackmapexec` | container Kali | ✅ | ✅ |
 | `empire` | container Kali | ✅ | ✅ |
 | `evil-winrm` | container Podman | ✅ | ✅ |
@@ -600,6 +605,7 @@ container Podman · `git` clone+venv.
 | `shellter` | container Kali | ✅ | ✅ |
 | `termineter` | container Kali | ✅ | ✅ |
 | `veil` | container Kali | ✅ | ✅ |
+| `villain` | git clone+venv | ✅ | ✅ |
 | **Pivoting/Tunnel** (18) | | | |
 | `cymothoa` | container Kali | ✅ | ✅ |
 | `dbd` | container Kali | ✅ | ✅ |
@@ -619,7 +625,7 @@ container Podman · `git` clone+venv.
 | `sslh` | container Kali | ✅ | ✅ |
 | `udptunnel` | container Kali | ✅ | ✅ |
 | `webacoo` | container Kali | ✅ | ✅ |
-| **Reverse engineering** (17) | | | |
+| **Reverse engineering** (15) | | | |
 | `apktool` | container Kali | ✅ | ✅ |
 | `binutils` | apk nativo | ✅ | ✅ |
 | `clang` | container Kali | ✅ | ✅ |
@@ -627,30 +633,24 @@ container Podman · `git` clone+venv.
 | `flare-floss` | pip/pipx | ✅ | ✅ |
 | `gdb` | apk nativo | ✅ | ✅ |
 | `ghidra` | apk nativo | ✅ | ✅ |
-| `honggfuzz` | container Kali | ✅ | ✅ |
 | `jadx` | apk nativo | ✅ | ✅ |
 | `jd-gui` | container Kali | ✅ | ✅ |
 | `ltrace` | apk nativo | ✅ | ✅ |
 | `pev` | apk nativo | ✅ | ✅ |
 | `radare2` | apk nativo | ✅ | ✅ |
-| `retdec` | container Kali | ✅ | ✅ |
 | `rizin` | container Kali | ✅ | ✅ |
 | `strace` | apk nativo | ✅ | ✅ |
 | `upx` | container Kali | ✅ | ✅ |
-| **Crypto/Stego** (6) | | | |
+| **Crypto/Stego** (3) | | | |
 | `cryptcat` | container Kali | ✅ | ✅ |
-| `gpa` | container Kali | ✅ | ✅ |
-| `outguess` | container Kali | ✅ | ✅ |
 | `seahorse` | container Kali | ✅ | ✅ |
 | `stegcracker` | container Kali | ✅ | ✅ |
-| `veracrypt` | container Kali | ✅ | ✅ |
-| **Hardware/SDR** (5) | | | |
+| **Hardware/SDR** (4) | | | |
 | `arduino` | container Kali | ✅ | ✅ |
 | `gtkterm` | container Kali | ✅ | ✅ |
 | `libnfc` | container Kali | ✅ | ✅ |
 | `minicom` | container Kali | ✅ | ✅ |
-| `simtrace` | container Kali | ✅ | ✅ |
-| **Forensics** (89) | | | |
+| **Forensics** (88) | | | |
 | `7zip` | container Kali | ✅ | ✅ |
 | `aesfix` | container Kali | ✅ | ✅ |
 | `aeskeyfind` | container Kali | ✅ | ✅ |
@@ -711,7 +711,6 @@ container Podman · `git` clone+venv.
 | `recoverjpeg` | container Kali | ✅ | ✅ |
 | `reglookup` | container Kali | ✅ | ✅ |
 | `regripper` | container Kali | ✅ | ✅ |
-| `rekall` | container Kali | ✅ | ✅ |
 | `rephrase` | container Kali | ✅ | ✅ |
 | `rifiuti` | container Kali | ✅ | ✅ |
 | `rifiuti2` | container Kali | ✅ | ✅ |
@@ -740,12 +739,11 @@ container Podman · `git` clone+venv.
 | `xmount` | container Kali | ✅ | ✅ |
 | `xplico` | container Kali | ✅ | ✅ |
 | `yara` | apk nativo | ✅ | ✅ |
-| **Reporting** (7) | | | |
+| **Reporting** (6) | | | |
 | `cherrytree` | apk nativo | ✅ | ✅ |
 | `dradis` | container Kali | ✅ | ✅ |
 | `eyewitness` | container Kali | ✅ | ✅ |
 | `faraday` | container Kali | ✅ | ✅ |
-| `freemind` | container Kali | ✅ | ✅ |
 | `maltego` | container Kali | ✅ | ✅ |
 | `recordmydesktop` | container Kali | ✅ | ✅ |
 | **Anonimato** (4) | | | |
@@ -753,8 +751,6 @@ container Podman · `git` clone+venv.
 | `proxychains-ng` | apk nativo | ✅ | ✅ |
 | `tor` | apk nativo | ✅ | ✅ |
 | `torsocks` | apk nativo | ✅ | ✅ |
-| **Altri strumenti** (1) | | | |
-| `voiper` | container Kali | ✅ | ✅ |
 
 </details>
 

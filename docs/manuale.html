@@ -95,7 +95,7 @@ footer{border-top:1px solid var(--line);padding:24px 0 60px;color:var(--muted);f
   <h2><span class="n">01</span> Cos'è NexusSec OS</h2>
   <p>NexusSec adotta la <strong>copertura di strumenti</strong> di Kali/Parrot ma
   con un modello opposto: <strong>niente preinstallato</strong>. Il catalogo conta
-  <strong>443 strumenti</strong> su 16 categorie; ognuno compare nel menu e viene
+  <strong>440 strumenti</strong> su 16 categorie; ognuno compare nel menu e viene
   scaricato ed eseguito <strong>al primo utilizzo</strong>, col metodo più adatto
   (pacchetto nativo, container Kali, pip, container Podman). Risultato: una ISO di
   <strong>~0,5 GB</strong> invece dei 4–6 GB delle distro di riferimento, con ogni
@@ -105,7 +105,7 @@ footer{border-top:1px solid var(--line);padding:24px 0 60px;color:var(--muted);f
       OpenRC (nessun daemon systemd), ~0,3–0,4 GB di RAM a riposo.</p></div>
     <div class="card"><span class="tag">dinamico</span><p>Quattro profili operativi
       che ridisegnano sfondo, accent e menu in base al lavoro da svolgere.</p></div>
-    <div class="card"><span class="tag">on-demand</span><p>443 tool a catalogo,
+    <div class="card"><span class="tag">on-demand</span><p>440 tool a catalogo,
       installati solo quando li apri. La live resta minimale.</p></div>
   </div>
 </section>
@@ -250,8 +250,8 @@ footer{border-top:1px solid var(--line);padding:24px 0 60px;color:var(--muted);f
   è già tutto configurato (chiave in <code>/etc/apk/keys/</code>, repo aggiunto
   all'avvio). Per usarlo altrove su Alpine:</p>
   <pre><code>wget -O /etc/apk/keys/nexussecos-arsenal.rsa.pub \
-  https://dplusos21.github.io/NexusSecOS-Arsenal/nexussecos-arsenal.rsa.pub
-echo "https://dplusos21.github.io/NexusSecOS-Arsenal" &gt;&gt; /etc/apk/repositories
+  https://dplusos21.github.io/NexusSec-OS/nexussecos-arsenal.rsa.pub
+echo "https://dplusos21.github.io/NexusSec-OS" &gt;&gt; /etc/apk/repositories
 apk update
 apk add foremost medusa bulk-extractor</code></pre>
 </section>
