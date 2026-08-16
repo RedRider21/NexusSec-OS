@@ -76,11 +76,19 @@ accent del pannello e tema delle icone** (anche cartelle e browser).
 |---|---|---|
 | ![forensics](screenshots/desktop-forensics.png) | ![osint](screenshots/desktop-osint.png) | ![web](screenshots/desktop-web.png) |
 
-Menu start con ricerca, strumenti raggruppati per categoria e stato installato:
+Menu start con ricerca, strumenti raggruppati per categoria e stato installato.
+La voce **Profilo (cambia)** e le utilita' di sistema restano sempre in cima,
+visibili subito senza scorrere; le categorie di strumenti del profilo attivo
+seguono piu' in basso (a fisarmonica, con il conteggio per categoria):
 
-| Menu (Base) | Menu (Pen Testing) |
+| Menu (Base) | Menu (Pen Testing) — categorie |
 |---|---|
 | ![menu-base](screenshots/menu-base.png) | ![menu-pentest](screenshots/menu-pentest.png) |
+
+Ogni categoria si espande al clic e mostra gli strumenti (pallino = da
+installare, si installa al primo avvio):
+
+![menu-pentest-expanded](screenshots/menu-pentest-expanded.png)
 
 ## Repository pacchetti (apk)
 
