@@ -68,7 +68,7 @@ footer{border-top:1px solid var(--line);padding:24px 0 60px;color:var(--muted);f
 <header class="hero">
   <p class="eyebrow">NexusSec OS · Manuale utente · edition 2026.08</p>
   <h1>Manuale di NexusSec OS</h1>
-  <p>Distro Linux live x86_64 per la cybersecurity, basata su Alpine (musl · apk ·
+  <p>Distro Linux live x86_64 e ARM64 (aarch64) per la cybersecurity, basata su Alpine (musl · apk ·
   OpenRC). Desktop Openbox con pannello e Centro di Controllo nativi in Python
   (GTK3), profili operativi dinamici e arsenale <strong>on-demand</strong>: gli
   strumenti sono già nei menu e si installano al volo solo quando servono.</p>
@@ -112,9 +112,13 @@ footer{border-top:1px solid var(--line);padding:24px 0 60px;color:var(--muted);f
 
 <section id="avvio">
   <h2><span class="n">02</span> Avvio e splashscreen</h2>
-  <p>La ISO è avviabile sia in <strong>BIOS</strong> (isolinux) sia in
-  <strong>EFI</strong> (grub-efi). In VirtualBox: VM Linux 64-bit, ≥ 2 GB di RAM
-  (3–4 GB se userai i container Forensics/Web), boot dall'immagine.</p>
+  <p>Sono disponibili due immagini. La ISO <strong>x86_64</strong> è avviabile sia
+  in <strong>BIOS</strong> (isolinux) sia in <strong>UEFI</strong> (grub-efi); in
+  VirtualBox: VM Linux 64-bit, ≥ 2 GB di RAM (3–4 GB se userai i container
+  Forensics/Web), boot dall'immagine. La ISO <strong>ARM64 (aarch64)</strong> è
+  <strong>solo UEFI</strong> (su ARM non esiste il boot BIOS) e si avvia con
+  <code>qemu-system-aarch64 -M virt</code> o UTM usando firmware UEFI
+  (edk2/AAVMF).</p>
   <p>All'accensione una <strong>splashscreen flat con barra di caricamento</strong>
   accompagna la preparazione del desktop; al termine compare il
   <strong>selettore di profilo</strong>, dove scegli la modalità di lavoro. Da lì
