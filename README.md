@@ -6,7 +6,11 @@ desktop Openbox con pannello e Centro di Controllo nativi in Python (GTK3) e
 **profili operativi dinamici** (Pen Testing · Digital Forensics · OSINT · Web).
 
 L'idea: la copertura di strumenti di Kali/Parrot, ma con ISO molto più piccola e
-tool **on-demand** (apk · container Podman · pip), ciascuno in **sandbox**.
+tool **on-demand** (apk · container Podman · pip), ciascuno **isolato**:
+container (namespace) o **sandbox bubblewrap** con il filesystem di sistema in
+sola lettura. I pochi tool a **raw-socket** (nmap SYN, masscan, aircrack,
+responder, ...) girano con privilegi e senza sandbox FS — necessario per i
+socket grezzi — ma il core resta comunque intatto perché la live è read-only.
 
 Include un **browser integrato stealth**: di default naviga in modo **anonimo**
 (traffico via **Tor**, IP nascosto) e **senza lasciare tracce** locali
@@ -122,7 +126,7 @@ repo è aggiunto all'avvio, quindi `nxs-tool install <tool>` li scarica da qui.
 
 Catalogo **curato**: **127 strumenti**, uno o piu' per ogni fase operativa, scelti tra i migliori/piu' efficienti ed evitando i doppioni superati (es. un solo fork di *foremost*, *ffuf*/*feroxbuster* al posto dei vecchi dir-buster). Tutti **on-demand** (`nxs-tool install <nome>` o le procedure guidate); fonti verificate vive (0 rotte).
 
-**Copertura:** 127/127 strumenti fanno parte dell'arsenale di **Kali** e **Parrot** — il catalogo e' costruito apposta come sottoinsieme del loro set. La differenza non e' *quali* strumenti, ma **come**: NexusSec li scarica **al bisogno** su una ISO di **~0.5 GB** (Kali ~4 GB, Parrot ~5-6 GB), ciascuno in sandbox.
+**Copertura:** 127/127 strumenti fanno parte dell'arsenale di **Kali** e **Parrot** — il catalogo e' costruito apposta come sottoinsieme del loro set. La differenza non e' *quali* strumenti, ma **come**: NexusSec li scarica **al bisogno** su una ISO di **~0.5 GB** (Kali ~4 GB, Parrot ~5-6 GB), ciascuno isolato (container o sandbox bubblewrap; i tool a raw-socket girano privilegiati ma su core in sola lettura).
 
 > **Arsenale esteso (on-demand):** oltre a questo nucleo curato, il catalogo
 > completo conta ora **440 strumenti** su 16 categorie (incluse **Crypto/Stego**
