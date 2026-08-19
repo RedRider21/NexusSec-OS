@@ -67,6 +67,23 @@ In VirtualBox (x86_64): VM Linux 64-bit, ≥ 2 GB RAM (3–4 GB se usi i contain
 Forensics/Web), boot dall'ISO. Su **ARM64** si avvia con QEMU
 (`qemu-system-aarch64 -M virt`) o UTM con firmware **UEFI** (edk2/AAVMF).
 
+## Desktop e pannello
+
+Pannello nativo in Python (GTK3, stile MATE):
+
+- **Menu start** con ricerca live, utilità di sistema in cima e strumenti del
+  profilo raggruppati per categoria (a fisarmonica, con conteggio). Una sezione
+  **Applicazioni** elenca le app installate via `apk` (LibreOffice, GIMP, VLC…),
+  rilevate dai file `.desktop` — compaiono da sole, senza configurazione.
+- **Multi-monitor**: una barra su **ogni schermo** (interno ed esterno), col
+  menu che si apre sul monitor dove clicchi.
+- **Monitor risorse** nella barra: mini-grafici **CPU / RAM / Rete / Disco**
+  (un clic apre il Monitor completo del Centro di Controllo).
+- **Orologio** regolabile: un clic imposta **ora, data e fuso orario** al volo,
+  senza aprire il Centro di Controllo.
+- **WiFi interno** (incluse le schede **Intel/iwlwifi**) e cablato pronti
+  all'uso, oltre agli adattatori WiFi USB da pentest.
+
 ## Screenshot
 
 All'avvio una **splashscreen flat** con barra di caricamento accompagna la
@@ -74,8 +91,9 @@ preparazione del desktop:
 
 ![splash](screenshots/splash.png)
 
-Desktop reali della live (QEMU/KVM). Cambiando profilo cambiano **sfondo,
-accent del pannello e tema delle icone** (anche cartelle e browser).
+Il desktop cambia con il profilo: **sfondo, accent del pannello e tema delle
+icone** (anche cartelle e browser). *(Le immagini seguenti sono anteprime
+fedeli del design.)*
 
 | Base | Pen Testing |
 |---|---|
