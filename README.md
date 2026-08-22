@@ -152,7 +152,7 @@ Catalogo **curato**: **127 strumenti**, uno o piu' per ogni fase operativa, scel
 **Copertura:** 127/127 strumenti fanno parte dell'arsenale di **Kali** e **Parrot** — il catalogo e' costruito apposta come sottoinsieme del loro set. La differenza non e' *quali* strumenti, ma **come**: NexusSec li scarica **al bisogno** su una ISO di **~0.5 GB** (Kali ~4 GB, Parrot ~8,5 GB), ciascuno isolato (container o sandbox bubblewrap; i tool a raw-socket girano privilegiati ma su core in sola lettura).
 
 > **Arsenale esteso (on-demand):** oltre a questo nucleo curato, il catalogo
-> completo conta ora **440 strumenti** su 16 categorie (incluse **Crypto/Stego**
+> completo conta ora **443 strumenti** su 16 categorie (incluse **Crypto/Stego**
 > e **Hardware/SDR**). I ~300 tool aggiuntivi sono raggiunti al volo tramite il
 > **container Kali condiviso** (`kali-rolling`): compaiono gia' nei menu e, al
 > primo avvio, vengono installati ed eseguiti. Rispetto ai metapacchetti
@@ -313,12 +313,12 @@ Legenda canale: **Alpine apk** = pacchetto nativo Alpine · **Arsenal** = .apk c
 ### Copertura completa dell'arsenale Kali / Parrot
 
 Confronto riga per riga della tabella metapacchetti `kali-linux-everything` /
-`parrot-tools-full` con il catalogo NexusSec (440 tool). Metodo su NexusSec:
+`parrot-tools-full` con il catalogo NexusSec (443 tool). Metodo su NexusSec:
 `apk` nativo Alpine · `kali` container Kali condiviso · `pip` (pipx) · `ctr`
 container Podman · `git` clone+venv.
 
 <details>
-<summary><b>Mostra tutti i 440 strumenti del catalogo</b> (per categoria, con metodo e presenza in Kali/Parrot)</summary>
+<summary><b>Mostra tutti i 443 strumenti del catalogo</b> (per categoria, con metodo e presenza in Kali/Parrot)</summary>
 
 | Categoria / Strumento | Metodo | Kali | Parrot |
 |---|---|:--:|:--:|
@@ -668,8 +668,11 @@ container Podman · `git` clone+venv.
 | `rizin` | container Kali | ✅ | ✅ |
 | `strace` | apk nativo | ✅ | ✅ |
 | `upx` | container Kali | ✅ | ✅ |
-| **Crypto/Stego** (3) | | | |
+| **Crypto/Stego** (6) | | | |
+| `age` | apk nativo | ✅ | ✅ |
 | `cryptcat` | container Kali | ✅ | ✅ |
+| `cryptsetup` | apk nativo | ✅ | ✅ |
+| `gnupg` | apk nativo | ✅ | ✅ |
 | `seahorse` | container Kali | ✅ | ✅ |
 | `stegcracker` | container Kali | ✅ | ✅ |
 | **Hardware/SDR** (4) | | | |
