@@ -149,7 +149,7 @@ repo è aggiunto all'avvio, quindi `nxs-tool install <tool>` li scarica da qui.
 
 Catalogo **curato**: **127 strumenti**, uno o piu' per ogni fase operativa, scelti tra i migliori/piu' efficienti ed evitando i doppioni superati (es. un solo fork di *foremost*, *ffuf*/*feroxbuster* al posto dei vecchi dir-buster). Tutti **on-demand** (`nxs-tool install <nome>` o le procedure guidate); fonti verificate vive (0 rotte).
 
-**Copertura:** 127/127 strumenti fanno parte dell'arsenale di **Kali** e **Parrot** — il catalogo e' costruito apposta come sottoinsieme del loro set. La differenza non e' *quali* strumenti, ma **come**: NexusSec li scarica **al bisogno** su una ISO di **~0.5 GB** (Kali ~4 GB, Parrot ~5-6 GB), ciascuno isolato (container o sandbox bubblewrap; i tool a raw-socket girano privilegiati ma su core in sola lettura).
+**Copertura:** 127/127 strumenti fanno parte dell'arsenale di **Kali** e **Parrot** — il catalogo e' costruito apposta come sottoinsieme del loro set. La differenza non e' *quali* strumenti, ma **come**: NexusSec li scarica **al bisogno** su una ISO di **~0.5 GB** (Kali ~4 GB, Parrot ~8,5 GB), ciascuno isolato (container o sandbox bubblewrap; i tool a raw-socket girano privilegiati ma su core in sola lettura).
 
 > **Arsenale esteso (on-demand):** oltre a questo nucleo curato, il catalogo
 > completo conta ora **440 strumenti** su 16 categorie (incluse **Crypto/Stego**
