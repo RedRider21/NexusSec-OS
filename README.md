@@ -124,7 +124,7 @@ I pacchetti compilati per NexusSec OS non presenti nei repo Alpine (`dmitry`,
 serviti via **GitHub Pages**:
 
 ```
-https://dplusos21.github.io/NexusSec-OS/
+https://redrider21.github.io/NexusSec-OS/
 ```
 
 Per usarlo su un sistema Alpine/NexusSec:
@@ -132,10 +132,10 @@ Per usarlo su un sistema Alpine/NexusSec:
 ```sh
 # 1) fidati della chiave pubblica del repo
 wget -O /etc/apk/keys/nexussecos-arsenal.rsa.pub \
-  https://dplusos21.github.io/NexusSec-OS/nexussecos-arsenal.rsa.pub
+  https://redrider21.github.io/NexusSec-OS/nexussecos-arsenal.rsa.pub
 
 # 2) aggiungi il repo
-echo "https://dplusos21.github.io/NexusSec-OS" >> /etc/apk/repositories
+echo "https://redrider21.github.io/NexusSec-OS" >> /etc/apk/repositories
 
 # 3) aggiorna e installa
 apk update
