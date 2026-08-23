@@ -1,0 +1,4 @@
+# NexusSec - default GTK2
+gtk-theme-name="NexusSec-Core"
+gtk-icon-theme-name="NexusSec-Base"
+gtk-font-name="DejaVu Sans 10"

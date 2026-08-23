@@ -1,0 +1,447 @@
+============================================================
+>>> BUILD dmitry
+### FAIL dmitry
+============================================================
+>>> BUILD foremost
+>>> foremost: Building builder/foremost 1.5.7-r0 (using abuild 3.18.0_rc1-r0) started Mon, 29 Jun 2026 13:23:59 +0000
+>>> foremost: Validating /home/builder/foremost/APKBUILD...
+>>> foremost: Analyzing dependencies...
+WARNING: opening /home/builder/packages//builder/x86_64/APKINDEX.tar.gz: No such file or directory
+>>> foremost: Installing for build: build-base
+WARNING: opening /home/builder/packages//builder/x86_64/APKINDEX.tar.gz: No such file or directory
+(1/1) Installing .makedepends-foremost (20260629.132400)
+OK: 431.0 MiB in 221 packages
+>>> foremost: Cleaning up srcdir
+>>> foremost: Cleaning up pkgdir
+>>> foremost: Cleaning up tmpdir
+>>> foremost: Fetching foremost-1.5.7.tar.gz::https://github.com/korczis/foremost/archive/refs/heads/master.tar.gz
+/var/cache/distfiles/foremost-1.5.7.tar.gz: OK
+>>> foremost: Fetching foremost-1.5.7.tar.gz::https://github.com/korczis/foremost/archive/refs/heads/master.tar.gz
+/var/cache/distfiles/foremost-1.5.7.tar.gz: OK
+>>> foremost: Unpacking /var/cache/distfiles/foremost-1.5.7.tar.gz...
+cc -c main.c
+cc -c state.c
+cc -c helpers.c
+cc -c config.c
+cc -c cli.c
+cc -c engine.c
+cc -c dir.c
+cc -c extract.c
+cc -c api.c
+main.c: In function 'usage':
+main.c:64:63: error: 'VERSION' undeclared (first use in this function)
+   64 |         fprintf(stderr, "%s version %s by %s.%s", __progname, VERSION, AUTHOR, NEWLINE);
+      |                                                               ^~~~~~~
+main.c:64:63: note: each undeclared identifier is reported only once for each function it appears in
+main.c: In function 'process_command_line':
+main.c:204:48: error: 'VERSION' undeclared (first use in this function)
+  204 |                                 printf("%s%s", VERSION, NEWLINE);
+      |                                                ^~~~~~~
+dir.c: In function 'write_to_disk':
+dir.c:345:38: warning: format '%llu' expects argument of type 'long long unsigned int', but argument 7 has type 'u_int64_t' {aka 'long unsigned int'} [-Wformat=]
+  345 |                          "%s/%s/%0*llu.%s",
+      |                                 ~~~~~^
+      |                                      |
+      |                                      long long unsigned int
+      |                                 %0*lu
+......
+  349 |                          block,
+      |                          ~~~~~        
+      |                          |
+      |                          u_int64_t {aka long unsigned int}
+dir.c:358:46: warning: format '%llu' expects argument of type 'long long unsigned int', but argument 7 has type 'u_int64_t' {aka 'long unsigned int'} [-Wformat=]
+  358 |                                  "%s/%s/%0*llu_%d.%s",
+      |                                         ~~~~~^
+      |                                              |
+      |                                              long long unsigned int
+      |                                         %0*lu
+......
+  362 |                                  block,
+      |                                  ~~~~~        
+      |                                  |
+      |                                  u_int64_t {aka long unsigned int}
+make: *** [Makefile:42: main.o] Error 1
+make: *** Waiting for unfinished jobs....
+state.c: In function 'write_audit_header':
+state.c:138:51: error: 'VERSION' undeclared (first use in this function)
+  138 |         audit_msg(s, "Foremost version %s by %s", VERSION, AUTHOR);
+      |                                                   ^~~~~~~
+state.c:138:51: note: each undeclared identifier is reported only once for each function it appears in
+helpers.c: In function 'human_readable':
+helpers.c:75:41: warning: format '%llu' expects argument of type 'long long unsigned int', but argument 4 has type 'long unsigned int' [-Wformat=]
+   75 |                 snprintf(buffer, 8, "%llu %s", (u_int64_t) size, units(count));
+      |                                      ~~~^      ~~~~~~~~~~~~~~~~
+      |                                         |      |
+      |                                         |      long unsigned int
+      |                                         long long unsigned int
+      |                                      %lu
+helpers.c: In function 'print_search_specs':
+helpers.c:329:77: warning: format '%llu' expects argument of type 'long long unsigned int', but argument 5 has type 'u_int64_t' {aka 'long unsigned int'} [-Wformat=]
+  329 |                 printf("%s:\n\t footer_len:=%d, header_len:=%d, max_len:=%llu ",
+      |                                                                          ~~~^
+      |                                                                             |
+      |                                                                             long long unsigned int
+      |                                                                          %lu
+......
+  333 |                            search_spec[i].max_len);
+      |                            ~~~~~~~~~~~~~~~~~~~~~~                            
+      |                                          |
+      |                                          u_int64_t {aka long unsigned int}
+extract.c: In function 'extract_wmv':
+extract.c:1183:66: warning: format '%llu' expects argument of type 'long long unsigned int', but argument 3 has type 'u_int64_t' {aka 'long unsigned int'} [-Wformat=]
+ 1183 |                 printf("WMV err num_header_objs=%d headerSize=%llu\n",numberofHeaderObjects,headerSize);
+      |                                                               ~~~^                          ~~~~~~~~~~
+      |                                                                  |                          |
+      |                                                                  long long unsigned int     u_int64_t {aka long unsigned int}
+      |                                                               %lu
+make: *** [Makefile:42: state.o] Error 1
+extract.c: In function 'extract_exe':
+extract.c:2148:26: warning: format not a string literal and no format arguments [-Wformat-security]
+ 2148 |         sprintf(comment, ascii_time);
+      |                          ^~~~~~~~~~
+>>> ERROR: foremost: build failed
+>>> foremost: Uninstalling dependencies...
+(1/1) Purging .makedepends-foremost (20260629.132400)
+OK: 431.0 MiB in 220 packages
+### FAIL foremost
+============================================================
+>>> BUILD dirb
+>>> dirb: Building builder/dirb 2.22-r0 (using abuild 3.18.0_rc1-r0) started Mon, 29 Jun 2026 13:24:01 +0000
+>>> dirb: Validating /home/builder/dirb/APKBUILD...
+>>> dirb: Analyzing dependencies...
+WARNING: opening /home/builder/packages//builder/x86_64/APKINDEX.tar.gz: No such file or directory
+>>> dirb: Installing for build: build-base curl-dev
+WARNING: opening /home/builder/packages//builder/x86_64/APKINDEX.tar.gz: No such file or directory
+(1/1) Installing .makedepends-dirb (20260629.132402)
+OK: 431.0 MiB in 221 packages
+>>> dirb: Cleaning up srcdir
+>>> dirb: Cleaning up pkgdir
+>>> dirb: Cleaning up tmpdir
+>>> dirb: Fetching dirb-2.22.tar.gz::https://downloads.sourceforge.net/project/dirb/dirb/2.22/dirb222.tar.gz
+/var/cache/distfiles/dirb-2.22.tar.gz: OK
+>>> dirb: Fetching dirb-2.22.tar.gz::https://downloads.sourceforge.net/project/dirb/dirb/2.22/dirb222.tar.gz
+/var/cache/distfiles/dirb-2.22.tar.gz: OK
+>>> dirb: Unpacking /var/cache/distfiles/dirb-2.22.tar.gz...
+tar: dirb222/autom4te.cache: Cannot change mode to rw-r--r--: Operation not permitted
+tar: dirb222/docs: Cannot change mode to rw-r--r--: Operation not permitted
+tar: dirb222/gendict_src: Cannot change mode to rw-r--r--: Operation not permitted
+tar: dirb222/src: Cannot change mode to rw-r--r--: Operation not permitted
+tar: dirb222/utils: Cannot change mode to rw-r--r--: Operation not permitted
+tar: dirb222/web2dic: Cannot change mode to rw-r--r--: Operation not permitted
+tar: dirb222/win32: Cannot change mode to rw-r--r--: Operation not permitted
+tar: dirb222/wordlists/others: Cannot change mode to rw-r--r--: Operation not permitted
+tar: dirb222/wordlists/stress: Cannot change mode to rw-r--r--: Operation not permitted
+tar: dirb222/wordlists/vulns: Cannot change mode to rw-r--r--: Operation not permitted
+tar: dirb222/wordlists: Cannot change mode to rw-r--r--: Operation not permitted
+tar: dirb222: Cannot change mode to rw-r--r--: Operation not permitted
+tar: Exiting with failure status due to previous errors
+>>> ERROR: dirb: unpack failed
+>>> dirb: Uninstalling dependencies...
+(1/1) Purging .makedepends-dirb (20260629.132402)
+OK: 431.0 MiB in 220 packages
+### FAIL dirb
+============================================================
+>>> BUILD medusa
+>>> medusa: Building builder/medusa 2.2-r0 (using abuild 3.18.0_rc1-r0) started Mon, 29 Jun 2026 13:24:03 +0000
+>>> medusa: Validating /home/builder/medusa/APKBUILD...
+>>> medusa: Analyzing dependencies...
+WARNING: opening /home/builder/packages//builder/x86_64/APKINDEX.tar.gz: No such file or directory
+>>> medusa: Installing for build: build-base autoconf automake libtool openssl-dev libssh2-dev ncurses-dev
+WARNING: opening /home/builder/packages//builder/x86_64/APKINDEX.tar.gz: No such file or directory
+(1/1) Installing .makedepends-medusa (20260629.132404)
+OK: 431.0 MiB in 221 packages
+>>> medusa: Cleaning up srcdir
+>>> medusa: Cleaning up pkgdir
+>>> medusa: Cleaning up tmpdir
+>>> medusa: Fetching medusa-2.2.tar.gz::https://github.com/jmk-foofus/medusa/archive/refs/tags/2.2.tar.gz
+/var/cache/distfiles/medusa-2.2.tar.gz: OK
+>>> medusa: Fetching medusa-2.2.tar.gz::https://github.com/jmk-foofus/medusa/archive/refs/tags/2.2.tar.gz
+/var/cache/distfiles/medusa-2.2.tar.gz: OK
+>>> medusa: Unpacking /var/cache/distfiles/medusa-2.2.tar.gz...
+tar: medusa-2.2/README: Cannot change mode to rwxr-xr-x: Operation not permitted
+tar: Exiting with failure status due to previous errors
+>>> ERROR: medusa: unpack failed
+>>> medusa: Uninstalling dependencies...
+(1/1) Purging .makedepends-medusa (20260629.132404)
+OK: 431.0 MiB in 220 packages
+### FAIL medusa
+============================================================
+>>> BUILD chkrootkit
+### FAIL chkrootkit
+============================================================
+>>> BUILD rkhunter
+>>> rkhunter: Building builder/rkhunter 1.4.6-r0 (using abuild 3.18.0_rc1-r0) started Mon, 29 Jun 2026 13:24:06 +0000
+>>> rkhunter: Validating /home/builder/rkhunter/APKBUILD...
+>>> rkhunter: Analyzing dependencies...
+WARNING: opening /home/builder/packages//builder/x86_64/APKINDEX.tar.gz: No such file or directory
+>>> rkhunter: Installing for build: build-base bash
+WARNING: opening /home/builder/packages//builder/x86_64/APKINDEX.tar.gz: No such file or directory
+(1/1) Installing .makedepends-rkhunter (20260629.132406)
+OK: 431.0 MiB in 221 packages
+>>> rkhunter: Cleaning up srcdir
+>>> rkhunter: Cleaning up pkgdir
+>>> rkhunter: Cleaning up tmpdir
+>>> rkhunter: Fetching rkhunter-1.4.6.tar.gz::https://downloads.sourceforge.net/project/rkhunter/rkhunter/1.4.6/rkhunter-1.4.6.tar.gz
+/var/cache/distfiles/rkhunter-1.4.6.tar.gz: OK
+>>> rkhunter: Fetching rkhunter-1.4.6.tar.gz::https://downloads.sourceforge.net/project/rkhunter/rkhunter/1.4.6/rkhunter-1.4.6.tar.gz
+/var/cache/distfiles/rkhunter-1.4.6.tar.gz: OK
+>>> rkhunter: Unpacking /var/cache/distfiles/rkhunter-1.4.6.tar.gz...
+>>> WARNING: rkhunter: APKBUILD does not run any tests!
+    Alpine policy will soon require that packages have any relevant testsuites run during the build process.
+    To fix, either define a check() function, or declare !check in $options to indicate the package does not have a testsuite.
+>>> rkhunter: Entering fakeroot...
+libfakeroot internal error: payload not recognized!
+libfakeroot internal error: payload not recognized!
+libfakeroot internal error: payload not recognized!
+libfakeroot internal error: payload not recognized!
+Standalone installation into /home/builder/rkhunter/src/rkhunter-1.4.6/files
+[H[JChecking system for:
+ Rootkit Hunter installer files: found
+ A web file download command: wget found
+Starting installation:
+ Checking installation directory ".": it exists and is writable.
+Installation complete
+>>> rkhunter*: Running postcheck for rkhunter
+>>> rkhunter*: Preparing package rkhunter...
+>>> rkhunter*: Tracing dependencies...
+	bash
+>>> rkhunter*: Package size: 1.7 MB
+>>> rkhunter*: Compressing data...
+>>> rkhunter*: Create checksum...
+>>> rkhunter*: Create rkhunter-1.4.6-r0.apk
+>>> rkhunter: Build complete at Mon, 29 Jun 2026 13:24:06 +0000 elapsed time 0h 0m 0s
+>>> rkhunter: Cleaning up srcdir
+>>> rkhunter: Cleaning up pkgdir
+>>> rkhunter: Cleaning up tmpdir
+>>> rkhunter: Uninstalling dependencies...
+(1/1) Purging .makedepends-rkhunter (20260629.132406)
+OK: 431.0 MiB in 220 packages
+>>> rkhunter: Updating the builder/x86_64 repository index...
+ERROR: rkhunter-1.4.6-r0.apk: UNTRUSTED signature
+>>> ERROR: rkhunter: Failed to create index
+>>> rkhunter: Uninstalling dependencies...
+ERROR: No such package: .makedepends-rkhunter
+### FAIL rkhunter
+============================================================
+>>> BUILD scalpel
+>>> scalpel: Building builder/scalpel 1.60-r0 (using abuild 3.18.0_rc1-r0) started Mon, 29 Jun 2026 13:24:08 +0000
+>>> scalpel: Validating /home/builder/scalpel/APKBUILD...
+>>> scalpel: Analyzing dependencies...
+WARNING: opening /home/builder/packages//builder/x86_64/APKINDEX.tar.gz: No such file or directory
+>>> scalpel: Installing for build: build-base
+WARNING: opening /home/builder/packages//builder/x86_64/APKINDEX.tar.gz: No such file or directory
+(1/1) Installing .makedepends-scalpel (20260629.132408)
+OK: 431.0 MiB in 221 packages
+>>> scalpel: Cleaning up srcdir
+>>> scalpel: Cleaning up pkgdir
+>>> scalpel: Cleaning up tmpdir
+>>> scalpel: Fetching scalpel-1.60.tar.gz::https://github.com/machn1k/Scalpel-2.0/archive/refs/heads/master.tar.gz
+/var/cache/distfiles/scalpel-1.60.tar.gz: OK
+>>> scalpel: Fetching scalpel-1.60.tar.gz::https://github.com/machn1k/Scalpel-2.0/archive/refs/heads/master.tar.gz
+/var/cache/distfiles/scalpel-1.60.tar.gz: OK
+>>> scalpel: Unpacking /var/cache/distfiles/scalpel-1.60.tar.gz...
+make: *** No targets specified and no makefile found.  Stop.
+make: *** No targets specified and no makefile found.  Stop.
+>>> ERROR: scalpel: build failed
+>>> scalpel: Uninstalling dependencies...
+(1/1) Purging .makedepends-scalpel (20260629.132408)
+OK: 431.0 MiB in 220 packages
+### FAIL scalpel
+============================================================
+>>> BUILD stegseek
+>>> stegseek: Building builder/stegseek 0.6-r0 (using abuild 3.18.0_rc1-r0) started Mon, 29 Jun 2026 13:24:15 +0000
+>>> stegseek: Validating /home/builder/stegseek/APKBUILD...
+>>> stegseek: Analyzing dependencies...
+WARNING: opening /home/builder/packages//builder/x86_64/APKINDEX.tar.gz: No such file or directory
+ERROR: unable to select packages:
+  .makedepends-stegseek-20260629.132415:
+    masked in: cache
+    satisfies: world[.makedepends-stegseek=20260629.132415]
+  mhash-dev (no such package):
+    required by: .makedepends-stegseek-20260629.132415[mhash-dev]
+>>> ERROR: stegseek: builddeps failed
+>>> stegseek: Uninstalling dependencies...
+ERROR: No such package: .makedepends-stegseek
+### FAIL stegseek
+============================================================
+>>> BUILD bulk-extractor
+>>> bulk-extractor: Building builder/bulk-extractor 2.0.0-r0 (using abuild 3.18.0_rc1-r0) started Mon, 29 Jun 2026 13:24:19 +0000
+>>> bulk-extractor: Validating /home/builder/bulk-extractor/APKBUILD...
+>>> bulk-extractor: Analyzing dependencies...
+WARNING: opening /home/builder/packages//builder/x86_64/APKINDEX.tar.gz: No such file or directory
+>>> bulk-extractor: Installing for build: build-base autoconf automake libtool openssl-dev zlib-dev expat-dev re2-dev linux-headers
+WARNING: opening /home/builder/packages//builder/x86_64/APKINDEX.tar.gz: No such file or directory
+(1/1) Installing .makedepends-bulk-extractor (20260629.132420)
+OK: 431.0 MiB in 221 packages
+>>> bulk-extractor: Cleaning up srcdir
+>>> bulk-extractor: Cleaning up pkgdir
+>>> bulk-extractor: Cleaning up tmpdir
+>>> bulk-extractor: Fetching bulk-extractor-2.0.0.tar.gz::https://github.com/simsong/bulk_extractor/releases/download/v2.0.0/bulk_extractor-2.0.0.tar.gz
+/var/cache/distfiles/bulk-extractor-2.0.0.tar.gz: OK
+>>> bulk-extractor: Fetching bulk-extractor-2.0.0.tar.gz::https://github.com/simsong/bulk_extractor/releases/download/v2.0.0/bulk_extractor-2.0.0.tar.gz
+/var/cache/distfiles/bulk-extractor-2.0.0.tar.gz: OK
+>>> bulk-extractor: Unpacking /var/cache/distfiles/bulk-extractor-2.0.0.tar.gz...
+configure: Compiling under .
+configure: checking /usr/local/include
+configure: checking /opt/local/include
+configure: checking /sw/include
+configure: checking /usr/local/ssl/include
+configure:  CPPFLAGS =  
+configure:  LDFLAGS = -Wl,--as-needed,-O1,--sort-common -Wl,-z,pack-relative-relocs 
+configure: Including dfxml_configure.m4 from dfxml
+configure: Note: checks for libewf.h should be in the caller, so they can be disabled
+checking for gcc... cc
+checking whether the C compiler works... yes
+checking for C compiler default output file name... a.out
+checking for suffix of executables... 
+checking whether we are cross compiling... no
+checking for suffix of object files... o
+checking whether the compiler supports GNU C... yes
+checking whether cc accepts -g... yes
+checking for cc option to enable C11 features... none needed
+checking whether cc understands -c and -o together... yes
+checking for stdio.h... yes
+checking for stdlib.h... yes
+checking for string.h... yes
+checking for inttypes.h... yes
+checking for stdint.h... yes
+checking for strings.h... yes
+checking for sys/stat.h... yes
+checking for sys/types.h... yes
+checking for unistd.h... yes
+checking for expat.h... yes
+checking for sys/resource.h... yes
+checking for sys/utsname.h... yes
+checking for unistd.h... (cached) yes
+checking for winsock2.h... no
+checking for boost/version.hpp... no
+checking for pwd.h... yes
+checking for uuid/uuid.h... no
+checking for gmtime_r... yes
+checking for getuid... yes
+checking for gethostname... yes
+checking for getpwuid... yes
+checking for getrusage... yes
+checking for vasprintf... yes
+checking for expat.h... (cached) yes
+checking for XML_ParserCreate in -lexpat... yes
+checking for git... true
+configure: WARNING: git not found
+checking for CommonCrypto/CommonDigest.h... no
+checking for gcrypt.h... no
+checking for gpg_strerror in -lgpg-error... no
+checking for gcry_md_open in -lgcrypt... no
+checking for openssl/aes.h... yes
+checking for openssl/bio.h... yes
+checking for openssl/evp.h... yes
+checking for openssl/hmac.h... yes
+checking for openssl/md5.h... yes
+checking for openssl/pem.h... yes
+checking for openssl/rand.h... yes
+checking for openssl/rsa.h... yes
+checking for openssl/sha.h... yes
+checking for openssl/pem.h... (cached) yes
+checking for openssl/x509.h... yes
+checking for EVP_get_digestbyname in -lcrypto... yes
+checking for SSL_library_init in -lssl... no
+checking for gcry_md_open... no
+checking for CC_MD2_Init... no
+checking for EVP_get_digestbyname... yes
+configure: Including be20_configure.m4 from be20_api
+checking whether C++ compiler understands ... Adding -pthread to CXXFLAGS
+checking whether byte ordering is bigendian... no
+checking for dlfcn.h... yes
+checking for fcntl.h... yes
+checking for limits.h... yes
+checking for limits/limits.h... no
+checking for linux/if_ether.h... yes
+checking for net/ethernet.h... yes
+checking for netinet/if_ether.h... yes
+checking for netinet/in.h... yes
+checking for pcap.h... no
+checking for pcap/pcap.h... no
+checking for sqlite3.h... no
+checking for sys/cdefs.h... no
+checking for sys/mman.h... yes
+checking for sys/stat.h... (cached) yes
+checking for sys/time.h... yes
+checking for sys/types.h... (cached) yes
+checking for sys/vmmeter.h... no
+checking for unistd.h... (cached) yes
+checking for windows.h... no
+checking for windows.h... (cached) no
+checking for windowsx.h... no
+checking for winsock2.h... (cached) no
+checking for wpcap/pcap.h... no
+checking for mach/mach.h... no
+checking for mach-o/dyld.h... no
+checking for gmtime_r... (cached) yes
+checking for ishexnumber... no
+checking for isxdigit... yes
+checking for localtime_r... yes
+checking for unistd.h... no
+checking for mmap... yes
+checking for err... yes
+checking for errx... yes
+checking for warn... yes
+checking for warnx... yes
+checking for pread64... no
+checking for pread... yes
+checking for strptime... yes
+checking for _lseeki64... no
+checking for task_info... no
+checking for utimes... yes
+checking for host_statistics64... no
+checking for sqlite3_libversion in -lsqlite3... no
+checking for sqlite3_create_function_v2... no
+checking for sysctlbyname... no
+checking for a BSD-compatible install... /usr/bin/install -c
+checking whether build environment is sane... yes
+checking for a race-free mkdir -p... ./build-aux/install-sh -c -d
+checking for gawk... no
+checking for mawk... no
+checking for nawk... no
+checking for awk... awk
+checking whether make sets $(MAKE)... yes
+checking whether make supports the include directive... yes (GNU style)
+checking whether make supports nested variables... yes
+checking dependency style of cc... gcc3
+checking whether to enable maintainer-specific portions of Makefiles... no
+checking for gcc... (cached) cc
+checking whether the compiler supports GNU C... (cached) yes
+checking whether cc accepts -g... (cached) yes
+checking for cc option to enable C11 features... (cached) none needed
+checking whether cc understands -c and -o together... (cached) yes
+checking whether the compiler supports GNU C++... yes
+checking whether c++ accepts -g... yes
+checking for c++ option to enable C++11 features... none needed
+checking dependency style of c++... gcc3
+checking for flex... no
+checking for lex... no
+checking whether c++ supports C++17 features with -std=c++17... yes
+checking for filesystem... yes
+checking for string... yes
+configure: C++ Warnings to test: -Wall -MD -Wpointer-arith     -Wshadow -Wwrite-strings -Wcast-align      -Wredundant-decls -Wdisabled-optimization     -Wfloat-equal -Wmultichar -Wmissing-noreturn     -Woverloaded-virtual -Wsign-promo     -funit-at-a-time  -Weffc++
+checking whether g++ understands -Wall... yes
+checking whether g++ understands -MD... yes
+checking whether g++ understands -Wpointer-arith... yes
+checking whether g++ understands -Wshadow... yes
+checking whether g++ understands -Wwrite-strings... yes
+checking whether g++ understands -Wcast-align... yes
+checking whether g++ understands -Wredundant-decls... yes
+checking whether g++ understands -Wdisabled-optimization... yes
+checking whether g++ understands -Wfloat-equal... yes
+checking whether g++ understands -Wmultichar... yes
+checking whether g++ understands -Wmissing-noreturn... yes
+checking whether g++ understands -Woverloaded-virtual... yes
+checking whether g++ understands -Wsign-promo... yes
+checking whether g++ understands -funit-at-a-time... yes
+checking whether g++ understands -Weffc++... yes
+configure: error: gnu flex is required.
+>>> ERROR: bulk-extractor: build failed
+>>> bulk-extractor: Uninstalling dependencies...
+(1/1) Purging .makedepends-bulk-extractor (20260629.132420)
+OK: 431.0 MiB in 220 packages
+### FAIL bulk-extractor
+============================================================
+RIEPILOGO: FAIL:dmitry FAIL:foremost FAIL:dirb FAIL:medusa FAIL:chkrootkit FAIL:rkhunter FAIL:scalpel FAIL:stegseek FAIL:bulk-extractor

@@ -1,0 +1,30 @@
+# Maintainer: NexusSec <deplano.d@gmail.com>
+pkgname=foremost
+pkgver=1.5.7
+pkgrel=0
+pkgdesc="File carving forense per signature (recupero file cancellati)"
+url="http://foremost.sourceforge.net/"
+arch="all"
+license="custom"
+# Pin al commit immutabile del branch master.
+_commit=9b2ccf2a6d924e7a57971af6b92e6a287d28efb1
+source="$pkgname-$pkgver.tar.gz::https://github.com/korczis/foremost/archive/$_commit.tar.gz"
+builddir="$srcdir/foremost-$_commit"
+build() {
+	cd "$builddir"
+	# Su musl non esiste fopen64: lo mappiamo a fopen (off_t e gia 64-bit).
+	# Le define stanno in RAW_FLAGS (che porta anche -DVERSION): le appendo
+	# per non perdere VERSION (override di CC romperebbe il -DVERSION).
+	sed -i 's|^RAW_FLAGS = .*|& -D_FILE_OFFSET_BITS=64 -Dfopen64=fopen -Dlseek64=lseek -Dstat64=stat -Dfseeko64=fseeko -Dftello64=ftello -Doff64_t=off_t -fcommon|' Makefile
+	make linux
+}
+package() {
+	cd "$builddir"
+	install -Dm755 foremost "$pkgdir"/usr/bin/foremost
+	install -Dm644 foremost.conf "$pkgdir"/etc/foremost.conf
+	# Niente man page: abuild rifiuta man pages non compresse (e gzip qui e
+	# superfluo per una live). Il tool resta pienamente funzionante.
+}
+sha512sums="
+4de46df37fa1bd3d6043c5e7f3dfa07aeca419aa2c6f6bd900777e22c2b8b6e43c78fde4b81ae33c84f8bea0a4dc7311063783298fe9b246a17533e6e8248242  foremost-1.5.7.tar.gz
+"

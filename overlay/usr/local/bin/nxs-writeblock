@@ -1,0 +1,177 @@
+#!/bin/sh
+# nxs-writeblock - write-blocker forense a livello di BLOCCO per NexusSec OS.
+#
+# Agganciato al profilo Forensics (nxs_profiles.model): quando Forensics e'
+# attivo, TUTTI i dischi/partizioni fisici NON in uso dal sistema vengono messi
+# in SOLA LETTURA (blockdev --setro) per impedire qualunque scrittura accidentale
+# sulle prove -- anche il semplice replay del journal al mount. Una regola udev
+# (10-nxs-forensic-writeblock.rules) estende la stessa protezione ai device
+# collegati DOPO l'attivazione. Negli altri profili e' completamente INERTE:
+# nessuna collisione con l'uso normale multi-profilo della distro.
+#
+# Il blocco a livello di blocco e' piu' forte del solo "mount -o ro": nessun
+# tool (dd, mkfs, un mount rw distratto, il recupero journal) puo' scrivere.
+#
+#   nxs-writeblock on          attiva il blocco (flag + dischi idle in sola lettura)
+#   nxs-writeblock off         disattiva (sblocca SOLO i device bloccati da noi)
+#   nxs-writeblock status      stato RO/RW di ogni disco fisico
+#   nxs-writeblock unlock DEV  sblocca DELIBERATAMENTE un device (es. disco destinazione)
+#   nxs-writeblock lock DEV    (ri)blocca un singolo device in sola lettura
+#
+# Il media di boot e la partizione di persistenza (NXSDATA), se montati in
+# lettura/scrittura, vengono SEMPRE saltati: non li tocchiamo mai.
+set -eu
+
+FLAG=/run/nxs/forensic-lock          # presenza = write-blocker attivo (gate udev)
+LOCKED=/run/nxs/wb-locked            # device bloccati da noi (per un 'off' pulito)
+
+ACT="${1:-status}"
+
+# status e' sola lettura (/sys world-readable): non serve root. Tutto il resto si
+# auto-eleva via doas (nopass :wheel sulla live).
+case "$ACT" in
+	status|_udev|"") : ;;
+	*) [ "$(id -u)" = 0 ] || exec doas "$0" "$@" ;;
+esac
+
+# Localizza 'blockdev' in modo robusto (util-linux o busybox, path variabili).
+_bd() {
+	for b in /usr/sbin/blockdev /sbin/blockdev /usr/bin/blockdev /bin/blockdev; do
+		[ -x "$b" ] && { "$b" "$@"; return $?; }
+	done
+	command -v blockdev >/dev/null 2>&1 && { blockdev "$@"; return $?; }
+	return 1
+}
+
+# Dischi "fisici" candidati (whole disk), esclusi i virtuali/di sistema.
+_phys_disks() {
+	for d in /sys/block/*; do
+		n=${d##*/}
+		case "$n" in
+			loop*|dm-*|ram*|zram*|md*|sr*|fd*|nbd*) continue ;;
+		esac
+		[ -e "/dev/$n" ] && printf '%s\n' "$n"
+	done
+}
+
+# Vero (0) se il disco $1 (o una sua partizione) risulta montato in READ-WRITE:
+# in tal caso e' il media di boot o la persistenza -> NON lo tocchiamo.
+_disk_busy_rw() {
+	findmnt -rno SOURCE,OPTIONS 2>/dev/null | awk -v d="/dev/$1" '
+		{
+			s=$1
+			opt=$2
+			if ((s==d) || (index(s,d)==1)) {
+				n=split(opt,a,",")
+				for(i=1;i<=n;i++) if(a[i]=="rw"){ found=1 }
+			}
+		}
+		END { exit(found?0:1) }'
+}
+
+# Applica setro a un whole disk e a tutte le sue partizioni.
+_set_disk_ro() {   # $1 = kernel name (es. sda)
+	_bd --setro "/dev/$1" 2>/dev/null || true
+	for p in /sys/block/"$1"/"$1"*; do
+		[ -e "$p" ] || continue
+		_bd --setro "/dev/${p##*/}" 2>/dev/null || true
+	done
+}
+_set_disk_rw() {   # $1 = kernel name
+	for p in /sys/block/"$1"/"$1"*; do
+		[ -e "$p" ] || continue
+		_bd --setrw "/dev/${p##*/}" 2>/dev/null || true
+	done
+	_bd --setrw "/dev/$1" 2>/dev/null || true
+}
+
+cmd_on() {
+	mkdir -p /run/nxs
+	: > "$LOCKED"
+	: > "$FLAG"
+	# Attiva la regola udev sui device FUTURI.
+	udevadm control --reload 2>/dev/null || true
+	echo "== Write-blocker forense: ATTIVAZIONE =="
+	any=0
+	for disk in $(_phys_disks); do
+		if _disk_busy_rw "$disk"; then
+			echo "  salto  /dev/$disk  (in uso dal sistema: boot/persistenza, montato rw)"
+			continue
+		fi
+		_set_disk_ro "$disk"
+		printf '%s\n' "$disk" >> "$LOCKED"
+		echo "  BLOCCO /dev/$disk  -> sola lettura"
+		any=1
+	done
+	[ "$any" = 1 ] || echo "  (nessun disco esterno idle da bloccare al momento)"
+	echo "Prove protette: i device collegati ora nascono in sola lettura."
+	echo "Per scrivere sul disco DESTINAZIONE: nxs-writeblock unlock <dev>"
+}
+
+cmd_off() {
+	# Nulla da fare se non era attivo (percorso veloce per gli altri profili).
+	[ -e "$FLAG" ] || [ -e "$LOCKED" ] || return 0
+	rm -f "$FLAG"
+	udevadm control --reload 2>/dev/null || true
+	if [ -f "$LOCKED" ]; then
+		while IFS= read -r disk; do
+			[ -n "$disk" ] || continue
+			_set_disk_rw "$disk"
+			echo "  sblocco /dev/$disk"
+		done < "$LOCKED"
+		rm -f "$LOCKED"
+	fi
+	echo "Write-blocker forense DISATTIVATO."
+}
+
+cmd_status() {
+	if [ -e "$FLAG" ]; then echo "Write-blocker forense: ATTIVO"
+	else echo "Write-blocker forense: inattivo"; fi
+	printf '%-14s %-3s %-9s %s\n' DEVICE RO SIZE MONTATO
+	for disk in $(_phys_disks); do
+		ro=$(cat /sys/block/"$disk"/ro 2>/dev/null || echo '?')
+		[ "$ro" = 1 ] && ro="RO" || ro="rw"
+		size=$(lsblk -dnro SIZE "/dev/$disk" 2>/dev/null | head -1)
+		mnt=$(findmnt -rno TARGET "/dev/$disk" 2>/dev/null | paste -sd, - 2>/dev/null)
+		printf '%-14s %-3s %-9s %s\n' "/dev/$disk" "$ro" "${size:-?}" "${mnt:-}"
+	done
+}
+
+_resolve_dev() {   # normalizza 'sda' o '/dev/sda' -> /dev/sda ; verifica block
+	d=$1; case "$d" in /dev/*) : ;; *) d="/dev/$d" ;; esac
+	[ -b "$d" ] || { echo "nxs-writeblock: $d non e' un device a blocchi" >&2; exit 1; }
+	printf '%s' "$d"
+}
+
+cmd_lock() {
+	dev=$(_resolve_dev "$1"); _bd --setro "$dev"; echo "$dev -> SOLA LETTURA"
+}
+
+cmd_unlock() {
+	dev=$(_resolve_dev "$1")
+	echo "ATTENZIONE: rendere SCRIVIBILE $dev."
+	echo "Una scrittura su una PROVA la invalida ai fini forensi. Fallo solo sul"
+	echo "disco DESTINAZIONE (dove copi l'immagine), MAI sull'originale."
+	printf "Confermi? scrivi 'si' e invio: "
+	read -r a || a=""
+	[ "$a" = si ] || { echo "annullato."; exit 1; }
+	_bd --setrw "$dev"; echo "$dev -> scrivibile"
+}
+
+# Sotto-comando interno chiamato dalla regola udev (gia' root) sui device nuovi.
+cmd_udev() {
+	name="${1:-}"; [ -n "$name" ] || exit 0
+	_disk_busy_rw "$name" && exit 0     # paranoia: mai toccare un montato rw
+	_bd --setro "/dev/$name" 2>/dev/null || true
+	exit 0
+}
+
+case "$ACT" in
+	on)      cmd_on ;;
+	off)     cmd_off ;;
+	status)  cmd_status ;;
+	lock)    [ $# -ge 2 ] || { echo "uso: nxs-writeblock lock <dev>" >&2; exit 2; }; cmd_lock "$2" ;;
+	unlock)  [ $# -ge 2 ] || { echo "uso: nxs-writeblock unlock <dev>" >&2; exit 2; }; cmd_unlock "$2" ;;
+	_udev)   cmd_udev "${2:-}" ;;
+	*) echo "uso: nxs-writeblock {on|off|status|lock DEV|unlock DEV}" >&2; exit 2 ;;
+esac

@@ -1,0 +1,12 @@
+#!/bin/sh
+# NexusSec - esegue un comando in un terminale in modo affidabile.
+# lxterminal con il server a istanza singola fa cilecca con -e: forziamo
+# --no-remote (nuovo processo) e in fallback xterm.
+# Uso: nxs-term COMANDO [ARG ...]
+[ $# -eq 0 ] && exec nxs-terminal
+if command -v lxterminal >/dev/null 2>&1; then
+  lxterminal --no-remote -e "$@" 2>/dev/null && exit 0
+  # alcune build non hanno --no-remote: riprova senza
+  lxterminal -e "$@" 2>/dev/null && exit 0
+fi
+command -v xterm >/dev/null 2>&1 && exec xterm -bg "#050a14" -fg "#c8f5ff" -e "$@"

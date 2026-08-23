@@ -1,0 +1,103 @@
+---
+
+  A. Wizard — piano di potenziamento
+
+  A1. Cosa c'è già (base solida su cui costruire)
+
+  - Wizard data-driven (wizards.json): fields, modes, options, steps.
+  - Catena output→input già funzionante: es. pentest-quick step[0] produces la lista host vivi (extract: nmap_up) → step[1] la consuma con -iL {vivi}.
+  - Runner con anonimizzazione per-step (raw/tor/container/local), esito onesto per step, report.log.
+  - GUI chooser→form→output dal vivo + builder per wizard custom.
+  - Oggi: 1 wizard per profilo (pentest/osint/forensics/web).
+
+  A2. Il bottone "Come funziona" (la spiegazione della pipeline)
+
+  - Dato: aggiungo a ogni wizard un campo explain in wizards.json:
+    - overview (a cosa serve), why_chain (perché quella sequenza),
+    - per ogni step: ruolo del tool, riceve, produce, alimenta (quale step).
+    - Gran parte si auto-genera dagli steps (tool, desc, produces) → poco testo a mano.
+  - GUI (gui.py): accanto ad "Avvia" un bottone "Come funziona" → finestra scrollabile con:
+    a. descrizione del wizard e obiettivo;
+    b. diagramma testuale della catena: nmap (host vivi) → [live.gnmap] → nmap -sV → NSE vuln → enum4linux;
+    c. scheda per ogni programma: cosa fa · cosa riceve · cosa produce · perché è concatenato · anonimizzabile sì/no.
+  - Bonus "spiega mentre esegue": prima di ogni step il runner stampa una riga ▶ perché questo passo (didattica in tempo reale).
+
+  A3. Catalogo ampliato (3–4 wizard per profilo, tutti con tool già nel repo.json)
+
+  Pen Testing
+  1. Ricognizione rete (esiste) — nmap sweep → servizi → NSE vuln → SMB.
+  2. Dominio Windows/AD — nmap → enum4linux/rpcclient → smbmap → crackmapexec (kali).
+  3. Password mirato — dai servizi trovati → hydra/medusa su SSH/FTP/HTTP.
+  4. Wireless — airodump → cattura handshake → hashcat (se hardware presente).
+  
+  OSINT
+  1. OSINT dominio (esiste) — theHarvester → whois → dnsrecon → subfinder → AXFR.
+  2. Persona/username — sherlock/maigret → holehe (email) → exiftool sui media trovati.
+  3. Infrastruttura — subfinder → dnsx → httpx → whatweb (+ shodan/censys se chiave).
+  4. Email & leak — theHarvester → holehe → h8mail (breach).
+  
+  Forensics (si integra col write-blocker appena fatto)
+  1. Analisi immagine/disco (esiste) — exiftool → bulk-extractor → foremost → binwalk.
+  2. Memoria RAM — volatility3: pslist → netscan → malfind → dumpfiles (catena tra plugin).
+  3. Acquisizione + timeline — write-blocker ON → dc3dd (hash) → sleuthkit fls/mactime → timeline.
+  4. Triage anti-malware — rkhunter/chkrootkit → clamav → yara.
+
+  Web
+  1. Scan web (esiste) — whatweb → wafw00f → nikto → nuclei → sqlmap.
+  2. Recon→web pivot — subfinder → httpx → gowitness (screenshot) → nuclei.
+  3. CMS mirato — whatweb → wpscan/joomscan/droopescan → nuclei.
+  4. Fuzzing dir/param/API — ffuf/gobuster → arjun → nuclei.
+
+  Base (nuovo, "primo avvio") — ricognizione locale: sysinfo + rete locale + porte in ascolto.
+
+  ▎ Il valore: ogni wizard è un playbook dell'esperto spiegato, riproducibile, con anonimizzazione per-step e catena dati — esattamente il "metodo incapsulato" che ci distingue.
+
+  ---
+
+  B. Report — implementazione dell'IA nella distro (per punti)
+
+  B1. Visione
+
+  - Non un chatbot incollato: un copilota di sicurezza al cuore del sistema (roadmap #6), che orchestra profili + wizard + tool e interpreta gli output.
+  - Collocazione: overlay/usr/local/lib/nxs-ai/, comando nxs-ai, pannello "Chiedi a NexAI".
+
+  B2. Architettura
+
+  - Backend LLM pluggabile:
+    - Locale (default): llama.cpp con modello quantizzato piccolo → offline, privacy totale (i dati sensibili non escono mai — requisito per una distro sec).
+    - Cloud (opt-in): chiave utente per più potenza, con avviso esplicito che i dati escono.
+  - On-demand (filosofia della distro): il modello si scarica su NXSDATA al primo uso, non gonfia l'ISO. La live gira in tmpfs → gestione RAM/persistenza dedicata.
+  - musl: llama.cpp compila su Alpine; evito stack pesanti.
+
+  B3. Come interviene — aspetti coperti
+
+  1. Copilota wizard: dall'obiettivo in linguaggio naturale ("testa la rete 10.0.0.0/24") propone il wizard giusto con campi precompilati; genera la sezione "Come funziona".
+  2. Interprete di output: legge nmap/nikto/volatility/… e produce sintesi + risultati salienti + prossimo passo consigliato (output→input anche verso l'umano).
+  3. Generatore di catene: da un obiettivo compone una pipeline nuova, validando che i tool esistano nel repo.json (builder assistito).
+  4. Assistente forense: verifica che il write-blocker sia attivo, ricorda la chain-of-custody, annota gli hash, redige bozza di verbale/report.
+  5. Assistente OSINT: correla email↔dominio↔username, deduplica, costruisce un grafo di entità.
+  6. Tutor/didattica: spiega tool, flag, tecniche; modalità "spiegami cosa è successo".
+  7. Triage di sistema: legge nxs-boot.log/dmesg e diagnostica (es. avrebbe indicato subito lo storm SD del boot lento).
+  8. Guardrail operativi: avvisa se un'azione è rumorosa/non anonimizzabile o fuori scope; richiede conferma su azioni intrusive; controllo autorizzazione sul target.
+  9. Automazione in linguaggio naturale: "trova i sottodomini di X e fai screenshot dei vivi" → compone ed esegue la catena con conferma.
+  10. Report finale: da report.log dei wizard genera un documento strutturato.
+
+  B4. Privacy, vincoli, etica
+
+  - Default locale/offline; cloud solo opt-in e dichiarato.
+  - Autorizzazione obbligatoria per azioni offensive; logging; niente mass-targeting; l'IA rifiuta usi chiaramente illeciti.
+
+  B5. Roadmap incrementale (a rischio crescente)
+
+  - Fase 1 — nxs-ai offline che spiega tool/output (nessuna esecuzione): basso rischio, subito utile, alimenta anche il bottone "Come funziona" dei wizard.
+  - Fase 2 — interprete output + suggerimento next-step.
+  - Fase 3 — orchestrazione in linguaggio naturale (compone/esegue catene, con conferma).
+  - Fase 4 — assistenti forense/OSINT specializzati + report.
+  - Fase 5 — guardrail e policy di sicurezza.
+
+  ---
+
+  Quando l'ARM finisce ti avviso; poi verifico le ISO e pubblico la Release. Dimmi come procediamo sui wizard: se ti torna il catalogo sopra, parto dopo il build a implementare il bottone "Come funziona" (Fase 1, sinergica con l'IA)
+  + i nuovi wizard, oppure se vuoi ne mettiamo a fuoco prima uno-due profili in dettaglio. E sull'IA: la Fase 1 offline è il punto di partenza naturale — la confermi come primo passo?
+
+

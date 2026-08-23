@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openbox_menu xmlns="http://openbox.org/3.4/menu">
+  <menu id="root-menu" label="NexusSec">
+    <item label="Profilo operativo"><action name="Execute"><command>nxs-profile</command></action></item>
+    <separator/>
+    <item label="Terminale"><action name="Execute"><command>nxs-terminal</command></action></item>
+    <item label="File manager"><action name="Execute"><command>pcmanfm</command></action></item>
+    <item label="Editor di testo"><action name="Execute"><command>pluma</command></action></item>
+    <item label="NexusSec Browser"><action name="Execute"><command>nxs-browser</command></action></item>
+    <item label="Centro di Controllo"><action name="Execute"><command>nxs-control-center</command></action></item>
+    <separator/>
+    <item label="Riavvia Openbox"><action name="Reconfigure"/></item>
+    <item label="Esci (logout)"><action name="Exit"/></item>
+    <item label="Riavvia il sistema"><action name="Execute"><command>nxs-shutdown reboot</command></action></item>
+    <item label="Spegni"><action name="Execute"><command>nxs-shutdown poweroff</command></action></item>
+  </menu>
+</openbox_menu>

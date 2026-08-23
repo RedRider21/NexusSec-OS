@@ -1,0 +1,51 @@
+# Maintainer: NexusSec <deplano.d@gmail.com>
+pkgname=medusa
+pkgver=2.2
+pkgrel=0
+pkgdesc="Brute-forcer di login modulare e parallelo"
+url="https://github.com/jmk-foofus/medusa"
+arch="all"
+license="GPL-2.0-or-later"
+makedepends="openssl-dev libssh2-dev ncurses-dev"
+# Pin al commit immutabile (tag 2.2).
+_commit=5a7b76ee9fb48e4983719f074335b003b7fd6ad5
+source="$pkgname-$pkgver.tar.gz::https://github.com/jmk-foofus/medusa/archive/$_commit.tar.gz"
+builddir="$srcdir/$pkgname-$_commit"
+unpack() {
+	# README e un SYMLINK a README.md: con podman rootless tar tenta il chmod
+	# sul link e aborta (Operation not permitted). Lo escludo dallo scompattamento.
+	mkdir -p "$srcdir"
+	tar -C "$srcdir" --exclude="$pkgname-$_commit/README" \
+		-xzf "$srcdir/$pkgname-$pkgver.tar.gz"
+}
+prepare() {
+	cd "$builddir"
+	# OpenSSL 3 ha RIMOSSO SSLv2/SSLv3_client_method: li rimappo a SSLv23
+	# (auto-negoziazione del protocollo migliore). TLSv1/SSLv23 restano.
+	sed -i -e 's/SSLv2_client_method/SSLv23_client_method/g' \
+	       -e 's/SSLv3_client_method/SSLv23_client_method/g' src/medusa-net.c
+}
+build() {
+	cd "$builddir"
+	chmod +x configure
+	# configure gia committato (no autoreconf, evita AM_CONFIG_HEADER deprecato).
+	# strcasestr richiede _GNU_SOURCE; -fcommon per i globali senza extern.
+	# strcasestr richiede _GNU_SOURCE; -fcommon per i globali senza extern;
+	# il callback keyboard-interactive di libssh2 ha firma "incompatibile"
+	# (errore con gcc >=14) -> declassato a warning. Il modulo VNC usa la struct
+	# DH di OpenSSL (resa opaca in OpenSSL 3) -> lo disabilito: medusa resta
+	# completo per ssh/ftp/http/smb/rdp/mysql/telnet/... (tutti gli altri moduli).
+	CFLAGS="$CFLAGS -fcommon -D_GNU_SOURCE -Wno-error=incompatible-pointer-types \
+		-Wno-error=deprecated-declarations -Wno-error=implicit-function-declaration" \
+		./configure --prefix=/usr --enable-static=no --enable-module-vnc=no
+	make
+}
+package() {
+	cd "$builddir"
+	make DESTDIR="$pkgdir" install
+	# abuild rifiuta man pages non compresse: per una live le rimuovo.
+	rm -rf "$pkgdir"/usr/share/man
+}
+sha512sums="
+d41838599d5d9c649008fe246b793340bd820c7f48662417310e55e53701e9af679c7967c3f7f66d60d4b91edcd5aab3ca8ed94176acdea4c3439913293ada58  medusa-2.2.tar.gz
+"

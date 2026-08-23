@@ -1,0 +1,27 @@
+# Maintainer: NexusSec <deplano.d@gmail.com>
+pkgname=dmitry
+pkgver=1.4.0
+pkgrel=0
+pkgdesc="Deepmagic Information Gathering Tool (whois/porte/sottodomini)"
+url="https://github.com/jaygreig86/dmitry"
+arch="all"
+license="GPL-3.0-or-later"
+makedepends="autoconf automake"
+# Pin al commit immutabile (tag/branch possono spostarsi o sparire -> 404).
+_commit=f2b8961dabbd55486a5649a9803446b860ad28e7  # tag v1.4.0
+source="$pkgname-$pkgver.tar.gz::https://github.com/jaygreig86/dmitry/archive/$_commit.tar.gz"
+builddir="$srcdir/$pkgname-$_commit"
+build() {
+	cd "$builddir"
+	[ -x ./configure ] || { autoreconf -fi || aclocal && autoconf; }
+	./configure --prefix=/usr
+	make
+}
+package() {
+	cd "$builddir"
+	install -Dm755 dmitry "$pkgdir"/usr/bin/dmitry
+	# Niente man page (abuild rifiuta quelle non compresse; superflue su live).
+}
+sha512sums="
+fd28068a0ea7e5e990cb5dcb7a005a05723234a98bc71eba1e232c3ad86a751c3e20cd69452018e05ab6befb3268ddd72ceec9c4c1e05cf61fbc46156fd3f0fa  dmitry-1.4.0.tar.gz
+"

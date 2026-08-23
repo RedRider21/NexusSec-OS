@@ -1,0 +1,52 @@
+# Maintainer: NexusSec <deplano.d@gmail.com>
+pkgname=scalpel
+pkgver=1.60
+pkgrel=0
+pkgdesc="File carving veloce (fork di foremost)"
+url="https://github.com/sleuthkit/scalpel"
+arch="all"
+license="GPL-2.0-or-later"
+makedepends="autoconf automake tre-dev linux-headers"
+# Pin al commit immutabile del branch master.
+_commit=16872619d0b889ddb566259074be24999c52f3d5
+source="$pkgname-$pkgver.tar.gz::https://github.com/machn1k/Scalpel-2.0/archive/$_commit.tar.gz"
+builddir="$srcdir/Scalpel-2.0-$_commit"
+build() {
+	cd "$builddir"
+	# Shim error.h: glibc-only, assente in musl (scalpel.h lo include).
+	mkdir -p "$builddir"/compat
+	cat > "$builddir"/compat/error.h <<'SHIM'
+#ifndef _NXS_ERROR_H
+#define _NXS_ERROR_H
+#include <stdio.h>
+#include <stdarg.h>
+#include <string.h>
+#include <errno.h>
+#include <stdlib.h>
+static inline void error(int status, int errnum, const char *fmt, ...) {
+	va_list ap;
+	fflush(stdout);
+	fputs("scalpel: ", stderr);
+	va_start(ap, fmt); vfprintf(stderr, fmt, ap); va_end(ap);
+	if (errnum) fprintf(stderr, ": %s", strerror(errnum));
+	fputc('\n', stderr);
+	if (status) exit(status);
+}
+#endif
+SHIM
+	# Ha configure (autotools) ma nessun Makefile finche non lo si lancia.
+	chmod +x configure
+	CFLAGS="$CFLAGS -fcommon -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64 -I$builddir/compat \
+		-Wno-error=implicit-function-declaration -Wno-error=int-conversion \
+		-Wno-error=incompatible-pointer-types" ./configure --prefix=/usr
+	make
+}
+package() {
+	cd "$builddir"
+	install -Dm755 scalpel "$pkgdir"/usr/bin/scalpel 2>/dev/null || \
+		install -Dm755 src/scalpel "$pkgdir"/usr/bin/scalpel
+	install -Dm644 scalpel.conf "$pkgdir"/etc/scalpel/scalpel.conf 2>/dev/null || true
+}
+sha512sums="
+9d21506b90282029bbc083bb7483e5611f6d02e0c174a5dd605a343b648232358a7c9d075ddcd8b706ace9f125025e6e3898dfae77a098863195b4eb287c089a  scalpel-1.60.tar.gz
+"

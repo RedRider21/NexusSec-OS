@@ -1,0 +1,130 @@
+=== NexusSec tool test  Mon Jun 29 23:11:20 UTC 2026 ===
+RAM: 
+disco /: 
+--- rete ---
+rete APK: OK (raggiungo dl-cdn.alpinelinux.org)
+repo configurati:
+    /media/cdrom/apks
+    http://dl-cdn.alpinelinux.org/alpine/edge/main
+    http://dl-cdn.alpinelinux.org/alpine/edge/community
+    http://dl-cdn.alpinelinux.org/alpine/edge/testing
+    /var/lib/nexussec-repo
+    https://dplusos21.github.io/NexusSecOS-Arsenal
+apk update: OK
+
+===== APK (38) =====
+TOOL             INSTALL   PATH    ESEGUE 
+aircrack-ng      OK        si      si     
+  spazio: 
+bettercap        OK        si      si     
+  spazio: 
+binwalk          OK        si      si     
+  spazio: 
+bulk-extractor   OK        no      -      
+  spazio: 
+chkrootkit       OK        si      -      
+  spazio: 
+clamav           OK        no      -      
+  spazio: 
+ddrescue         OK        si      si     
+  spazio: 
+dirb             OK        si      -      
+  spazio: 
+dmitry           OK        si      -      
+  spazio: 
+dnsenum          OK        si      -      
+  spazio: 
+dnsrecon         OK        si      -      
+  spazio: 
+ettercap         OK        si      si     
+  spazio: 
+exiftool         OK        si      si     
+  spazio: 
+ffuf             OK        si      si     
+  spazio: 
+foremost         OK        si      si     
+  spazio: 
+gobuster         OK        si      si     
+  spazio: 
+hashcat          OK        si      si     
+  spazio: 
+hydra            OK        si      -      
+  spazio: 
+john             OK        si      -      
+  spazio: 
+masscan          OK        si      -      
+  spazio: 
+medusa           OK        si      si     
+  spazio: 
+nikto            OK        no      -      
+  spazio: 
+nmap             OK        si      si     
+  spazio: 
+nuclei           OK        si      si     
+  spazio: 
+recon-ng         OK        si      -      
+  spazio: 
+responder        OK        si      -      
+  spazio: 
+rkhunter         OK        si      si     
+  spazio: 
+scalpel          OK        si      -      
+  spazio: 
+shodan           OK        si      -      
+  spazio: 
+sleuthkit        OK        no      -      
+  spazio: 
+sqlmap           OK        si      -      
+  spazio: 
+sslscan          OK        si      si     
+  spazio: 
+steghide         OK        si      si     
+  spazio: 
+testdisk         OK        si      si     
+  spazio: 
+volatility3      OK        si      si     
+  spazio: 
+whois            OK        si      si     
+  spazio: 
+yara             OK        si      si     
+  spazio: 
+zaproxy          OK        si      -      
+  spazio: 
+----- si: 34/38 install+PATH OK -----
+
+===== PIP (12) =====
+TOOL             INSTALL   PATH    ESEGUE 
+commix           FAIL      no      -      
+  spazio: 
+enum4linux       FAIL      no      -      
+  spazio: 
+fierce           FAIL      no      -      
+  spazio: 
+holehe           FAIL      no      -      
+  spazio: 
+metagoofil       FAIL      no      -      
+  spazio: 
+netexec          FAIL      no      -      
+  spazio: 
+smbmap           FAIL      no      -      
+  spazio: 
+sublist3r        FAIL      no      -      
+  spazio: 
+theharvester     FAIL      no      -      
+  spazio: 
+wafw00f          FAIL      no      -      
+  spazio: 
+wfuzz            FAIL      no      -      
+  spazio: 
+wifite           FAIL      no      -      
+  spazio: 
+----- no: 0/12 install+PATH OK -----
+
+===== CONTAINER (meccanismo) =====
+podman: presente
+pull di prova: amass (docker.io/caffix/amass:latest)
+  pull amass: FAIL/timeout (vedi install.log)
+  (gli altri container non pullati: tmpfs 4GB)
+
+RAM finale: 
+=== FINE ===

@@ -1,0 +1,41 @@
+#!/bin/sh
+# NexusSec - installazione su disco / persistenza (Alpine).
+#
+# Due modi per NON perdere l'arsenale (immagini container/kali) al riavvio:
+#  A) INSTALLAZIONE SU DISCO (consigliata): il sistema va su disco; lo storage
+#     di Podman e tutto il resto sono su disco => persistenza COMPLETA e
+#     automatica (anche i tool apk installati restano). Avvolge setup-disk /
+#     setup-alpine ufficiali Alpine.
+#  B) PERSISTENZA LIVE: resti da live ma crei una partizione dati NXSDATA
+#     (nxs-persist) su cui salvare immagini container/kali + stato tool.
+priv() { if [ "$(id -u)" = 0 ]; then "$@"; \
+         elif command -v doas >/dev/null 2>&1; then doas "$@"; \
+         else sudo "$@"; fi; }
+
+echo "==============================================================="
+echo "  NexusSec OS - installazione su disco / persistenza"
+echo "==============================================================="
+echo
+echo "  A) INSTALLA SU DISCO (persistenza completa e automatica)"
+echo "     1) setup-alpine   configurazione guidata completa + installazione"
+echo "     2) setup-disk     installa il sistema corrente su un disco (sys)"
+echo
+echo "  B) PERSISTENZA LIVE (resti live, salvi solo arsenale + stato)"
+echo "     3) nxs-persist    crea la partizione dati NXSDATA"
+echo "     4) stato persistenza"
+echo
+echo "     q) annulla"
+printf "  Scelta: "; read ans
+case "$ans" in
+  1) exec priv setup-alpine ;;
+  2) echo "  Dischi disponibili:"; lsblk -o NAME,SIZE,TYPE,MODEL 2>/dev/null
+     printf "  Disco di destinazione (es. /dev/sda): "; read disk
+     if [ -n "$disk" ]; then
+       echo "  Dopo l'installazione lo storage Podman sara su disco:"
+       echo "  l'arsenale scaricato restera tra i riavvii."
+       exec priv setup-disk -m sys "$disk"
+     fi ;;
+  3) exec nxs-persist ;;
+  4) exec nxs-persist status ;;
+  *) echo "annullato" ;;
+esac

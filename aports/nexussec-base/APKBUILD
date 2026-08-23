@@ -1,0 +1,119 @@
+# Maintainer: NexusSec <deplano.d@gmail.com>
+# Meta-pacchetto base NexusSec: desktop Openbox + stack Python + runtime tool.
+# Sostituisce i pacchetti TinyCore (.tcz) con gli equivalenti Alpine.
+pkgname=nexussec-base
+pkgver=1.0.0
+pkgrel=2
+pkgdesc="NexusSec OS - desktop base (Openbox + Python + isolamento tool)"
+url="https://github.com/thecloners21"
+arch="noarch"
+license="MIT"
+# Stack desktop (equivalenti Alpine dei vecchi .tcz TinyCore):
+#   openbox, pcmanfm, lxterminal, lxappearance, pluma, feh, xdotool, wmctrl,
+#   font-dejavu, adwaita-icon-theme, gtk+3.0  (== gtk3 + gir via py3-gobject3)
+#   pluma = editor di testo di MATE (fork di gedit2): evidenziazione sintassi,
+#   schede, cerca/sostituisci, codifiche): equivalente gedit-class in stile Mint.
+# Xorg: xorg-server + xinit. Driver: si preferisce 'modesetting' INTEGRATO
+#   (KMS/DRM) che copre VMSVGA/VMware (vmwgfx), QEMU (qxl/virtio/bochs) e HW
+#   reale (i915/amdgpu/nouveau). NB: xf86-video-vmware e' RIMOSSO apposta: su
+#   VirtualBox VMSVGA va in segfault (Unable to map BAR) -> con esso assente
+#   Xorg usa modesetting via vmwgfx (funziona). Restano vboxvideo (VBoxVGA),
+#   qxl (QEMU) e vesa/fbdev come fallback. + mesa-dri-gallium (GL) + libinput.
+# Python + GTK introspection: python3, py3-gobject3, py3-cairo.
+# Isolamento tool (Fase 2): bubblewrap (sandbox) + podman (container) + pipx.
+#   PODMAN ROOTLESS (gira come utente 'nexus'): richiede OBBLIGATORIAMENTE
+#   - shadow-uidmap  -> newuidmap/newgidmap: senza, il rootless NON crea gli
+#                       user-namespace e OGNI pull/run fallisce (era la vera
+#                       causa per cui i tool container/kali non partivano);
+#   - fuse-overlayfs -> storage overlay rootless efficiente (senza, ripiego su
+#                       'vfs' che duplica i layer e gonfia lo spazio/RAM);
+#   - slirp4netns    -> rete rootless per il pull quando non si usa --net host.
+#   Servono anche /etc/subuid e /etc/subgid per nexus (li scrive genapkovl).
+# Persistenza/installazione su disco: e2fsprogs (mkfs.ext4 partizione dati
+#   NXSDATA) + parted (partizionamento in nxs-persist/nxs-install).
+# Rete: wpa_supplicant+iw (WiFi e test wireless: scan/monitor mode),
+#   iproute2 (VLAN/bridge/macvlan via 'ip link add type ...': sostituisce il
+#   pacchetto legacy 'vlan' che confligge con ifupdown-ng), bridge (MITM
+#   transparent bridging). Evitiamo il meta 'network-extras' (tira vlan/ppp/
+#   bonding/usb-modeswitch inutili e in conflitto).
+# Anonimato/STEALTH: tor (SOCKS 9050) + torsocks: usati dal browser (modalita'
+#   stealth) e dalle procedure guidate (nxs-wizard: instrada via Tor gli step
+#   anonimizzabili, con esito onesto per step).
+# Firmware WIRELESS: NON qui ma nel modloop (xz) via meta "nexussec-firmware"
+#   (vedi aports/nexussec-firmware): Atheros/Realtek/Broadcom/MediaTek + Intel
+#   (iwlwifi, schede interne portatili), senza blob GPU per non gonfiare l'ISO.
+# Fuso orario: tzdata (zoneinfo) -> orologio in ora LOCALE e cambio fuso al volo
+#   dal pannello (clic sull'orologio), senza aprire il Centro di Controllo.
+depends="
+	openrc
+	eudev
+	dbus
+	agetty
+	openbox
+	xorg-server
+	xinit
+	setxkbmap
+	xf86-video-fbdev
+	mesa-dri-gallium
+	xf86-input-libinput
+	pcmanfm
+	lxterminal
+	lxappearance
+	pluma
+	feh
+	xdotool
+	wmctrl
+	font-dejavu
+	adwaita-icon-theme
+	gtk+3.0
+	py3-gobject3
+	py3-cairo
+	python3
+	bubblewrap
+	podman
+	fuse-overlayfs
+	shadow-uidmap
+	slirp4netns
+	e2fsprogs
+	parted
+	lsblk
+	findmnt
+	pipx
+	py3-pip
+	git
+	doas
+	imagemagick
+	wpa_supplicant
+	iw
+	util-linux-misc
+	xrandr
+	iproute2
+	bridge
+	tor
+	torsocks
+	tzdata
+	"
+
+# Driver video/guest specifici per architettura (risolti al build dal $CARCH del
+# container). x86_64: VESA + QXL (QEMU) + VirtualBox guest. aarch64: solo fbdev
+# (gia' comune) + 'modesetting' INTEGRATO in xorg-server via virtio-gpu (QEMU
+# virt) o GPU reale (SBC): niente VESA-BIOS/QXL/VirtualBox su ARM (assenti nei
+# repo aarch64 e privi di senso). Meta noarch: il set giusto viene fissato dal
+# container di build della rispettiva ISO.
+case "$CARCH" in
+	x86_64)
+		depends="$depends
+			xf86-video-vesa
+			xf86-video-qxl
+			xf86-video-vboxvideo
+			virtualbox-guest-additions
+			virtualbox-guest-additions-x11"
+		;;
+esac
+options="!check"
+
+package() {
+	# Meta-pacchetto: nessun file. Il payload NexusSec (nxs_cc, nxs_profiles,
+	# binari, profiles.json, sfondi) e' fornito dall'overlay/apkovl di build.
+	mkdir -p "$pkgdir"
+}

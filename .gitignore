@@ -1,0 +1,16 @@
+# artefatti di build (rigenerabili, pesanti)
+out/
+*.iso
+*.ppm
+*.apk
+build-alpine/fbsplash.ppm
+# abuild: sorgenti scaricati e pkg intermedi
+aports/*/src/
+aports/*/pkg/
+aports/**/*.tar.*
+aports/**/*.tar
+# python
+__pycache__/
+*.pyc
+# chiave privata di firma: MAI in git (resta solo locale)
+build-alpine/arsenal-keys/*.rsa

@@ -1,0 +1,37 @@
+# Maintainer: NexusSec <deplano.d@gmail.com>
+# Meta-pacchetto firmware NexusSec: sottoinsieme WIRELESS per il modloop.
+# Usato SOLO dalla sezione kernel di mkimage (token corto, va nel modloop
+# compresso xz). Evita il meta "linux-firmware" (tutti i blob GPU ~400MB) ma
+# INCLUDE "linux-firmware-intel" (iwlwifi, ~122MB): serve al WiFi INTERNO dei
+# portatili (schede Intel, maggioranza del parco) per usare la distro in
+# mobilita' senza adattatore USB. Copre inoltre gli adattatori WiFi USB da
+# pentest: Atheros (ath9k_htc/ath10k/ath11k), Realtek (rtlwifi/rtw88/rtw89/
+# rtl_nic), Broadcom/Cypress, MediaTek (mt76). + wireless-regdb (regolatoria).
+# NB: +122MB sull'ISO -> scelta esplicita per l'usabilita' su portatile.
+pkgname=nexussec-firmware
+pkgver=1.0.0
+pkgrel=1
+pkgdesc="NexusSec OS - firmware wireless (subset per modloop: WiFi USB + Intel, senza GPU)"
+url="https://github.com/thecloners21"
+arch="noarch"
+license="MIT"
+depends="
+	wireless-regdb
+	linux-firmware-intel
+	linux-firmware-ath9k_htc
+	linux-firmware-ath10k
+	linux-firmware-ath11k
+	linux-firmware-rtlwifi
+	linux-firmware-rtw88
+	linux-firmware-rtw89
+	linux-firmware-rtl_nic
+	linux-firmware-brcm
+	linux-firmware-cypress
+	linux-firmware-mediatek
+	"
+options="!check"
+
+package() {
+	# Meta-pacchetto: nessun file proprio.
+	mkdir -p "$pkgdir"
+}

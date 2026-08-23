@@ -1,0 +1,1372 @@
+260629 [/media/cdrom/apks]
+v3.24.0-1052-g229db36cd9c [http://dl-cdn.alpinelinux.org/alpine/edge/main]
+v3.24.0-1055-g4ae74bb6240 [http://dl-cdn.alpinelinux.org/alpine/edge/community]
+v3.24.0-1053-ge9f7816fd41 [http://dl-cdn.alpinelinux.org/alpine/edge/testing]
+nexussec  [/var/lib/nexussec-repo]
+arsenal  [https://dplusos21.github.io/NexusSecOS-Arsenal]
+OK: 35762 distinct packages available
+######## aircrack-ng (aircrack-ng) ########
+(1/9) Installing ethtool (7.0-r0)
+(2/9) Installing wireless-tools-libs (30_pre9-r5)
+(3/9) Installing wireless-tools (30_pre9-r5)
+(4/9) Installing sqlite (3.53.3-r0)
+(5/9) Installing grep (3.12-r0)
+(6/9) Installing libpcap (1.10.6-r1)
+(7/9) Installing pcre (8.45-r4)
+(8/9) Installing aircrack-ng (1.7-r5)
+(9/9) Installing ifupdown-ng-ethtool (0.13.0-r0)
+Executing busybox-1.38.0-r1.trigger
+OK: 507.8 MiB in 308 packages
+[*] apk add --no-cache aircrack-ng
+######## bettercap (bettercap) ########
+(1/7) Installing libnftnl (1.3.1-r0)
+(2/7) Installing iptables (1.8.13-r0)
+(3/7) Installing iptables-openrc (1.8.13-r0)
+(4/7) Installing mii-tool (2.10-r3)
+(5/7) Installing net-tools (2.10-r3)
+(6/7) Installing libusb (1.0.30-r0)
+(7/7) Installing bettercap (2.41.7-r0)
+Executing busybox-1.38.0-r1.trigger
+OK: 578.2 MiB in 315 packages
+[*] apk add --no-cache bettercap
+######## binwalk (binwalk) ########
+(1/1) Installing binwalk (3.1.0-r0)
+Executing busybox-1.38.0-r1.trigger
+OK: 580.3 MiB in 316 packages
+[*] apk add --no-cache binwalk
+######## bulk-extractor (bulk-extractor) ########
+(1/1) Installing bulk-extractor (2.0.0-r0)
+Executing busybox-1.38.0-r1.trigger
+OK: 592.4 MiB in 317 packages
+[*] apk add --no-cache bulk-extractor
+######## chkrootkit (chkrootkit) ########
+(1/1) Installing chkrootkit (0.58b-r0)
+Executing busybox-1.38.0-r1.trigger
+OK: 592.7 MiB in 318 packages
+[*] apk add --no-cache chkrootkit
+######## clamav (clamav) ########
+( 1/10) Installing libmspack (0.11_alpha-r1)
+( 2/10) Installing clamav-libs (1.4.4-r0)
+( 3/10) Installing freshclam (1.4.4-r0)
+  Executing freshclam-1.4.4-r0.pre-install
+( 4/10) Installing freshclam-openrc (1.4.4-r0)
+( 5/10) Installing clamav-scanner (1.4.4-r0)
+( 6/10) Installing clamav-clamdscan (1.4.4-r0)
+( 7/10) Installing clamav-daemon (1.4.4-r0)
+  Executing clamav-daemon-1.4.4-r0.pre-install
+( 8/10) Installing clamav-daemon-openrc (1.4.4-r0)
+( 9/10) Installing musl-fts (1.2.7-r7)
+(10/10) Installing clamav (1.4.4-r0)
+Executing busybox-1.38.0-r1.trigger
+OK: 667.9 MiB in 328 packages
+[*] apk add --no-cache clamav
+######## ddrescue (ddrescue) ########
+(1/1) Installing ddrescue (1.30-r0)
+Executing busybox-1.38.0-r1.trigger
+OK: 668.0 MiB in 329 packages
+[*] apk add --no-cache ddrescue
+######## dirb (dirb) ########
+(1/1) Installing dirb (2.22-r0)
+Executing busybox-1.38.0-r1.trigger
+OK: 669.4 MiB in 330 packages
+[*] apk add --no-cache dirb
+######## dmitry (dmitry) ########
+(1/1) Installing dmitry (1.4.0-r0)
+Executing busybox-1.38.0-r1.trigger
+OK: 669.4 MiB in 331 packages
+[*] apk add --no-cache dmitry
+######## dnsenum (dnsenum) ########
+( 1/10) Installing perl (5.42.2-r0)
+( 2/10) Installing perl-digest-sha1 (2.13-r20)
+( 3/10) Installing perl-digest-md5 (2.59-r3)
+( 4/10) Installing perl-digest-hmac (1.05-r0)
+( 5/10) Installing perl-net-dns (1.55-r0)
+( 6/10) Installing perl-net-ip (1.26-r7)
+( 7/10) Installing perl-net-netmask (2.0003-r1)
+( 8/10) Installing perl-string-random (0.32-r3)
+( 9/10) Installing perl-xml-writer (0.900-r2)
+(10/10) Installing dnsenum (1.3.2-r1)
+Executing busybox-1.38.0-r1.trigger
+OK: 708.8 MiB in 341 packages
+[*] apk add --no-cache dnsenum
+######## dnsrecon (dnsrecon) ########
+( 1/23) Installing dnsrecon-pyc (1.6.1-r0)
+( 2/23) Installing py3-dnspython-pyc (2.8.0-r1)
+( 3/23) Installing py3-dnspython (2.8.0-r1)
+( 4/23) Installing py3-loguru (0.7.3-r0)
+( 5/23) Installing py3-loguru-pyc (0.7.3-r0)
+( 6/23) Installing libxslt (1.1.43-r3)
+( 7/23) Installing py3-lxml (6.1.1-r0)
+( 8/23) Installing py3-lxml-pyc (6.1.1-r0)
+( 9/23) Installing py3-netaddr (0.10.1-r2)
+(10/23) Installing py3-netaddr-pyc (0.10.1-r2)
+(11/23) Installing py3-certifi (2026.5.20-r0)
+(12/23) Installing py3-certifi-pyc (2026.5.20-r0)
+(13/23) Installing py3-charset-normalizer (3.4.7-r0)
+(14/23) Installing py3-charset-normalizer-pyc (3.4.7-r0)
+(15/23) Installing py3-idna (3.18-r0)
+(16/23) Installing py3-idna-pyc (3.18-r0)
+(17/23) Installing py3-urllib3 (2.7.0-r0)
+(18/23) Installing py3-urllib3-pyc (2.7.0-r0)
+(19/23) Installing py3-requests (2.33.1-r0)
+(20/23) Installing py3-requests-pyc (2.33.1-r0)
+(21/23) Installing py3-setuptools (82.0.1-r1)
+(22/23) Installing py3-setuptools-pyc (82.0.1-r1)
+(23/23) Installing dnsrecon (1.6.1-r0)
+Executing busybox-1.38.0-r1.trigger
+OK: 736.5 MiB in 364 packages
+[*] apk add --no-cache dnsrecon
+######## ettercap (ettercap) ########
+(1/6) Installing libformw (6.6_p20260516-r0)
+(2/6) Installing libmaxminddb-libs (1.13.3-r0)
+(3/6) Installing libmenuw (6.6_p20260516-r0)
+(4/6) Installing libnet (1.3-r0)
+(5/6) Installing libettercap (0.8.4.1-r0)
+(6/6) Installing ettercap (0.8.4.1-r0)
+Executing busybox-1.38.0-r1.trigger
+OK: 748.4 MiB in 370 packages
+[*] apk add --no-cache ettercap
+######## exiftool (exiftool) ########
+(1/2) Installing perl-image-exiftool (13.55-r0)
+(2/2) Installing exiftool (13.55-r0)
+Executing busybox-1.38.0-r1.trigger
+OK: 767.8 MiB in 372 packages
+[*] apk add --no-cache exiftool
+######## ffuf (ffuf) ########
+(1/1) Installing ffuf (2.1.0-r22)
+Executing busybox-1.38.0-r1.trigger
+OK: 778.1 MiB in 373 packages
+[*] apk add --no-cache ffuf
+######## foremost (foremost) ########
+(1/1) Installing foremost (1.5.7-r0)
+Executing busybox-1.38.0-r1.trigger
+OK: 778.2 MiB in 374 packages
+[*] apk add --no-cache foremost
+######## gobuster (gobuster) ########
+(1/1) Installing gobuster (3.8.2-r0)
+Executing busybox-1.38.0-r1.trigger
+OK: 788.8 MiB in 375 packages
+[*] apk add --no-cache gobuster
+######## hashcat (hashcat) ########
+(1/1) Installing hashcat (6.2.6-r0)
+Executing busybox-1.38.0-r1.trigger
+OK: 936.8 MiB in 376 packages
+[*] apk add --no-cache hashcat
+######## hydra (hydra) ########
+( 1/41) Installing libedit (20260508.3.1-r1)
+( 2/41) Installing afpfs-ng (0.8.1-r12)
+( 3/41) Installing apr (1.7.6-r0)
+( 4/41) Installing libbson (1.30.6-r1)
+( 5/41) Installing alsa-lib (1.2.15.3-r0)
+( 6/41) Installing fdk-aac (2.0.2-r4)
+( 7/41) Installing fuse3-libs (3.18.2-r0)
+( 8/41) Installing gsm (1.0.23-r0)
+( 9/41) Installing krb5-conf (1.0-r2)
+(10/41) Installing libcom_err (1.47.4-r0)
+(11/41) Installing keyutils-libs (1.6.3-r4)
+(12/41) Installing libverto (0.3.2-r2)
+(13/41) Installing krb5-libs (1.22.2-r1)
+(14/41) Installing openh264 (2.6.0-r0)
+(15/41) Installing opus (1.6.1-r0)
+(16/41) Installing freerdp-libs (3.27.1-r0)
+(17/41) Installing libidn (1.43-r0)
+(18/41) Installing mariadb-connector-c (3.4.6-r0)
+(19/41) Installing libmemcached-libs (1.1.4-r1)
+(20/41) Installing snappy (1.2.2-r0)
+(21/41) Installing mongo-c-driver (1.30.6-r1)
+(22/41) Installing libpq (18.4-r0)
+(23/41) Installing talloc (2.4.4-r1)
+(24/41) Installing tevent (0.17.1-r1)
+(25/41) Installing samba-util-libs (4.23.8-r0)
+(26/41) Installing lmdb (0.9.35-r0)
+(27/41) Installing tdb-libs (1.4.15-r1)
+(28/41) Installing ldb (4.23.8-r0)
+(29/41) Installing libwbclient (4.23.8-r0)
+(30/41) Installing libauth-samba (4.23.8-r0)
+(31/41) Installing samba-client-libs (4.23.8-r0)
+(32/41) Installing jansson (2.15.0-r0)
+(33/41) Installing popt (1.19-r4)
+(34/41) Installing samba-libs (4.23.8-r0)
+(35/41) Installing libsmbclient (4.23.8-r0)
+(36/41) Installing libssh (0.12.0-r0)
+(37/41) Installing apr-util (1.6.3-r2)
+(38/41) Installing serf (1.3.10-r0)
+(39/41) Installing subversion-libs (1.14.5-r1)
+(40/41) Installing hydra (9.6-r1)
+(41/41) Installing libheif-openh264 (1.23.0-r0)
+Executing busybox-1.38.0-r1.trigger
+OK: 977.1 MiB in 417 packages
+[*] apk add --no-cache hydra
+######## john (john) ########
+(1/4) Installing nspr (4.38.2-r0)
+(2/4) Installing nss (3.125-r0)
+(3/4) Installing opencl (2026.05.29-r0)
+(4/4) Installing john (1.9.0-r8)
+Executing busybox-1.38.0-r1.trigger
+OK: 1031.8 MiB in 421 packages
+[*] apk add --no-cache john
+######## masscan (masscan) ########
+(1/1) Installing masscan (1.3.2-r2)
+Executing busybox-1.38.0-r1.trigger
+OK: 1032.2 MiB in 422 packages
+[*] apk add --no-cache masscan
+######## medusa (medusa) ########
+(1/2) Installing libssh2 (1.11.1-r3)
+(2/2) Installing medusa (2.2-r0)
+Executing busybox-1.38.0-r1.trigger
+OK: 1033.0 MiB in 424 packages
+[*] apk add --no-cache medusa
+######## nikto (nikto) ########
+(1/3) Installing lua5.4-libs (5.4.8-r0)
+(2/3) Installing nmap (7.99-r0)
+(3/3) Installing nikto (2.6.0-r0)
+Executing busybox-1.38.0-r1.trigger
+OK: 1048.4 MiB in 427 packages
+[*] apk add --no-cache nikto
+######## nmap (nmap) ########
+OK: 1048.4 MiB in 427 packages
+[*] apk add --no-cache nmap
+######## nuclei (nuclei) ########
+(1/1) Installing nuclei (3.9.0-r0)
+Executing busybox-1.38.0-r1.trigger
+OK: 1191.2 MiB in 428 packages
+[*] apk add --no-cache nuclei
+######## recon-ng (recon-ng) ########
+( 1/40) Installing py3-installer (1.0.0-r0)
+( 2/40) Installing py3-installer-pyc (1.0.0-r0)
+( 3/40) Installing py3-gpep517 (19-r2)
+( 4/40) Installing py3-gpep517-pyc (19-r2)
+( 5/40) Installing py3-wheel (0.47.0-r0)
+( 6/40) Installing py3-wheel-pyc (0.47.0-r0)
+( 7/40) Installing py3-dicttoxml (1.7.16-r4)
+( 8/40) Installing py3-dicttoxml-pyc (1.7.16-r4)
+( 9/40) Installing yaml (0.2.5-r2)
+(10/40) Installing py3-yaml (6.0.3-r2)
+(11/40) Installing py3-yaml-pyc (6.0.3-r2)
+(12/40) Installing py3-six (1.17.0-r1)
+(13/40) Installing py3-six-pyc (1.17.0-r1)
+(14/40) Installing py3-webencodings (0.5.1-r10)
+(15/40) Installing py3-webencodings-pyc (0.5.1-r10)
+(16/40) Installing py3-html5lib (1.1-r8)
+(17/40) Installing py3-html5lib-pyc (1.1-r8)
+(18/40) Installing py3-mechanize (0.4.10-r1)
+(19/40) Installing py3-mechanize-pyc (0.4.10-r1)
+(20/40) Installing py3-xlsxwriter (3.2.9-r1)
+(21/40) Installing py3-xlsxwriter-pyc (3.2.9-r1)
+(22/40) Installing py3-asgiref (3.9.1-r1)
+(23/40) Installing py3-asgiref-pyc (3.9.1-r1)
+(24/40) Installing py3-blinker (1.9.0-r1)
+(25/40) Installing py3-blinker-pyc (1.9.0-r1)
+(26/40) Installing py3-dotenv (1.2.2-r0)
+(27/40) Installing py3-dotenv-pyc (1.2.2-r0)
+(28/40) Installing py3-itsdangerous (2.2.0-r1)
+(29/40) Installing py3-itsdangerous-pyc (2.2.0-r1)
+(30/40) Installing py3-markupsafe (3.0.3-r1)
+(31/40) Installing py3-markupsafe-pyc (3.0.3-r1)
+(32/40) Installing py3-jinja2 (3.1.6-r1)
+(33/40) Installing py3-jinja2-pyc (3.1.6-r1)
+(34/40) Installing py3-werkzeug (3.1.8-r0)
+(35/40) Installing py3-werkzeug-pyc (3.1.8-r0)
+(36/40) Installing py3-flask (3.1.3-r2)
+(37/40) Installing py3-flask-pyc (3.1.3-r2)
+(38/40) Installing py3-unicodecsv (0.14.2-r0)
+(39/40) Installing py3-unicodecsv-pyc (0.14.2-r0)
+(40/40) Installing recon-ng (5.1.2-r1)
+Executing busybox-1.38.0-r1.trigger
+OK: 1201.8 MiB in 468 packages
+[*] apk add --no-cache recon-ng
+######## responder (responder) ########
+(1/2) Installing py3-netifaces (0.11.0-r4)
+(2/2) Installing responder (3.1.7.0-r0)
+Executing busybox-1.38.0-r1.trigger
+OK: 1205.6 MiB in 470 packages
+[*] apk add --no-cache responder
+######## rkhunter (rkhunter) ########
+(1/2) Installing bash (5.3.9-r1)
+  Executing bash-5.3.9-r1.post-install
+(2/2) Installing rkhunter (1.4.6-r0)
+Executing busybox-1.38.0-r1.trigger
+OK: 1208.6 MiB in 472 packages
+[*] apk add --no-cache rkhunter
+######## scalpel (scalpel) ########
+(1/2) Installing tre (0.8.0-r2)
+(2/2) Installing scalpel (1.60-r0)
+Executing busybox-1.38.0-r1.trigger
+OK: 1208.7 MiB in 474 packages
+[*] apk add --no-cache scalpel
+######## shodan (shodan) ########
+( 1/10) Installing py3-click-plugins (2.0_git20240226-r1)
+( 2/10) Installing py3-click-plugins-pyc (2.0_git20240226-r1)
+( 3/10) Installing py3-requests-file (2.1.0-r1)
+( 4/10) Installing py3-requests-file-pyc (2.1.0-r1)
+( 5/10) Installing py3-filelock (3.29.0-r0)
+( 6/10) Installing py3-filelock-pyc (3.29.0-r0)
+( 7/10) Installing py3-tldextract (5.3.1-r1)
+( 8/10) Installing py3-tldextract-pyc (5.3.1-r1)
+( 9/10) Installing py3-shodan (1.31.0-r2)
+(10/10) Installing py3-shodan-pyc (1.31.0-r2)
+Executing busybox-1.38.0-r1.trigger
+OK: 1209.5 MiB in 484 packages
+[*] apk add --no-cache py3-shodan
+######## sleuthkit (sleuthkit) ########
+(1/2) Installing sleuthkit-libs (4.15.0-r0)
+(2/2) Installing sleuthkit (4.15.0-r0)
+Executing busybox-1.38.0-r1.trigger
+OK: 1211.0 MiB in 486 packages
+[*] apk add --no-cache sleuthkit
+######## sqlmap (sqlmap) ########
+( 1/20) Installing py3-soupsieve (2.7-r1)
+( 2/20) Installing py3-soupsieve-pyc (2.7-r1)
+( 3/20) Installing py3-typing-extensions (4.15.0-r1)
+( 4/20) Installing py3-typing-extensions-pyc (4.15.0-r1)
+( 5/20) Installing py3-beautifulsoup4 (4.15.0-r0)
+( 6/20) Installing py3-beautifulsoup4-pyc (4.15.0-r0)
+( 7/20) Installing py3-bottle (0.13.4-r1)
+( 8/20) Installing py3-bottle-pyc (0.13.4-r1)
+( 9/20) Installing py3-chardet (5.2.0-r2)
+(10/20) Installing py3-chardet-pyc (5.2.0-r2)
+(11/20) Installing py3-keepalive (0.5-r6)
+(12/20) Installing py3-keepalive-pyc (0.5-r6)
+(13/20) Installing py3-magic (0.4.27-r4)
+(14/20) Installing py3-magic-pyc (0.4.27-r4)
+(15/20) Installing py3-pydes (2.0.1-r6)
+(16/20) Installing py3-pydes-pyc (2.0.1-r6)
+(17/20) Installing py3-termcolor (3.3.0-r0)
+(18/20) Installing py3-termcolor-pyc (3.3.0-r0)
+(19/20) Installing sqlmap (1.10.6-r0)
+(20/20) Installing sqlmap-pyc (1.10.6-r0)
+Executing busybox-1.38.0-r1.trigger
+OK: 1228.1 MiB in 506 packages
+[*] apk add --no-cache sqlmap
+######## sslscan (sslscan) ########
+(1/1) Installing sslscan (2.2.2-r0)
+Executing busybox-1.38.0-r1.trigger
+OK: 1228.2 MiB in 507 packages
+[*] apk add --no-cache sslscan
+######## steghide (steghide) ########
+(1/3) Installing libmcrypt (2.5.8-r11)
+(2/3) Installing libmhash (0.9.9.9-r4)
+(3/3) Installing steghide (0.5.1.1-r0)
+Executing busybox-1.38.0-r1.trigger
+OK: 1228.9 MiB in 510 packages
+[*] apk add --no-cache steghide
+######## testdisk (testdisk) ########
+(1/3) Installing e2fsprogs-libs (1.47.4-r0)
+(2/3) Installing ntfs-3g-libs (2026.2.25-r0)
+(3/3) Installing testdisk (7.2-r1)
+Executing busybox-1.38.0-r1.trigger
+OK: 1230.7 MiB in 513 packages
+[*] apk add --no-cache testdisk
+######## volatility3 (vol) ########
+( 1/11) Installing py3-pycryptodome (3.23.0-r1)
+( 2/11) Installing py3-pycryptodome-pyc (3.23.0-r1)
+( 3/11) Installing capstone (5.0.9-r0)
+( 4/11) Installing py3-capstone (5.0.9-r0)
+( 5/11) Installing py3-capstone-pyc (5.0.9-r0)
+( 6/11) Installing yara (4.5.7-r0)
+( 7/11) Installing py3-yara (4.5.5-r0)
+( 8/11) Installing py3-pefile (2024.8.26-r2)
+( 9/11) Installing py3-pefile-pyc (2024.8.26-r2)
+(10/11) Installing volatility3 (2.28.0-r0)
+(11/11) Installing volatility3-pyc (2.28.0-r0)
+Executing busybox-1.38.0-r1.trigger
+OK: 1262.1 MiB in 524 packages
+[*] apk add --no-cache volatility3
+######## whois (whois) ########
+(1/1) Installing whois (5.6.6-r0)
+Executing busybox-1.38.0-r1.trigger
+OK: 1262.2 MiB in 525 packages
+[*] apk add --no-cache whois
+######## yara (yara) ########
+OK: 1262.2 MiB in 525 packages
+[*] apk add --no-cache yara
+######## zaproxy (zaproxy) ########
+(1/8) Installing java-common (1.0-r2)
+(2/8) Installing p11-kit-trust (0.26.2-r1)
+(3/8) Installing ca-certificates (20260611-r0)
+(4/8) Installing java-cacerts (1.1-r0)
+(5/8) Installing openjdk17-jre-headless (17.0.19_p10-r0)
+(6/8) Installing openjdk17-jre (17.0.19_p10-r0)
+(7/8) Installing font-liberation (2.1.5-r2)
+(8/8) Installing zaproxy (2.17.0-r0)
+Executing busybox-1.38.0-r1.trigger
+Executing fontconfig-2.18.1-r0.trigger
+Executing mkfontscale-1.2.4-r0.trigger
+Executing java-common-1.0-r2.trigger
+Executing ca-certificates-20260611-r0.trigger
+OK: 1708.0 MiB in 533 packages
+[*] apk add --no-cache zaproxy
+######## commix (commix) ########
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/nexus/.local/state/pipx/log'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/nexus/.local/state/pipx'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1274, in setup_log_file
+    return _setup_log_file()
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1255, in _setup_log_file
+    pipx_log_dir.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1015, in mkdir
+    self.parent.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1015, in mkdir
+    self.parent.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+PermissionError: [Errno 13] Permission denied: '/home/nexus/.local/state'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/nexus/.local/state/pipx/log'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/nexus/.local/state/pipx'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/bin/pipx", line 8, in <module>
+    sys.exit(cli())
+             ~~~^^
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1426, in cli
+    setup(parsed_pipx_args)
+    ~~~~~^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1338, in setup
+    setup_logging(verbose)
+    ~~~~~~~~~~~~~^^^^^^^^^
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1281, in setup_logging
+    paths.ctx.log_file = setup_log_file()
+                         ~~~~~~~~~~~~~~^^
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1276, in setup_log_file
+    return _setup_log_file(platformdirs.user_log_path("pipx"))
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1255, in _setup_log_file
+    pipx_log_dir.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1015, in mkdir
+    self.parent.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1015, in mkdir
+    self.parent.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+PermissionError: [Errno 13] Permission denied: '/home/nexus/.local/state'
+[*] pipx install commix
+######## enum4linux (enum4linux-ng) ########
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/nexus/.local/state/pipx/log'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/nexus/.local/state/pipx'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1274, in setup_log_file
+    return _setup_log_file()
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1255, in _setup_log_file
+    pipx_log_dir.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1015, in mkdir
+    self.parent.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1015, in mkdir
+    self.parent.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+PermissionError: [Errno 13] Permission denied: '/home/nexus/.local/state'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/nexus/.local/state/pipx/log'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/nexus/.local/state/pipx'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/bin/pipx", line 8, in <module>
+    sys.exit(cli())
+             ~~~^^
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1426, in cli
+    setup(parsed_pipx_args)
+    ~~~~~^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1338, in setup
+    setup_logging(verbose)
+    ~~~~~~~~~~~~~^^^^^^^^^
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1281, in setup_logging
+    paths.ctx.log_file = setup_log_file()
+                         ~~~~~~~~~~~~~~^^
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1276, in setup_log_file
+    return _setup_log_file(platformdirs.user_log_path("pipx"))
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1255, in _setup_log_file
+    pipx_log_dir.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1015, in mkdir
+    self.parent.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1015, in mkdir
+    self.parent.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+PermissionError: [Errno 13] Permission denied: '/home/nexus/.local/state'
+[*] pipx install enum4linux-ng
+######## fierce (fierce) ########
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/nexus/.local/state/pipx/log'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/nexus/.local/state/pipx'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1274, in setup_log_file
+    return _setup_log_file()
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1255, in _setup_log_file
+    pipx_log_dir.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1015, in mkdir
+    self.parent.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1015, in mkdir
+    self.parent.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+PermissionError: [Errno 13] Permission denied: '/home/nexus/.local/state'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/nexus/.local/state/pipx/log'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/nexus/.local/state/pipx'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/bin/pipx", line 8, in <module>
+    sys.exit(cli())
+             ~~~^^
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1426, in cli
+    setup(parsed_pipx_args)
+    ~~~~~^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1338, in setup
+    setup_logging(verbose)
+    ~~~~~~~~~~~~~^^^^^^^^^
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1281, in setup_logging
+    paths.ctx.log_file = setup_log_file()
+                         ~~~~~~~~~~~~~~^^
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1276, in setup_log_file
+    return _setup_log_file(platformdirs.user_log_path("pipx"))
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1255, in _setup_log_file
+    pipx_log_dir.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1015, in mkdir
+    self.parent.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1015, in mkdir
+    self.parent.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+PermissionError: [Errno 13] Permission denied: '/home/nexus/.local/state'
+[*] pipx install fierce
+######## holehe (holehe) ########
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/nexus/.local/state/pipx/log'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/nexus/.local/state/pipx'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1274, in setup_log_file
+    return _setup_log_file()
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1255, in _setup_log_file
+    pipx_log_dir.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1015, in mkdir
+    self.parent.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1015, in mkdir
+    self.parent.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+PermissionError: [Errno 13] Permission denied: '/home/nexus/.local/state'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/nexus/.local/state/pipx/log'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/nexus/.local/state/pipx'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/bin/pipx", line 8, in <module>
+    sys.exit(cli())
+             ~~~^^
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1426, in cli
+    setup(parsed_pipx_args)
+    ~~~~~^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1338, in setup
+    setup_logging(verbose)
+    ~~~~~~~~~~~~~^^^^^^^^^
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1281, in setup_logging
+    paths.ctx.log_file = setup_log_file()
+                         ~~~~~~~~~~~~~~^^
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1276, in setup_log_file
+    return _setup_log_file(platformdirs.user_log_path("pipx"))
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1255, in _setup_log_file
+    pipx_log_dir.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1015, in mkdir
+    self.parent.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1015, in mkdir
+    self.parent.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+PermissionError: [Errno 13] Permission denied: '/home/nexus/.local/state'
+[*] pipx install holehe
+######## metagoofil (metagoofil) ########
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/nexus/.local/state/pipx/log'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/nexus/.local/state/pipx'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1274, in setup_log_file
+    return _setup_log_file()
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1255, in _setup_log_file
+    pipx_log_dir.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1015, in mkdir
+    self.parent.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1015, in mkdir
+    self.parent.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+PermissionError: [Errno 13] Permission denied: '/home/nexus/.local/state'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/nexus/.local/state/pipx/log'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/nexus/.local/state/pipx'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/bin/pipx", line 8, in <module>
+    sys.exit(cli())
+             ~~~^^
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1426, in cli
+    setup(parsed_pipx_args)
+    ~~~~~^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1338, in setup
+    setup_logging(verbose)
+    ~~~~~~~~~~~~~^^^^^^^^^
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1281, in setup_logging
+    paths.ctx.log_file = setup_log_file()
+                         ~~~~~~~~~~~~~~^^
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1276, in setup_log_file
+    return _setup_log_file(platformdirs.user_log_path("pipx"))
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1255, in _setup_log_file
+    pipx_log_dir.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1015, in mkdir
+    self.parent.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1015, in mkdir
+    self.parent.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+PermissionError: [Errno 13] Permission denied: '/home/nexus/.local/state'
+[*] pipx install metagoofil
+######## netexec (nxc) ########
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/nexus/.local/state/pipx/log'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/nexus/.local/state/pipx'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1274, in setup_log_file
+    return _setup_log_file()
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1255, in _setup_log_file
+    pipx_log_dir.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1015, in mkdir
+    self.parent.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1015, in mkdir
+    self.parent.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+PermissionError: [Errno 13] Permission denied: '/home/nexus/.local/state'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/nexus/.local/state/pipx/log'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/nexus/.local/state/pipx'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/bin/pipx", line 8, in <module>
+    sys.exit(cli())
+             ~~~^^
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1426, in cli
+    setup(parsed_pipx_args)
+    ~~~~~^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1338, in setup
+    setup_logging(verbose)
+    ~~~~~~~~~~~~~^^^^^^^^^
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1281, in setup_logging
+    paths.ctx.log_file = setup_log_file()
+                         ~~~~~~~~~~~~~~^^
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1276, in setup_log_file
+    return _setup_log_file(platformdirs.user_log_path("pipx"))
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1255, in _setup_log_file
+    pipx_log_dir.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1015, in mkdir
+    self.parent.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1015, in mkdir
+    self.parent.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+PermissionError: [Errno 13] Permission denied: '/home/nexus/.local/state'
+[*] pipx install netexec
+######## smbmap (smbmap) ########
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/nexus/.local/state/pipx/log'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/nexus/.local/state/pipx'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1274, in setup_log_file
+    return _setup_log_file()
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1255, in _setup_log_file
+    pipx_log_dir.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1015, in mkdir
+    self.parent.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1015, in mkdir
+    self.parent.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+PermissionError: [Errno 13] Permission denied: '/home/nexus/.local/state'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/nexus/.local/state/pipx/log'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/nexus/.local/state/pipx'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/bin/pipx", line 8, in <module>
+    sys.exit(cli())
+             ~~~^^
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1426, in cli
+    setup(parsed_pipx_args)
+    ~~~~~^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1338, in setup
+    setup_logging(verbose)
+    ~~~~~~~~~~~~~^^^^^^^^^
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1281, in setup_logging
+    paths.ctx.log_file = setup_log_file()
+                         ~~~~~~~~~~~~~~^^
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1276, in setup_log_file
+    return _setup_log_file(platformdirs.user_log_path("pipx"))
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1255, in _setup_log_file
+    pipx_log_dir.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1015, in mkdir
+    self.parent.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1015, in mkdir
+    self.parent.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+PermissionError: [Errno 13] Permission denied: '/home/nexus/.local/state'
+[*] pipx install smbmap
+######## sublist3r (sublist3r) ########
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/nexus/.local/state/pipx/log'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/nexus/.local/state/pipx'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1274, in setup_log_file
+    return _setup_log_file()
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1255, in _setup_log_file
+    pipx_log_dir.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1015, in mkdir
+    self.parent.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1015, in mkdir
+    self.parent.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+PermissionError: [Errno 13] Permission denied: '/home/nexus/.local/state'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/nexus/.local/state/pipx/log'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/nexus/.local/state/pipx'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/bin/pipx", line 8, in <module>
+    sys.exit(cli())
+             ~~~^^
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1426, in cli
+    setup(parsed_pipx_args)
+    ~~~~~^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1338, in setup
+    setup_logging(verbose)
+    ~~~~~~~~~~~~~^^^^^^^^^
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1281, in setup_logging
+    paths.ctx.log_file = setup_log_file()
+                         ~~~~~~~~~~~~~~^^
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1276, in setup_log_file
+    return _setup_log_file(platformdirs.user_log_path("pipx"))
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1255, in _setup_log_file
+    pipx_log_dir.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1015, in mkdir
+    self.parent.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1015, in mkdir
+    self.parent.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+PermissionError: [Errno 13] Permission denied: '/home/nexus/.local/state'
+[*] pipx install sublist3r
+######## theharvester (theHarvester) ########
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/nexus/.local/state/pipx/log'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/nexus/.local/state/pipx'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1274, in setup_log_file
+    return _setup_log_file()
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1255, in _setup_log_file
+    pipx_log_dir.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1015, in mkdir
+    self.parent.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1015, in mkdir
+    self.parent.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+PermissionError: [Errno 13] Permission denied: '/home/nexus/.local/state'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/nexus/.local/state/pipx/log'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/nexus/.local/state/pipx'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/bin/pipx", line 8, in <module>
+    sys.exit(cli())
+             ~~~^^
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1426, in cli
+    setup(parsed_pipx_args)
+    ~~~~~^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1338, in setup
+    setup_logging(verbose)
+    ~~~~~~~~~~~~~^^^^^^^^^
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1281, in setup_logging
+    paths.ctx.log_file = setup_log_file()
+                         ~~~~~~~~~~~~~~^^
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1276, in setup_log_file
+    return _setup_log_file(platformdirs.user_log_path("pipx"))
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1255, in _setup_log_file
+    pipx_log_dir.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1015, in mkdir
+    self.parent.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1015, in mkdir
+    self.parent.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+PermissionError: [Errno 13] Permission denied: '/home/nexus/.local/state'
+[*] pipx install theHarvester
+######## wafw00f (wafw00f) ########
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/nexus/.local/state/pipx/log'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/nexus/.local/state/pipx'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1274, in setup_log_file
+    return _setup_log_file()
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1255, in _setup_log_file
+    pipx_log_dir.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1015, in mkdir
+    self.parent.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1015, in mkdir
+    self.parent.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+PermissionError: [Errno 13] Permission denied: '/home/nexus/.local/state'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/nexus/.local/state/pipx/log'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/nexus/.local/state/pipx'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/bin/pipx", line 8, in <module>
+    sys.exit(cli())
+             ~~~^^
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1426, in cli
+    setup(parsed_pipx_args)
+    ~~~~~^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1338, in setup
+    setup_logging(verbose)
+    ~~~~~~~~~~~~~^^^^^^^^^
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1281, in setup_logging
+    paths.ctx.log_file = setup_log_file()
+                         ~~~~~~~~~~~~~~^^
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1276, in setup_log_file
+    return _setup_log_file(platformdirs.user_log_path("pipx"))
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1255, in _setup_log_file
+    pipx_log_dir.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1015, in mkdir
+    self.parent.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1015, in mkdir
+    self.parent.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+PermissionError: [Errno 13] Permission denied: '/home/nexus/.local/state'
+[*] pipx install wafw00f
+######## wfuzz (wfuzz) ########
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/nexus/.local/state/pipx/log'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/nexus/.local/state/pipx'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1274, in setup_log_file
+    return _setup_log_file()
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1255, in _setup_log_file
+    pipx_log_dir.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1015, in mkdir
+    self.parent.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1015, in mkdir
+    self.parent.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+PermissionError: [Errno 13] Permission denied: '/home/nexus/.local/state'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/nexus/.local/state/pipx/log'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/nexus/.local/state/pipx'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/bin/pipx", line 8, in <module>
+    sys.exit(cli())
+             ~~~^^
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1426, in cli
+    setup(parsed_pipx_args)
+    ~~~~~^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1338, in setup
+    setup_logging(verbose)
+    ~~~~~~~~~~~~~^^^^^^^^^
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1281, in setup_logging
+    paths.ctx.log_file = setup_log_file()
+                         ~~~~~~~~~~~~~~^^
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1276, in setup_log_file
+    return _setup_log_file(platformdirs.user_log_path("pipx"))
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1255, in _setup_log_file
+    pipx_log_dir.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1015, in mkdir
+    self.parent.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1015, in mkdir
+    self.parent.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+PermissionError: [Errno 13] Permission denied: '/home/nexus/.local/state'
+[*] pipx install wfuzz
+######## wifite (wifite) ########
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/nexus/.local/state/pipx/log'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/nexus/.local/state/pipx'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1274, in setup_log_file
+    return _setup_log_file()
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1255, in _setup_log_file
+    pipx_log_dir.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1015, in mkdir
+    self.parent.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1015, in mkdir
+    self.parent.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+PermissionError: [Errno 13] Permission denied: '/home/nexus/.local/state'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/nexus/.local/state/pipx/log'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/nexus/.local/state/pipx'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/bin/pipx", line 8, in <module>
+    sys.exit(cli())
+             ~~~^^
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1426, in cli
+    setup(parsed_pipx_args)
+    ~~~~~^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1338, in setup
+    setup_logging(verbose)
+    ~~~~~~~~~~~~~^^^^^^^^^
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1281, in setup_logging
+    paths.ctx.log_file = setup_log_file()
+                         ~~~~~~~~~~~~~~^^
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1276, in setup_log_file
+    return _setup_log_file(platformdirs.user_log_path("pipx"))
+  File "/usr/lib/python3.14/site-packages/pipx/main.py", line 1255, in _setup_log_file
+    pipx_log_dir.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1015, in mkdir
+    self.parent.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1015, in mkdir
+    self.parent.mkdir(parents=True, exist_ok=True)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 1011, in mkdir
+    os.mkdir(self, mode)
+    ~~~~~~~~^^^^^^^^^^^^
+PermissionError: [Errno 13] Permission denied: '/home/nexus/.local/state'
+[*] pipx install git+https://github.com/derv82/wifite2.git
+Error: creating runtime static files directory "/home/nexus/.local/share/containers/storage/libpod": mkdir /home/nexus/.local/share/containers: permission denied
+[*] podman pull docker.io/caffix/amass:latest

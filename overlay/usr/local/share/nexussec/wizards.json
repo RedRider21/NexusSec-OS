@@ -1,0 +1,185 @@
+{
+  "_note": "Procedure guidate NexusSec (schema v2). Ogni wizard chiede pochi dati (fields) e lancia in sequenza una catena di tool del catalogo (repo.json), installandoli se servono. MODALITA' ('modes'): intensita' a scelta SINGOLA (radio) che iniettano variabili negli args (campo 'vars'). OPZIONI ('options'): spunte indipendenti che abilitano singoli step (gate 'needs'). STEALTH: interruttore ON/OFF indipendente (sempre disponibile in interfaccia) = anonimato via Tor DOVE POSSIBILE. Per ogni step il campo 'stealth' dichiara: anon (tor=instradato via Tor con torsocks/proxychains; raw=pacchetti raw non anonimizzabili; container=gira in container, non instradabile da Tor host; local=offline), flags (argomenti extra aggiunti in stealth, es. -sT per forzare la connect-scan torificabile), skip (salta lo step quando stealth ON), only ('on'/'off' = variante valida solo con stealth attivo/spento). CATENA DATI: uno step puo' 'produces' {var,from,extract} una lista estratta dall'output (extract: nmap_up/subdomains/urls/hosts/lines/regex:PATTERN); va in {loot}/<var>.txt ed e' esposta come {var} (file) e {var}_n (quanti) agli step successivi; uno step che usa un {var} vuoto si salta. Segnaposto args: {campo}, {var-modalita'}, {var-prodotta}, {outdir}, {loot}. Personalizzati in ~/.config/nxs/wizards/<id>.json (dal costruttore).",
+  "wizards": {
+    "pentest-quick": {
+      "name": "Pentest di rete",
+      "profile": "pentest",
+      "icon": "network-workgroup-symbolic",
+      "description": "Scoperta host e mappatura servizi su un IP o range. Senza stealth: trova gli host vivi e scansiona solo quelli (catena). Con stealth: scansiona il bersaglio via Tor in connect-scan.",
+      "stealth_default": false,
+      "fields": [
+        {"key": "target", "label": "IP o range (es. 192.168.1.0/24 o 10.0.0.5)",
+         "required": true, "placeholder": "192.168.1.0/24"}
+      ],
+      "modes": [
+        {"id": "light", "label": "Leggero", "default": true,
+         "desc": "Veloce, porte piu' comuni (top 200).",
+         "vars": {"timing": "-T4", "ports": "--top-ports 200"}},
+        {"id": "deep", "label": "Approfondito",
+         "desc": "Tutte le 65535 porte TCP: piu' lento ma completo.",
+         "vars": {"timing": "-T4", "ports": "-p-"}}
+      ],
+      "options": [
+        {"id": "vulnscan", "label": "Script vulnerabilita' (NSE)",
+         "desc": "Esegue gli script 'vuln' di nmap per debolezze note.", "default": true},
+        {"id": "osdetect", "label": "Rilevamento sistema operativo",
+         "desc": "Fingerprint dello stack TCP/IP (non anonimizzabile).", "default": false},
+        {"id": "udp", "label": "Scansione UDP (top 50)",
+         "desc": "Principali servizi UDP (non anonimizzabile).", "default": false},
+        {"id": "smbenum", "label": "Enumerazione SMB/NetBIOS",
+         "desc": "enum4linux su condivisioni, utenti e gruppi Windows.", "default": false}
+      ],
+      "steps": [
+        {"tool": "nmap", "desc": "Scoperta host attivi (ping sweep)",
+         "args": "-sn -oG {outdir}/live.gnmap {target}",
+         "stealth": {"only": "off", "anon": "raw"},
+         "produces": {"var": "vivi", "from": "{outdir}/live.gnmap", "extract": "nmap_up"}},
+        {"tool": "nmap", "desc": "Servizi e versioni sugli host vivi",
+         "args": "-sV {timing} {ports} -Pn -iL {vivi}",
+         "stealth": {"only": "off", "anon": "tor"}},
+        {"tool": "nmap", "desc": "Servizi e versioni sul bersaglio (via Tor)",
+         "args": "-sV -sT {ports} -Pn {target}",
+         "stealth": {"only": "on", "anon": "tor"}},
+        {"tool": "nmap", "desc": "Script di default",
+         "args": "-sC {timing} --top-ports 200 -Pn {target}",
+         "stealth": {"anon": "tor", "flags": "-sT"}},
+        {"tool": "nmap", "desc": "Rilevamento sistema operativo", "needs": ["osdetect"],
+         "args": "-O -Pn {target}",
+         "stealth": {"anon": "raw", "skip": true}},
+        {"tool": "nmap", "desc": "Script di rilevamento vulnerabilita' (NSE)", "needs": ["vulnscan"],
+         "args": "{timing} --script vuln -Pn {target}",
+         "stealth": {"anon": "tor", "flags": "-sT"}},
+        {"tool": "nmap", "desc": "Scansione UDP (top 50)", "needs": ["udp"],
+         "args": "-sU -T4 --top-ports 50 -Pn {target}",
+         "stealth": {"anon": "raw", "skip": true}},
+        {"tool": "enum4linux", "desc": "Enumerazione SMB/NetBIOS", "needs": ["smbenum"],
+         "args": "-A {target}", "stealth": {"anon": "tor"}}
+      ]
+    },
+    "osint-domain": {
+      "name": "OSINT su dominio",
+      "profile": "osint",
+      "icon": "system-search-symbolic",
+      "description": "Raccolta passiva su un dominio: email, host, sottodomini e DNS. La modalita' regola quante fonti interrogare; le opzioni aggiungono DNS, sottodomini, WHOIS e AXFR. In stealth i tool nativi passano da Tor; quelli in container restano non instradati (badge onesto).",
+      "stealth_default": false,
+      "fields": [
+        {"key": "domain", "label": "Dominio (es. esempio.com)",
+         "required": true, "placeholder": "esempio.com"}
+      ],
+      "modes": [
+        {"id": "light", "label": "Leggero", "default": true,
+         "desc": "Poche fonti, risultati limitati (rapido).",
+         "vars": {"limit": "100", "sources": "bing,duckduckgo,crtsh"}},
+        {"id": "deep", "label": "Approfondito",
+         "desc": "Molte fonti pubbliche, piu' risultati.",
+         "vars": {"limit": "500", "sources": "bing,duckduckgo,crtsh,otx,hackertarget,rapiddns"}}
+      ],
+      "options": [
+        {"id": "dns", "label": "Enumerazione DNS",
+         "desc": "Record DNS del dominio con dnsrecon.", "default": true},
+        {"id": "subdomains", "label": "Scoperta sottodomini",
+         "desc": "subfinder da fonti passive.", "default": true},
+        {"id": "whois", "label": "Interrogazione WHOIS",
+         "desc": "Titolare, date e nameserver del dominio.", "default": true},
+        {"id": "axfr", "label": "Tentativo zone transfer (AXFR)",
+         "desc": "Prova un trasferimento di zona DNS (spesso negato).", "default": false}
+      ],
+      "steps": [
+        {"tool": "theharvester", "desc": "Email/host da fonti pubbliche",
+         "args": "-d {domain} -b {sources} -l {limit}",
+         "stealth": {"anon": "container"}},
+        {"tool": "whois", "desc": "Interrogazione WHOIS", "needs": ["whois"],
+         "args": "{domain}", "stealth": {"anon": "tor"}},
+        {"tool": "dnsrecon", "desc": "Enumerazione DNS", "needs": ["dns"],
+         "args": "-d {domain}", "stealth": {"anon": "tor"}},
+        {"tool": "subfinder", "desc": "Scoperta sottodomini passiva", "needs": ["subdomains"],
+         "args": "-d {domain} -silent", "stealth": {"anon": "container"}},
+        {"tool": "dnsrecon", "desc": "Tentativo zone transfer (AXFR)", "needs": ["axfr"],
+         "args": "-d {domain} -a", "stealth": {"anon": "tor"}}
+      ]
+    },
+    "forensics-image": {
+      "name": "Forensics su immagine/disco",
+      "profile": "forensics",
+      "icon": "drive-harddisk-symbolic",
+      "description": "Analisi di un file immagine (.dd/.img/.raw) o dispositivo verso la cartella reperti. La modalita' regola l'ampiezza del carving; le opzioni scelgono metadati, feature, recupero file e analisi binaria. Operazioni locali: lo stealth non si applica.",
+      "stealth_default": false,
+      "fields": [
+        {"key": "image", "label": "Percorso immagine o dispositivo (es. /mnt/share/disco.dd)",
+         "required": true, "placeholder": "/percorso/immagine.dd", "type": "file"}
+      ],
+      "modes": [
+        {"id": "rapida", "label": "Rapida", "default": true,
+         "desc": "Carving limitato ai tipi di file piu' comuni.",
+         "vars": {"carve": "-t jpg,pdf,png,doc,zip"}},
+        {"id": "completa", "label": "Completa",
+         "desc": "Carving di tutti i tipi supportati (piu' lento).",
+         "vars": {"carve": ""}}
+      ],
+      "options": [
+        {"id": "metadata", "label": "Metadati (ExifTool)",
+         "desc": "Estrae i metadati del file/immagine.", "default": true},
+        {"id": "features", "label": "Estrazione feature (bulk_extractor)",
+         "desc": "Email, URL, numeri di carta e altri artefatti.", "default": true},
+        {"id": "carving", "label": "Recupero file (foremost)",
+         "desc": "Recupera file per signature (carving).", "default": true},
+        {"id": "binwalk", "label": "Analisi/estrazione binaria (binwalk)",
+         "desc": "Cerca ed estrae contenuti annidati nel binario.", "default": false}
+      ],
+      "steps": [
+        {"tool": "exiftool", "desc": "Metadati del file", "needs": ["metadata"],
+         "args": "{image}", "stealth": {"anon": "local"}},
+        {"tool": "bulk-extractor", "desc": "Estrazione feature (email/URL/carte)", "needs": ["features"],
+         "args": "-o {outdir} {image}", "stealth": {"anon": "local"}},
+        {"tool": "foremost", "desc": "Recupero file per signature (carving)", "needs": ["carving"],
+         "args": "{carve} -i {image} -o {outdir}", "stealth": {"anon": "local"}},
+        {"tool": "binwalk", "desc": "Analisi ed estrazione binaria", "needs": ["binwalk"],
+         "args": "-e {image}", "stealth": {"anon": "local"}}
+      ]
+    },
+    "web-scan": {
+      "name": "Scan web su URL",
+      "profile": "web",
+      "icon": "applications-internet-symbolic",
+      "description": "Analisi di un'applicazione web: fingerprinting, vulnerabilita' e SQL injection. La modalita' regola la profondita' (crawl/level); le opzioni scelgono quali scanner eseguire. In stealth i tool nativi passano da Tor con user-agent casuale; WhatWeb (container) resta non instradato (badge onesto).",
+      "stealth_default": false,
+      "fields": [
+        {"key": "url", "label": "URL completo (es. http://sito.test)",
+         "required": true, "placeholder": "http://sito.test"}
+      ],
+      "modes": [
+        {"id": "light", "label": "Leggero", "default": true,
+         "desc": "Crawl minimo, test rapidi.",
+         "vars": {"level": "1", "crawl": "1"}},
+        {"id": "deep", "label": "Approfondito",
+         "desc": "Crawl esteso e test piu' aggressivi.",
+         "vars": {"level": "3", "crawl": "3"}}
+      ],
+      "options": [
+        {"id": "fingerprint", "label": "Fingerprint tecnologie (WhatWeb)",
+         "desc": "Identifica CMS, framework e server.", "default": true},
+        {"id": "nikto", "label": "Vulnerabilita' web server (Nikto)",
+         "desc": "Scansione di configurazioni e file noti.", "default": true},
+        {"id": "sqli", "label": "SQL injection (sqlmap)",
+         "desc": "Prova iniezioni SQL sui parametri trovati.", "default": true},
+        {"id": "waf", "label": "Rilevamento WAF (wafw00f)",
+         "desc": "Rileva la presenza di un Web Application Firewall.", "default": false},
+        {"id": "nuclei", "label": "Scanner template (Nuclei)",
+         "desc": "Controlli basati sui template della community.", "default": false}
+      ],
+      "steps": [
+        {"tool": "whatweb", "desc": "Fingerprinting tecnologie", "needs": ["fingerprint"],
+         "args": "{url}", "stealth": {"anon": "container"}},
+        {"tool": "wafw00f", "desc": "Rilevamento WAF", "needs": ["waf"],
+         "args": "{url}", "stealth": {"anon": "tor"}},
+        {"tool": "nikto", "desc": "Scansione vulnerabilita' web server", "needs": ["nikto"],
+         "args": "-h {url}", "stealth": {"anon": "tor"}},
+        {"tool": "nuclei", "desc": "Scanner basato su template", "needs": ["nuclei"],
+         "args": "-u {url} -silent", "stealth": {"anon": "tor"}},
+        {"tool": "sqlmap", "desc": "Analisi SQL injection", "needs": ["sqli"],
+         "args": "-u {url} --batch --crawl={crawl} --level={level}",
+         "stealth": {"anon": "tor", "flags": "--random-agent --delay=1"}}
+      ]
+    }
+  }
+}

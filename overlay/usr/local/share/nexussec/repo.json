@@ -1,0 +1,3077 @@
+{
+  "_note": "Catalogo tool NexusSec (base Alpine), set allineato per categoria a Kali/Parrot. 'method': 'apk' = pacchetto nativo Alpine (apk add); 'container' = immagine Podman (tool pesanti/non in apk, es. Metasploit/ZAP; campi: image, opz. run/entrypoint/net/privileged); 'pip' = pipx; 'git' = clone + venv dedicato (campi: git, entry, bin; per tool che NON sono pacchetti PyPI es. metagoofil); 'kali' = eseguito dentro l'immagine kalilinux/kali-rolling con apt (campo opz. apt; canale Debian mantenuto e sempre aggiornato per qualunque tool dell'arsenale Kali non disponibile come apk su musl). PERCHE' non si usano direttamente i repo APT di Parrot/Kali: sono .deb costruiti per glibc/Debian, BINARIAMENTE incompatibili con Alpine (musl/apk); li si consuma quindi via container ('container'/'kali'), che portano dentro il proprio userland Debian. nxs-tool sceglie automaticamente.",
+  "tools": {
+    "nmap": {
+      "category": "recon",
+      "method": "apk",
+      "apk": "nmap",
+      "apk_extra": [
+        "nmap-scripts"
+      ],
+      "description": "Scanner di rete e porte.",
+      "privileged": true
+    },
+    "masscan": {
+      "category": "recon",
+      "method": "apk",
+      "apk": "masscan",
+      "description": "Scanner di porte ad altissima velocita'.",
+      "privileged": true
+    },
+    "hydra": {
+      "category": "bruteforce",
+      "method": "apk",
+      "apk": "hydra",
+      "description": "Brute force login multi-protocollo."
+    },
+    "john": {
+      "category": "password",
+      "method": "apk",
+      "apk": "john",
+      "description": "John the Ripper: cracking hash."
+    },
+    "hashcat": {
+      "category": "password",
+      "method": "apk",
+      "apk": "hashcat",
+      "description": "Cracking hash GPU/CPU."
+    },
+    "sqlmap": {
+      "category": "web",
+      "method": "apk",
+      "apk": "sqlmap",
+      "description": "SQL injection automatico."
+    },
+    "metasploit": {
+      "category": "exploit",
+      "method": "container",
+      "image": "docker.io/metasploitframework/metasploit-framework:latest",
+      "run": "./msfconsole",
+      "net": "host",
+      "description": "Framework di exploit (container Rapid7)."
+    },
+    "netexec": {
+      "category": "exploit",
+      "method": "container",
+      "image": "docker.io/parrotsec/netexec:latest",
+      "bin": "nxc",
+      "net": "host",
+      "description": "CrackMapExec successore (SMB/LDAP/WinRM). Immagine mantenuta da ParrotSec (entrypoint nxc)."
+    },
+    "enum4linux": {
+      "category": "recon",
+      "method": "pip",
+      "pip": "git+https://github.com/cddmp/enum4linux-ng.git",
+      "bin": "enum4linux-ng",
+      "description": "Enumerazione SMB/Windows."
+    },
+    "smbmap": {
+      "category": "recon",
+      "method": "pip",
+      "pip": "smbmap",
+      "description": "Enumerazione share SMB."
+    },
+    "responder": {
+      "category": "sniffing",
+      "method": "apk",
+      "description": "LLMNR/NBT-NS/MDNS poisoner.",
+      "privileged": true,
+      "apk": "responder",
+      "bin": "responder"
+    },
+    "bettercap": {
+      "category": "sniffing",
+      "method": "apk",
+      "apk": "bettercap",
+      "description": "MITM e attacchi di rete.",
+      "privileged": true
+    },
+    "ettercap": {
+      "category": "sniffing",
+      "method": "apk",
+      "apk": "ettercap",
+      "description": "Suite MITM.",
+      "privileged": true
+    },
+    "aircrack-ng": {
+      "category": "wireless",
+      "method": "apk",
+      "apk": "aircrack-ng",
+      "description": "Audit Wi-Fi.",
+      "privileged": true
+    },
+    "sleuthkit": {
+      "category": "forensics",
+      "method": "apk",
+      "apk": "sleuthkit",
+      "description": "The Sleuth Kit: file system forensics.",
+      "bin": "fls"
+    },
+    "autopsy": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "autopsy",
+      "bin": "autopsy",
+      "net": "host",
+      "description": "Front-end forense (via Kali rolling: l'immagine sleuthkit/autopsy non esiste piu')."
+    },
+    "volatility3": {
+      "category": "forensics",
+      "method": "apk",
+      "description": "Analisi memoria RAM (Volatility 3).",
+      "apk": "volatility3",
+      "bin": "vol"
+    },
+    "binwalk": {
+      "category": "forensics",
+      "method": "apk",
+      "apk": "binwalk",
+      "description": "Analisi/carving firmware."
+    },
+    "testdisk": {
+      "category": "forensics",
+      "method": "apk",
+      "apk": "testdisk",
+      "description": "Recupero partizioni/file (con photorec)."
+    },
+    "ddrescue": {
+      "category": "forensics",
+      "method": "apk",
+      "apk": "ddrescue",
+      "description": "Copia/recupero dati da dischi danneggiati."
+    },
+    "exiftool": {
+      "category": "forensics",
+      "method": "apk",
+      "apk": "exiftool",
+      "description": "Lettura/scrittura metadati."
+    },
+    "yara": {
+      "category": "forensics",
+      "method": "apk",
+      "apk": "yara",
+      "description": "Pattern matching malware."
+    },
+    "clamav": {
+      "category": "forensics",
+      "method": "apk",
+      "apk": "clamav-scanner",
+      "description": "Antivirus.",
+      "bin": "clamscan"
+    },
+    "steghide": {
+      "category": "forensics",
+      "method": "apk",
+      "apk": "steghide",
+      "description": "Steganografia."
+    },
+    "theharvester": {
+      "category": "osint",
+      "method": "container",
+      "image": "ghcr.io/laramies/theharvester:latest",
+      "entrypoint": "theHarvester",
+      "net": "host",
+      "description": "Email/sottodomini da fonti pubbliche. Container ufficiale upstream (override entrypoint: l'EP di default e' il server REST)."
+    },
+    "recon-ng": {
+      "category": "osint",
+      "method": "apk",
+      "description": "Framework web recon (OSINT).",
+      "apk": "recon-ng",
+      "bin": "recon-ng"
+    },
+    "spiderfoot": {
+      "category": "osint",
+      "method": "kali",
+      "apt": "spiderfoot",
+      "bin": "spiderfoot",
+      "net": "host",
+      "description": "Automazione OSINT (via Kali rolling: l'immagine spiderfoot/spiderfoot non esiste piu')."
+    },
+    "sherlock": {
+      "category": "osint",
+      "method": "container",
+      "image": "docker.io/sherlock/sherlock:latest",
+      "description": "Username su social (container)."
+    },
+    "dnsrecon": {
+      "category": "osint",
+      "method": "apk",
+      "apk": "dnsrecon",
+      "description": "Enumerazione DNS."
+    },
+    "amass": {
+      "category": "osint",
+      "method": "container",
+      "image": "docker.io/caffix/amass:latest",
+      "net": "host",
+      "description": "Mappatura attack surface / sottodomini."
+    },
+    "subfinder": {
+      "category": "osint",
+      "method": "container",
+      "image": "docker.io/projectdiscovery/subfinder:latest",
+      "net": "host",
+      "description": "Scoperta sottodomini passiva."
+    },
+    "whois": {
+      "category": "osint",
+      "method": "apk",
+      "apk": "whois",
+      "description": "Interrogazione WHOIS."
+    },
+    "holehe": {
+      "category": "osint",
+      "method": "pip",
+      "pip": "holehe",
+      "description": "Account associati a una email."
+    },
+    "shodan": {
+      "category": "osint",
+      "method": "apk",
+      "description": "CLI Shodan.",
+      "apk": "py3-shodan",
+      "bin": "shodan"
+    },
+    "metagoofil": {
+      "category": "osint",
+      "method": "git",
+      "git": "https://github.com/opsdisk/metagoofil.git",
+      "entry": "metagoofil.py",
+      "bin": "metagoofil",
+      "description": "Estrazione metadati da documenti pubblici (script: clone + venv dedicato)."
+    },
+    "nikto": {
+      "category": "web",
+      "method": "apk",
+      "apk": "nikto",
+      "description": "Scanner vulnerabilita' web server.",
+      "bin": "nikto.pl"
+    },
+    "wpscan": {
+      "category": "web",
+      "method": "container",
+      "image": "docker.io/wpscanteam/wpscan:latest",
+      "description": "Scanner WordPress (container)."
+    },
+    "zaproxy": {
+      "category": "web",
+      "method": "apk",
+      "description": "OWASP ZAP - scanner sicurezza web.",
+      "apk": "zaproxy",
+      "bin": "zaproxy"
+    },
+    "burpsuite": {
+      "category": "web",
+      "method": "kali",
+      "apt": "burpsuite",
+      "bin": "burpsuite",
+      "net": "host",
+      "description": "Burp Suite Community (via Kali rolling: nessuna immagine OCI ufficiale)."
+    },
+    "gobuster": {
+      "category": "web",
+      "method": "apk",
+      "apk": "gobuster",
+      "description": "Brute force dir/dns/vhost."
+    },
+    "ffuf": {
+      "category": "web",
+      "method": "apk",
+      "apk": "ffuf",
+      "description": "Fuzzer web veloce."
+    },
+    "wafw00f": {
+      "category": "web",
+      "method": "pip",
+      "pip": "wafw00f",
+      "description": "Rileva i WAF."
+    },
+    "sslscan": {
+      "category": "web",
+      "method": "apk",
+      "apk": "sslscan",
+      "description": "Analisi configurazione SSL/TLS."
+    },
+    "nuclei": {
+      "category": "web",
+      "method": "apk",
+      "apk": "nuclei",
+      "description": "Scanner basato su template."
+    },
+    "commix": {
+      "category": "web",
+      "method": "pip",
+      "pip": "commix",
+      "description": "Command injection exploiter."
+    },
+    "dalfox": {
+      "category": "web",
+      "method": "container",
+      "image": "ghcr.io/hahwul/dalfox:latest",
+      "net": "host",
+      "run": "./dalfox",
+      "description": "Scanner XSS."
+    },
+    "dmitry": {
+      "category": "osint",
+      "method": "apk",
+      "apk": "dmitry",
+      "description": "Deepmagic info gathering (whois/porte/sub)."
+    },
+    "foremost": {
+      "category": "forensics",
+      "method": "apk",
+      "apk": "foremost",
+      "description": "File carving per signature."
+    },
+    "medusa": {
+      "category": "bruteforce",
+      "method": "apk",
+      "apk": "medusa",
+      "description": "Brute-forcer login paralleli."
+    },
+    "chkrootkit": {
+      "category": "forensics",
+      "method": "apk",
+      "apk": "chkrootkit",
+      "description": "Rilevazione rootkit (locale)."
+    },
+    "rkhunter": {
+      "category": "forensics",
+      "method": "apk",
+      "apk": "rkhunter",
+      "description": "Rootkit Hunter (scansione integrita')."
+    },
+    "bulk-extractor": {
+      "category": "forensics",
+      "method": "apk",
+      "apk": "bulk-extractor",
+      "description": "Estrazione feature (email/URL/cc) da immagini.",
+      "bin": "bulk_extractor"
+    },
+    "stegseek": {
+      "category": "forensics",
+      "method": "container",
+      "image": "docker.io/rickdejager/stegseek:latest",
+      "bin": "stegseek",
+      "description": "Crack steghide ultra-veloce (container: mhash assente in Alpine)."
+    },
+    "feroxbuster": {
+      "category": "web",
+      "method": "kali",
+      "apt": "feroxbuster",
+      "bin": "feroxbuster",
+      "net": "host",
+      "description": "Brute-force contenuti web (Rust, ricorsivo) via Kali rolling: l'immagine ghcr epi052 non esiste piu'."
+    },
+    "whatweb": {
+      "category": "web",
+      "method": "container",
+      "image": "docker.io/secsi/whatweb:latest",
+      "net": "host",
+      "description": "Fingerprinting tecnologie web."
+    },
+    "wifite": {
+      "category": "wireless",
+      "method": "pip",
+      "pip": "git+https://github.com/derv82/wifite2.git",
+      "bin": "wifite",
+      "description": "Automazione attacchi wireless (WEP/WPA/WPS).",
+      "privileged": true
+    },
+    "wireshark": {
+      "category": "sniffing",
+      "method": "apk",
+      "apk": "wireshark",
+      "bin": "wireshark",
+      "description": "Analizzatore di protocolli di rete (GUI)."
+    },
+    "tshark": {
+      "category": "sniffing",
+      "method": "apk",
+      "apk": "tshark",
+      "bin": "tshark",
+      "description": "Wireshark da riga di comando."
+    },
+    "tcpdump": {
+      "category": "sniffing",
+      "method": "apk",
+      "apk": "tcpdump",
+      "bin": "tcpdump",
+      "description": "Cattura pacchetti da CLI."
+    },
+    "arp-scan": {
+      "category": "recon",
+      "method": "apk",
+      "apk": "arp-scan",
+      "description": "Discovery host su LAN via ARP.",
+      "privileged": true
+    },
+    "fping": {
+      "category": "recon",
+      "method": "apk",
+      "apk": "fping",
+      "description": "Ping parallelo di molti host/range."
+    },
+    "hping3": {
+      "category": "recon",
+      "method": "apk",
+      "apk": "hping3",
+      "description": "Generatore/analizzatore pacchetti TCP/IP.",
+      "privileged": true
+    },
+    "netdiscover": {
+      "category": "recon",
+      "method": "apk",
+      "apk": "netdiscover",
+      "description": "Discovery host ARP attivo/passivo.",
+      "privileged": true
+    },
+    "nbtscan": {
+      "category": "recon",
+      "method": "apk",
+      "apk": "nbtscan",
+      "description": "Scanner nomi NetBIOS."
+    },
+    "naabu": {
+      "category": "recon",
+      "method": "apk",
+      "apk": "naabu",
+      "description": "Port scanner veloce (ProjectDiscovery)."
+    },
+    "snmpwalk": {
+      "category": "recon",
+      "method": "apk",
+      "apk": "net-snmp-tools",
+      "bin": "snmpwalk",
+      "description": "Interrogazione/enumerazione SNMP."
+    },
+    "onesixtyone": {
+      "category": "recon",
+      "method": "kali",
+      "apt": "onesixtyone",
+      "bin": "onesixtyone",
+      "net": "host",
+      "description": "Brute-force community string SNMP (via Kali rolling)."
+    },
+    "sipvicious": {
+      "category": "recon",
+      "method": "kali",
+      "apt": "sipvicious",
+      "bin": "svmap",
+      "net": "host",
+      "description": "Audit di sistemi SIP/VoIP (via Kali rolling)."
+    },
+    "macchanger": {
+      "category": "anonymity",
+      "method": "apk",
+      "apk": "macchanger",
+      "description": "Cambia l'indirizzo MAC dell'interfaccia.",
+      "privileged": true
+    },
+    "proxychains-ng": {
+      "category": "anonymity",
+      "method": "apk",
+      "apk": "proxychains-ng",
+      "bin": "proxychains4",
+      "description": "Instrada connessioni TCP via proxy/Tor."
+    },
+    "tor": {
+      "category": "anonymity",
+      "method": "apk",
+      "apk": "tor",
+      "bin": "tor",
+      "description": "Rete di anonimizzazione (onion routing)."
+    },
+    "torsocks": {
+      "category": "anonymity",
+      "method": "apk",
+      "apk": "torsocks",
+      "description": "Fa passare un'applicazione attraverso Tor."
+    },
+    "socat": {
+      "category": "pivoting",
+      "method": "apk",
+      "apk": "socat",
+      "description": "Relay bidirezionale multiprotocollo (tunnel/pivot)."
+    },
+    "netcat": {
+      "category": "pivoting",
+      "method": "apk",
+      "apk": "netcat-openbsd",
+      "bin": "nc",
+      "description": "Coltellino svizzero TCP/UDP (bind/reverse shell)."
+    },
+    "ncat": {
+      "category": "pivoting",
+      "method": "apk",
+      "apk": "nmap-ncat",
+      "bin": "ncat",
+      "description": "Netcat di Nmap (con TLS/proxy)."
+    },
+    "ngrep": {
+      "category": "sniffing",
+      "method": "apk",
+      "apk": "ngrep",
+      "description": "grep sul traffico di rete.",
+      "privileged": true
+    },
+    "mitmproxy": {
+      "category": "sniffing",
+      "method": "apk",
+      "apk": "mitmproxy",
+      "bin": "mitmproxy",
+      "description": "Proxy HTTP/HTTPS interattivo (MITM)."
+    },
+    "dsniff": {
+      "category": "sniffing",
+      "method": "kali",
+      "apt": "dsniff",
+      "bin": "dsniff",
+      "net": "host",
+      "privileged": true,
+      "description": "Suite sniffing password/credenziali (via Kali rolling)."
+    },
+    "driftnet": {
+      "category": "sniffing",
+      "method": "kali",
+      "apt": "driftnet",
+      "bin": "driftnet",
+      "net": "host",
+      "privileged": true,
+      "description": "Estrae immagini dal traffico di rete (via Kali rolling)."
+    },
+    "netsniff-ng": {
+      "category": "sniffing",
+      "method": "kali",
+      "apt": "netsniff-ng",
+      "bin": "netsniff-ng",
+      "net": "host",
+      "privileged": true,
+      "description": "Toolkit sniffing/networking zero-copy (via Kali rolling)."
+    },
+    "sslsplit": {
+      "category": "sniffing",
+      "method": "kali",
+      "apt": "sslsplit",
+      "bin": "sslsplit",
+      "net": "host",
+      "privileged": true,
+      "description": "MITM trasparente su SSL/TLS (via Kali rolling)."
+    },
+    "dnschef": {
+      "category": "sniffing",
+      "method": "kali",
+      "apt": "dnschef",
+      "bin": "dnschef",
+      "net": "host",
+      "description": "Proxy DNS per MITM/redirect (via Kali rolling)."
+    },
+    "radare2": {
+      "category": "reverse",
+      "method": "apk",
+      "apk": "radare2",
+      "bin": "r2",
+      "description": "Framework di reverse engineering."
+    },
+    "gdb": {
+      "category": "reverse",
+      "method": "apk",
+      "apk": "gdb",
+      "description": "Debugger GNU."
+    },
+    "ltrace": {
+      "category": "reverse",
+      "method": "apk",
+      "apk": "ltrace",
+      "description": "Traccia chiamate di libreria."
+    },
+    "strace": {
+      "category": "reverse",
+      "method": "apk",
+      "apk": "strace",
+      "description": "Traccia le system call."
+    },
+    "binutils": {
+      "category": "reverse",
+      "method": "apk",
+      "apk": "binutils",
+      "bin": "objdump",
+      "description": "objdump/readelf/nm: analisi binari."
+    },
+    "ghidra": {
+      "category": "reverse",
+      "method": "apk",
+      "apk": "ghidra",
+      "bin": "ghidra",
+      "description": "Suite di reverse engineering (NSA)."
+    },
+    "jadx": {
+      "category": "reverse",
+      "method": "apk",
+      "apk": "jadx",
+      "bin": "jadx",
+      "description": "Decompilatore Dalvik/APK -> Java."
+    },
+    "pev": {
+      "category": "reverse",
+      "method": "apk",
+      "apk": "pev",
+      "bin": "readpe",
+      "description": "Toolkit di analisi di eseguibili PE."
+    },
+    "apktool": {
+      "category": "reverse",
+      "method": "kali",
+      "apt": "apktool",
+      "bin": "apktool",
+      "description": "Reverse/rebuild di APK Android (via Kali rolling)."
+    },
+    "crunch": {
+      "category": "password",
+      "method": "kali",
+      "apt": "crunch",
+      "bin": "crunch",
+      "description": "Generatore di wordlist (via Kali rolling)."
+    },
+    "cewl": {
+      "category": "password",
+      "method": "kali",
+      "apt": "cewl",
+      "bin": "cewl",
+      "net": "host",
+      "description": "Wordlist dai contenuti di un sito (via Kali rolling)."
+    },
+    "hashid": {
+      "category": "password",
+      "method": "kali",
+      "apt": "hashid",
+      "bin": "hashid",
+      "description": "Identifica il tipo di hash (via Kali rolling)."
+    },
+    "fcrackzip": {
+      "category": "password",
+      "method": "kali",
+      "apt": "fcrackzip",
+      "bin": "fcrackzip",
+      "description": "Crack di ZIP protetti (via Kali rolling)."
+    },
+    "pdfcrack": {
+      "category": "password",
+      "method": "apk",
+      "apk": "pdfcrack",
+      "description": "Recupero password di PDF."
+    },
+    "ophcrack": {
+      "category": "password",
+      "method": "kali",
+      "apt": "ophcrack-cli",
+      "bin": "ophcrack-cli",
+      "description": "Crack password Windows con rainbow table (via Kali rolling)."
+    },
+    "ncrack": {
+      "category": "bruteforce",
+      "method": "kali",
+      "apt": "ncrack",
+      "bin": "ncrack",
+      "net": "host",
+      "description": "Brute-force di autenticazioni di rete (via Kali rolling)."
+    },
+    "patator": {
+      "category": "bruteforce",
+      "method": "kali",
+      "apt": "patator",
+      "bin": "patator",
+      "net": "host",
+      "description": "Brute-forcer modulare multi-servizio (via Kali rolling)."
+    },
+    "crowbar": {
+      "category": "bruteforce",
+      "method": "kali",
+      "apt": "crowbar",
+      "bin": "crowbar",
+      "net": "host",
+      "description": "Brute-force per RDP/SSH/OpenVPN (via Kali rolling)."
+    },
+    "lynis": {
+      "category": "vuln",
+      "method": "apk",
+      "apk": "lynis",
+      "bin": "lynis",
+      "description": "Audit di hardening/sicurezza del sistema."
+    },
+    "wapiti": {
+      "category": "web",
+      "method": "kali",
+      "apt": "wapiti",
+      "bin": "wapiti",
+      "net": "host",
+      "description": "Scanner di vulnerabilita' web black-box (via Kali rolling)."
+    },
+    "joomscan": {
+      "category": "web",
+      "method": "kali",
+      "apt": "joomscan",
+      "bin": "joomscan",
+      "net": "host",
+      "description": "Scanner di vulnerabilita' Joomla (via Kali rolling)."
+    },
+    "httrack": {
+      "category": "web",
+      "method": "apk",
+      "apk": "httrack",
+      "bin": "httrack",
+      "description": "Copia offline di interi siti web."
+    },
+    "exploitdb": {
+      "category": "exploit",
+      "method": "kali",
+      "apt": "exploitdb",
+      "bin": "searchsploit",
+      "description": "Exploit-DB + searchsploit (ricerca exploit offline, via Kali rolling)."
+    },
+    "set": {
+      "category": "exploit",
+      "method": "kali",
+      "apt": "set",
+      "bin": "setoolkit",
+      "net": "host",
+      "description": "Social-Engineer Toolkit (via Kali rolling)."
+    },
+    "beef-xss": {
+      "category": "exploit",
+      "method": "kali",
+      "apt": "beef-xss",
+      "bin": "beef-xss",
+      "net": "host",
+      "description": "Framework di exploitation del browser (via Kali rolling)."
+    },
+    "routersploit": {
+      "category": "exploit",
+      "method": "kali",
+      "apt": "routersploit",
+      "bin": "routersploit",
+      "net": "host",
+      "description": "Framework di exploit per dispositivi embedded/router (via Kali rolling)."
+    },
+    "weevely": {
+      "category": "web",
+      "method": "kali",
+      "apt": "weevely",
+      "bin": "weevely",
+      "net": "host",
+      "description": "Web shell PHP stealth + gestione (via Kali rolling)."
+    },
+    "impacket": {
+      "category": "exploit",
+      "method": "kali",
+      "apt": "impacket-scripts",
+      "bin": "impacket-secretsdump",
+      "net": "host",
+      "description": "Script Impacket (secretsdump/psexec/... via Kali rolling)."
+    },
+    "evil-winrm": {
+      "category": "exploit",
+      "method": "container",
+      "image": "docker.io/parrotsec/evil-winrm:latest",
+      "bin": "evil-winrm",
+      "net": "host",
+      "description": "Shell WinRM per Windows (immagine mantenuta da ParrotSec)."
+    },
+    "bloodhound-python": {
+      "category": "exploit",
+      "method": "pip",
+      "pip": "bloodhound",
+      "bin": "bloodhound-python",
+      "description": "Ingestor Python di BloodHound (raccolta dati Active Directory)."
+    },
+    "reaver": {
+      "category": "wireless",
+      "method": "kali",
+      "apt": "reaver",
+      "bin": "reaver",
+      "net": "host",
+      "privileged": true,
+      "description": "Attacco WPS su router Wi-Fi (via Kali rolling)."
+    },
+    "pixiewps": {
+      "category": "wireless",
+      "method": "apk",
+      "apk": "pixiewps",
+      "bin": "pixiewps",
+      "privileged": true,
+      "description": "Attacco WPS offline (Pixie Dust)."
+    },
+    "cowpatty": {
+      "category": "wireless",
+      "method": "kali",
+      "apt": "cowpatty",
+      "bin": "cowpatty",
+      "description": "Crack di PSK WPA/WPA2 (via Kali rolling)."
+    },
+    "mdk4": {
+      "category": "wireless",
+      "method": "kali",
+      "apt": "mdk4",
+      "bin": "mdk4",
+      "net": "host",
+      "privileged": true,
+      "description": "Stress/attacco su reti Wi-Fi 802.11 (via Kali rolling)."
+    },
+    "kismet": {
+      "category": "wireless",
+      "method": "apk",
+      "apk": "kismet",
+      "bin": "kismet",
+      "privileged": true,
+      "description": "Rilevatore/sniffer di reti wireless."
+    },
+    "wifiphisher": {
+      "category": "wireless",
+      "method": "kali",
+      "apt": "wifiphisher",
+      "bin": "wifiphisher",
+      "net": "host",
+      "privileged": true,
+      "description": "Attacchi di phishing/rogue-AP su Wi-Fi (via Kali rolling)."
+    },
+    "extundelete": {
+      "category": "forensics",
+      "method": "apk",
+      "apk": "extundelete",
+      "bin": "extundelete",
+      "description": "Recupero file cancellati da ext3/ext4."
+    },
+    "hexedit": {
+      "category": "forensics",
+      "method": "apk",
+      "apk": "hexedit",
+      "bin": "hexedit",
+      "description": "Editor esadecimale da terminale."
+    },
+    "ghex": {
+      "category": "forensics",
+      "method": "apk",
+      "apk": "ghex",
+      "bin": "ghex",
+      "description": "Editor esadecimale grafico (GTK)."
+    },
+    "dcfldd": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "dcfldd",
+      "bin": "dcfldd",
+      "description": "dd forense con hashing on-the-fly (via Kali rolling)."
+    },
+    "dc3dd": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "dc3dd",
+      "bin": "dc3dd",
+      "description": "dd forense patchato (DC3) con log/hash (via Kali rolling)."
+    },
+    "guymager": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "guymager",
+      "bin": "guymager",
+      "description": "Imager forense grafico (via Kali rolling)."
+    },
+    "autorecon": {
+      "category": "recon",
+      "method": "pip",
+      "pip": "autorecon",
+      "bin": "autorecon",
+      "description": "Ricognizione multi-thread automatica (orchestratore)."
+    },
+    "flare-floss": {
+      "category": "reverse",
+      "method": "pip",
+      "pip": "flare-floss",
+      "bin": "floss",
+      "description": "Estrazione stringhe offuscate da malware (FLARE FLOSS)."
+    },
+    "cherrytree": {
+      "category": "reporting",
+      "method": "apk",
+      "apk": "cherrytree",
+      "bin": "cherrytree",
+      "description": "Note gerarchiche per report/appunti di pentest."
+    },
+    "dnsenum": {
+      "category": "osint",
+      "method": "kali",
+      "apt": "dnsenum",
+      "description": "Enumerazione DNS e sottodomini completa.",
+      "net": "host"
+    },
+    "dnsmap": {
+      "category": "osint",
+      "method": "kali",
+      "apt": "dnsmap",
+      "description": "Brute force di sottodomini via DNS.",
+      "net": "host"
+    },
+    "dnstracer": {
+      "category": "osint",
+      "method": "kali",
+      "apt": "dnstracer",
+      "description": "Traccia la catena di server DNS per un host.",
+      "net": "host"
+    },
+    "fierce": {
+      "category": "osint",
+      "method": "kali",
+      "apt": "fierce",
+      "description": "Ricognizione DNS: individua IP e host non contigui.",
+      "net": "host"
+    },
+    "smtp-user-enum": {
+      "category": "osint",
+      "method": "kali",
+      "apt": "smtp-user-enum",
+      "description": "Enumerazione utenti via SMTP (VRFY/EXPN/RCPT).",
+      "net": "host"
+    },
+    "snmp-check": {
+      "category": "osint",
+      "method": "kali",
+      "apt": "snmpcheck",
+      "description": "Enumerazione dispositivi via SNMP.",
+      "net": "host",
+      "bin": "snmp-check"
+    },
+    "swaks": {
+      "category": "osint",
+      "method": "kali",
+      "apt": "swaks",
+      "description": "Coltellino svizzero per testare server SMTP.",
+      "net": "host"
+    },
+    "twofi": {
+      "category": "osint",
+      "method": "kali",
+      "apt": "twofi",
+      "description": "Genera wordlist dai profili social.",
+      "net": "host"
+    },
+    "netmask": {
+      "category": "osint",
+      "method": "kali",
+      "apt": "netmask",
+      "description": "Calcolo e conversione di netmask e range IP."
+    },
+    "braa": {
+      "category": "recon",
+      "method": "kali",
+      "apt": "braa",
+      "description": "Query SNMP di massa ad alta velocita.",
+      "net": "host"
+    },
+    "ike-scan": {
+      "category": "recon",
+      "method": "kali",
+      "apt": "ike-scan",
+      "description": "Discovery e fingerprint di VPN IPsec/IKE.",
+      "net": "host",
+      "privileged": true
+    },
+    "p0f": {
+      "category": "recon",
+      "method": "kali",
+      "apt": "p0f",
+      "description": "Fingerprint passivo dei sistemi operativi.",
+      "net": "host",
+      "privileged": true
+    },
+    "unicornscan": {
+      "category": "recon",
+      "method": "kali",
+      "apt": "unicornscan",
+      "description": "Scanner di rete asincrono ad alte prestazioni.",
+      "net": "host",
+      "privileged": true
+    },
+    "thc-ipv6": {
+      "category": "recon",
+      "method": "kali",
+      "apt": "thc-ipv6",
+      "description": "Toolkit di attacco/test per IPv6.",
+      "net": "host",
+      "bin": "atk6-alive6",
+      "privileged": true
+    },
+    "wfuzz": {
+      "category": "web",
+      "method": "kali",
+      "apt": "wfuzz",
+      "description": "Fuzzer web per parametri e percorsi.",
+      "net": "host"
+    },
+    "skipfish": {
+      "category": "web",
+      "method": "kali",
+      "apt": "skipfish",
+      "description": "Scanner di sicurezza web attivo e veloce.",
+      "net": "host"
+    },
+    "cadaver": {
+      "category": "web",
+      "method": "kali",
+      "apt": "cadaver",
+      "description": "Client WebDAV a riga di comando.",
+      "net": "host"
+    },
+    "davtest": {
+      "category": "web",
+      "method": "kali",
+      "apt": "davtest",
+      "description": "Testa upload ed esecuzione su server WebDAV.",
+      "net": "host"
+    },
+    "dotdotpwn": {
+      "category": "web",
+      "method": "kali",
+      "apt": "dotdotpwn",
+      "description": "Fuzzer per vulnerabilita di path traversal.",
+      "net": "host"
+    },
+    "uniscan": {
+      "category": "web",
+      "method": "kali",
+      "apt": "uniscan",
+      "description": "Scanner vulnerabilita web (RFI/LFI/RCE).",
+      "net": "host"
+    },
+    "xsser": {
+      "category": "web",
+      "method": "kali",
+      "apt": "xsser",
+      "description": "Framework per rilevare e sfruttare XSS.",
+      "net": "host"
+    },
+    "padbuster": {
+      "category": "web",
+      "method": "kali",
+      "apt": "padbuster",
+      "description": "Attacco di padding oracle.",
+      "net": "host"
+    },
+    "sslyze": {
+      "category": "web",
+      "method": "kali",
+      "apt": "sslyze",
+      "description": "Analisi approfondita della configurazione SSL/TLS.",
+      "net": "host"
+    },
+    "tlssled": {
+      "category": "web",
+      "method": "kali",
+      "apt": "tlssled",
+      "description": "Valutazione della sicurezza di endpoint SSL/TLS.",
+      "net": "host"
+    },
+    "slowhttptest": {
+      "category": "web",
+      "method": "kali",
+      "apt": "slowhttptest",
+      "description": "Test di DoS applicativi lenti (Slowloris).",
+      "net": "host"
+    },
+    "hakrawler": {
+      "category": "web",
+      "method": "kali",
+      "apt": "hakrawler",
+      "description": "Crawler veloce per raccogliere URL ed endpoint.",
+      "net": "host"
+    },
+    "proxytunnel": {
+      "category": "web",
+      "method": "kali",
+      "apt": "proxytunnel",
+      "description": "Tunnel TCP attraverso proxy HTTPS.",
+      "net": "host"
+    },
+    "cutycapt": {
+      "category": "web",
+      "method": "kali",
+      "apt": "cutycapt",
+      "description": "Screenshot di pagine web da riga di comando.",
+      "net": "host"
+    },
+    "hash-identifier": {
+      "category": "password",
+      "method": "kali",
+      "apt": "hash-identifier",
+      "description": "Identifica il tipo di hash."
+    },
+    "chntpw": {
+      "category": "password",
+      "method": "kali",
+      "apt": "chntpw",
+      "description": "Reset/modifica password Windows (hive SAM)."
+    },
+    "samdump2": {
+      "category": "password",
+      "method": "kali",
+      "apt": "samdump2",
+      "description": "Estrae hash dal file SAM di Windows."
+    },
+    "rsmangler": {
+      "category": "password",
+      "method": "kali",
+      "apt": "rsmangler",
+      "description": "Espande e manipola wordlist con regole."
+    },
+    "truecrack": {
+      "category": "password",
+      "method": "kali",
+      "apt": "truecrack",
+      "description": "Brute force di volumi TrueCrypt."
+    },
+    "rarcrack": {
+      "category": "password",
+      "method": "kali",
+      "apt": "rarcrack",
+      "description": "Brute force di archivi rar/zip/7z."
+    },
+    "pipal": {
+      "category": "password",
+      "method": "kali",
+      "apt": "pipal",
+      "description": "Analisi statistica di password craccate."
+    },
+    "thc-pptp-bruter": {
+      "category": "password",
+      "method": "kali",
+      "apt": "thc-pptp-bruter",
+      "description": "Brute force su VPN PPTP.",
+      "net": "host"
+    },
+    "seclists": {
+      "category": "password",
+      "method": "kali",
+      "apt": "seclists",
+      "description": "Raccolta di wordlist e payload (SecLists in /usr/share).",
+      "bin": "seclists"
+    },
+    "rfkill": {
+      "category": "wireless",
+      "method": "kali",
+      "apt": "rfkill",
+      "description": "Abilita/disabilita i dispositivi wireless.",
+      "net": "host",
+      "privileged": true
+    },
+    "crackle": {
+      "category": "wireless",
+      "method": "kali",
+      "apt": "crackle",
+      "description": "Crack di chiavi Bluetooth LE."
+    },
+    "tcpflow": {
+      "category": "sniffing",
+      "method": "kali",
+      "apt": "tcpflow",
+      "description": "Cattura e ricostruisce i flussi TCP.",
+      "net": "host",
+      "privileged": true
+    },
+    "tcpreplay": {
+      "category": "sniffing",
+      "method": "kali",
+      "apt": "tcpreplay",
+      "description": "Rigenera traffico da file pcap.",
+      "net": "host",
+      "privileged": true
+    },
+    "darkstat": {
+      "category": "sniffing",
+      "method": "kali",
+      "apt": "darkstat",
+      "description": "Statistiche del traffico di rete via web.",
+      "net": "host",
+      "privileged": true
+    },
+    "hexinject": {
+      "category": "sniffing",
+      "method": "kali",
+      "apt": "hexinject",
+      "description": "Iniettore/sniffer di pacchetti raw.",
+      "net": "host",
+      "privileged": true
+    },
+    "veil": {
+      "category": "exploit",
+      "method": "kali",
+      "apt": "veil",
+      "description": "Genera payload che evadono gli antivirus.",
+      "net": "host"
+    },
+    "powersploit": {
+      "category": "exploit",
+      "method": "kali",
+      "apt": "powersploit",
+      "description": "Framework PowerShell di post-exploitation (in /usr/share).",
+      "bin": "powersploit"
+    },
+    "nishang": {
+      "category": "exploit",
+      "method": "kali",
+      "apt": "nishang",
+      "description": "Script PowerShell offensivi (in /usr/share).",
+      "bin": "nishang"
+    },
+    "dns2tcp": {
+      "category": "pivoting",
+      "method": "kali",
+      "apt": "dns2tcp",
+      "description": "Tunnel TCP incapsulato nel DNS.",
+      "net": "host",
+      "bin": "dns2tcpc"
+    },
+    "iodine": {
+      "category": "pivoting",
+      "method": "kali",
+      "apt": "iodine",
+      "description": "Tunnel IP su DNS.",
+      "net": "host",
+      "privileged": true
+    },
+    "ptunnel": {
+      "category": "pivoting",
+      "method": "kali",
+      "apt": "ptunnel",
+      "description": "Tunnel TCP su ICMP.",
+      "net": "host",
+      "privileged": true
+    },
+    "udptunnel": {
+      "category": "pivoting",
+      "method": "kali",
+      "apt": "udptunnel",
+      "description": "Tunnel TCP su UDP.",
+      "net": "host"
+    },
+    "rizin": {
+      "category": "reverse",
+      "method": "kali",
+      "apt": "rizin",
+      "description": "Framework di reverse engineering (fork di radare2)."
+    },
+    "dex2jar": {
+      "category": "reverse",
+      "method": "kali",
+      "apt": "dex2jar",
+      "description": "Converte .dex Android in .jar.",
+      "bin": "d2j-dex2jar"
+    },
+    "upx": {
+      "category": "reverse",
+      "method": "kali",
+      "apt": "upx-ucl",
+      "description": "Compressore/decompressore di eseguibili (UPX).",
+      "bin": "upx-ucl"
+    },
+    "ewf-tools": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "ewf-tools",
+      "description": "Acquisizione immagini forensi E01/EWF.",
+      "bin": "ewfacquire"
+    },
+    "afflib-tools": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "afflib-tools",
+      "description": "Strumenti per il formato forense AFF.",
+      "bin": "affinfo"
+    },
+    "ssdeep": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "ssdeep",
+      "description": "Hash fuzzy per similarita tra file."
+    },
+    "hashdeep": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "hashdeep",
+      "description": "Hashing ricorsivo e audit di integrita."
+    },
+    "scalpel": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "scalpel",
+      "description": "File carving basato su header/footer."
+    },
+    "pdf-parser": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "pdf-parser",
+      "description": "Analisi di file PDF sospetti."
+    },
+    "pdfid": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "pdfid",
+      "description": "Triage rapido degli elementi di un PDF."
+    },
+    "pasco": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "pasco",
+      "description": "Analisi della cronologia di Internet Explorer."
+    },
+    "rifiuti2": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "rifiuti2",
+      "description": "Analisi del Cestino di Windows.",
+      "bin": "rifiuti-vista"
+    },
+    "regripper": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "regripper",
+      "description": "Estrae informazioni dal registro di Windows.",
+      "bin": "regripper"
+    },
+    "ext4magic": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "ext4magic",
+      "description": "Recupero file cancellati da ext3/ext4."
+    },
+    "safecopy": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "safecopy",
+      "description": "Copia dati da supporti danneggiati."
+    },
+    "recoverjpeg": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "recoverjpeg",
+      "description": "Recupero di immagini JPEG cancellate."
+    },
+    "magicrescue": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "magicrescue",
+      "description": "Recupero file per tipo tramite magic bytes."
+    },
+    "unhide": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "unhide",
+      "description": "Rileva processi e porte nascosti dai rootkit.",
+      "privileged": true
+    },
+    "exiv2": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "exiv2",
+      "description": "Gestione dei metadati delle immagini."
+    },
+    "cabextract": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "cabextract",
+      "description": "Estrazione di archivi Microsoft CAB."
+    },
+    "urlcrazy": {
+      "category": "osint",
+      "method": "kali",
+      "apt": "urlcrazy",
+      "net": "host",
+      "description": "Genera e testa domini typo-squatting."
+    },
+    "shellter": {
+      "category": "exploit",
+      "method": "kali",
+      "apt": "shellter",
+      "description": "Iniettore dinamico di shellcode in PE Windows."
+    },
+    "0trace": {
+      "category": "recon",
+      "method": "kali",
+      "apt": "0trace",
+      "description": "traceroute tool that can run within an existing TCP connection",
+      "net": "host",
+      "bin": "0trace.sh"
+    },
+    "7zip": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "7zip",
+      "description": "7-Zip file archiver with a high compression ratio",
+      "bin": "p7zip"
+    },
+    "above": {
+      "category": "sniffing",
+      "method": "kali",
+      "apt": "above",
+      "description": "Network security sniffer for finding vulnerabilities in the network",
+      "net": "host"
+    },
+    "aesfix": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "aesfix",
+      "description": "tool for correcting bit errors in an AES key schedule"
+    },
+    "aeskeyfind": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "aeskeyfind",
+      "description": "tool for locating AES keys in a captured memory image"
+    },
+    "afl++": {
+      "category": "vuln",
+      "method": "kali",
+      "apt": "afl++",
+      "description": "instrumentation-driven fuzzer for binary formats",
+      "net": "host",
+      "bin": "afl-cc"
+    },
+    "airgeddon": {
+      "category": "wireless",
+      "method": "kali",
+      "apt": "airgeddon",
+      "description": "multi-use bash script for Linux systems to audit wireless networks",
+      "net": "host"
+    },
+    "apache-users": {
+      "category": "web",
+      "method": "kali",
+      "apt": "apache-users",
+      "description": "Enumerate usernames on systems with Apache UserDir module",
+      "net": "host"
+    },
+    "armitage": {
+      "category": "exploit",
+      "method": "kali",
+      "apt": "armitage",
+      "description": "Cyber attack management for Metasploit",
+      "net": "host"
+    },
+    "arping": {
+      "category": "recon",
+      "method": "kali",
+      "apt": "arping",
+      "description": "sends IP and/or ARP pings (to the MAC address)",
+      "net": "host"
+    },
+    "asleap": {
+      "category": "wireless",
+      "method": "kali",
+      "apt": "asleap",
+      "description": "A tool for exploiting Cisco LEAP networks",
+      "net": "host"
+    },
+    "bed": {
+      "category": "vuln",
+      "method": "kali",
+      "apt": "bed",
+      "description": "A network protocol fuzzer",
+      "net": "host"
+    },
+    "binwalk3": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "binwalk3",
+      "description": "tool library for analyzing binary blobs and executable code"
+    },
+    "blue-hydra": {
+      "category": "wireless",
+      "method": "kali",
+      "apt": "blue-hydra",
+      "description": "Bluetooth device discovery service",
+      "net": "host",
+      "bin": "blue_hydra"
+    },
+    "bluelog": {
+      "category": "wireless",
+      "method": "kali",
+      "apt": "bluelog",
+      "description": "Bluetooth scanner and logger",
+      "net": "host"
+    },
+    "blueranger": {
+      "category": "wireless",
+      "method": "kali",
+      "apt": "blueranger",
+      "description": "Simple Bash script to locate Bluetooth devices",
+      "net": "host"
+    },
+    "bluesnarfer": {
+      "category": "wireless",
+      "method": "kali",
+      "apt": "bluesnarfer",
+      "description": "Bluesnarfing utility",
+      "net": "host"
+    },
+    "btscanner": {
+      "category": "wireless",
+      "method": "kali",
+      "apt": "btscanner",
+      "description": "ncurses-based scanner for Bluetooth devices",
+      "net": "host"
+    },
+    "bully": {
+      "category": "wireless",
+      "method": "kali",
+      "apt": "bully",
+      "description": "Implementation of the WPS brute force attack, written in C",
+      "net": "host"
+    },
+    "bytecode-viewer": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "bytecode-viewer",
+      "description": "Java 8+ Jar & Android APK Reverse Engineering Suite"
+    },
+    "ccrypt": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "ccrypt",
+      "description": "secure encryption and decryption of files and streams"
+    },
+    "chirp": {
+      "category": "wireless",
+      "method": "kali",
+      "apt": "chirp",
+      "description": "Configuration tool for amateur radios",
+      "net": "host",
+      "bin": "chirpc"
+    },
+    "cisco-auditing-tool": {
+      "category": "password",
+      "method": "kali",
+      "apt": "cisco-auditing-tool",
+      "description": "Scans Cisco routers for vulnerabilities",
+      "bin": "CAT"
+    },
+    "cisco-global-exploiter": {
+      "category": "vuln",
+      "method": "kali",
+      "apt": "cisco-global-exploiter",
+      "description": "Simple and fast Cisco exploitation tool",
+      "net": "host",
+      "bin": "cge.pl"
+    },
+    "cisco-ocs": {
+      "category": "vuln",
+      "method": "kali",
+      "apt": "cisco-ocs",
+      "description": "Mass Cisco scanner",
+      "net": "host"
+    },
+    "cisco-torch": {
+      "category": "vuln",
+      "method": "kali",
+      "apt": "cisco-torch",
+      "description": "Cisco device scanner",
+      "net": "host"
+    },
+    "clang": {
+      "category": "reverse",
+      "method": "kali",
+      "apt": "clang",
+      "description": "C, C++ and Objective-C compiler (LLVM based), clang binary"
+    },
+    "cmospwd": {
+      "category": "password",
+      "method": "kali",
+      "apt": "cmospwd",
+      "description": "decrypt BIOS passwords from CMOS"
+    },
+    "copy-router-config": {
+      "category": "vuln",
+      "method": "kali",
+      "apt": "copy-router-config",
+      "description": "Copies Cisco configs via SNMP",
+      "net": "host",
+      "bin": "copy-router-config.pl"
+    },
+    "creddump7": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "creddump7",
+      "description": "Python tool to extract credentials and secrets from Windows registry hives"
+    },
+    "cymothoa": {
+      "category": "pivoting",
+      "method": "kali",
+      "apt": "cymothoa",
+      "description": "Stealth backdooring tool",
+      "net": "host"
+    },
+    "dbd": {
+      "category": "pivoting",
+      "method": "kali",
+      "apt": "dbd",
+      "description": "Netcat clone with encryption",
+      "net": "host"
+    },
+    "dhcpig": {
+      "category": "vuln",
+      "method": "kali",
+      "apt": "dhcpig",
+      "description": "DHCP exhaustion script using scapy network library",
+      "net": "host"
+    },
+    "dirb": {
+      "category": "web",
+      "method": "kali",
+      "apt": "dirb",
+      "description": "URL bruteforcing tool",
+      "net": "host"
+    },
+    "dirbuster": {
+      "category": "web",
+      "method": "kali",
+      "apt": "dirbuster",
+      "description": "Web server directory brute-forcer",
+      "net": "host"
+    },
+    "dnswalk": {
+      "category": "recon",
+      "method": "kali",
+      "apt": "dnswalk",
+      "description": "Checks dns zone information using nameserver lookups",
+      "net": "host"
+    },
+    "dradis": {
+      "category": "reporting",
+      "method": "kali",
+      "apt": "dradis",
+      "description": "Collaboration tools for penetration testing"
+    },
+    "dumpzilla": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "dumpzilla",
+      "description": "Mozilla browser forensic tool"
+    },
+    "eapmd5pass": {
+      "category": "wireless",
+      "method": "kali",
+      "apt": "eapmd5pass",
+      "description": "Tool for extracting and cracking EAP-MD5",
+      "net": "host"
+    },
+    "edb-debugger": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "edb-debugger",
+      "description": "cross platform x86/x86-64 debugger",
+      "bin": "edb"
+    },
+    "enumiax": {
+      "category": "vuln",
+      "method": "kali",
+      "apt": "enumiax",
+      "description": "IAX protocol username enumerator",
+      "net": "host"
+    },
+    "ettercap-graphical": {
+      "category": "sniffing",
+      "method": "kali",
+      "apt": "ettercap-graphical",
+      "description": "Ettercap GUI-enabled executable",
+      "net": "host",
+      "bin": "ettercap"
+    },
+    "exe2hexbat": {
+      "category": "pivoting",
+      "method": "kali",
+      "apt": "exe2hexbat",
+      "description": "Convert EXE to bat",
+      "net": "host",
+      "bin": "exe2hex"
+    },
+    "exifprobe": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "exifprobe",
+      "description": "read metadata from digital pictures"
+    },
+    "ext3grep": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "ext3grep",
+      "description": "tool to help recover deleted files on ext3 filesystems"
+    },
+    "eyewitness": {
+      "category": "reporting",
+      "method": "kali",
+      "apt": "eyewitness",
+      "description": "Rapid web application triage tool"
+    },
+    "faraday": {
+      "category": "reporting",
+      "method": "kali",
+      "apt": "faraday",
+      "description": "Collaborative Penetration Test IDE"
+    },
+    "fern-wifi-cracker": {
+      "category": "wireless",
+      "method": "kali",
+      "apt": "fern-wifi-cracker",
+      "description": "Automated Wi-Fi cracker",
+      "net": "host"
+    },
+    "ferret-sidejack": {
+      "category": "sniffing",
+      "method": "kali",
+      "apt": "ferret-sidejack",
+      "description": "Monitors data and extracts interesting data",
+      "net": "host"
+    },
+    "fiked": {
+      "category": "sniffing",
+      "method": "kali",
+      "apt": "fiked",
+      "description": "Cisco VPN attack tool",
+      "net": "host"
+    },
+    "firewalk": {
+      "category": "recon",
+      "method": "kali",
+      "apt": "firewalk",
+      "description": "active reconnaissance network security tool",
+      "net": "host"
+    },
+    "forensics-colorize": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "forensics-colorize",
+      "description": "show differences between files using color graphics",
+      "bin": "colorize"
+    },
+    "fragrouter": {
+      "category": "recon",
+      "method": "kali",
+      "apt": "fragrouter",
+      "description": "IDS evasion toolkit",
+      "net": "host"
+    },
+    "freeradius-wpe": {
+      "category": "wireless",
+      "method": "kali",
+      "apt": "freeradius-wpe",
+      "description": "FreeRadius Wireless Pawn Edition",
+      "net": "host"
+    },
+    "freerdp3-x11": {
+      "category": "password",
+      "method": "kali",
+      "apt": "freerdp3-x11",
+      "description": "RDP client for Windows Terminal Services (X11 client tramsitional package)",
+      "bin": "xfreerdp3"
+    },
+    "ftester": {
+      "category": "web",
+      "method": "kali",
+      "apt": "ftester",
+      "description": "Tool for testing firewalls and Intrusion Detection System (IDS)",
+      "net": "host",
+      "bin": "ftest"
+    },
+    "galleta": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "galleta",
+      "description": "Internet Explorer cookie forensic analysis tool"
+    },
+    "gnuradio": {
+      "category": "wireless",
+      "method": "kali",
+      "apt": "gnuradio",
+      "description": "GNU Radio Software Radio Toolkit",
+      "net": "host",
+      "bin": "gnuradio-companion"
+    },
+    "gpart": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "gpart",
+      "description": "Guess PC disk partition table, find lost partitions"
+    },
+    "gparted": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "gparted",
+      "description": "GNOME partition editor"
+    },
+    "gpp-decrypt": {
+      "category": "password",
+      "method": "kali",
+      "apt": "gpp-decrypt",
+      "description": "Group Policy Preferences decrypter"
+    },
+    "gqrx-sdr": {
+      "category": "wireless",
+      "method": "kali",
+      "apt": "gqrx-sdr",
+      "description": "Software defined radio receiver",
+      "net": "host",
+      "bin": "gqrx"
+    },
+    "gr-air-modes": {
+      "category": "wireless",
+      "method": "kali",
+      "apt": "gr-air-modes",
+      "description": "Gnuradio Mode-S/ADS-B radio",
+      "net": "host",
+      "bin": "modes_rx"
+    },
+    "gr-osmosdr": {
+      "category": "wireless",
+      "method": "kali",
+      "apt": "gr-osmosdr",
+      "description": "GNU Radio blocks from the OsmoSDR project",
+      "net": "host",
+      "bin": "osmocom_fft"
+    },
+    "grokevt": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "grokevt",
+      "description": "scripts for reading Microsoft Windows event log files",
+      "bin": "grokevt-addlog"
+    },
+    "hackrf": {
+      "category": "wireless",
+      "method": "kali",
+      "apt": "hackrf",
+      "description": "Software defined radio peripheral - utilities",
+      "net": "host",
+      "bin": "hackrf_info"
+    },
+    "hamster-sidejack": {
+      "category": "sniffing",
+      "method": "kali",
+      "apt": "hamster-sidejack",
+      "description": "Sidejacking tool",
+      "net": "host"
+    },
+    "heartleech": {
+      "category": "web",
+      "method": "kali",
+      "apt": "heartleech",
+      "description": "Scanner detecting systems vulnerable to the heartbleed OpenSSL bug",
+      "net": "host"
+    },
+    "hostapd-wpe": {
+      "category": "wireless",
+      "method": "kali",
+      "apt": "hostapd-wpe",
+      "description": "Modified hostapd to facilitate AP impersonation attacks",
+      "net": "host"
+    },
+    "httprint": {
+      "category": "web",
+      "method": "kali",
+      "apt": "httprint",
+      "description": "Web server fingerprinting tool",
+      "net": "host"
+    },
+    "hydra-gtk": {
+      "category": "password",
+      "method": "kali",
+      "apt": "hydra-gtk",
+      "description": "very fast network logon cracker - GTK+ based GUI",
+      "bin": "xhydra"
+    },
+    "iaxflood": {
+      "category": "vuln",
+      "method": "kali",
+      "apt": "iaxflood",
+      "description": "VoIP flooder tool",
+      "net": "host"
+    },
+    "inetsim": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "inetsim",
+      "description": "Software suite for simulating common internet services"
+    },
+    "inspectrum": {
+      "category": "wireless",
+      "method": "kali",
+      "apt": "inspectrum",
+      "description": "tool for visualising captured radio signals",
+      "net": "host"
+    },
+    "intrace": {
+      "category": "recon",
+      "method": "kali",
+      "apt": "intrace",
+      "description": "Traceroute-like application piggybacking on existing TCP connections",
+      "net": "host"
+    },
+    "inviteflood": {
+      "category": "vuln",
+      "method": "kali",
+      "apt": "inviteflood",
+      "description": "SIP/SDP INVITE message flooding over UDP/IP",
+      "net": "host"
+    },
+    "irpas": {
+      "category": "recon",
+      "method": "kali",
+      "apt": "irpas",
+      "description": "Internetwork Routing Protocol Attack Suite",
+      "net": "host",
+      "bin": "dfkaa"
+    },
+    "isr-evilgrade": {
+      "category": "sniffing",
+      "method": "kali",
+      "apt": "isr-evilgrade",
+      "description": "Evilgrade framework",
+      "net": "host",
+      "bin": "evilgrade"
+    },
+    "iw": {
+      "category": "wireless",
+      "method": "kali",
+      "apt": "iw",
+      "description": "tool for configuring Linux wireless devices",
+      "net": "host"
+    },
+    "javasnoop": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "javasnoop",
+      "description": "Intercept Java applications locally"
+    },
+    "jboss-autopwn": {
+      "category": "web",
+      "method": "kali",
+      "apt": "jboss-autopwn",
+      "description": "JBoss script for obtaining remote shell access",
+      "net": "host",
+      "bin": "jboss-linux"
+    },
+    "jd-gui": {
+      "category": "reverse",
+      "method": "kali",
+      "apt": "jd-gui",
+      "description": "GUI Java .class decompiler"
+    },
+    "johnny": {
+      "category": "password",
+      "method": "kali",
+      "apt": "johnny",
+      "description": "GUI for John the Ripper"
+    },
+    "jsql-injection": {
+      "category": "web",
+      "method": "kali",
+      "apt": "jsql-injection",
+      "description": "Java tool for automatic database injection",
+      "net": "host"
+    },
+    "kalibrate-rtl": {
+      "category": "wireless",
+      "method": "kali",
+      "apt": "kalibrate-rtl",
+      "description": "Calculate local oscillator frequency offset using GSM base stations",
+      "net": "host",
+      "bin": "kal"
+    },
+    "laudanum": {
+      "category": "pivoting",
+      "method": "kali",
+      "apt": "laudanum",
+      "description": "Collection of injectable web files",
+      "net": "host"
+    },
+    "lbd": {
+      "category": "web",
+      "method": "kali",
+      "apt": "lbd",
+      "description": "Load balancer detector",
+      "net": "host"
+    },
+    "legion": {
+      "category": "vuln",
+      "method": "kali",
+      "apt": "legion",
+      "description": "semi-automated network penetration testing tool",
+      "net": "host"
+    },
+    "lvm2": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "lvm2",
+      "description": "Linux Logical Volume Manager",
+      "bin": "lvm"
+    },
+    "mac-robber": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "mac-robber",
+      "description": "collects data about allocated files in mounted filesystems"
+    },
+    "maltego": {
+      "category": "reporting",
+      "method": "kali",
+      "apt": "maltego",
+      "description": "Open source intelligence and forensics application"
+    },
+    "maskprocessor": {
+      "category": "password",
+      "method": "kali",
+      "apt": "maskprocessor",
+      "description": "high-performance word generator with a per-position configurable charset",
+      "bin": "mp32"
+    },
+    "mdbtools": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "mdbtools",
+      "description": "JET / MS Access database (MDB) tools",
+      "bin": "mdb-json"
+    },
+    "mdk3": {
+      "category": "wireless",
+      "method": "kali",
+      "apt": "mdk3",
+      "description": "Wireless attack tool for IEEE 802.11 networks",
+      "net": "host"
+    },
+    "memdump": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "memdump",
+      "description": "utility to dump memory contents to standard output"
+    },
+    "metacam": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "metacam",
+      "description": "extract EXIF information from digital camera files"
+    },
+    "mimikatz": {
+      "category": "pivoting",
+      "method": "kali",
+      "apt": "mimikatz",
+      "description": "Uses admin rights on Windows to display passwords in plaintext",
+      "net": "host"
+    },
+    "miredo": {
+      "category": "pivoting",
+      "method": "kali",
+      "apt": "miredo",
+      "description": "Teredo IPv6 tunneling through NATs",
+      "net": "host"
+    },
+    "missidentify": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "missidentify",
+      "description": "find win32 applications"
+    },
+    "msfpc": {
+      "category": "exploit",
+      "method": "kali",
+      "apt": "msfpc",
+      "description": "MSFvenom Payload Creator (MSFPC)",
+      "net": "host"
+    },
+    "multimon-ng": {
+      "category": "wireless",
+      "method": "kali",
+      "apt": "multimon-ng",
+      "description": "digital radio transmission decoder",
+      "net": "host"
+    },
+    "myrescue": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "myrescue",
+      "description": "rescue data from damaged disks"
+    },
+    "nasm": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "nasm",
+      "description": "General-purpose x86 assembler"
+    },
+    "nasty": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "nasty",
+      "description": "tool which helps you to recover your GPG passphrase"
+    },
+    "oclgausscrack": {
+      "category": "password",
+      "method": "kali",
+      "apt": "oclgausscrack",
+      "description": "Cracks verification hashes of the Gauss Virus"
+    },
+    "ohrwurm": {
+      "category": "vuln",
+      "method": "kali",
+      "apt": "ohrwurm",
+      "description": "RTP fuzzer",
+      "net": "host"
+    },
+    "ollydbg": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "ollydbg",
+      "description": "32-bit assembler level analysing debugger"
+    },
+    "oscanner": {
+      "category": "web",
+      "method": "kali",
+      "apt": "oscanner",
+      "description": "Oracle assessment framework",
+      "net": "host"
+    },
+    "owasp-mantra-ff": {
+      "category": "web",
+      "method": "kali",
+      "apt": "owasp-mantra-ff",
+      "description": "Web application security testing framework built on top of Firefox",
+      "net": "host"
+    },
+    "pack": {
+      "category": "password",
+      "method": "kali",
+      "apt": "pack",
+      "description": "Password analysis and cracking kit",
+      "bin": "maskgen"
+    },
+    "pack2": {
+      "category": "password",
+      "method": "kali",
+      "apt": "pack2",
+      "description": "Password analysis and cracking kit 2"
+    },
+    "paros": {
+      "category": "web",
+      "method": "kali",
+      "apt": "paros",
+      "description": "Web application proxy",
+      "net": "host"
+    },
+    "parted": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "parted",
+      "description": "disk partition manipulator"
+    },
+    "passing-the-hash": {
+      "category": "password",
+      "method": "kali",
+      "apt": "passing-the-hash",
+      "description": "Patched tools to use password hashes as authentication input",
+      "bin": "pth-rpcclient"
+    },
+    "peass": {
+      "category": "vuln",
+      "method": "kali",
+      "apt": "peass",
+      "description": "Privilege Escalation Awesome Scripts SUITE",
+      "net": "host"
+    },
+    "polenum": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "polenum",
+      "description": "Extracts the password policy from a Windows system"
+    },
+    "protos-sip": {
+      "category": "vuln",
+      "method": "kali",
+      "apt": "protos-sip",
+      "description": "SIP test suite",
+      "net": "host"
+    },
+    "proxmark3": {
+      "category": "wireless",
+      "method": "kali",
+      "apt": "proxmark3",
+      "description": "Firmware, flasher, and client for the Proxmark3",
+      "net": "host"
+    },
+    "proxychains4": {
+      "category": "pivoting",
+      "method": "kali",
+      "apt": "proxychains4",
+      "description": "redirect connections through socks/http proxies (proxychains-ng)",
+      "net": "host"
+    },
+    "pst-utils": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "pst-utils",
+      "description": "tools for reading Microsoft Outlook PST files",
+      "bin": "nick2ldif"
+    },
+    "pwnat": {
+      "category": "pivoting",
+      "method": "kali",
+      "apt": "pwnat",
+      "description": "NAT to NAT client-server communication",
+      "net": "host"
+    },
+    "qsslcaudit": {
+      "category": "web",
+      "method": "kali",
+      "apt": "qsslcaudit",
+      "description": "test SSL/TLS clients how secure they are",
+      "net": "host"
+    },
+    "rainbowcrack": {
+      "category": "password",
+      "method": "kali",
+      "apt": "rainbowcrack",
+      "description": "Rainbow table password cracker",
+      "bin": "rcrack"
+    },
+    "rcracki-mt": {
+      "category": "password",
+      "method": "kali",
+      "apt": "rcracki-mt",
+      "description": "Version of rcrack that supports hybrid and indexed tables",
+      "bin": "rcracki_mt"
+    },
+    "readpe": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "readpe",
+      "description": "command-line tools to manipulate Windows PE files"
+    },
+    "rebind": {
+      "category": "sniffing",
+      "method": "kali",
+      "apt": "rebind",
+      "description": "DNS rebinding tool",
+      "net": "host",
+      "bin": "dns-rebind"
+    },
+    "recordmydesktop": {
+      "category": "reporting",
+      "method": "kali",
+      "apt": "recordmydesktop",
+      "description": "Captures audio-video data of a Linux desktop session"
+    },
+    "recoverdm": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "recoverdm",
+      "description": "recover files on disks with damaged sectors"
+    },
+    "redfang": {
+      "category": "wireless",
+      "method": "kali",
+      "apt": "redfang",
+      "description": "Locates non-discoverable bluetooth devices",
+      "net": "host",
+      "bin": "fang"
+    },
+    "redsocks": {
+      "category": "web",
+      "method": "kali",
+      "apt": "redsocks",
+      "description": "arbitrary TCP connection redirector to a SOCKS or HTTPS proxy server",
+      "net": "host"
+    },
+    "reglookup": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "reglookup",
+      "description": "utility to analysis for Windows NT-based registry"
+    },
+    "rephrase": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "rephrase",
+      "description": "Specialized passphrase recovery tool for GnuPG"
+    },
+    "rfcat": {
+      "category": "wireless",
+      "method": "kali",
+      "apt": "rfcat",
+      "description": "Swiss army knife of sub-GHz radio",
+      "net": "host"
+    },
+    "rfdump": {
+      "category": "wireless",
+      "method": "kali",
+      "apt": "rfdump",
+      "description": "tool to decode RFID tag data",
+      "net": "host"
+    },
+    "rifiuti": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "rifiuti",
+      "description": "MS Windows recycle bin analysis tool"
+    },
+    "rizin-cutter": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "rizin-cutter",
+      "description": "reverse engineering platform powered by rizin",
+      "bin": "cutter"
+    },
+    "rsakeyfind": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "rsakeyfind",
+      "description": "locates BER-encoded RSA private keys in memory images"
+    },
+    "rtpbreak": {
+      "category": "vuln",
+      "method": "kali",
+      "apt": "rtpbreak",
+      "description": "Detects, reconstructs, and analyzes RTP sessions",
+      "net": "host"
+    },
+    "rtpflood": {
+      "category": "vuln",
+      "method": "kali",
+      "apt": "rtpflood",
+      "description": "Tool to flood any RTP device",
+      "net": "host"
+    },
+    "rtpinsertsound": {
+      "category": "vuln",
+      "method": "kali",
+      "apt": "rtpinsertsound",
+      "description": "Inserts audio into a specified stream",
+      "net": "host"
+    },
+    "rtpmixsound": {
+      "category": "vuln",
+      "method": "kali",
+      "apt": "rtpmixsound",
+      "description": "Mixes pre-recorded audio in real-time",
+      "net": "host"
+    },
+    "sakis3g": {
+      "category": "wireless",
+      "method": "kali",
+      "apt": "sakis3g",
+      "description": "Tool for establishing 3G connections",
+      "net": "host"
+    },
+    "sbd": {
+      "category": "pivoting",
+      "method": "kali",
+      "apt": "sbd",
+      "description": "Secure backdoor for Linux and Windows",
+      "net": "host"
+    },
+    "scrounge-ntfs": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "scrounge-ntfs",
+      "description": "Data recovery program for NTFS filesystems"
+    },
+    "sctpscan": {
+      "category": "vuln",
+      "method": "kali",
+      "apt": "sctpscan",
+      "description": "SCTP network scanner for discovery and security",
+      "net": "host"
+    },
+    "sfuzz": {
+      "category": "vuln",
+      "method": "kali",
+      "apt": "sfuzz",
+      "description": "Black Box testing utilities",
+      "net": "host"
+    },
+    "shellnoob": {
+      "category": "exploit",
+      "method": "kali",
+      "apt": "shellnoob",
+      "description": "Shellcode writing toolkit",
+      "net": "host"
+    },
+    "sidguesser": {
+      "category": "web",
+      "method": "kali",
+      "apt": "sidguesser",
+      "description": "Guesses sids against an Oracle database",
+      "net": "host",
+      "bin": "sidguess"
+    },
+    "siege": {
+      "category": "web",
+      "method": "kali",
+      "apt": "siege",
+      "description": "HTTP regression testing and benchmarking utility",
+      "net": "host"
+    },
+    "siparmyknife": {
+      "category": "vuln",
+      "method": "kali",
+      "apt": "siparmyknife",
+      "description": "SIP fuzzing tool",
+      "net": "host"
+    },
+    "sipcrack": {
+      "category": "password",
+      "method": "kali",
+      "apt": "sipcrack",
+      "description": "SIP login dumper/cracker"
+    },
+    "sipp": {
+      "category": "vuln",
+      "method": "kali",
+      "apt": "sipp",
+      "description": "Traffic generator for the SIP protocol",
+      "net": "host"
+    },
+    "sipsak": {
+      "category": "vuln",
+      "method": "kali",
+      "apt": "sipsak",
+      "description": "SIP Swiss army knife",
+      "net": "host"
+    },
+    "sniffjoke": {
+      "category": "sniffing",
+      "method": "kali",
+      "apt": "sniffjoke",
+      "description": "Transparent TCP connection scrambler",
+      "net": "host"
+    },
+    "spike": {
+      "category": "vuln",
+      "method": "kali",
+      "apt": "spike",
+      "description": "Network protocol fuzzer",
+      "net": "host",
+      "bin": "pmspike"
+    },
+    "spooftooph": {
+      "category": "wireless",
+      "method": "kali",
+      "apt": "spooftooph",
+      "description": "Automates spoofing or cloning Bluetooth devices",
+      "net": "host"
+    },
+    "sqldict": {
+      "category": "password",
+      "method": "kali",
+      "apt": "sqldict",
+      "description": "Dictionary attack tool for SQL Server"
+    },
+    "sqlitebrowser": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "sqlitebrowser",
+      "description": "GUI editor for SQLite databases"
+    },
+    "sqlninja": {
+      "category": "web",
+      "method": "kali",
+      "apt": "sqlninja",
+      "description": "SQL server injection and takeover tool",
+      "net": "host"
+    },
+    "sqlsus": {
+      "category": "web",
+      "method": "kali",
+      "apt": "sqlsus",
+      "description": "MySQL injection tool",
+      "net": "host"
+    },
+    "ssldump": {
+      "category": "web",
+      "method": "kali",
+      "apt": "ssldump",
+      "description": "SSLv3/TLS network protocol analyzer",
+      "net": "host"
+    },
+    "sslh": {
+      "category": "pivoting",
+      "method": "kali",
+      "apt": "sslh",
+      "description": "Applicative protocol multiplexer",
+      "net": "host"
+    },
+    "sslsniff": {
+      "category": "sniffing",
+      "method": "kali",
+      "apt": "sslsniff",
+      "description": "SSL/TLS man-in-the-middle attack tool",
+      "net": "host"
+    },
+    "statsprocessor": {
+      "category": "password",
+      "method": "kali",
+      "apt": "statsprocessor",
+      "description": "word generator based on per-position Markov chains",
+      "bin": "sp32"
+    },
+    "stegosuite": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "stegosuite",
+      "description": "steganography tool to hide information in image files"
+    },
+    "stegsnow": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "stegsnow",
+      "description": "steganography using ASCII files"
+    },
+    "sucrack": {
+      "category": "password",
+      "method": "kali",
+      "apt": "sucrack",
+      "description": "multithreaded su bruteforcer"
+    },
+    "t50": {
+      "category": "vuln",
+      "method": "kali",
+      "apt": "t50",
+      "description": "Multi-protocol packet injector tool",
+      "net": "host"
+    },
+    "tcpick": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "tcpick",
+      "description": "TCP stream sniffer and connection tracker"
+    },
+    "termineter": {
+      "category": "exploit",
+      "method": "kali",
+      "apt": "termineter",
+      "description": "Smart meter testing framework",
+      "net": "host"
+    },
+    "thc-ssl-dos": {
+      "category": "web",
+      "method": "kali",
+      "apt": "thc-ssl-dos",
+      "description": "Stress tester for the SSL handshake",
+      "net": "host"
+    },
+    "tnscmd10g": {
+      "category": "web",
+      "method": "kali",
+      "apt": "tnscmd10g",
+      "description": "Tool to prod the oracle tnslsnr process",
+      "net": "host"
+    },
+    "ubertooth": {
+      "category": "wireless",
+      "method": "kali",
+      "apt": "ubertooth",
+      "description": "2.4 GHz wireless development platform for Bluetooth experimentation",
+      "net": "host",
+      "bin": "ubertooth-rx"
+    },
+    "uhd-host": {
+      "category": "wireless",
+      "method": "kali",
+      "apt": "uhd-host",
+      "description": "universal hardware driver for Ettus Research products - host apps",
+      "net": "host",
+      "bin": "usrpctl"
+    },
+    "undbx": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "undbx",
+      "description": "tool to extract, recover and undelete e-mail messages from .dbx files"
+    },
+    "unix-privesc-check": {
+      "category": "vuln",
+      "method": "kali",
+      "apt": "unix-privesc-check",
+      "description": "Script to check for simple privilege escalation vectors",
+      "net": "host"
+    },
+    "unrar": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "unrar",
+      "description": "Unarchiver for .rar files (non-free version)",
+      "bin": "unrar-nonfree"
+    },
+    "vinetto": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "vinetto",
+      "description": "forensics tool to examine Thumbs.db files"
+    },
+    "voiphopper": {
+      "category": "vuln",
+      "method": "kali",
+      "apt": "voiphopper",
+      "description": "Runs a VLAN hop security test",
+      "net": "host"
+    },
+    "watobo": {
+      "category": "web",
+      "method": "kali",
+      "apt": "watobo",
+      "description": "Semi-automated web application scanner",
+      "net": "host"
+    },
+    "wce": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "wce",
+      "description": "Windows Credentials Editor"
+    },
+    "webacoo": {
+      "category": "pivoting",
+      "method": "kali",
+      "apt": "webacoo",
+      "description": "Web backdoor cookie script kit",
+      "net": "host"
+    },
+    "webscarab": {
+      "category": "web",
+      "method": "kali",
+      "apt": "webscarab",
+      "description": "Web application review tool",
+      "net": "host"
+    },
+    "webshells": {
+      "category": "web",
+      "method": "kali",
+      "apt": "webshells",
+      "description": "Collection of webshells",
+      "net": "host"
+    },
+    "wifi-honey": {
+      "category": "sniffing",
+      "method": "kali",
+      "apt": "wifi-honey",
+      "description": "Wi-Fi honeypot",
+      "net": "host"
+    },
+    "winregfs": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "winregfs",
+      "description": "Windows registry FUSE filesystem",
+      "bin": "fsck.winregfs"
+    },
+    "wordlists": {
+      "category": "password",
+      "method": "kali",
+      "apt": "wordlists",
+      "description": "Contains the rockyou wordlist"
+    },
+    "xmount": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "xmount",
+      "description": "tool for crossmounting between disk image formats"
+    },
+    "xplico": {
+      "category": "forensics",
+      "method": "kali",
+      "apt": "xplico",
+      "description": "Network Forensic Analysis Tool (NFAT)"
+    },
+    "yersinia": {
+      "category": "vuln",
+      "method": "kali",
+      "apt": "yersinia",
+      "description": "Network vulnerabilities check software",
+      "net": "host"
+    },
+    "zenmap": {
+      "category": "recon",
+      "method": "kali",
+      "apt": "zenmap",
+      "description": "The Network Mapper Front End",
+      "net": "host"
+    },
+    "2ping": {
+      "category": "recon",
+      "method": "kali",
+      "apt": "2ping",
+      "bin": "2ping",
+      "description": "Utility ping bidirezionale tra host."
+    },
+    "altdns": {
+      "category": "osint",
+      "method": "kali",
+      "apt": "altdns",
+      "bin": "altdns",
+      "description": "Genera permutazioni di sottodomini da testare."
+    },
+    "amap": {
+      "category": "recon",
+      "method": "kali",
+      "apt": "amap",
+      "bin": "amap",
+      "description": "Mappatore di applicazioni e servizi di rete."
+    },
+    "arpwatch": {
+      "category": "sniffing",
+      "method": "kali",
+      "apt": "arpwatch",
+      "bin": "arpwatch",
+      "description": "Monitor delle attivita ARP sulla rete."
+    },
+    "arjun": {
+      "category": "web",
+      "method": "kali",
+      "apt": "arjun",
+      "bin": "arjun",
+      "description": "Scoperta di parametri HTTP nascosti."
+    },
+    "assetfinder": {
+      "category": "osint",
+      "method": "kali",
+      "apt": "assetfinder",
+      "bin": "assetfinder",
+      "description": "Trova domini e sottodomini correlati a un target."
+    },
+    "caido": {
+      "category": "web",
+      "method": "kali",
+      "apt": "caido",
+      "bin": "caido",
+      "description": "Proxy web per pentest, alternativa a Burp Suite."
+    },
+    "crlfuzz": {
+      "category": "web",
+      "method": "kali",
+      "apt": "crlfuzz",
+      "bin": "crlfuzz",
+      "description": "Scanner di vulnerabilita CRLF injection."
+    },
+    "dirsearch": {
+      "category": "web",
+      "method": "kali",
+      "apt": "dirsearch",
+      "bin": "dirsearch",
+      "description": "Brute force di percorsi e file su web server."
+    },
+    "emailharvester": {
+      "category": "osint",
+      "method": "kali",
+      "apt": "emailharvester",
+      "bin": "emailharvester",
+      "description": "Raccolta di indirizzi email da fonti pubbliche."
+    },
+    "email2phonenumber": {
+      "category": "osint",
+      "method": "kali",
+      "apt": "email2phonenumber",
+      "bin": "email2phonenumber",
+      "description": "Ricava numeri di telefono a partire da un'email."
+    },
+    "findomain": {
+      "category": "osint",
+      "method": "kali",
+      "apt": "findomain",
+      "bin": "findomain",
+      "description": "Enumeratore veloce di sottodomini."
+    },
+    "gospider": {
+      "category": "web",
+      "method": "kali",
+      "apt": "gospider",
+      "bin": "gospider",
+      "description": "Web spider veloce scritto in Go."
+    },
+    "instaloader": {
+      "category": "osint",
+      "method": "kali",
+      "apt": "instaloader",
+      "bin": "instaloader",
+      "description": "Scarica dati e media pubblici da Instagram."
+    },
+    "linkedin2username": {
+      "category": "osint",
+      "method": "kali",
+      "apt": "linkedin2username",
+      "bin": "linkedin2username",
+      "description": "Genera liste di username da profili LinkedIn."
+    },
+    "massdns": {
+      "category": "recon",
+      "method": "kali",
+      "apt": "massdns",
+      "bin": "massdns",
+      "description": "Risolutore DNS di massa ad alte prestazioni."
+    },
+    "parsero": {
+      "category": "web",
+      "method": "kali",
+      "apt": "parsero",
+      "bin": "parsero",
+      "description": "Analizza le regole Disallow del robots.txt."
+    },
+    "photon": {
+      "category": "osint",
+      "method": "kali",
+      "apt": "photon",
+      "bin": "photon",
+      "description": "Crawler OSINT per estrarre dati dai siti."
+    },
+    "sparrow-wifi": {
+      "category": "wireless",
+      "method": "kali",
+      "apt": "sparrow-wifi",
+      "bin": "sparrow-wifi",
+      "description": "Analizzatore WiFi e Bluetooth con GUI."
+    },
+    "sublist3r": {
+      "category": "osint",
+      "method": "kali",
+      "apt": "sublist3r",
+      "bin": "sublist3r",
+      "description": "Enumerazione sottodomini via motori di ricerca."
+    },
+    "sstimap": {
+      "category": "web",
+      "method": "kali",
+      "apt": "sstimap",
+      "bin": "sstimap",
+      "description": "Rilevamento e sfruttamento di SSTI."
+    },
+    "subjack": {
+      "category": "web",
+      "method": "kali",
+      "apt": "subjack",
+      "bin": "subjack",
+      "description": "Rilevamento di subdomain takeover."
+    },
+    "tinja": {
+      "category": "web",
+      "method": "kali",
+      "apt": "tinja",
+      "bin": "tinja",
+      "description": "Scanner di template injection (SSTI/CSTI)."
+    },
+    "tookie-osint": {
+      "category": "osint",
+      "method": "kali",
+      "apt": "tookie-osint",
+      "bin": "tookie-osint",
+      "description": "Ricerca account social a partire da uno username."
+    },
+    "uniscan-gui": {
+      "category": "web",
+      "method": "kali",
+      "apt": "uniscan",
+      "bin": "uniscan-gui",
+      "description": "Scanner di vulnerabilita web con interfaccia grafica."
+    },
+    "uro": {
+      "category": "web",
+      "method": "kali",
+      "apt": "uro",
+      "bin": "uro",
+      "description": "Deduplica e ripulisce liste di URL."
+    },
+    "wash": {
+      "category": "wireless",
+      "method": "kali",
+      "apt": "reaver",
+      "bin": "wash",
+      "description": "Scanner di access point con WPS attivo."
+    },
+    "wpprobe": {
+      "category": "web",
+      "method": "kali",
+      "apt": "wpprobe",
+      "bin": "wpprobe",
+      "description": "Fingerprint dei plugin di siti WordPress."
+    },
+    "crackmapexec": {
+      "category": "exploit",
+      "method": "kali",
+      "apt": "crackmapexec",
+      "bin": "crackmapexec",
+      "description": "Post-exploitation su reti Active Directory."
+    },
+    "empire": {
+      "category": "exploit",
+      "method": "kali",
+      "apt": "powershell-empire",
+      "bin": "powershell-empire",
+      "description": "Framework C2 di post-exploitation."
+    },
+    "arpspoof": {
+      "category": "sniffing",
+      "method": "kali",
+      "apt": "dsniff",
+      "bin": "arpspoof",
+      "description": "Spoofing ARP per attacchi MITM."
+    },
+    "msgsnarf": {
+      "category": "sniffing",
+      "method": "kali",
+      "apt": "dsniff",
+      "bin": "msgsnarf",
+      "description": "Cattura messaggi di chat dal traffico di rete."
+    },
+    "urlsnarf": {
+      "category": "sniffing",
+      "method": "kali",
+      "apt": "dsniff",
+      "bin": "urlsnarf",
+      "description": "Cattura gli URL dal traffico HTTP."
+    },
+    "webspy": {
+      "category": "sniffing",
+      "method": "kali",
+      "apt": "dsniff",
+      "bin": "webspy",
+      "description": "Mostra in tempo reale le pagine visitate dal target."
+    },
+    "bloodhound": {
+      "category": "exploit",
+      "method": "kali",
+      "apt": "bloodhound",
+      "bin": "bloodhound",
+      "description": "Analisi dei percorsi di attacco in Active Directory."
+    },
+    "arduino": {
+      "category": "hardware",
+      "method": "kali",
+      "apt": "arduino",
+      "bin": "arduino",
+      "description": "IDE per programmare microcontrollori Arduino."
+    },
+    "gtkterm": {
+      "category": "hardware",
+      "method": "kali",
+      "apt": "gtkterm",
+      "bin": "gtkterm",
+      "description": "Terminale seriale con interfaccia grafica."
+    },
+    "minicom": {
+      "category": "hardware",
+      "method": "kali",
+      "apt": "minicom",
+      "bin": "minicom",
+      "description": "Terminale seriale per porte e console."
+    },
+    "cryptcat": {
+      "category": "crypto",
+      "method": "kali",
+      "apt": "cryptcat",
+      "bin": "cryptcat",
+      "description": "Netcat con cifratura del traffico."
+    },
+    "cryptsetup": {
+      "category": "crypto",
+      "method": "apk",
+      "apk": "cryptsetup",
+      "bin": "cryptsetup",
+      "description": "Cifratura volumi/dischi LUKS: crea, apre e gestisce contenitori cifrati.",
+      "privileged": true
+    },
+    "gnupg": {
+      "category": "crypto",
+      "method": "apk",
+      "apk": "gnupg",
+      "bin": "gpg",
+      "description": "GnuPG: cifra/decifra e firma file e messaggi, gestione chiavi OpenPGP."
+    },
+    "age": {
+      "category": "crypto",
+      "method": "apk",
+      "apk": "age",
+      "bin": "age",
+      "description": "Cifratura file moderna e semplice (chiavi X25519); alternativa leggera a GPG."
+    },
+    "seahorse": {
+      "category": "crypto",
+      "method": "kali",
+      "apt": "seahorse",
+      "bin": "seahorse",
+      "description": "Gestore grafico di password e chiavi."
+    },
+    "stegcracker": {
+      "category": "crypto",
+      "method": "kali",
+      "apt": "stegcracker",
+      "bin": "stegcracker",
+      "description": "Brute force di file protetti con steghide."
+    },
+    "libnfc": {
+      "category": "hardware",
+      "method": "kali",
+      "apt": "libnfc-bin",
+      "bin": "nfc-list",
+      "description": "Strumenti per leggere e scrivere tag NFC."
+    },
+    "pupy": {
+      "category": "exploit",
+      "method": "pip",
+      "pip": "git+https://github.com/n1nj4sec/pupy.git",
+      "bin": "pupysh",
+      "description": "RAT/C2 multipiattaforma post-exploitation (Python)."
+    },
+    "certipy": {
+      "category": "exploit",
+      "method": "pip",
+      "pip": "certipy-ad",
+      "bin": "certipy",
+      "description": "Abuso di AD Certificate Services (ESC1-ESC8): richiesta/forgiatura certificati."
+    },
+    "bloodyAD": {
+      "category": "exploit",
+      "method": "pip",
+      "pip": "bloodyAD",
+      "bin": "bloodyAD",
+      "description": "Escalation privilegi in Active Directory via LDAP (ACL, RBCD, shadow creds)."
+    },
+    "coercer": {
+      "category": "exploit",
+      "method": "pip",
+      "pip": "coercer",
+      "bin": "coercer",
+      "description": "Forza l'autenticazione di un host Windows (PetitPotam, PrinterBug, DFSCoerce)."
+    },
+    "mitm6": {
+      "category": "sniffing",
+      "method": "pip",
+      "pip": "mitm6",
+      "bin": "mitm6",
+      "privileged": true,
+      "description": "Takeover DNS via IPv6 (WPAD) per il relay NTLM."
+    },
+    "pywerview": {
+      "category": "recon",
+      "method": "pip",
+      "pip": "pywerview",
+      "bin": "pywerview",
+      "description": "Enumerazione Active Directory (porting Python di PowerView)."
+    },
+    "ldapdomaindump": {
+      "category": "recon",
+      "method": "pip",
+      "pip": "ldapdomaindump",
+      "bin": "ldapdomaindump",
+      "description": "Dump completo del dominio AD via LDAP (utenti, gruppi, computer, policy)."
+    },
+    "villain": {
+      "category": "exploit",
+      "method": "git",
+      "git": "https://github.com/t3l3machus/Villain.git",
+      "entry": "Villain.py",
+      "bin": "villain",
+      "description": "Framework C2 leggero multi-sessione: gestione reverse shell e payload (Python)."
+    }
+  }
+}

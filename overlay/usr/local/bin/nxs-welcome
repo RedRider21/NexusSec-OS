@@ -1,0 +1,20 @@
+#!/bin/sh
+# NexusSec - messaggio di benvenuto nel terminale iniziale.
+echo "  Benvenuto in NexusSec OS  (base Alpine Linux)"
+echo
+echo "  Desktop:  click destro = menu    icone = applicazioni"
+echo "  Centro di Controllo:  Super+C  (o icona sul desktop)"
+echo
+echo "  Profilo operativo (Pen Testing / Forensics / OSINT / Web):"
+echo "    nxs-profile               selettore grafico del profilo"
+echo "    nxs-tool profiles         elenca i profili"
+echo "    nxs-tool profile web      attiva un profilo (apk add meta-pacchetto)"
+echo "    nxs-tool list             tool del profilo corrente"
+echo
+echo "  Pacchetti (Alpine apk):"
+echo "    doas apk update           aggiorna l'indice"
+echo "    apk search NOME           cerca un pacchetto"
+echo "    doas apk add NOME         installa"
+echo "    doas apk del NOME         rimuove"
+echo
+exec sh

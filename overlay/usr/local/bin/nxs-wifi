@@ -1,0 +1,97 @@
+#!/bin/sh
+# NexusSec - gestione WiFi minima per il pannello (scan / connect / status)
+# via wpa_supplicant + wpa_cli. L'interfaccia si autorileva (wlan*/wl*).
+#
+# Uso:
+#   nxs-wifi iface            stampa l'interfaccia WiFi (vuoto se assente)
+#   nxs-wifi status           "connected <SSID>" | "disconnected" | "no-wifi"
+#   nxs-wifi scan             elenco reti: "SSID<TAB>segnale(dBm)<TAB>flags"
+#   nxs-wifi connect SSID PSK connette (PSK vuoto = rete aperta)
+#   nxs-wifi disconnect       disconnette
+#
+# Elevazione: nexus e' in wheel con 'permit nopass :wheel' (doas).
+priv() { if command -v doas >/dev/null 2>&1; then doas "$@"; \
+         elif command -v sudo >/dev/null 2>&1; then sudo "$@"; else "$@"; fi; }
+
+WPACONF=/etc/wpa_supplicant/wpa_supplicant.conf
+
+detect_iface() {
+  i=$(iw dev 2>/dev/null | awk '/Interface/{print $2; exit}')
+  [ -n "$i" ] || i=$(ls /sys/class/net 2>/dev/null | grep -E '^wl' | head -1)
+  echo "$i"
+}
+IFACE="${NXS_WIFI_IFACE:-$(detect_iface)}"
+
+ensure_up() {
+  [ -n "$IFACE" ] || return 1
+  priv rfkill unblock wifi 2>/dev/null
+  priv ip link set "$IFACE" up 2>/dev/null
+  # wpa_supplicant attivo? altrimenti avvialo (crea conf minima se assente).
+  if ! wpa_cli -i "$IFACE" ping >/dev/null 2>&1; then
+    priv sh -c "[ -f '$WPACONF' ] || { mkdir -p /etc/wpa_supplicant; \
+      printf 'ctrl_interface=/var/run/wpa_supplicant\nupdate_config=1\n' > '$WPACONF'; }"
+    priv wpa_supplicant -B -i "$IFACE" -c "$WPACONF" >/dev/null 2>&1
+    sleep 1
+  fi
+  return 0
+}
+
+case "${1:-}" in
+  iface) echo "$IFACE" ;;
+
+  status)
+    [ -n "$IFACE" ] || { echo "no-wifi"; exit 0; }
+    st=$(wpa_cli -i "$IFACE" status 2>/dev/null)
+    state=$(printf '%s\n' "$st" | sed -n 's/^wpa_state=//p')
+    ssid=$(printf '%s\n' "$st" | sed -n 's/^ssid=//p')
+    if [ "$state" = "COMPLETED" ] && [ -n "$ssid" ]; then
+      echo "connected $ssid"
+    else
+      echo "disconnected"
+    fi
+    ;;
+
+  scan)
+    ensure_up || { echo ""; exit 0; }
+    priv wpa_cli -i "$IFACE" scan >/dev/null 2>&1
+    sleep 2
+    # scan_results: bssid  freq  signal  flags  ssid
+    priv wpa_cli -i "$IFACE" scan_results 2>/dev/null | awk '
+      NR>1 {
+        sig=$3; flags=$4; ssid="";
+        for (i=5;i<=NF;i++) ssid=ssid (i>5?" ":"") $i;
+        if (ssid=="") next;
+        key=ssid;
+        if (!(key in seen) || sig>bestsig[key]) { bestsig[key]=sig; bestflags[key]=flags; seen[key]=1 }
+      }
+      END { for (k in seen) print k "\t" bestsig[k] "\t" bestflags[k] }' \
+      | sort -t"	" -k2 -nr
+    ;;
+
+  connect)
+    ssid="$2"; psk="$3"
+    ensure_up || { echo "err"; exit 1; }
+    [ -n "$ssid" ] || { echo "err"; exit 1; }
+    id=$(priv wpa_cli -i "$IFACE" add_network 2>/dev/null | tail -1)
+    priv wpa_cli -i "$IFACE" set_network "$id" ssid "\"$ssid\"" >/dev/null 2>&1
+    if [ -n "$psk" ]; then
+      priv wpa_cli -i "$IFACE" set_network "$id" psk "\"$psk\"" >/dev/null 2>&1
+    else
+      priv wpa_cli -i "$IFACE" set_network "$id" key_mgmt NONE >/dev/null 2>&1
+    fi
+    priv wpa_cli -i "$IFACE" enable_network "$id" >/dev/null 2>&1
+    priv wpa_cli -i "$IFACE" select_network "$id" >/dev/null 2>&1
+    priv wpa_cli -i "$IFACE" save_config >/dev/null 2>&1
+    ( sleep 3; priv udhcpc -i "$IFACE" -n -q >/dev/null 2>&1 ) &
+    echo "ok"
+    ;;
+
+  disconnect)
+    [ -n "$IFACE" ] && priv wpa_cli -i "$IFACE" disconnect >/dev/null 2>&1
+    echo "ok"
+    ;;
+
+  *)
+    echo "uso: nxs-wifi {iface|status|scan|connect SSID [PSK]|disconnect}" >&2
+    exit 2 ;;
+esac

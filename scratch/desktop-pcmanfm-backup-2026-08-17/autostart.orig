@@ -1,0 +1,29 @@
+#!/bin/sh
+# NexusSec - autostart Openbox (Alpine).
+# Log in /tmp/nxs-autostart.log per la diagnostica (nxs-diag lo legge).
+exec >>/tmp/nxs-autostart.log 2>&1
+echo "=== autostart $(date) ==="
+
+# 0) Splashscreen di avvio (flat, con barra di caricamento). Copre la
+#    preparazione del desktop e si chiude da sola (~3.2s, timeout di sicurezza
+#    a 6s). Nessuna dipendenza extra: solo GTK3/Cairo gia' presenti.
+command -v nxs-splash >/dev/null 2>&1 && nxs-splash &
+
+# 1) Desktop manager pcmanfm (icone + SFONDO). DEVE partire PRIMA, perche'
+#    lo sfondo del profilo viene impostato via "pcmanfm --set-wallpaper".
+command -v pcmanfm >/dev/null 2>&1 && pcmanfm --desktop --profile=NexusSec &
+
+# 2) Sfondo + accent del profilo corrente (quando pcmanfm e' pronto).
+#    'apply' non reinstalla nulla: imposta solo wallpaper (via pcmanfm) + accent.
+(sleep 1.5; nxs-tool apply) &
+
+# 3) Pannello inferiore nativo GTK3 (la barra Python).
+nxs-panel &
+
+# 4) Integrazione VirtualBox (mouse seamless + auto-resize). Su hardware reale
+#    o altre VM VBoxClient-all esce subito: innocuo.
+command -v VBoxClient-all >/dev/null 2>&1 && VBoxClient-all 2>/dev/null &
+
+# 5) Selettore del profilo operativo all'avvio (Pen Testing/Forensics/OSINT/Web).
+#    Compare DOPO lo splash (che dura ~3.2s), cosi' non ci si sovrappongono.
+(sleep 3.6; nxs-profile) &

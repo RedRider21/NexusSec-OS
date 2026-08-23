@@ -1,0 +1,12 @@
+amass docker.io/caffix/amass:latest
+autopsy docker.io/sleuthkit/autopsy:latest
+burpsuite 
+dalfox ghcr.io/hahwul/dalfox:latest
+feroxbuster ghcr.io/epi052/feroxbuster:latest
+metasploit docker.io/metasploitframework/metasploit-framework:latest
+sherlock docker.io/sherlock/sherlock:latest
+spiderfoot docker.io/spiderfoot/spiderfoot:latest
+stegseek docker.io/rickdejager/stegseek:latest
+subfinder docker.io/projectdiscovery/subfinder:latest
+whatweb docker.io/secsi/whatweb:latest
+wpscan docker.io/wpscanteam/wpscan:latest

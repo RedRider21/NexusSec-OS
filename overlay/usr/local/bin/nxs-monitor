@@ -1,0 +1,4 @@
+#!/bin/sh
+# NexusSec - monitor risorse (htop o top di fallback).
+command -v htop >/dev/null 2>&1 && exec htop
+exec top

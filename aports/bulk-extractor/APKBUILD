@@ -1,0 +1,55 @@
+# Maintainer: NexusSec <deplano.d@gmail.com>
+pkgname=bulk-extractor
+pkgver=2.0.0
+pkgrel=0
+pkgdesc="Estrazione di feature (email/URL/carte) da immagini disco"
+url="https://github.com/simsong/bulk_extractor"
+arch="all"
+license="MIT"
+makedepends="autoconf automake libtool flex openssl-dev zlib-dev expat-dev re2-dev linux-headers"
+source="$pkgname-$pkgver.tar.gz::https://github.com/simsong/bulk_extractor/releases/download/v$pkgver/bulk_extractor-$pkgver.tar.gz"
+builddir="$srcdir/bulk_extractor-$pkgver"
+build() {
+	cd "$builddir"
+	# Shim per gli header glibc assenti in musl. Verificato a monte: l'UNICO
+	# blocco a livello di header e sys/cdefs.h (definisce __BEGIN_DECLS/__END_DECLS,
+	# usati da pcap_fake.h/net_ethernet.h/pyxpress.h). Niente err.h/execinfo/strlcpy.
+	mkdir -p "$builddir"/compat/sys
+	cat > "$builddir"/compat/sys/cdefs.h <<'SHIM'
+#ifndef _NXS_SYS_CDEFS_H
+#define _NXS_SYS_CDEFS_H
+#ifdef __cplusplus
+# define __BEGIN_DECLS extern "C" {
+# define __END_DECLS }
+#else
+# define __BEGIN_DECLS
+# define __END_DECLS
+#endif
+#ifndef __THROW
+# define __THROW
+#endif
+#ifndef __nonnull
+# define __nonnull(x)
+#endif
+#ifndef __wur
+# define __wur
+#endif
+#endif
+SHIM
+	[ -x ./configure ] || ./bootstrap.sh
+	# musl: uint16_t -> force-include <cstdint>; u_int (tipo BSD) -> _GNU_SOURCE
+	# + sys/types.h force-included; cdefs -> shim sopra.
+	CXXFLAGS="$CXXFLAGS -D_GNU_SOURCE -include cstdint -include sys/types.h -I$builddir/compat" \
+	CFLAGS="$CFLAGS -fcommon -D_GNU_SOURCE -include sys/types.h -I$builddir/compat" \
+		./configure --prefix=/usr
+	make
+}
+package() {
+	cd "$builddir"
+	make DESTDIR="$pkgdir" install
+	# abuild rifiuta man pages non compresse: per una live le rimuovo.
+	rm -rf "$pkgdir"/usr/share/man
+}
+sha512sums="
+895828f5dbd0e2a69d227448f3defea979107302287755a26dcbad36e37a5ec394a1ae0fd4f70f4c269b660b7ca75a9b3aae49e4c9e98c4c4e1541ff1ea6383c  bulk-extractor-2.0.0.tar.gz
+"

@@ -1,0 +1,5 @@
+#!/bin/sh
+# NexusSec - apre una shell Python 3.
+command -v python3 >/dev/null 2>&1 && exec python3
+echo "python3 non disponibile (doas apk add python3)"
+printf "Premi invio "; read junk

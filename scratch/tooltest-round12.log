@@ -1,0 +1,103 @@
+  (dep mancante, ignoro: alpine-sdk)
+  (dep mancante, ignoro: abuild)
+  (dep mancante, ignoro: build-base)
+  (dep mancante, ignoro: file)
+============================================================
+>>> BUILD dmitry
+mkdir: impossibile creare la directory "/root": Permesso negato
+cp: impossibile accedere a '/root/b/dmitry/': Permesso negato
+scratch/tooltest.sh: 37: cd: can't cd to /root/b/dmitry
+scratch/tooltest.sh: 42: abuild: not found
+  (checksum tentativo 1 fallito, riprovo tra 5s)
+scratch/tooltest.sh: 42: abuild: not found
+  (checksum tentativo 2 fallito, riprovo tra 5s)
+scratch/tooltest.sh: 42: abuild: not found
+  (checksum tentativo 3 fallito, riprovo tra 5s)
+### FAIL dmitry
+============================================================
+>>> BUILD foremost
+mkdir: impossibile creare la directory "/root": Permesso negato
+cp: impossibile accedere a '/root/b/foremost/': Permesso negato
+scratch/tooltest.sh: 37: cd: can't cd to /root/b/foremost
+scratch/tooltest.sh: 42: abuild: not found
+  (checksum tentativo 1 fallito, riprovo tra 5s)
+scratch/tooltest.sh: 42: abuild: not found
+  (checksum tentativo 2 fallito, riprovo tra 5s)
+scratch/tooltest.sh: 42: abuild: not found
+  (checksum tentativo 3 fallito, riprovo tra 5s)
+### FAIL foremost
+============================================================
+>>> BUILD dirb
+mkdir: impossibile creare la directory "/root": Permesso negato
+cp: impossibile accedere a '/root/b/dirb/': Permesso negato
+scratch/tooltest.sh: 37: cd: can't cd to /root/b/dirb
+scratch/tooltest.sh: 42: abuild: not found
+  (checksum tentativo 1 fallito, riprovo tra 5s)
+scratch/tooltest.sh: 42: abuild: not found
+  (checksum tentativo 2 fallito, riprovo tra 5s)
+scratch/tooltest.sh: 42: abuild: not found
+  (checksum tentativo 3 fallito, riprovo tra 5s)
+### FAIL dirb
+============================================================
+>>> BUILD medusa
+mkdir: impossibile creare la directory "/root": Permesso negato
+cp: impossibile accedere a '/root/b/medusa/': Permesso negato
+scratch/tooltest.sh: 37: cd: can't cd to /root/b/medusa
+scratch/tooltest.sh: 42: abuild: not found
+  (checksum tentativo 1 fallito, riprovo tra 5s)
+scratch/tooltest.sh: 42: abuild: not found
+  (checksum tentativo 2 fallito, riprovo tra 5s)
+scratch/tooltest.sh: 42: abuild: not found
+  (checksum tentativo 3 fallito, riprovo tra 5s)
+### FAIL medusa
+============================================================
+>>> BUILD chkrootkit
+mkdir: impossibile creare la directory "/root": Permesso negato
+cp: impossibile accedere a '/root/b/chkrootkit/': Permesso negato
+scratch/tooltest.sh: 37: cd: can't cd to /root/b/chkrootkit
+scratch/tooltest.sh: 42: abuild: not found
+  (checksum tentativo 1 fallito, riprovo tra 5s)
+scratch/tooltest.sh: 42: abuild: not found
+  (checksum tentativo 2 fallito, riprovo tra 5s)
+scratch/tooltest.sh: 42: abuild: not found
+  (checksum tentativo 3 fallito, riprovo tra 5s)
+### FAIL chkrootkit
+============================================================
+>>> BUILD rkhunter
+mkdir: impossibile creare la directory "/root": Permesso negato
+cp: impossibile accedere a '/root/b/rkhunter/': Permesso negato
+scratch/tooltest.sh: 37: cd: can't cd to /root/b/rkhunter
+scratch/tooltest.sh: 42: abuild: not found
+  (checksum tentativo 1 fallito, riprovo tra 5s)
+scratch/tooltest.sh: 42: abuild: not found
+  (checksum tentativo 2 fallito, riprovo tra 5s)
+scratch/tooltest.sh: 42: abuild: not found
+  (checksum tentativo 3 fallito, riprovo tra 5s)
+### FAIL rkhunter
+============================================================
+>>> BUILD scalpel
+mkdir: impossibile creare la directory "/root": Permesso negato
+cp: impossibile accedere a '/root/b/scalpel/': Permesso negato
+scratch/tooltest.sh: 37: cd: can't cd to /root/b/scalpel
+scratch/tooltest.sh: 42: abuild: not found
+  (checksum tentativo 1 fallito, riprovo tra 5s)
+scratch/tooltest.sh: 42: abuild: not found
+  (checksum tentativo 2 fallito, riprovo tra 5s)
+scratch/tooltest.sh: 42: abuild: not found
+  (checksum tentativo 3 fallito, riprovo tra 5s)
+### FAIL scalpel
+============================================================
+>>> BUILD bulk-extractor
+mkdir: impossibile creare la directory "/root": Permesso negato
+cp: impossibile accedere a '/root/b/bulk-extractor/': Permesso negato
+scratch/tooltest.sh: 37: cd: can't cd to /root/b/bulk-extractor
+scratch/tooltest.sh: 42: abuild: not found
+  (checksum tentativo 1 fallito, riprovo tra 5s)
+scratch/tooltest.sh: 42: abuild: not found
+  (checksum tentativo 2 fallito, riprovo tra 5s)
+scratch/tooltest.sh: 42: abuild: not found
+  (checksum tentativo 3 fallito, riprovo tra 5s)
+### FAIL bulk-extractor
+============================================================
+RIEPILOGO: FAIL:dmitry FAIL:foremost FAIL:dirb FAIL:medusa FAIL:chkrootkit FAIL:rkhunter FAIL:scalpel FAIL:bulk-extractor
+scratch/tooltest.sh: 55: Syntax error: Unterminated quoted string

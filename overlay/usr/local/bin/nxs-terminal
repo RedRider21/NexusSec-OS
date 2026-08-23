@@ -1,0 +1,4 @@
+#!/bin/sh
+# NexusSec - apre il terminale (lxterminal, fallback xterm con tema Nebula).
+command -v lxterminal >/dev/null 2>&1 && exec lxterminal
+exec xterm -bg "#050a14" -fg "#c8f5ff"

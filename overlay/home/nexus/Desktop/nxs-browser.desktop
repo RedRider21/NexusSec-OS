@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=NexusSec Browser
+Comment=Browser web di NexusSec OS (GTK3 + WebKit2)
+Exec=nxs-browser
+Icon=nxs-browser
+Terminal=false
+Categories=Network;WebBrowser;

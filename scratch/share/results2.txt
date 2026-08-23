@@ -1,0 +1,28 @@
+=== RE-TEST  Mon Jun 29 23:40:30 UTC 2026 ===
+PATH=/home/nexus/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ls ~/.local: drwxr-xr-x nexus /home/nexus/.local/bin drwxr-xr-x nexus /home/nexus/.local/state 
+
+===== APK bin corretti + wireshark =====
+bulk-extractor   install=OK   PATH=si  exec=si (bin=bulk_extractor)
+clamav           install=OK   PATH=si  exec=si (bin=clamscan)
+nikto            install=OK   PATH=si  exec=- (bin=nikto.pl)
+sleuthkit        install=OK   PATH=si  exec=si (bin=fls)
+wireshark        install=OK   PATH=si  exec=si (bin=wireshark)
+tcpdump          install=OK   PATH=si  exec=si (bin=tcpdump)
+tshark           install=OK   PATH=si  exec=si (bin=tshark)
+
+===== PIP (12) =====
+commix           install=OK   PATH=si  exec=-
+enum4linux       install=OK   PATH=si  exec=-
+fierce           install=OK   PATH=si  exec=si
+holehe           install=OK   PATH=si  exec=si
+metagoofil       install=FAIL PATH=no  exec=-
+netexec          install=FAIL PATH=no  exec=-
+smbmap           install=OK   PATH=si  exec=si
+sublist3r        install=OK   PATH=si  exec=si
+theharvester     install=FAIL PATH=no  exec=-
+wafw00f          install=OK   PATH=si  exec=si
+wfuzz            install=FAIL PATH=no  exec=-
+wifite           install=OK   PATH=si  exec=-
+----- PIP: 8/12 OK -----
+=== FINE2 ===

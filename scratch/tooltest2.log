@@ -1,0 +1,302 @@
+============================================================
+>>> BUILD dmitry
+>>> dmitry: Building aports/dmitry 1.3a-r0 (using abuild 3.18.0_rc1-r0) started Mon, 29 Jun 2026 13:32:11 +0000
+>>> dmitry: Validating /work/aports/dmitry/APKBUILD...
+>>> dmitry: Analyzing dependencies...
+WARNING: opening /root/packages/aports/x86_64/APKINDEX.tar.gz: No such file or directory
+>>> dmitry: Installing for build: build-base autoconf automake
+WARNING: opening /root/packages/aports/x86_64/APKINDEX.tar.gz: No such file or directory
+(1/1) Installing .makedepends-dmitry (20260629.133212)
+OK: 432.6 MiB in 223 packages
+>>> dmitry: Cleaning up srcdir
+>>> dmitry: Cleaning up pkgdir
+>>> dmitry: Cleaning up tmpdir
+>>> dmitry: Fetching dmitry-1.3a.tar.gz::https://github.com/jaygreig86/dmitry/archive/refs/heads/master.tar.gz
+/var/cache/distfiles/dmitry-1.3a.tar.gz: OK
+>>> dmitry: Fetching dmitry-1.3a.tar.gz::https://github.com/jaygreig86/dmitry/archive/refs/heads/master.tar.gz
+/var/cache/distfiles/dmitry-1.3a.tar.gz: OK
+>>> dmitry: Unpacking /var/cache/distfiles/dmitry-1.3a.tar.gz...
+tar: dmitry-master/docs: Cannot change mode to rwxrwxr-x: Operation not permitted
+tar: dmitry-master/src/includes: Cannot change mode to rwxrwxr-x: Operation not permitted
+tar: dmitry-master/src: Cannot change mode to rwxrwxr-x: Operation not permitted
+tar: dmitry-master: Cannot change mode to rwxrwxr-x: Operation not permitted
+tar: Exiting with failure status due to previous errors
+>>> ERROR: dmitry: unpack failed
+>>> dmitry: Uninstalling dependencies...
+(1/1) Purging .makedepends-dmitry (20260629.133212)
+OK: 432.6 MiB in 222 packages
+### FAIL dmitry
+============================================================
+>>> BUILD foremost
+>>> foremost: Building aports/foremost 1.5.7-r0 (using abuild 3.18.0_rc1-r0) started Mon, 29 Jun 2026 13:32:12 +0000
+>>> foremost: Validating /work/aports/foremost/APKBUILD...
+>>> foremost: Analyzing dependencies...
+WARNING: opening /root/packages/aports/x86_64/APKINDEX.tar.gz: No such file or directory
+>>> foremost: Installing for build: build-base linux-headers
+WARNING: opening /root/packages/aports/x86_64/APKINDEX.tar.gz: No such file or directory
+(1/1) Installing .makedepends-foremost (20260629.133213)
+OK: 432.6 MiB in 223 packages
+>>> foremost: Cleaning up srcdir
+>>> foremost: Cleaning up pkgdir
+>>> foremost: Cleaning up tmpdir
+>>> foremost: Fetching https://foremost.sourceforge.net/pkg/foremost-1.5.7.tar.gz
+/var/cache/distfiles/foremost-1.5.7.tar.gz: OK
+>>> foremost: Fetching https://foremost.sourceforge.net/pkg/foremost-1.5.7.tar.gz
+/var/cache/distfiles/foremost-1.5.7.tar.gz: OK
+>>> foremost: Unpacking /var/cache/distfiles/foremost-1.5.7.tar.gz...
+tar: foremost-1.5.7: Cannot change mode to rwxr-xr-x: Operation not permitted
+tar: Exiting with failure status due to previous errors
+>>> ERROR: foremost: unpack failed
+>>> foremost: Uninstalling dependencies...
+(1/1) Purging .makedepends-foremost (20260629.133213)
+OK: 432.6 MiB in 222 packages
+### FAIL foremost
+============================================================
+>>> BUILD dirb
+>>> dirb: Building aports/dirb 2.22-r0 (using abuild 3.18.0_rc1-r0) started Mon, 29 Jun 2026 13:32:15 +0000
+>>> dirb: Validating /work/aports/dirb/APKBUILD...
+>>> dirb: Analyzing dependencies...
+WARNING: opening /root/packages/aports/x86_64/APKINDEX.tar.gz: No such file or directory
+>>> dirb: Installing for build: build-base curl-dev
+WARNING: opening /root/packages/aports/x86_64/APKINDEX.tar.gz: No such file or directory
+(1/1) Installing .makedepends-dirb (20260629.133216)
+OK: 432.6 MiB in 223 packages
+>>> dirb: Cleaning up srcdir
+>>> dirb: Cleaning up pkgdir
+>>> dirb: Cleaning up tmpdir
+>>> dirb: Fetching dirb-2.22.tar.gz::https://downloads.sourceforge.net/project/dirb/dirb/2.22/dirb222.tar.gz
+/var/cache/distfiles/dirb-2.22.tar.gz: OK
+>>> dirb: Fetching dirb-2.22.tar.gz::https://downloads.sourceforge.net/project/dirb/dirb/2.22/dirb222.tar.gz
+/var/cache/distfiles/dirb-2.22.tar.gz: OK
+>>> dirb: Unpacking /var/cache/distfiles/dirb-2.22.tar.gz...
+tar: dirb222/autom4te.cache: Cannot change mode to rw-rw-r--: Operation not permitted
+tar: dirb222/docs: Cannot change mode to rw-rw-r--: Operation not permitted
+tar: dirb222/gendict_src: Cannot change mode to rw-rw-r--: Operation not permitted
+tar: dirb222/src: Cannot change mode to rw-rw-r--: Operation not permitted
+tar: dirb222/utils: Cannot change mode to rw-rw-r--: Operation not permitted
+tar: dirb222/web2dic: Cannot change mode to rw-rw-r--: Operation not permitted
+tar: dirb222/win32: Cannot change mode to rw-rw-r--: Operation not permitted
+tar: dirb222/wordlists/others: Cannot change mode to rw-rw-r--: Operation not permitted
+tar: dirb222/wordlists/stress: Cannot change mode to rw-rw-r--: Operation not permitted
+tar: dirb222/wordlists/vulns: Cannot change mode to rw-rw-r--: Operation not permitted
+tar: dirb222/wordlists: Cannot change mode to rw-rw-r--: Operation not permitted
+tar: dirb222: Cannot change mode to rw-rw-r--: Operation not permitted
+tar: Exiting with failure status due to previous errors
+>>> ERROR: dirb: unpack failed
+>>> dirb: Uninstalling dependencies...
+(1/1) Purging .makedepends-dirb (20260629.133216)
+OK: 432.6 MiB in 222 packages
+### FAIL dirb
+============================================================
+>>> BUILD medusa
+>>> medusa: Building aports/medusa 2.2-r0 (using abuild 3.18.0_rc1-r0) started Mon, 29 Jun 2026 13:32:22 +0000
+>>> medusa: Validating /work/aports/medusa/APKBUILD...
+>>> medusa: Analyzing dependencies...
+WARNING: opening /root/packages/aports/x86_64/APKINDEX.tar.gz: No such file or directory
+>>> medusa: Installing for build: build-base autoconf automake libtool openssl-dev libssh2-dev ncurses-dev
+WARNING: opening /root/packages/aports/x86_64/APKINDEX.tar.gz: No such file or directory
+(1/1) Installing .makedepends-medusa (20260629.133222)
+OK: 432.6 MiB in 223 packages
+>>> medusa: Cleaning up srcdir
+>>> medusa: Cleaning up pkgdir
+>>> medusa: Cleaning up tmpdir
+>>> medusa: Fetching medusa-2.2.tar.gz::https://github.com/jmk-foofus/medusa/archive/refs/tags/2.2.tar.gz
+/var/cache/distfiles/medusa-2.2.tar.gz: OK
+>>> medusa: Fetching medusa-2.2.tar.gz::https://github.com/jmk-foofus/medusa/archive/refs/tags/2.2.tar.gz
+/var/cache/distfiles/medusa-2.2.tar.gz: OK
+>>> medusa: Unpacking /var/cache/distfiles/medusa-2.2.tar.gz...
+tar: medusa-2.2/README: Cannot change mode to rwxrwxrwx: Operation not permitted
+tar: medusa-2.2/doc: Cannot change mode to rwxrwxr-x: Operation not permitted
+tar: medusa-2.2/misc/net-analyzer: Cannot change mode to rwxrwxr-x: Operation not permitted
+tar: medusa-2.2/misc/test_scripts: Cannot change mode to rwxrwxr-x: Operation not permitted
+tar: medusa-2.2/misc/zsh: Cannot change mode to rwxrwxr-x: Operation not permitted
+tar: medusa-2.2/misc: Cannot change mode to rwxrwxr-x: Operation not permitted
+tar: medusa-2.2/sample: Cannot change mode to rwxrwxr-x: Operation not permitted
+tar: medusa-2.2/src/modsrc/wrapper: Cannot change mode to rwxrwxr-x: Operation not permitted
+tar: medusa-2.2/src/modsrc: Cannot change mode to rwxrwxr-x: Operation not permitted
+tar: medusa-2.2/src/test: Cannot change mode to rwxrwxr-x: Operation not permitted
+tar: medusa-2.2/src: Cannot change mode to rwxrwxr-x: Operation not permitted
+tar: medusa-2.2: Cannot change mode to rwxrwxr-x: Operation not permitted
+tar: Exiting with failure status due to previous errors
+>>> ERROR: medusa: unpack failed
+>>> medusa: Uninstalling dependencies...
+(1/1) Purging .makedepends-medusa (20260629.133222)
+OK: 432.6 MiB in 222 packages
+### FAIL medusa
+============================================================
+>>> BUILD chkrootkit
+>>> chkrootkit: Building aports/chkrootkit 0.58b-r0 (using abuild 3.18.0_rc1-r0) started Mon, 29 Jun 2026 13:32:25 +0000
+>>> chkrootkit: Validating /work/aports/chkrootkit/APKBUILD...
+>>> chkrootkit: Analyzing dependencies...
+WARNING: opening /root/packages/aports/x86_64/APKINDEX.tar.gz: No such file or directory
+>>> chkrootkit: Installing for build: build-base
+WARNING: opening /root/packages/aports/x86_64/APKINDEX.tar.gz: No such file or directory
+(1/1) Installing .makedepends-chkrootkit (20260629.133225)
+OK: 432.6 MiB in 223 packages
+>>> chkrootkit: Cleaning up srcdir
+>>> chkrootkit: Cleaning up pkgdir
+>>> chkrootkit: Cleaning up tmpdir
+>>> chkrootkit: Fetching chkrootkit-0.58b.tar.gz::https://github.com/Magentron/chkrootkit/archive/refs/heads/master.tar.gz
+/var/cache/distfiles/chkrootkit-0.58b.tar.gz: OK
+>>> chkrootkit: Fetching chkrootkit-0.58b.tar.gz::https://github.com/Magentron/chkrootkit/archive/refs/heads/master.tar.gz
+/var/cache/distfiles/chkrootkit-0.58b.tar.gz: OK
+>>> chkrootkit: Unpacking /var/cache/distfiles/chkrootkit-0.58b.tar.gz...
+tar: chkrootkit-master: Cannot change mode to rwxrwxr-x: Operation not permitted
+tar: Exiting with failure status due to previous errors
+>>> ERROR: chkrootkit: unpack failed
+>>> chkrootkit: Uninstalling dependencies...
+(1/1) Purging .makedepends-chkrootkit (20260629.133225)
+OK: 432.6 MiB in 222 packages
+### FAIL chkrootkit
+============================================================
+>>> BUILD rkhunter
+>>> rkhunter: Building aports/rkhunter 1.4.6-r0 (using abuild 3.18.0_rc1-r0) started Mon, 29 Jun 2026 13:32:29 +0000
+>>> rkhunter: Validating /work/aports/rkhunter/APKBUILD...
+>>> rkhunter: Analyzing dependencies...
+WARNING: opening /root/packages/aports/x86_64/APKINDEX.tar.gz: No such file or directory
+>>> rkhunter: Installing for build: build-base bash
+WARNING: opening /root/packages/aports/x86_64/APKINDEX.tar.gz: No such file or directory
+(1/1) Installing .makedepends-rkhunter (20260629.133229)
+OK: 432.6 MiB in 223 packages
+>>> rkhunter: Cleaning up srcdir
+>>> rkhunter: Cleaning up pkgdir
+>>> rkhunter: Cleaning up tmpdir
+>>> rkhunter: Fetching rkhunter-1.4.6.tar.gz::https://downloads.sourceforge.net/project/rkhunter/rkhunter/1.4.6/rkhunter-1.4.6.tar.gz
+/var/cache/distfiles/rkhunter-1.4.6.tar.gz: OK
+>>> rkhunter: Fetching rkhunter-1.4.6.tar.gz::https://downloads.sourceforge.net/project/rkhunter/rkhunter/1.4.6/rkhunter-1.4.6.tar.gz
+/var/cache/distfiles/rkhunter-1.4.6.tar.gz: OK
+>>> rkhunter: Unpacking /var/cache/distfiles/rkhunter-1.4.6.tar.gz...
+tar: rkhunter-1.4.6/files/signatures: Cannot change mode to rwxr-xr-x: Operation not permitted
+tar: rkhunter-1.4.6/files/i18n: Cannot change mode to rwxr-xr-x: Operation not permitted
+tar: rkhunter-1.4.6/files/contrib: Cannot change mode to rwxr-xr-x: Operation not permitted
+tar: rkhunter-1.4.6/files: Cannot change mode to rwxr-xr-x: Operation not permitted
+tar: rkhunter-1.4.6: Cannot change mode to rwxr-xr-x: Operation not permitted
+tar: Exiting with failure status due to previous errors
+>>> ERROR: rkhunter: unpack failed
+>>> rkhunter: Uninstalling dependencies...
+(1/1) Purging .makedepends-rkhunter (20260629.133229)
+OK: 432.6 MiB in 222 packages
+### FAIL rkhunter
+============================================================
+>>> BUILD scalpel
+>>> scalpel: Building aports/scalpel 1.60-r0 (using abuild 3.18.0_rc1-r0) started Mon, 29 Jun 2026 13:32:31 +0000
+>>> scalpel: Validating /work/aports/scalpel/APKBUILD...
+>>> scalpel: Analyzing dependencies...
+WARNING: opening /root/packages/aports/x86_64/APKINDEX.tar.gz: No such file or directory
+>>> scalpel: Installing for build: build-base
+WARNING: opening /root/packages/aports/x86_64/APKINDEX.tar.gz: No such file or directory
+(1/1) Installing .makedepends-scalpel (20260629.133231)
+OK: 432.6 MiB in 223 packages
+>>> scalpel: Cleaning up srcdir
+>>> scalpel: Cleaning up pkgdir
+>>> scalpel: Cleaning up tmpdir
+>>> scalpel: Fetching scalpel-1.60.tar.gz::https://github.com/machn1k/Scalpel-2.0/archive/refs/heads/master.tar.gz
+/var/cache/distfiles/scalpel-1.60.tar.gz: OK
+>>> scalpel: Fetching scalpel-1.60.tar.gz::https://github.com/machn1k/Scalpel-2.0/archive/refs/heads/master.tar.gz
+/var/cache/distfiles/scalpel-1.60.tar.gz: OK
+>>> scalpel: Unpacking /var/cache/distfiles/scalpel-1.60.tar.gz...
+tar: Scalpel-2.0-master/conf: Cannot change mode to rwxrwxr-x: Operation not permitted
+tar: Scalpel-2.0-master/man: Cannot change mode to rwxrwxr-x: Operation not permitted
+tar: Scalpel-2.0-master/pthreads-win32: Cannot change mode to rwxrwxr-x: Operation not permitted
+tar: Scalpel-2.0-master/src: Cannot change mode to rwxrwxr-x: Operation not permitted
+tar: Scalpel-2.0-master/tre-0.7.5-win32/doc: Cannot change mode to rwxrwxr-x: Operation not permitted
+tar: Scalpel-2.0-master/tre-0.7.5-win32/gnulib/lib/.deps: Cannot change mode to rwxrwxr-x: Operation not permitted
+tar: Scalpel-2.0-master/tre-0.7.5-win32/gnulib/lib/.libs: Cannot change mode to rwxrwxr-x: Operation not permitted
+tar: Scalpel-2.0-master/tre-0.7.5-win32/gnulib/lib: Cannot change mode to rwxrwxr-x: Operation not permitted
+tar: Scalpel-2.0-master/tre-0.7.5-win32/gnulib/m4: Cannot change mode to rwxrwxr-x: Operation not permitted
+tar: Scalpel-2.0-master/tre-0.7.5-win32/gnulib/tests: Cannot change mode to rwxrwxr-x: Operation not permitted
+tar: Scalpel-2.0-master/tre-0.7.5-win32/gnulib: Cannot change mode to rwxrwxr-x: Operation not permitted
+tar: Scalpel-2.0-master/tre-0.7.5-win32/lib/.deps: Cannot change mode to rwxrwxr-x: Operation not permitted
+tar: Scalpel-2.0-master/tre-0.7.5-win32/lib/.libs: Cannot change mode to rwxrwxr-x: Operation not permitted
+tar: Scalpel-2.0-master/tre-0.7.5-win32/lib: Cannot change mode to rwxrwxr-x: Operation not permitted
+tar: Scalpel-2.0-master/tre-0.7.5-win32/m4: Cannot change mode to rwxrwxr-x: Operation not permitted
+tar: Scalpel-2.0-master/tre-0.7.5-win32/po: Cannot change mode to rwxrwxr-x: Operation not permitted
+tar: Scalpel-2.0-master/tre-0.7.5-win32/python: Cannot change mode to rwxrwxr-x: Operation not permitted
+tar: Scalpel-2.0-master/tre-0.7.5-win32/src/.deps: Cannot change mode to rwxrwxr-x: Operation not permitted
+tar: Scalpel-2.0-master/tre-0.7.5-win32/src/.libs: Cannot change mode to rwxrwxr-x: Operation not permitted
+tar: Scalpel-2.0-master/tre-0.7.5-win32/src: Cannot change mode to rwxrwxr-x: Operation not permitted
+tar: Scalpel-2.0-master/tre-0.7.5-win32/tests/.deps: Cannot change mode to rwxrwxr-x: Operation not permitted
+tar: Scalpel-2.0-master/tre-0.7.5-win32/tests/agrep: Cannot change mode to rwxrwxr-x: Operation not permitted
+tar: Scalpel-2.0-master/tre-0.7.5-win32/tests: Cannot change mode to rwxrwxr-x: Operation not permitted
+tar: Scalpel-2.0-master/tre-0.7.5-win32/utils: Cannot change mode to rwxrwxr-x: Operation not permitted
+tar: Scalpel-2.0-master/tre-0.7.5-win32/win32: Cannot change mode to rwxrwxr-x: Operation not permitted
+tar: Scalpel-2.0-master/tre-0.7.5-win32: Cannot change mode to rwxrwxr-x: Operation not permitted
+tar: Scalpel-2.0-master: Cannot change mode to rwxrwxr-x: Operation not permitted
+tar: Exiting with failure status due to previous errors
+>>> ERROR: scalpel: unpack failed
+>>> scalpel: Uninstalling dependencies...
+(1/1) Purging .makedepends-scalpel (20260629.133231)
+OK: 432.6 MiB in 222 packages
+### FAIL scalpel
+============================================================
+>>> BUILD stegseek
+>>> stegseek: Building aports/stegseek 0.6-r0 (using abuild 3.18.0_rc1-r0) started Mon, 29 Jun 2026 13:32:32 +0000
+>>> stegseek: Validating /work/aports/stegseek/APKBUILD...
+>>> stegseek: Analyzing dependencies...
+WARNING: opening /root/packages/aports/x86_64/APKINDEX.tar.gz: No such file or directory
+ERROR: unable to select packages:
+  .makedepends-stegseek-20260629.133233:
+    masked in: cache
+    satisfies: world[.makedepends-stegseek=20260629.133233]
+  mhash-dev (no such package):
+    required by: .makedepends-stegseek-20260629.133233[mhash-dev]
+>>> ERROR: stegseek: builddeps failed
+>>> stegseek: Uninstalling dependencies...
+ERROR: No such package: .makedepends-stegseek
+### FAIL stegseek
+============================================================
+>>> BUILD bulk-extractor
+>>> bulk-extractor: Building aports/bulk-extractor 2.0.0-r0 (using abuild 3.18.0_rc1-r0) started Mon, 29 Jun 2026 13:32:34 +0000
+>>> bulk-extractor: Validating /work/aports/bulk-extractor/APKBUILD...
+>>> bulk-extractor: Analyzing dependencies...
+WARNING: opening /root/packages/aports/x86_64/APKINDEX.tar.gz: No such file or directory
+>>> bulk-extractor: Installing for build: build-base autoconf automake libtool openssl-dev zlib-dev expat-dev re2-dev linux-headers flex bison
+WARNING: opening /root/packages/aports/x86_64/APKINDEX.tar.gz: No such file or directory
+(1/1) Installing .makedepends-bulk-extractor (20260629.133234)
+OK: 432.6 MiB in 223 packages
+>>> bulk-extractor: Cleaning up srcdir
+>>> bulk-extractor: Cleaning up pkgdir
+>>> bulk-extractor: Cleaning up tmpdir
+>>> bulk-extractor: Fetching bulk-extractor-2.0.0.tar.gz::https://github.com/simsong/bulk_extractor/releases/download/v2.0.0/bulk_extractor-2.0.0.tar.gz
+/var/cache/distfiles/bulk-extractor-2.0.0.tar.gz: OK
+>>> bulk-extractor: Fetching bulk-extractor-2.0.0.tar.gz::https://github.com/simsong/bulk_extractor/releases/download/v2.0.0/bulk_extractor-2.0.0.tar.gz
+/var/cache/distfiles/bulk-extractor-2.0.0.tar.gz: OK
+>>> bulk-extractor: Unpacking /var/cache/distfiles/bulk-extractor-2.0.0.tar.gz...
+tar: bulk_extractor-2.0.0/man: Cannot change mode to rwxr-xr-x: Operation not permitted
+tar: bulk_extractor-2.0.0/build-aux: Cannot change mode to rwxr-xr-x: Operation not permitted
+tar: bulk_extractor-2.0.0/licenses: Cannot change mode to rwxr-xr-x: Operation not permitted
+tar: bulk_extractor-2.0.0/python: Cannot change mode to rwxr-xr-x: Operation not permitted
+tar: bulk_extractor-2.0.0/specfiles: Cannot change mode to rwxr-xr-x: Operation not permitted
+tar: bulk_extractor-2.0.0/tests: Cannot change mode to rwxr-xr-x: Operation not permitted
+tar: bulk_extractor-2.0.0/m4: Cannot change mode to rwxr-xr-x: Operation not permitted
+tar: bulk_extractor-2.0.0/doc: Cannot change mode to rwxr-xr-x: Operation not permitted
+tar: bulk_extractor-2.0.0/src/be20_api: Cannot change mode to rwxr-xr-x: Operation not permitted
+tar: bulk_extractor-2.0.0/src/tests: Cannot change mode to rwxr-xr-x: Operation not permitted
+tar: bulk_extractor-2.0.0/src/rar: Cannot change mode to rwxr-xr-x: Operation not permitted
+tar: bulk_extractor-2.0.0/src/tsk3: Cannot change mode to rwxr-xr-x: Operation not permitted
+tar: bulk_extractor-2.0.0/src/tsk3/vs: Cannot change mode to rwxr-xr-x: Operation not permitted
+tar: bulk_extractor-2.0.0/src/tsk3/auto: Cannot change mode to rwxr-xr-x: Operation not permitted
+tar: bulk_extractor-2.0.0/src/tsk3/hashdb: Cannot change mode to rwxr-xr-x: Operation not permitted
+tar: bulk_extractor-2.0.0/src/tsk3/img: Cannot change mode to rwxr-xr-x: Operation not permitted
+tar: bulk_extractor-2.0.0/src/tsk3/fs: Cannot change mode to rwxr-xr-x: Operation not permitted
+tar: bulk_extractor-2.0.0/src/tsk3/base: Cannot change mode to rwxr-xr-x: Operation not permitted
+tar: bulk_extractor-2.0.0/src/tests/jpegs: Cannot change mode to rwxr-xr-x: Operation not permitted
+tar: bulk_extractor-2.0.0/src/be20_api/utf8: Cannot change mode to rwxr-xr-x: Operation not permitted
+tar: bulk_extractor-2.0.0/src/be20_api/thread-pool: Cannot change mode to rwxr-xr-x: Operation not permitted
+tar: bulk_extractor-2.0.0/src/be20_api/dfxml_cpp: Cannot change mode to rwxr-xr-x: Operation not permitted
+tar: bulk_extractor-2.0.0/src/be20_api/m4: Cannot change mode to rwxr-xr-x: Operation not permitted
+tar: bulk_extractor-2.0.0/src/be20_api/dfxml_cpp/src: Cannot change mode to rwxr-xr-x: Operation not permitted
+tar: bulk_extractor-2.0.0/src: Cannot change mode to rwxr-xr-x: Operation not permitted
+tar: bulk_extractor-2.0.0/doc/announce: Cannot change mode to rwxr-xr-x: Operation not permitted
+tar: bulk_extractor-2.0.0/doc/latex_manuals: Cannot change mode to rwxr-xr-x: Operation not permitted
+tar: bulk_extractor-2.0.0/doc/Diagnostic_Notes: Cannot change mode to rwxr-xr-x: Operation not permitted
+tar: bulk_extractor-2.0.0/tests/Data: Cannot change mode to rwxr-xr-x: Operation not permitted
+tar: bulk_extractor-2.0.0: Cannot change mode to rwxr-xr-x: Operation not permitted
+tar: Exiting with failure status due to previous errors
+>>> ERROR: bulk-extractor: unpack failed
+>>> bulk-extractor: Uninstalling dependencies...
+(1/1) Purging .makedepends-bulk-extractor (20260629.133234)
+OK: 432.6 MiB in 222 packages
+### FAIL bulk-extractor
+============================================================
+RIEPILOGO: FAIL:dmitry FAIL:foremost FAIL:dirb FAIL:medusa FAIL:chkrootkit FAIL:rkhunter FAIL:scalpel FAIL:stegseek FAIL:bulk-extractor

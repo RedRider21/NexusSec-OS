@@ -1,0 +1,565 @@
+#### bulk-extractor ####
+(1/1) Installing bulk-extractor (2.0.0-r0)
+Executing busybox-1.38.0-r1.trigger
+OK: 521.1 MiB in 302 packages
+[*] apk add --no-cache bulk-extractor
+#### clamav ####
+(1/5) Installing libmspack (0.11_alpha-r1)
+(2/5) Installing clamav-libs (1.4.4-r0)
+(3/5) Installing freshclam (1.4.4-r0)
+  Executing freshclam-1.4.4-r0.pre-install
+(4/5) Installing freshclam-openrc (1.4.4-r0)
+(5/5) Installing clamav-scanner (1.4.4-r0)
+Executing busybox-1.38.0-r1.trigger
+OK: 595.5 MiB in 307 packages
+[*] apk add --no-cache clamav-scanner
+#### nikto ####
+(1/9) Installing perl (5.42.2-r0)
+(2/9) Installing perl-error (0.17030-r0)
+(3/9) Installing perl-git (2.54.0-r0)
+(4/9) Installing git-perl (2.54.0-r0)
+(5/9) Installing lua5.4-libs (5.4.8-r0)
+(6/9) Installing libpcap (1.10.6-r1)
+(7/9) Installing libssh2 (1.11.1-r3)
+(8/9) Installing nmap (7.99-r0)
+(9/9) Installing nikto (2.6.0-r0)
+Executing busybox-1.38.0-r1.trigger
+OK: 649.8 MiB in 316 packages
+[*] apk add --no-cache nikto
+#### sleuthkit ####
+(1/2) Installing sleuthkit-libs (4.15.0-r0)
+(2/2) Installing sleuthkit (4.15.0-r0)
+Executing busybox-1.38.0-r1.trigger
+OK: 651.3 MiB in 318 packages
+[*] apk add --no-cache sleuthkit
+#### wireshark ####
+( 1/52) Purging icu-data-en (78.1-r0)
+( 2/52) Installing icu-data-full (78.1-r0)
+( 3/52) Installing tzdata (2026b-r0)
+( 4/52) Installing libb2 (0.98.1-r3)
+( 5/52) Installing double-conversion (3.4.0-r0)
+( 6/52) Installing libpcre2-16 (10.47-r1)
+( 7/52) Installing duktape-libs (2.7.0-r3)
+( 8/52) Installing libproxy (0.5.12-r0)
+( 9/52) Installing qt6-qtbase (6.11.1-r1)
+(10/52) Installing hicolor-icon-theme (0.18-r0)
+(11/52) Installing file (5.47-r2)
+(12/52) Installing xprop (1.2.8-r0)
+(13/52) Installing xset (1.2.5-r1)
+(14/52) Installing xdg-utils (1.2.1-r1)
+(15/52) Installing qt6-qtbase-wayland (6.11.1-r1)
+(16/52) Installing tslib (1.24-r0)
+(17/52) Installing xcb-util-image (0.4.1-r0)
+(18/52) Installing xcb-util-renderutil (0.3.10-r0)
+(19/52) Installing xcb-util-cursor (0.1.5-r0)
+(20/52) Installing xcb-util-wm (0.4.2-r0)
+(21/52) Installing xcb-util-keysyms (0.4.1-r0)
+(22/52) Installing libxkbcommon-x11 (1.13.1-r0)
+(23/52) Installing qt6-qtbase-x11 (6.11.1-r1)
+(24/52) Installing qt6-qtsvg (6.11.1-r0)
+(25/52) Installing qt6-qtdeclarative (6.11.1-r1)
+(26/52) Installing qt6-qtshadertools (6.11.1-r0)
+(27/52) Installing qt6-qt5compat (6.11.1-r0)
+(28/52) Installing libasyncns (0.8-r5)
+(29/52) Installing orc (0.4.42-r0)
+(30/52) Installing libogg (1.3.6-r0)
+(31/52) Installing libflac (1.4.3-r2)
+(32/52) Installing alsa-lib (1.2.15.3-r0)
+(33/52) Installing lame-libs (3.100-r5)
+(34/52) Installing mpg123-libs (1.33.6-r0)
+(35/52) Installing opus (1.6.1-r0)
+(36/52) Installing libvorbis (1.3.7-r2)
+(37/52) Installing libsndfile (1.2.2-r2)
+(38/52) Installing soxr (0.1.3-r7)
+(39/52) Installing speexdsp (1.2.1-r2)
+(40/52) Installing tdb-libs (1.4.15-r1)
+(41/52) Installing libpulse (17.0-r7)
+(42/52) Installing qt6-qtmultimedia (6.11.1-r0)
+(43/52) Installing krb5-conf (1.0-r2)
+(44/52) Installing libcom_err (1.47.4-r0)
+(45/52) Installing keyutils-libs (1.6.3-r4)
+(46/52) Installing libverto (0.3.2-r2)
+(47/52) Installing krb5-libs (1.22.2-r1)
+(48/52) Installing libmaxminddb-libs (1.13.3-r0)
+(49/52) Installing libsmi (0.5.0-r5)
+(50/52) Installing libssh (0.12.0-r0)
+(51/52) Installing wireshark-common (4.6.6-r0)
+  Executing wireshark-common-4.6.6-r0.pre-install
+  Executing wireshark-common-4.6.6-r0.post-install
+  * 
+  * If you want to run wireshark as an unprivileged user
+  * then you must add that user to the group "wireshark".
+  * 
+(52/52) Installing wireshark (4.6.6-r0)
+Executing busybox-1.38.0-r1.trigger
+Executing shared-mime-info-2.4-r7.trigger
+OK: 931.9 MiB in 368 packages
+[*] apk add --no-cache wireshark
+#### tcpdump ####
+(1/1) Installing tcpdump (4.99.6-r1)
+Executing busybox-1.38.0-r1.trigger
+OK: 932.8 MiB in 369 packages
+[*] apk add --no-cache tcpdump
+#### tshark ####
+(1/1) Installing tshark (4.6.6-r0)
+Executing busybox-1.38.0-r1.trigger
+OK: 933.1 MiB in 370 packages
+[*] apk add --no-cache tshark
+######## PIP commix (commix) ########
+creating virtual environment...
+creating shared libraries...
+upgrading shared libraries...
+WARNING: Skipping setuptools as it is not installed.
+installing commix...
+done! ✨ 🌟 ✨
+  installed package commix 0.1, installed using Python 3.14.5
+  These apps are now available
+    - commix
+[*] pipx install commix
+######## PIP enum4linux (enum4linux-ng) ########
+creating virtual environment...
+determining package name from 'git+https://github.com/cddmp/enum4linux-ng.git'...
+creating virtual environment...
+installing enum4linux-ng from spec 'git+https://github.com/cddmp/enum4linux-ng.git'...
+done! ✨ 🌟 ✨
+  installed package enum4linux-ng 1.3.10, installed using Python 3.14.5
+  These apps are now available
+    - enum4linux-ng
+[*] pipx install git+https://github.com/cddmp/enum4linux-ng.git
+######## PIP fierce (fierce) ########
+creating virtual environment...
+installing fierce...
+done! ✨ 🌟 ✨
+  installed package fierce 1.6.0, installed using Python 3.14.5
+  These apps are now available
+    - fierce
+[*] pipx install fierce
+######## PIP holehe (holehe) ########
+creating virtual environment...
+installing holehe...
+done! ✨ 🌟 ✨
+  installed package holehe 1.61, installed using Python 3.14.5
+  These apps are now available
+    - holehe
+[*] pipx install holehe
+######## PIP metagoofil (metagoofil) ########
+creating virtual environment...
+determining package name from 'git+https://github.com/opsdisk/metagoofil.git'...
+Running command git clone --filter=blob:none --quiet https://github.com/opsdisk/metagoofil.git /tmp/pip-req-build-b2jzb928
+ERROR: git+https://github.com/opsdisk/metagoofil.git does not appear to be a Python project: neither 'setup.py' nor 'pyproject.toml' found.
+( 1/34) Installing python3-dev (3.14.5-r2)
+( 2/34) Installing jansson (2.15.0-r0)
+( 3/34) Installing binutils (2.45.1-r1)
+( 4/34) Installing libgcc-static (15.2.0-r6)
+( 5/34) Installing libatomic (15.2.0-r6)
+( 6/34) Installing isl26 (0.26-r2)
+( 7/34) Installing mpfr4 (4.2.2-r0)
+( 8/34) Installing mpc1 (1.3.1-r1)
+( 9/34) Installing gcc (15.2.0-r6)
+(10/34) Installing libstdc++-dev (15.2.0-r6)
+(11/34) Installing musl-dev (1.2.6-r2)
+(12/34) Installing g++ (15.2.0-r6)
+(13/34) Installing linux-headers (7.0.0-r1)
+(14/34) Installing libffi-dev (3.5.2-r1)
+(15/34) Installing openssl-dev (3.5.7-r0)
+(16/34) Installing make (4.4.1-r4)
+(17/34) Installing brotli (1.2.0-r1)
+(18/34) Installing brotli-dev (1.2.0-r1)
+(19/34) Installing c-ares-dev (1.34.6-r0)
+(20/34) Installing libidn2-dev (2.3.8-r0)
+(21/34) Installing libpsl-utils (0.21.5-r3)
+(22/34) Installing libpsl-dev (0.21.5-r3)
+(23/34) Installing nghttp2-dev (1.69.0-r0)
+(24/34) Installing zlib-dev (1.3.2-r0)
+(25/34) Installing zstd (1.5.7-r2)
+(26/34) Installing zstd-dev (1.5.7-r2)
+(27/34) Installing curl-dev (8.20.0-r1)
+(28/34) Installing xz (5.8.3-r0)
+(29/34) Installing xz-dev (5.8.3-r0)
+(30/34) Installing libxml2-utils (2.13.9-r2)
+(31/34) Installing libxml2-dev (2.13.9-r2)
+(32/34) Installing libxslt (1.1.43-r3)
+(33/34) Installing libxslt-dev (1.1.43-r3)
+(34/34) Installing .nxs-pipbuild (20260629.234129)
+Executing busybox-1.38.0-r1.trigger
+OK: 1300.3 MiB in 404 packages
+creating virtual environment...
+determining package name from 'git+https://github.com/opsdisk/metagoofil.git'...
+Running command git clone --filter=blob:none --quiet https://github.com/opsdisk/metagoofil.git /tmp/pip-req-build-rg2jeieg
+ERROR: git+https://github.com/opsdisk/metagoofil.git does not appear to be a Python project: neither 'setup.py' nor 'pyproject.toml' found.
+WARNING: opening from cache http://dl-cdn.alpinelinux.org/alpine/edge/main/x86_64/APKINDEX.tar.gz: No such file or directory
+WARNING: opening from cache http://dl-cdn.alpinelinux.org/alpine/edge/community/x86_64/APKINDEX.tar.gz: No such file or directory
+WARNING: opening from cache http://dl-cdn.alpinelinux.org/alpine/edge/testing/x86_64/APKINDEX.tar.gz: No such file or directory
+WARNING: opening from cache https://dplusos21.github.io/NexusSecOS-Arsenal/x86_64/APKINDEX.tar.gz: No such file or directory
+( 1/34) Purging .nxs-pipbuild (20260629.234129)
+( 2/34) Purging python3-dev (3.14.5-r2)
+( 3/34) Purging g++ (15.2.0-r6)
+( 4/34) Purging libstdc++-dev (15.2.0-r6)
+( 5/34) Purging gcc (15.2.0-r6)
+( 6/34) Purging binutils (2.45.1-r1)
+( 7/34) Purging libgcc-static (15.2.0-r6)
+( 8/34) Purging libatomic (15.2.0-r6)
+( 9/34) Purging musl-dev (1.2.6-r2)
+(10/34) Purging libffi-dev (3.5.2-r1)
+(11/34) Purging make (4.4.1-r4)
+(12/34) Purging linux-headers (7.0.0-r1)
+(13/34) Purging curl-dev (8.20.0-r1)
+(14/34) Purging libxslt-dev (1.1.43-r3)
+(15/34) Purging libxslt (1.1.43-r3)
+(16/34) Purging brotli-dev (1.2.0-r1)
+(17/34) Purging brotli (1.2.0-r1)
+(18/34) Purging c-ares-dev (1.34.6-r0)
+(19/34) Purging isl26 (0.26-r2)
+(20/34) Purging jansson (2.15.0-r0)
+(21/34) Purging libpsl-dev (0.21.5-r3)
+(22/34) Purging libpsl-utils (0.21.5-r3)
+(23/34) Purging libxml2-dev (2.13.9-r2)
+(24/34) Purging libxml2-utils (2.13.9-r2)
+(25/34) Purging mpc1 (1.3.1-r1)
+(26/34) Purging mpfr4 (4.2.2-r0)
+(27/34) Purging nghttp2-dev (1.69.0-r0)
+(28/34) Purging openssl-dev (3.5.7-r0)
+(29/34) Purging xz-dev (5.8.3-r0)
+(30/34) Purging xz (5.8.3-r0)
+(31/34) Purging zlib-dev (1.3.2-r0)
+(32/34) Purging zstd-dev (1.5.7-r2)
+(33/34) Purging zstd (1.5.7-r2)
+(34/34) Purging libidn2-dev (2.3.8-r0)
+Executing busybox-1.38.0-r1.trigger
+OK: 933.1 MiB in 370 packages
+[*] pipx install git+https://github.com/opsdisk/metagoofil.git
+[*] pipx fallito: riprovo con build-deps temporanee...
+######## PIP netexec (nxc) ########
+creating virtual environment...
+installing netexec...
+Fatal error from pip prevented installation. Full pip output in file:
+    /home/nexus/.local/state/pipx/log/cmd_2026-06-29_23.41.36_pip_errors.log
+
+Some possibly relevant errors from pip install:
+    ERROR: Could not find a version that satisfies the requirement netexec (from versions: none)
+    ERROR: No matching distribution found for netexec
+Error installing netexec.
+
+( 1/34) Installing python3-dev (3.14.5-r2)
+( 2/34) Installing jansson (2.15.0-r0)
+( 3/34) Installing binutils (2.45.1-r1)
+( 4/34) Installing libgcc-static (15.2.0-r6)
+( 5/34) Installing libatomic (15.2.0-r6)
+( 6/34) Installing isl26 (0.26-r2)
+( 7/34) Installing mpfr4 (4.2.2-r0)
+( 8/34) Installing mpc1 (1.3.1-r1)
+( 9/34) Installing gcc (15.2.0-r6)
+(10/34) Installing libstdc++-dev (15.2.0-r6)
+(11/34) Installing musl-dev (1.2.6-r2)
+(12/34) Installing g++ (15.2.0-r6)
+(13/34) Installing linux-headers (7.0.0-r1)
+(14/34) Installing libffi-dev (3.5.2-r1)
+(15/34) Installing openssl-dev (3.5.7-r0)
+(16/34) Installing make (4.4.1-r4)
+(17/34) Installing brotli (1.2.0-r1)
+(18/34) Installing brotli-dev (1.2.0-r1)
+(19/34) Installing c-ares-dev (1.34.6-r0)
+(20/34) Installing libidn2-dev (2.3.8-r0)
+(21/34) Installing libpsl-utils (0.21.5-r3)
+(22/34) Installing libpsl-dev (0.21.5-r3)
+(23/34) Installing nghttp2-dev (1.69.0-r0)
+(24/34) Installing zlib-dev (1.3.2-r0)
+(25/34) Installing zstd (1.5.7-r2)
+(26/34) Installing zstd-dev (1.5.7-r2)
+(27/34) Installing curl-dev (8.20.0-r1)
+(28/34) Installing xz (5.8.3-r0)
+(29/34) Installing xz-dev (5.8.3-r0)
+(30/34) Installing libxml2-utils (2.13.9-r2)
+(31/34) Installing libxml2-dev (2.13.9-r2)
+(32/34) Installing libxslt (1.1.43-r3)
+(33/34) Installing libxslt-dev (1.1.43-r3)
+(34/34) Installing .nxs-pipbuild (20260629.234137)
+Executing busybox-1.38.0-r1.trigger
+OK: 1300.3 MiB in 404 packages
+creating virtual environment...
+installing netexec...
+Fatal error from pip prevented installation. Full pip output in file:
+    /home/nexus/.local/state/pipx/log/cmd_2026-06-29_23.41.42_pip_errors.log
+
+Some possibly relevant errors from pip install:
+    ERROR: Could not find a version that satisfies the requirement netexec (from versions: none)
+    ERROR: No matching distribution found for netexec
+Error installing netexec.
+
+WARNING: opening from cache http://dl-cdn.alpinelinux.org/alpine/edge/main/x86_64/APKINDEX.tar.gz: No such file or directory
+WARNING: opening from cache http://dl-cdn.alpinelinux.org/alpine/edge/community/x86_64/APKINDEX.tar.gz: No such file or directory
+WARNING: opening from cache http://dl-cdn.alpinelinux.org/alpine/edge/testing/x86_64/APKINDEX.tar.gz: No such file or directory
+WARNING: opening from cache https://dplusos21.github.io/NexusSecOS-Arsenal/x86_64/APKINDEX.tar.gz: No such file or directory
+( 1/34) Purging .nxs-pipbuild (20260629.234137)
+( 2/34) Purging python3-dev (3.14.5-r2)
+( 3/34) Purging g++ (15.2.0-r6)
+( 4/34) Purging libstdc++-dev (15.2.0-r6)
+( 5/34) Purging gcc (15.2.0-r6)
+( 6/34) Purging binutils (2.45.1-r1)
+( 7/34) Purging libgcc-static (15.2.0-r6)
+( 8/34) Purging libatomic (15.2.0-r6)
+( 9/34) Purging musl-dev (1.2.6-r2)
+(10/34) Purging libffi-dev (3.5.2-r1)
+(11/34) Purging make (4.4.1-r4)
+(12/34) Purging linux-headers (7.0.0-r1)
+(13/34) Purging curl-dev (8.20.0-r1)
+(14/34) Purging libxslt-dev (1.1.43-r3)
+(15/34) Purging libxslt (1.1.43-r3)
+(16/34) Purging brotli-dev (1.2.0-r1)
+(17/34) Purging brotli (1.2.0-r1)
+(18/34) Purging c-ares-dev (1.34.6-r0)
+(19/34) Purging isl26 (0.26-r2)
+(20/34) Purging jansson (2.15.0-r0)
+(21/34) Purging libpsl-dev (0.21.5-r3)
+(22/34) Purging libpsl-utils (0.21.5-r3)
+(23/34) Purging libxml2-dev (2.13.9-r2)
+(24/34) Purging libxml2-utils (2.13.9-r2)
+(25/34) Purging mpc1 (1.3.1-r1)
+(26/34) Purging mpfr4 (4.2.2-r0)
+(27/34) Purging nghttp2-dev (1.69.0-r0)
+(28/34) Purging openssl-dev (3.5.7-r0)
+(29/34) Purging xz-dev (5.8.3-r0)
+(30/34) Purging xz (5.8.3-r0)
+(31/34) Purging zlib-dev (1.3.2-r0)
+(32/34) Purging zstd-dev (1.5.7-r2)
+(33/34) Purging zstd (1.5.7-r2)
+(34/34) Purging libidn2-dev (2.3.8-r0)
+Executing busybox-1.38.0-r1.trigger
+OK: 933.1 MiB in 370 packages
+[*] pipx install netexec
+[*] pipx fallito: riprovo con build-deps temporanee...
+######## PIP smbmap (smbmap) ########
+creating virtual environment...
+installing smbmap...
+done! ✨ 🌟 ✨
+  installed package smbmap 1.10.8, installed using Python 3.14.5
+  These apps are now available
+    - smbmap
+[*] pipx install smbmap
+######## PIP sublist3r (sublist3r) ########
+creating virtual environment...
+installing sublist3r...
+done! ✨ 🌟 ✨
+  installed package sublist3r 1.0, installed using Python 3.14.5
+  These apps are now available
+    - sublist3r
+[*] pipx install sublist3r
+######## PIP theharvester (theHarvester) ########
+creating virtual environment...
+installing theharvester...
+No apps associated with package theharvester or its dependencies. If you are
+attempting to install a library, pipx should not be used. Consider using pip
+or a similar tool instead.
+
+( 1/34) Installing python3-dev (3.14.5-r2)
+( 2/34) Installing jansson (2.15.0-r0)
+( 3/34) Installing binutils (2.45.1-r1)
+( 4/34) Installing libgcc-static (15.2.0-r6)
+( 5/34) Installing libatomic (15.2.0-r6)
+( 6/34) Installing isl26 (0.26-r2)
+( 7/34) Installing mpfr4 (4.2.2-r0)
+( 8/34) Installing mpc1 (1.3.1-r1)
+( 9/34) Installing gcc (15.2.0-r6)
+(10/34) Installing libstdc++-dev (15.2.0-r6)
+(11/34) Installing musl-dev (1.2.6-r2)
+(12/34) Installing g++ (15.2.0-r6)
+(13/34) Installing linux-headers (7.0.0-r1)
+(14/34) Installing libffi-dev (3.5.2-r1)
+(15/34) Installing openssl-dev (3.5.7-r0)
+(16/34) Installing make (4.4.1-r4)
+(17/34) Installing brotli (1.2.0-r1)
+(18/34) Installing brotli-dev (1.2.0-r1)
+(19/34) Installing c-ares-dev (1.34.6-r0)
+(20/34) Installing libidn2-dev (2.3.8-r0)
+(21/34) Installing libpsl-utils (0.21.5-r3)
+(22/34) Installing libpsl-dev (0.21.5-r3)
+(23/34) Installing nghttp2-dev (1.69.0-r0)
+(24/34) Installing zlib-dev (1.3.2-r0)
+(25/34) Installing zstd (1.5.7-r2)
+(26/34) Installing zstd-dev (1.5.7-r2)
+(27/34) Installing curl-dev (8.20.0-r1)
+(28/34) Installing xz (5.8.3-r0)
+(29/34) Installing xz-dev (5.8.3-r0)
+(30/34) Installing libxml2-utils (2.13.9-r2)
+(31/34) Installing libxml2-dev (2.13.9-r2)
+(32/34) Installing libxslt (1.1.43-r3)
+(33/34) Installing libxslt-dev (1.1.43-r3)
+(34/34) Installing .nxs-pipbuild (20260629.234157)
+Executing busybox-1.38.0-r1.trigger
+OK: 1300.3 MiB in 404 packages
+creating virtual environment...
+installing theharvester...
+No apps associated with package theharvester or its dependencies. If you are
+attempting to install a library, pipx should not be used. Consider using pip
+or a similar tool instead.
+
+WARNING: opening from cache http://dl-cdn.alpinelinux.org/alpine/edge/main/x86_64/APKINDEX.tar.gz: No such file or directory
+WARNING: opening from cache http://dl-cdn.alpinelinux.org/alpine/edge/community/x86_64/APKINDEX.tar.gz: No such file or directory
+WARNING: opening from cache http://dl-cdn.alpinelinux.org/alpine/edge/testing/x86_64/APKINDEX.tar.gz: No such file or directory
+WARNING: opening from cache https://dplusos21.github.io/NexusSecOS-Arsenal/x86_64/APKINDEX.tar.gz: No such file or directory
+( 1/34) Purging .nxs-pipbuild (20260629.234157)
+( 2/34) Purging python3-dev (3.14.5-r2)
+( 3/34) Purging g++ (15.2.0-r6)
+( 4/34) Purging libstdc++-dev (15.2.0-r6)
+( 5/34) Purging gcc (15.2.0-r6)
+( 6/34) Purging binutils (2.45.1-r1)
+( 7/34) Purging libgcc-static (15.2.0-r6)
+( 8/34) Purging libatomic (15.2.0-r6)
+( 9/34) Purging musl-dev (1.2.6-r2)
+(10/34) Purging libffi-dev (3.5.2-r1)
+(11/34) Purging make (4.4.1-r4)
+(12/34) Purging linux-headers (7.0.0-r1)
+(13/34) Purging curl-dev (8.20.0-r1)
+(14/34) Purging libxslt-dev (1.1.43-r3)
+(15/34) Purging libxslt (1.1.43-r3)
+(16/34) Purging brotli-dev (1.2.0-r1)
+(17/34) Purging brotli (1.2.0-r1)
+(18/34) Purging c-ares-dev (1.34.6-r0)
+(19/34) Purging isl26 (0.26-r2)
+(20/34) Purging jansson (2.15.0-r0)
+(21/34) Purging libpsl-dev (0.21.5-r3)
+(22/34) Purging libpsl-utils (0.21.5-r3)
+(23/34) Purging libxml2-dev (2.13.9-r2)
+(24/34) Purging libxml2-utils (2.13.9-r2)
+(25/34) Purging mpc1 (1.3.1-r1)
+(26/34) Purging mpfr4 (4.2.2-r0)
+(27/34) Purging nghttp2-dev (1.69.0-r0)
+(28/34) Purging openssl-dev (3.5.7-r0)
+(29/34) Purging xz-dev (5.8.3-r0)
+(30/34) Purging xz (5.8.3-r0)
+(31/34) Purging zlib-dev (1.3.2-r0)
+(32/34) Purging zstd-dev (1.5.7-r2)
+(33/34) Purging zstd (1.5.7-r2)
+(34/34) Purging libidn2-dev (2.3.8-r0)
+Executing busybox-1.38.0-r1.trigger
+OK: 933.1 MiB in 370 packages
+[*] pipx install theHarvester
+[*] pipx fallito: riprovo con build-deps temporanee...
+######## PIP wafw00f (wafw00f) ########
+creating virtual environment...
+installing wafw00f...
+done! ✨ 🌟 ✨
+  installed package wafw00f 2.4.2, installed using Python 3.14.5
+  These apps are now available
+    - wafw00f
+[*] pipx install wafw00f
+######## PIP wfuzz (wfuzz) ########
+creating virtual environment...
+installing wfuzz...
+Fatal error from pip prevented installation. Full pip output in file:
+    /home/nexus/.local/state/pipx/log/cmd_2026-06-29_23.42.06_pip_errors.log
+
+pip seemed to fail to build package:
+    'pycurl'
+
+Some possibly relevant errors from pip install:
+    error: subprocess-exited-with-error
+    FileNotFoundError: [Errno 2] No such file or directory: 'curl-config'
+    ConfigurationError: Could not run curl-config: [Errno 2] No such file or directory: 'curl-config'
+    ERROR: Failed to build 'pycurl' when getting requirements to build wheel
+Error installing wfuzz.
+
+( 1/34) Installing python3-dev (3.14.5-r2)
+( 2/34) Installing jansson (2.15.0-r0)
+( 3/34) Installing binutils (2.45.1-r1)
+( 4/34) Installing libgcc-static (15.2.0-r6)
+( 5/34) Installing libatomic (15.2.0-r6)
+( 6/34) Installing isl26 (0.26-r2)
+( 7/34) Installing mpfr4 (4.2.2-r0)
+( 8/34) Installing mpc1 (1.3.1-r1)
+( 9/34) Installing gcc (15.2.0-r6)
+(10/34) Installing libstdc++-dev (15.2.0-r6)
+(11/34) Installing musl-dev (1.2.6-r2)
+(12/34) Installing g++ (15.2.0-r6)
+(13/34) Installing linux-headers (7.0.0-r1)
+(14/34) Installing libffi-dev (3.5.2-r1)
+(15/34) Installing openssl-dev (3.5.7-r0)
+(16/34) Installing make (4.4.1-r4)
+(17/34) Installing brotli (1.2.0-r1)
+(18/34) Installing brotli-dev (1.2.0-r1)
+(19/34) Installing c-ares-dev (1.34.6-r0)
+(20/34) Installing libidn2-dev (2.3.8-r0)
+(21/34) Installing libpsl-utils (0.21.5-r3)
+(22/34) Installing libpsl-dev (0.21.5-r3)
+(23/34) Installing nghttp2-dev (1.69.0-r0)
+(24/34) Installing zlib-dev (1.3.2-r0)
+(25/34) Installing zstd (1.5.7-r2)
+(26/34) Installing zstd-dev (1.5.7-r2)
+(27/34) Installing curl-dev (8.20.0-r1)
+(28/34) Installing xz (5.8.3-r0)
+(29/34) Installing xz-dev (5.8.3-r0)
+(30/34) Installing libxml2-utils (2.13.9-r2)
+(31/34) Installing libxml2-dev (2.13.9-r2)
+(32/34) Installing libxslt (1.1.43-r3)
+(33/34) Installing libxslt-dev (1.1.43-r3)
+(34/34) Installing .nxs-pipbuild (20260629.234209)
+Executing busybox-1.38.0-r1.trigger
+OK: 1300.3 MiB in 404 packages
+creating virtual environment...
+installing wfuzz...
+Fatal error from pip prevented installation. Full pip output in file:
+    /home/nexus/.local/state/pipx/log/cmd_2026-06-29_23.42.14_pip_errors.log
+
+pip failed to build package:
+    pycurl
+
+Some possibly relevant errors from pip install:
+    error: subprocess-exited-with-error
+    src/easy.c:283:5: error: implicit declaration of function 'Py_TRASHCAN_SAFE_BEGIN'; did you mean 'Py_TRASHCAN_BEGIN'? [-Wimplicit-function-declaration]
+    src/easy.c:289:5: error: implicit declaration of function 'Py_TRASHCAN_SAFE_END'; did you mean 'Py_TRASHCAN_END'? [-Wimplicit-function-declaration]
+    error: command '/usr/bin/cc' failed with exit code 1
+    error: failed-wheel-build-for-install
+Error installing wfuzz.
+
+WARNING: opening from cache http://dl-cdn.alpinelinux.org/alpine/edge/main/x86_64/APKINDEX.tar.gz: No such file or directory
+WARNING: opening from cache http://dl-cdn.alpinelinux.org/alpine/edge/community/x86_64/APKINDEX.tar.gz: No such file or directory
+WARNING: opening from cache http://dl-cdn.alpinelinux.org/alpine/edge/testing/x86_64/APKINDEX.tar.gz: No such file or directory
+WARNING: opening from cache https://dplusos21.github.io/NexusSecOS-Arsenal/x86_64/APKINDEX.tar.gz: No such file or directory
+( 1/34) Purging .nxs-pipbuild (20260629.234209)
+( 2/34) Purging python3-dev (3.14.5-r2)
+( 3/34) Purging g++ (15.2.0-r6)
+( 4/34) Purging libstdc++-dev (15.2.0-r6)
+( 5/34) Purging gcc (15.2.0-r6)
+( 6/34) Purging binutils (2.45.1-r1)
+( 7/34) Purging libgcc-static (15.2.0-r6)
+( 8/34) Purging libatomic (15.2.0-r6)
+( 9/34) Purging musl-dev (1.2.6-r2)
+(10/34) Purging libffi-dev (3.5.2-r1)
+(11/34) Purging make (4.4.1-r4)
+(12/34) Purging linux-headers (7.0.0-r1)
+(13/34) Purging curl-dev (8.20.0-r1)
+(14/34) Purging libxslt-dev (1.1.43-r3)
+(15/34) Purging libxslt (1.1.43-r3)
+(16/34) Purging brotli-dev (1.2.0-r1)
+(17/34) Purging brotli (1.2.0-r1)
+(18/34) Purging c-ares-dev (1.34.6-r0)
+(19/34) Purging isl26 (0.26-r2)
+(20/34) Purging jansson (2.15.0-r0)
+(21/34) Purging libpsl-dev (0.21.5-r3)
+(22/34) Purging libpsl-utils (0.21.5-r3)
+(23/34) Purging libxml2-dev (2.13.9-r2)
+(24/34) Purging libxml2-utils (2.13.9-r2)
+(25/34) Purging mpc1 (1.3.1-r1)
+(26/34) Purging mpfr4 (4.2.2-r0)
+(27/34) Purging nghttp2-dev (1.69.0-r0)
+(28/34) Purging openssl-dev (3.5.7-r0)
+(29/34) Purging xz-dev (5.8.3-r0)
+(30/34) Purging xz (5.8.3-r0)
+(31/34) Purging zlib-dev (1.3.2-r0)
+(32/34) Purging zstd-dev (1.5.7-r2)
+(33/34) Purging zstd (1.5.7-r2)
+(34/34) Purging libidn2-dev (2.3.8-r0)
+Executing busybox-1.38.0-r1.trigger
+OK: 933.1 MiB in 370 packages
+[*] pipx install wfuzz
+[*] pipx fallito: riprovo con build-deps temporanee...
+######## PIP wifite (wifite) ########
+creating virtual environment...
+determining package name from 'git+https://github.com/derv82/wifite2.git'...
+creating virtual environment...
+installing wifite from spec 'git+https://github.com/derv82/wifite2.git'...
+done! ✨ 🌟 ✨
+  installed package wifite 2.2.5, installed using Python 3.14.5
+  These apps are now available
+    - wifite
+[*] pipx install git+https://github.com/derv82/wifite2.git

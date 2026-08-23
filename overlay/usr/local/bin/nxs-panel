@@ -1,0 +1,10 @@
+#!/bin/sh
+# NexusSec OS - avvia il pannello inferiore nativo (GTK3 + wmctrl).
+for c in python3 python3.9 python3.11 python3.7; do
+  if command -v "$c" >/dev/null 2>&1; then
+    exec env GTK_IM_MODULE=gtk-im-context-simple PYTHONPATH=/usr/local/lib \
+         "$c" -m nxs_cc.panel "$@"
+  fi
+done
+echo "nxs-panel: python3 non disponibile" >&2
+exit 1

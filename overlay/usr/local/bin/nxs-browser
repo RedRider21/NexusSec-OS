@@ -1,0 +1,61 @@
+#!/bin/sh
+# NexusSec Browser - launcher (Alpine).
+#
+# Il browser e' Python GTK3 + WebKit2 (in /usr/local/lib/nxs_browser). Su
+# Alpine il motore web e' il pacchetto apk 'webkit2gtk': NON e' nel set base
+# (e' pesante), lo installiamo ON-DEMAND alla prima apertura con apk.
+#
+# Tutto l'output (errori inclusi) va in /tmp/nxs-browser.log per diagnostica.
+set -e
+LOG=/tmp/nxs-browser.log
+# In Alpine il pacchetto NON e' "webkit2gtk" (non esiste) ma "webkit2gtk-4.1"
+# (fornisce WebKit2-4.1.typelib). Usarlo, altrimenti apk add fallisce sempre.
+PKG=webkit2gtk-4.1
+
+# Ambiente robusto per WebKit2 su X minimale/VM (niente GPU/GL):
+#  - GTK_IM_MODULE simple: evita il crash da modulo input-method assente.
+#  - WEBKIT_DISABLE_COMPOSITING_MODE: niente compositing accelerato (no GL).
+#  - LIBGL_ALWAYS_SOFTWARE: rendering software se mesa c'e'.
+#  - WEBKIT_FORCE_SANDBOX=0: il sandbox a user-namespace puo' non essere
+#    disponibile e impedirebbe l'avvio del web process.
+IMENV="GTK_IM_MODULE=gtk-im-context-simple \
+WEBKIT_DISABLE_COMPOSITING_MODE=1 \
+LIBGL_ALWAYS_SOFTWARE=1 \
+WEBKIT_FORCE_SANDBOX=0"
+
+priv() { if command -v doas >/dev/null 2>&1; then doas "$@"; \
+         elif command -v sudo >/dev/null 2>&1; then sudo "$@"; else "$@"; fi; }
+
+have_webkit() {
+  for d in /usr/lib/girepository-1.0 /usr/local/lib/girepository-1.0; do
+    [ -f "$d/WebKit2-4.1.typelib" ] || [ -f "$d/WebKit2-4.0.typelib" ] && return 0
+  done
+  return 1
+}
+
+if ! have_webkit; then
+  echo "NexusSec Browser: installo WebKit2 con apk (solo la prima volta)..." | tee -a "$LOG" >&2
+  priv apk add --no-cache "$PKG" >>"$LOG" 2>&1 || true
+fi
+
+if ! have_webkit; then
+  MSG="WebKit2 non disponibile: impossibile avviare NexusSec Browser. Vedi $LOG"
+  echo "$MSG" >&2
+  command -v xmessage >/dev/null 2>&1 && xmessage -center "$MSG"
+  exit 1
+fi
+
+# Il browser e' STEALTH di default (anonimo via Tor). Serve il binario 'tor':
+# lo installiamo on-demand (best-effort). Senza, il browser resta usabile ma
+# senza anonimato di IP (badge "Stealth (no Tor)"); il demone lo avvia da se'
+# in user-space (SOCKS 9050, data-dir in ~/.nxs-browser/tor).
+if ! command -v tor >/dev/null 2>&1; then
+  echo "NexusSec Browser: installo Tor per la modalita' stealth..." | tee -a "$LOG" >&2
+  priv apk add --no-cache tor >>"$LOG" 2>&1 || true
+fi
+
+if command -v python3 >/dev/null 2>&1; then
+  exec env $IMENV PYTHONPATH=/usr/local/lib python3 -m nxs_browser "$@" >>"$LOG" 2>&1
+fi
+echo "nxs-browser: python3 non disponibile (apk add python3)" >&2
+exit 1

@@ -1,0 +1,730 @@
+"""Pannello stile MATE per NexusSec OS.
+
+Barra nativa GTK3 con icone simboliche cyan, agganciabile in basso o in
+alto (configurabile da ~/.config/nxs/panel.conf, vedi panelcfg.py):
+
+  [menu] [term][file][centro] | lista finestre... | [orologio][desktop]
+
+La lista finestre viene da `wmctrl -l` (poll ~1s); il click attiva la
+finestra o la minimizza se gia' attiva. Niente conky, niente tint2: solo
+GTK3 + wmctrl. Le icone seguono il tema icone selezionato (Adwaita), il
+colore cyan e' imposto via CSS (.nxs-panel button image).
+"""
+from __future__ import annotations
+
+import subprocess
+import time
+
+import gi
+gi.require_version("Gtk", "3.0")
+gi.require_version("Gdk", "3.0")
+from gi.repository import Gtk, Gdk, GLib  # noqa: E402
+
+from .common import apply_css, have, run_bg  # noqa: E402
+from . import panelcfg  # noqa: E402
+
+# Sistema profili (pacchetto separato, nessuna dipendenza GTK). Se assente, il
+# pannello resta pienamente funzionante senza la sezione profilo.
+try:
+    from nxs_profiles import model as profiles_model  # noqa: E402
+except Exception:                                     # noqa: BLE001
+    profiles_model = None
+
+try:
+    from nxs_profiles import isolation as profiles_iso  # noqa: E402
+except Exception:                                       # noqa: BLE001
+    profiles_iso = None
+
+# Procedure guidate (wizard): soft-import, il menu mostra quelle del profilo.
+try:
+    from nxs_wizards import recipes as wiz_recipes  # noqa: E402
+except Exception:                                   # noqa: BLE001
+    wiz_recipes = None
+
+# Categoria tool -> (etichetta leggibile, icona simbolica). Usate per le
+# intestazioni di sezione e l'icona di ogni tool nel menu start.
+TOOL_CATEGORIES = [
+    ("recon",      ("Ricognizione",      "system-search-symbolic")),
+    ("osint",      ("OSINT",             "find-location-symbolic")),
+    ("web",        ("Web",               "applications-internet-symbolic")),
+    ("password",   ("Password",          "dialog-password-symbolic")),
+    ("bruteforce", ("Brute force",       "changes-prevent-symbolic")),
+    ("wireless",   ("Wireless",          "network-wireless-symbolic")),
+    ("sniffing",   ("Sniffing/Spoofing", "network-transmit-receive-symbolic")),
+    ("vuln",       ("Analisi vulnerabilita", "dialog-warning-symbolic")),
+    ("exploit",    ("Exploitation",      "application-x-executable-symbolic")),
+    ("pivoting",   ("Pivoting/Tunnel",   "network-vpn-symbolic")),
+    ("reverse",    ("Reverse engineering", "applications-engineering-symbolic")),
+    ("crypto",     ("Crypto/Stego",      "dialog-password-symbolic")),
+    ("hardware",   ("Hardware/SDR",      "audio-card-symbolic")),
+    ("forensics",  ("Forensics",         "drive-harddisk-symbolic")),
+    ("reporting",  ("Reporting",         "text-x-generic-symbolic")),
+    ("anonymity",  ("Anonimato",         "security-high-symbolic")),
+    ("other",      ("Altri strumenti",   "applications-utilities-symbolic")),
+]
+TOOL_CAT_LABEL = {k: v[0] for k, v in TOOL_CATEGORIES}
+TOOL_CAT_ICON = {k: v[1] for k, v in TOOL_CATEGORIES}
+TOOL_CAT_ORDER = [k for k, _ in TOOL_CATEGORIES]
+
+PANEL_HEIGHT = panelcfg.PANEL_HEIGHT
+POLL_MS = 1000
+
+
+# Finestre da NON mostrare nella tasklist: la finestra "desktop" di
+# pcmanfm (--desktop) e simili. Il file manager vero ha come titolo il
+# nome della cartella, quindi non viene filtrato.
+_SKIP_TITLES = {"pcmanfm", "desktop", "pcmanfm-desktop", ""}
+
+
+def _wmctrl_list():
+    """Ritorna [(id, desktop, titolo)] delle finestre normali."""
+    try:
+        out = subprocess.run(["wmctrl", "-l"], capture_output=True,
+                             text=True, timeout=3).stdout
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        return []
+    wins = []
+    for line in out.splitlines():
+        parts = line.split(None, 3)
+        if len(parts) < 4:
+            continue
+        wid, desk, _host, title = parts
+        if desk == "-1":          # finestre sticky/desktop escluse
+            continue
+        if title.strip().lower() in _SKIP_TITLES:   # desktop di pcmanfm
+            continue
+        wins.append((wid, desk, title))
+    return wins
+
+
+def _active_window():
+    """ID esadecimale della finestra attiva (via Gdk, nessuna dipendenza)."""
+    try:
+        w = Gdk.Screen.get_default().get_active_window()
+        if w is not None:
+            return "0x%08x" % w.get_xid()
+    except Exception:
+        pass
+    return None
+
+
+def _icon_button(icon_name, tooltip, css_class="nxs-icon"):
+    b = Gtk.Button()
+    b.set_relief(Gtk.ReliefStyle.NONE)
+    b.set_tooltip_text(tooltip)
+    b.get_style_context().add_class(css_class)
+    img = Gtk.Image.new_from_icon_name(icon_name, Gtk.IconSize.LARGE_TOOLBAR)
+    b.set_image(img)
+    b.set_always_show_image(True)
+    return b
+
+
+class Panel(Gtk.Window):
+    def __init__(self):
+        super().__init__(type=Gtk.WindowType.TOPLEVEL)
+        apply_css()
+        self.position = panelcfg.get_position()
+        self.set_type_hint(Gdk.WindowTypeHint.DOCK)
+        self.set_decorated(False)
+        self.set_resizable(False)
+        self.set_keep_above(True)
+        self.stick()
+        self.set_skip_taskbar_hint(True)
+        self.set_skip_pager_hint(True)
+        ctx = self.get_style_context()
+        ctx.add_class("nxs-panel")
+        if self.position == "top":
+            ctx.add_class("nxs-panel-top")
+
+        self._task_btns = {}      # id -> Gtk.Button
+        self._last_sig = None
+        self._popups = {}         # key -> finestra toplevel aperta
+        self._popup_closed = {}   # key -> timestamp ultima chiusura (anti-rimbalzo)
+
+        root = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=0)
+        self.add(root)
+
+        # --- Sinistra: menu + lanciatori (icone) ---
+        left = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=0)
+        root.pack_start(left, False, False, 0)
+
+        menu_btn = _icon_button("open-menu-symbolic", "Menu NexusSec", "nxs-menu")
+        menu_btn.connect("clicked", self._on_menu)
+        left.pack_start(menu_btn, False, False, 0)
+
+        left.pack_start(Gtk.Separator(orientation=Gtk.Orientation.VERTICAL),
+                        False, False, 0)
+
+        for icon, tip, cmd in (
+            ("utilities-terminal-symbolic", "Terminale", ["nxs-terminal"]),
+            ("system-file-manager-symbolic", "File", ["pcmanfm"]),
+            ("accessories-text-editor-symbolic", "Editor di testo", ["xed"]),
+            ("nxs-browser", "NexusSec Browser", ["nxs-browser"]),
+            ("preferences-system-symbolic", "Centro di Controllo",
+             ["nxs-control-center"]),
+        ):
+            b = _icon_button(icon, tip)
+            b.connect("clicked", lambda _w, c=cmd: run_bg(c))
+            left.pack_start(b, False, False, 0)
+
+        left.pack_start(Gtk.Separator(orientation=Gtk.Orientation.VERTICAL),
+                        False, False, 0)
+
+        # --- Centro: lista finestre ---
+        self.tasks = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=0)
+        root.pack_start(self.tasks, True, True, 0)
+
+        # --- Destra: orologio + mostra desktop ---
+        right = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=0)
+        root.pack_end(right, False, False, 0)
+
+        right.pack_start(Gtk.Separator(orientation=Gtk.Orientation.VERTICAL),
+                         False, False, 0)
+
+        clock_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+        clock_box.set_valign(Gtk.Align.CENTER)
+        self.clock = Gtk.Label()
+        self.clock.get_style_context().add_class("nxs-clock")
+        self.date = Gtk.Label()
+        self.date.get_style_context().add_class("nxs-clock-date")
+        clock_box.pack_start(self.clock, False, False, 0)
+        clock_box.pack_start(self.date, False, False, 0)
+
+        # Pulsante orologio: apre/chiude il calendario (finestra toplevel).
+        self.clock_btn = Gtk.Button()
+        self.clock_btn.set_relief(Gtk.ReliefStyle.NONE)
+        self.clock_btn.set_tooltip_text("Calendario")
+        self.clock_btn.get_style_context().add_class("nxs-clock-btn")
+        self.clock_btn.add(clock_box)
+        self.clock_btn.connect("clicked", self._toggle_calendar)
+        right.pack_start(self.clock_btn, False, False, 0)
+
+        sd = _icon_button("user-desktop-symbolic", "Mostra il desktop")
+        sd.connect("clicked", self._on_show_desktop)
+        right.pack_start(sd, False, False, 0)
+
+        self._place()
+        self.connect("screen-changed", lambda *_: self._place())
+        self.connect("realize", self._on_realize)
+
+        self._tick_clock()
+        self._refresh_tasks()
+        GLib.timeout_add(POLL_MS, self._refresh_tasks)
+        GLib.timeout_add(1000, self._tick_clock)
+
+    # --- geometria ---
+    def _place(self):
+        scr = self.get_screen()
+        mon = scr.get_primary_monitor() if hasattr(scr, "get_primary_monitor") else 0
+        geo = scr.get_monitor_geometry(mon)
+        self._geo = geo
+        self.set_size_request(geo.width, PANEL_HEIGHT)
+        if self.position == "top":
+            self.move(geo.x, geo.y)
+        else:
+            self.move(geo.x, geo.y + geo.height - PANEL_HEIGHT)
+
+    def _on_realize(self, _w):
+        # Lo spazio e' riservato dal margine di Openbox (rc.xml), aggiornato
+        # da panelcfg.move_panel quando si cambia posizione.
+        self._place()
+
+    # --- popup come finestre toplevel keep_above (i Gtk.Popover su Openbox
+    #     senza compositor finivano "sotto" lo sfondo) ---
+    def _spawn_popup(self, key, content, align):
+        # toggle: se gia' aperto, chiudi
+        if key in self._popups:
+            self._popups.pop(key).destroy()
+            self._popup_closed[key] = time.time()
+            return
+        # anti-rimbalzo: evita la riapertura immediata dopo il focus-out
+        if time.time() - self._popup_closed.get(key, 0) < 0.25:
+            return
+
+        w = Gtk.Window(type=Gtk.WindowType.TOPLEVEL)
+        w.set_decorated(False)
+        w.set_resizable(False)
+        w.set_skip_taskbar_hint(True)
+        w.set_skip_pager_hint(True)
+        w.set_keep_above(True)
+        w.set_type_hint(Gdk.WindowTypeHint.UTILITY)
+        w.set_screen(self.get_screen())
+        w.get_style_context().add_class("nxs-popup")
+        w.add(content)
+        w.show_all()
+
+        _min, nat = w.get_preferred_size()
+        pw, ph = nat.width, nat.height
+        geo = self._geo
+        margin = 6
+        # Clamp: il popup non deve mai superare l'area disponibile (altrimenti il
+        # bordo alto esce dallo schermo e le prime voci diventano irraggiungibili).
+        avail_h = geo.height - PANEL_HEIGHT - margin
+        if ph > avail_h:
+            ph = avail_h
+            w.resize(pw, ph)
+        if align == "right":
+            x = geo.x + geo.width - pw - margin
+        else:
+            x = geo.x + margin
+        if self.position == "top":
+            y = geo.y + PANEL_HEIGHT
+        else:
+            y = geo.y + geo.height - PANEL_HEIGHT - ph
+        w.move(x, y)
+
+        def on_focus_out(*_a):
+            if key in self._popups:
+                self._popups.pop(key, None)
+                self._popup_closed[key] = time.time()
+                w.destroy()
+            return False
+        w.connect("focus-out-event", on_focus_out)
+        self._popups[key] = w
+        w.present()
+
+    def _close_popup(self, key):
+        if key in self._popups:
+            self._popups.pop(key).destroy()
+            self._popup_closed[key] = time.time()
+
+    # --- menu NexusSec (stile Windows, con banda verticale) ---
+    def _menu_item(self, key, icon, label, cmd=None, move_to=None, confirm=None):
+        b = Gtk.Button()
+        b.set_relief(Gtk.ReliefStyle.NONE)
+        b.get_style_context().add_class("nxs-menu-item")
+        box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        img = Gtk.Image.new_from_icon_name(icon, Gtk.IconSize.LARGE_TOOLBAR)
+        lab = Gtk.Label(label=label)
+        lab.set_xalign(0)
+        box.pack_start(img, False, False, 0)
+        box.pack_start(lab, True, True, 0)
+        b.add(box)
+
+        def on_click(_w):
+            self._close_popup(key)
+            if move_to is not None:
+                panelcfg.move_panel(move_to)
+                return
+            if cmd is None:
+                return
+            if confirm:
+                d = Gtk.MessageDialog(
+                    transient_for=None, modal=True,
+                    message_type=Gtk.MessageType.QUESTION,
+                    buttons=Gtk.ButtonsType.YES_NO, text=confirm)
+                d.set_keep_above(True)
+                resp = d.run()
+                d.destroy()
+                if resp != Gtk.ResponseType.YES:
+                    return
+            run_bg(cmd)
+        b.connect("clicked", on_click)
+        return b
+
+    # --- sistema profili ---
+    def _profile_data(self):
+        """Dati del profilo corrente, o {} se il sistema profili e' assente."""
+        if profiles_model is None:
+            return {}
+        try:
+            return profiles_model.profile_data()
+        except Exception:                # noqa: BLE001
+            return {}
+
+    def _profile_tools(self):
+        if profiles_model is None:
+            return []
+        try:
+            return profiles_model.profile_tools()
+        except Exception:                # noqa: BLE001
+            return []
+
+    def _tool_meta(self, tool):
+        """(category, method, description) del tool da repo.json (con fallback)."""
+        data = {}
+        if profiles_model is not None:
+            try:
+                data = profiles_model.tool_data(tool) or {}
+            except Exception:            # noqa: BLE001
+                data = {}
+        cat = data.get("category") or "other"
+        if cat not in TOOL_CAT_LABEL:
+            cat = "other"
+        return cat, (data.get("method") or "apk"), (data.get("description") or "")
+
+    def _tool_installed_fast(self, tool):
+        """Stato installato 'rapido': solo PATH/has-image senza subprocess apk
+        (il menu deve aprirsi istantaneamente). None se non determinabile."""
+        if profiles_iso is None:
+            return None
+        try:
+            data = profiles_model.tool_data(tool) if profiles_model else {}
+            binname = data.get("bin", tool)
+            if profiles_iso.have(binname) or profiles_iso.have(tool):
+                return True
+            # container: l'eseguibile non sta nel PATH host -> non determinabile
+            if (data.get("method") or "apk") == "container":
+                return None
+            return False
+        except Exception:                # noqa: BLE001
+            return None
+
+    def _tool_row(self, tool):
+        """Riga-tool del menu: icona categoria + nome + pallino di stato.
+        Ritorna (widget, testo_ricerca) per il filtro live."""
+        cat, method, desc = self._tool_meta(tool)
+        icon = TOOL_CAT_ICON.get(cat, "utilities-terminal-symbolic")
+        installed = self._tool_installed_fast(tool)
+
+        b = Gtk.Button()
+        b.set_relief(Gtk.ReliefStyle.NONE)
+        b.get_style_context().add_class("nxs-menu-item")
+        b.get_style_context().add_class("nxs-tool-item")
+        box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        img = Gtk.Image.new_from_icon_name(icon, Gtk.IconSize.LARGE_TOOLBAR)
+        lab = Gtk.Label(label=tool)
+        lab.set_xalign(0)
+        # Pallino di stato: verde=installato, ambra=da scaricare, grigio=ignoto.
+        dot = Gtk.Label(label="●")
+        dot.get_style_context().add_class("nxs-tool-dot")
+        if installed is True:
+            dot.get_style_context().add_class("ok")
+            dot.set_tooltip_text("Installato")
+        elif installed is False:
+            dot.get_style_context().add_class("todo")
+            dot.set_tooltip_text("Da scaricare (%s)" % method)
+        else:
+            dot.get_style_context().add_class("unknown")
+            dot.set_tooltip_text("Stato sconosciuto (%s)" % method)
+        box.pack_start(img, False, False, 0)
+        box.pack_start(lab, True, True, 0)
+        box.pack_start(dot, False, False, 0)
+        b.add(box)
+        if desc:
+            b.set_tooltip_text("%s  [%s]" % (desc, method))
+
+        cmd = ["lxterminal", "-e", "nxs-run-tool %s" % tool]
+
+        def on_click(_w):
+            self._close_popup("menu")
+            run_bg(cmd)
+        b.connect("clicked", on_click)
+        return b, ("%s %s %s" % (tool, cat, desc)).lower()
+
+    def _on_menu(self, _btn):
+        hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=0)
+        hbox.get_style_context().add_class("nxs-startmenu")
+
+        # Banda verticale brandizzata
+        strip = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
+        strip.get_style_context().add_class("nxs-menu-strip")
+        strip.set_valign(Gtk.Align.FILL)
+        brand = Gtk.Label(label="NexusSec OS")
+        brand.get_style_context().add_class("brand")
+        brand.set_angle(90)
+        # Sotto-etichetta = profilo operativo corrente (se disponibile).
+        prof = self._profile_data()
+        sub_text = prof.get("name", "64-bit") if prof else "64-bit"
+        sub = Gtk.Label(label=sub_text)
+        sub.get_style_context().add_class("brand-sub")
+        sub.set_angle(90)
+        # Ancorate IN BASSO (pack_end): il nome parte ~14px dal fondo della
+        # barra colorata e legge verso l'alto, senza uscire dallo schermo.
+        # Ordine dal basso: [14px] NexusSec OS, poi il profilo sopra.
+        strip.pack_end(brand, False, False, 14)
+        strip.pack_end(sub, False, False, 0)
+        hbox.pack_start(strip, False, False, 0)
+
+        lst = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+        lst.get_style_context().add_class("nxs-startmenu-list")
+        # Con profili ricchi la lista supera l'altezza schermo: la mettiamo in
+        # uno ScrolledWindow che cresce fino allo spazio disponibile e poi
+        # scorre (rotellina/barra), cosi nessuna voce resta tagliata in alto.
+        scroller = Gtk.ScrolledWindow()
+        scroller.get_style_context().add_class("nxs-startmenu-scroll")
+        scroller.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        scroller.set_propagate_natural_width(True)
+        scroller.set_propagate_natural_height(True)
+        # Riservo ~220px per ricerca + footer fisso (Esci/Riavvia/Spegni), cosi'
+        # il footer non viene mai schiacciato e i tool scorrono nello spazio sopra.
+        avail_h = max(160, self._geo.height - PANEL_HEIGHT - 24 - 220)
+        scroller.set_max_content_height(avail_h)
+        scroller.add(lst)
+        # Scorrevole SI', ma NON deve auto-scrollare da solo: di default lo
+        # ScrolledWindow segue il focus (quando una voce prende il focus salta
+        # a quella voce -> il menu si apriva gia' scrollato). Neutralizziamo gli
+        # adjustment di focus del viewport interno: cosi' lo scroll lo decide
+        # solo l'utente (rotellina/barra) e il menu si apre fermo all'inizio.
+        _vp = scroller.get_child()
+        if _vp is not None:
+            _vp.set_focus_vadjustment(Gtk.Adjustment())
+            _vp.set_focus_hadjustment(Gtk.Adjustment())
+
+        # Colonna destra = [ricerca] + [lista scrollabile]. La ricerca resta
+        # fissa in alto e filtra dal vivo le righe-tool.
+        col = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+        search = Gtk.SearchEntry()
+        search.get_style_context().add_class("nxs-menu-search")
+        search.set_placeholder_text("Cerca strumento...")
+        col.pack_start(search, False, False, 0)
+        col.pack_start(scroller, True, True, 0)
+        hbox.pack_start(col, True, True, 0)
+
+        # Registri per il filtro live: ogni voce-tool e ogni intestazione di
+        # categoria con le sue voci, per nascondere le sezioni vuote.
+        tool_rows = []        # [(widget, testo_ricerca)]
+        cat_sections = []     # [(header_widget, [row_widget, ...])]
+
+        def sep():
+            lst.pack_start(Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL),
+                           False, False, 0)
+
+        # Rivela una riga collassata: NB con set_no_show_all(True) il show_all
+        # iniziale salta la riga E I SUOI FIGLI (icona+etichetta), quindi un
+        # semplice set_visible(True) mostrerebbe solo il bottone vuoto (si vedeva
+        # l'hover ma NON il testo). Va tolto il flag e fatto show_all() sulla riga.
+        def _reveal_row(r):
+            r.set_no_show_all(False)
+            r.show_all()
+
+        # --- Sezione PROFILO: cambio profilo + tool del profilo corrente ---
+        prof = self._profile_data()
+        if prof:
+            # Icona del PROFILO, volutamente diversa dall'ingranaggio delle
+            # impostazioni (Centro di Controllo) per non confondere le due voci.
+            icon = prof.get("icon", "system-users")
+            lst.pack_start(
+                self._menu_item("menu", icon,
+                                "Profilo: %s  (cambia)" % prof.get("name", ""),
+                                ["nxs-profile"], None, None),
+                False, False, 0)
+
+            # Procedure guidate del profilo corrente: un clic apre il wizard
+            # gia' sul form giusto (es. "Pentest rapido" chiede l'IP e fa tutto).
+            if wiz_recipes is not None and profiles_model is not None:
+                try:
+                    pkey = profiles_model.current_profile()
+                    wizs = wiz_recipes.for_profile(pkey)
+                except Exception:            # noqa: BLE001
+                    wizs = []
+                for wid, w in wizs:
+                    lst.pack_start(
+                        self._menu_item(
+                            "menu", w.get("icon", "system-run-symbolic"),
+                            "  %s (procedura guidata)" % w.get("name", wid),
+                            ["nxs-wizard", "gui", wid], None, None),
+                        False, False, 0)
+
+            # Tool del profilo RAGGRUPPATI per categoria, in ordine fisso.
+            # Ogni voce mostra icona di categoria + pallino di stato; le
+            # intestazioni di sezione si nascondono quando il filtro le svuota.
+            by_cat = {}
+            for tool in self._profile_tools():
+                cat, _m, _d = self._tool_meta(tool)
+                by_cat.setdefault(cat, []).append(tool)
+
+            # Sottomenu per categoria a FISARMONICA: con centinaia di tool
+            # (arsenale Kali completo) una lista piatta sarebbe ingestibile.
+            # Di default si vedono solo le intestazioni (collassate); un clic
+            # espande la categoria. Il filtro di ricerca espande al volo i
+            # risultati ignorando lo stato collassato.
+            for cat in TOOL_CAT_ORDER:
+                tools = by_cat.get(cat)
+                if not tools:
+                    continue
+                state = {"collapsed": True}
+                section_rows = []
+                # Uppercase in Python (text-transform e' GTK4-only).
+                header = Gtk.Button()
+                header.get_style_context().add_class("nxs-menu-cat")
+                hlbl = Gtk.Label()
+                hlbl.set_xalign(0)
+                hlbl.set_markup("▸  %s  <small>(%d)</small>"
+                                % (TOOL_CAT_LABEL[cat].upper(), len(tools)))
+                header.add(hlbl)
+                lst.pack_start(header, False, False, 0)
+                for tool in sorted(tools):
+                    row, haystack = self._tool_row(tool)
+                    row.set_no_show_all(True)     # parte collassato (no flash)
+                    lst.pack_start(row, False, False, 0)
+                    tool_rows.append((row, haystack))
+                    section_rows.append(row)
+
+                def _toggle(_btn, lbl=hlbl, name=TOOL_CAT_LABEL[cat],
+                            rows=section_rows, st=state, reveal=_reveal_row):
+                    st["collapsed"] = not st["collapsed"]
+                    arrow = "▸" if st["collapsed"] else "▾"
+                    lbl.set_markup("%s  %s  <small>(%d)</small>"
+                                   % (arrow, name.upper(), len(rows)))
+                    for r in rows:
+                        r.hide() if st["collapsed"] else reveal(r)
+                header.connect("clicked", _toggle)
+                cat_sections.append((header, section_rows, state))
+            sep()
+
+        # --- Filtro live: nasconde righe-tool non corrispondenti e le
+        #     intestazioni di categoria rimaste senza voci visibili ---
+        def on_search(entry):
+            q = entry.get_text().strip().lower()
+            if q:
+                # ricerca: mostra le righe che combaciano (ignora il collasso) e
+                # le sole intestazioni con risultati. reveal mostra anche i figli.
+                for row, hay in tool_rows:
+                    _reveal_row(row) if q in hay else row.hide()
+                for header, rows, _st in cat_sections:
+                    header.set_visible(any(r.get_visible() for r in rows))
+            else:
+                # ricerca vuota: ripristina lo stato a fisarmonica (collassato).
+                for header, rows, st in cat_sections:
+                    header.set_visible(True)
+                    for r in rows:
+                        r.hide() if st["collapsed"] else _reveal_row(r)
+        search.connect("search-changed", on_search)
+        if not tool_rows:
+            search.set_no_show_all(True)
+            search.hide()
+
+        move_to = "bottom" if self.position == "top" else "top"
+        move_label = ("Sposta pannello in basso" if move_to == "bottom"
+                      else "Sposta pannello in alto")
+        move_icon = "go-bottom-symbolic" if move_to == "bottom" else "go-top-symbolic"
+
+        # (icona, etichetta, comando, sposta_a, conferma)
+        # Voci SCORREVOLI (app e utilita'): vanno nella lista che scorre.
+        app_items = [
+            ("preferences-system-symbolic", "Centro di Controllo",
+             ["nxs-control-center"], None, None),
+            ("utilities-terminal-symbolic", "Terminale", ["nxs-terminal"], None, None),
+            ("system-file-manager-symbolic", "File manager", ["pcmanfm"], None, None),
+            ("accessories-text-editor-symbolic", "Editor di testo", ["xed"], None, None),
+            ("nxs-browser", "NexusSec Browser", ["nxs-browser"], None, None),
+            ("system-run-symbolic", "Procedure guidate", ["nxs-wizard"], None, None),
+            (None, None, None, None, None),
+            ("computer-symbolic", "Info sistema",
+             ["nxs-control-center", "sysinfo"], None, None),
+            ("applications-system-symbolic", "Monitor risorse",
+             ["nxs-control-center", "monitor"], None, None),
+            ("system-software-install-symbolic", "Gestore pacchetti",
+             ["nxs-control-center", "pacchetti"], None, None),
+            ("network-wired-symbolic", "Rete",
+             ["nxs-control-center", "rete"], None, None),
+            (None, None, None, None, None),
+            (move_icon, move_label, None, move_to, None),
+            ("view-refresh-symbolic", "Riavvia Openbox",
+             ["openbox", "--restart"], None, None),
+        ]
+        for icon, label, cmd, mv, conf in app_items:
+            if icon is None:
+                sep()
+            else:
+                lst.pack_start(
+                    self._menu_item("menu", icon, label, cmd, mv, conf),
+                    False, False, 0)
+
+        # Voci di USCITA/SPEGNIMENTO: ancorate in un FOOTER FISSO fuori dallo
+        # scroller, cosi' restano SEMPRE visibili anche con tanti tool (prima
+        # finivano in coda alla lista scrollabile e sparivano sotto il bordo).
+        footer = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+        footer.get_style_context().add_class("nxs-startmenu-footer")
+        footer.pack_start(Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL),
+                          False, False, 0)
+        power_items = [
+            ("system-log-out-symbolic", "Esci (logout)",
+             ["openbox", "--exit"], None, "Uscire dalla sessione (logout)?"),
+            ("system-reboot-symbolic", "Riavvia il sistema",
+             ["nxs-shutdown", "reboot"], None, "Riavviare il sistema?"),
+            ("system-shutdown-symbolic", "Spegni",
+             ["nxs-shutdown", "poweroff"], None, "Spegnere il sistema?"),
+        ]
+        for icon, label, cmd, mv, conf in power_items:
+            footer.pack_start(self._menu_item("menu", icon, label, cmd, mv, conf),
+                              False, False, 0)
+        col.pack_end(footer, False, False, 0)
+
+        self._spawn_popup("menu", hbox, align="left")
+        # Focus alla ricerca per poter digitare subito (la ricerca e' FUORI dallo
+        # scroller, quindi non sposta la lista). Niente forzatura di scroll: con
+        # gli adjustment di focus neutralizzati il menu nasce fermo all'inizio e
+        # scorre solo se lo fa l'utente.
+        if tool_rows:
+            GLib.idle_add(search.grab_focus)
+
+    def _on_show_desktop(self, _w):
+        if have("wmctrl"):
+            run_bg(["wmctrl", "-k", "on"])
+
+    def _on_today(self, _w):
+        t = time.localtime()
+        self.calendar.select_month(t.tm_mon - 1, t.tm_year)
+        self.calendar.select_day(t.tm_mday)
+
+    # --- calendario (toplevel toggle) ---
+    def _toggle_calendar(self, _btn):
+        cal_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
+        cal_box.get_style_context().add_class("nxs-calbox")
+        self.calendar = Gtk.Calendar()
+        self.calendar.get_style_context().add_class("nxs-calendar")
+        cal_box.pack_start(self.calendar, True, True, 0)
+        btn_today = Gtk.Button(label="Oggi")
+        btn_today.get_style_context().add_class("nxs-menu-item")
+        btn_today.connect("clicked", self._on_today)
+        cal_box.pack_start(btn_today, False, False, 0)
+        self._spawn_popup("calendar", cal_box, align="right")
+
+    # --- lista finestre ---
+    def _refresh_tasks(self):
+        wins = _wmctrl_list()
+        active = _active_window()
+        sig = tuple((w, t) for w, _d, t in wins)
+        if sig != self._last_sig:
+            self._last_sig = sig
+            for child in self.tasks.get_children():
+                self.tasks.remove(child)
+            self._task_btns = {}
+            for wid, _desk, title in wins:
+                short = title if len(title) <= 28 else title[:27] + "…"
+                b = Gtk.Button(label=short)
+                b.set_tooltip_text(title)
+                b.get_style_context().add_class("nxs-task")
+                b.connect("clicked", self._on_task, wid)
+                self.tasks.pack_start(b, False, False, 0)
+                self._task_btns[wid] = b
+            self.tasks.show_all()
+        for wid, b in self._task_btns.items():
+            ctx = b.get_style_context()
+            if active and wid.lower() == active.lower():
+                ctx.add_class("nxs-task-active")
+            else:
+                ctx.remove_class("nxs-task-active")
+        return True
+
+    def _on_task(self, _btn, wid):
+        active = _active_window()
+        if active and wid.lower() == active.lower():
+            if have("xdotool"):
+                run_bg(["xdotool", "windowminimize", str(int(wid, 16))])
+        else:
+            run_bg(["wmctrl", "-i", "-a", wid])
+
+    # --- orologio ---
+    def _tick_clock(self):
+        t = time.localtime()
+        self.clock.set_text(time.strftime("%H:%M", t))
+        giorni = ["lun", "mar", "mer", "gio", "ven", "sab", "dom"]
+        mesi = ["gen", "feb", "mar", "apr", "mag", "giu",
+                "lug", "ago", "set", "ott", "nov", "dic"]
+        self.date.set_text("%s %d %s" % (giorni[t.tm_wday], t.tm_mday,
+                                         mesi[t.tm_mon - 1]))
+        return True
+
+
+def run():
+    p = Panel()
+    p.show_all()
+    p.connect("destroy", Gtk.main_quit)
+    Gtk.main()
+
+
+if __name__ == "__main__":
+    run()

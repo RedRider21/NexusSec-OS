@@ -1,0 +1,38 @@
+#!/bin/sh
+# NexusSec - esegue un tool del profilo dal menu del pannello, TENENDO APERTO
+# il terminale. Molti tool CLI (nmap, sqlmap, ...) senza argomenti stampano
+# l'help ed escono subito: senza questo wrapper il terminale si chiudeva di
+# colpo. Qui: installa-se-serve + esegue, poi lascia una SHELL interattiva in
+# cui il tool si puo' RILANCIARE con argomenti (es. "<tool> --help").
+#
+# ATTENZIONE (bug UX risolto): i tool con method 'kali'/'container' NON hanno un
+# binario sull'host della live: girano DENTRO il container (es. amap sta in
+# localhost/nxs-kali). Prima il messaggio diceva 'rilancia con amap --help' ma
+# sull'host "amap" non esiste -> "/bin/sh: amap: not found". Ora definiamo nella
+# shell lasciata aperta una FUNZIONE con il nome del tool che re-invoca
+# "nxs-tool launch <tool> ..." (installa-se-serve + esegue nel giusto ambiente).
+# Cosi' "amap -h" funziona davvero, per QUALSIASI method (apk/pip/git/container/
+# kali) in modo uniforme. Il re-run di un tool gia' presente e' immediato.
+tool="$1"
+[ -n "$tool" ] || { echo "uso: nxs-run-tool <tool>"; exec "${SHELL:-/bin/sh}"; }
+
+printf '\033[1;36m[NexusSec]\033[0m preparo ed avvio: %s\n\n' "$tool"
+nxs-tool launch "$tool"
+rc=$?
+echo
+printf '\033[1;36m[NexusSec]\033[0m "%s" terminato (codice %s).\n' "$tool" "$rc"
+
+# rcfile sourced dalla shell interattiva (busybox ash legge $ENV all'avvio):
+# definisce la funzione <tool> per rilanciarlo. Nome tool validato (solo
+# caratteri di un nome pacchetto) per non iniettare codice nel nome funzione.
+if printf '%s' "$tool" | grep -Eq '^[A-Za-z0-9._+-]+$'; then
+  rc_file="${XDG_RUNTIME_DIR:-/tmp}/nxs-run-tool.rc"
+  {
+    printf '%s() { nxs-tool launch %s "$@"; }\n' "$tool" "$tool"
+    printf 'PS1="[nxs %s] $ "\n' "$tool"
+  } > "$rc_file" 2>/dev/null && export ENV="$rc_file"
+  printf '\033[0;36mSei in una shell. Rilancia il tool: "%s <argomenti>" (es. "%s -h"). Chiudi con "exit".\033[0m\n\n' "$tool" "$tool"
+else
+  printf '\033[0;36mSei in una shell. Chiudi con "exit".\033[0m\n\n'
+fi
+exec "${SHELL:-/bin/sh}" -i

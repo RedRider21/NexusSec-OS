@@ -1,0 +1,28 @@
+# Maintainer: NexusSec <deplano.d@gmail.com>
+pkgname=dirb
+pkgver=2.22
+pkgrel=0
+pkgdesc="Web content scanner (brute-force directory/file con wordlist)"
+url="https://dirb.sourceforge.net/"
+arch="all"
+license="GPL-2.0-or-later"
+makedepends="curl-dev"
+source="$pkgname-$pkgver.tar.gz::https://downloads.sourceforge.net/project/dirb/dirb/$pkgver/dirb222.tar.gz"
+builddir="$srcdir/dirb222"
+build() {
+	cd "$builddir"
+	chmod +x configure
+	# -fcommon: i globali sono definiti negli header senza extern (multiple
+	# definition con gcc >=10). configure sostituisce CFLAGS nel Makefile.
+	CFLAGS="$CFLAGS -fcommon -D_GNU_SOURCE" ./configure --prefix=/usr
+	make
+}
+package() {
+	cd "$builddir"
+	install -Dm755 dirb "$pkgdir"/usr/bin/dirb
+	mkdir -p "$pkgdir"/usr/share/dirb
+	cp -r wordlists "$pkgdir"/usr/share/dirb/ 2>/dev/null || true
+}
+sha512sums="
+57305160b11be9d48b44ece5848a102ab7a493a7ac30a44c31339fd7ca659866521ba621dc0639dc28bf21c3b5315390b934441590dac7d5b463e68df4b80b81  dirb-2.22.tar.gz
+"

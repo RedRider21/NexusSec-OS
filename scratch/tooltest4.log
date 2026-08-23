@@ -1,0 +1,1076 @@
+============================================================
+>>> BUILD dmitry
+>>> dmitry: Building b/dmitry 1.3a-r0 (using abuild 3.18.0_rc1-r0) started Mon, 29 Jun 2026 13:37:18 +0000
+>>> dmitry: Validating /root/b/dmitry/APKBUILD...
+>>> dmitry: Analyzing dependencies...
+WARNING: opening /root/packages/b/x86_64/APKINDEX.tar.gz: No such file or directory
+>>> dmitry: Installing for build: build-base autoconf automake
+WARNING: opening /root/packages/b/x86_64/APKINDEX.tar.gz: No such file or directory
+(1/1) Installing .makedepends-dmitry (20260629.133718)
+OK: 432.6 MiB in 223 packages
+>>> dmitry: Cleaning up srcdir
+>>> dmitry: Cleaning up pkgdir
+>>> dmitry: Cleaning up tmpdir
+>>> dmitry: Fetching dmitry-1.3a.tar.gz::https://github.com/jaygreig86/dmitry/archive/refs/heads/master.tar.gz
+/var/cache/distfiles/dmitry-1.3a.tar.gz: OK
+>>> dmitry: Fetching dmitry-1.3a.tar.gz::https://github.com/jaygreig86/dmitry/archive/refs/heads/master.tar.gz
+/var/cache/distfiles/dmitry-1.3a.tar.gz: OK
+>>> dmitry: Unpacking /var/cache/distfiles/dmitry-1.3a.tar.gz...
+checking for a BSD-compatible install... /usr/bin/install -c
+checking whether sleep supports fractional seconds... yes
+checking filesystem timestamp resolution... 2
+checking whether build environment is sane... yes
+checking for a race-free mkdir -p... /bin/mkdir -p
+checking for gawk... no
+checking for mawk... no
+checking for nawk... no
+checking for awk... awk
+checking whether make sets $(MAKE)... yes
+checking whether make supports nested variables... yes
+checking xargs -n works... yes
+checking whether UID '0' is supported by ustar format... yes
+checking whether GID '0' is supported by ustar format... yes
+checking how to create a ustar tar archive... gnutar
+checking whether build environment is sane... yes
+checking for gcc... cc
+checking whether the C compiler works... yes
+checking for C compiler default output file name... a.out
+checking for suffix of executables... 
+checking whether we are cross compiling... no
+checking for suffix of object files... o
+checking whether the compiler supports GNU C... yes
+checking whether cc accepts -g... yes
+checking for cc option to enable C11 features... none needed
+checking whether cc understands -c and -o together... yes
+checking whether make supports the include directive... yes (GNU style)
+checking dependency style of cc... gcc3
+checking for stdio.h... yes
+checking for stdlib.h... yes
+checking for string.h... yes
+checking for inttypes.h... yes
+checking for stdint.h... yes
+checking for strings.h... yes
+checking for sys/stat.h... yes
+checking for sys/types.h... yes
+checking for unistd.h... yes
+checking for sys/time.h... yes
+checking for sys/select.h... yes
+checking for sys/socket.h... yes
+checking for arpa/inet.h... yes
+checking for netdb.h... yes
+checking for netinet/in.h... yes
+checking for stdlib.h... (cached) yes
+checking for string.h... (cached) yes
+checking for sys/socket.h... (cached) yes
+checking for sys/time.h... (cached) yes
+checking for unistd.h... (cached) yes
+checking whether struct tm is in sys/time.h or time.h... time.h
+checking build system type... x86_64-pc-linux-musl
+checking host system type... x86_64-pc-linux-musl
+checking for GNU libc compatible malloc... yes
+checking for GNU libc compatible realloc... yes
+checking types of arguments for select... int,fd_set *,struct timeval *
+checking for strftime... yes
+checking for alarm... yes
+checking for gethostbyaddr... yes
+checking for gethostbyname... yes
+checking for memset... yes
+checking for socket... yes
+checking for strstr... yes
+checking for getopt.h... yes
+checking for sigsetjmp... yes
+checking that generated files are newer than configure... done
+checking that generated files are newer than configure... done
+configure: creating ./config.status
+config.status: creating Makefile
+config.status: creating src/includes/config.h
+config.status: executing depfiles commands
+depbase=`echo src/output.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+cc -DHAVE_CONFIG_H -I. -I./src/includes     -Os -fstack-clash-protection -Wformat -Werror=format-security -fno-plt -MT src/output.o -MD -MP -MF $depbase.Tpo -c -o src/output.o src/output.c &&\
+mv -f $depbase.Tpo $depbase.Po
+depbase=`echo src/iwhois.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+cc -DHAVE_CONFIG_H -I. -I./src/includes     -Os -fstack-clash-protection -Wformat -Werror=format-security -fno-plt -MT src/iwhois.o -MD -MP -MF $depbase.Tpo -c -o src/iwhois.o src/iwhois.c &&\
+mv -f $depbase.Tpo $depbase.Po
+depbase=`echo src/tcp_sock.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+cc -DHAVE_CONFIG_H -I. -I./src/includes     -Os -fstack-clash-protection -Wformat -Werror=format-security -fno-plt -MT src/tcp_sock.o -MD -MP -MF $depbase.Tpo -c -o src/tcp_sock.o src/tcp_sock.c &&\
+mv -f $depbase.Tpo $depbase.Po
+depbase=`echo src/netcraft.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+cc -DHAVE_CONFIG_H -I. -I./src/includes     -Os -fstack-clash-protection -Wformat -Werror=format-security -fno-plt -MT src/netcraft.o -MD -MP -MF $depbase.Tpo -c -o src/netcraft.o src/netcraft.c &&\
+mv -f $depbase.Tpo $depbase.Po
+depbase=`echo src/dmitry.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+cc -DHAVE_CONFIG_H -I. -I./src/includes     -Os -fstack-clash-protection -Wformat -Werror=format-security -fno-plt -MT src/dmitry.o -MD -MP -MF $depbase.Tpo -c -o src/dmitry.o src/dmitry.c &&\
+mv -f $depbase.Tpo $depbase.Po
+depbase=`echo src/file.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+cc -DHAVE_CONFIG_H -I. -I./src/includes     -Os -fstack-clash-protection -Wformat -Werror=format-security -fno-plt -MT src/file.o -MD -MP -MF $depbase.Tpo -c -o src/file.o src/file.c &&\
+mv -f $depbase.Tpo $depbase.Po
+depbase=`echo src/nwhois.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+cc -DHAVE_CONFIG_H -I. -I./src/includes     -Os -fstack-clash-protection -Wformat -Werror=format-security -fno-plt -MT src/nwhois.o -MD -MP -MF $depbase.Tpo -c -o src/nwhois.o src/nwhois.c &&\
+mv -f $depbase.Tpo $depbase.Po
+depbase=`echo src/portscan.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+cc -DHAVE_CONFIG_H -I. -I./src/includes     -Os -fstack-clash-protection -Wformat -Werror=format-security -fno-plt -MT src/portscan.o -MD -MP -MF $depbase.Tpo -c -o src/portscan.o src/portscan.c &&\
+mv -f $depbase.Tpo $depbase.Po
+depbase=`echo src/port_sock.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+cc -DHAVE_CONFIG_H -I. -I./src/includes     -Os -fstack-clash-protection -Wformat -Werror=format-security -fno-plt -MT src/port_sock.o -MD -MP -MF $depbase.Tpo -c -o src/port_sock.o src/port_sock.c &&\
+mv -f $depbase.Tpo $depbase.Po
+depbase=`echo src/resolve.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+cc -DHAVE_CONFIG_H -I. -I./src/includes     -Os -fstack-clash-protection -Wformat -Werror=format-security -fno-plt -MT src/resolve.o -MD -MP -MF $depbase.Tpo -c -o src/resolve.o src/resolve.c &&\
+mv -f $depbase.Tpo $depbase.Po
+depbase=`echo src/subsearch.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+cc -DHAVE_CONFIG_H -I. -I./src/includes     -Os -fstack-clash-protection -Wformat -Werror=format-security -fno-plt -MT src/subsearch.o -MD -MP -MF $depbase.Tpo -c -o src/subsearch.o src/subsearch.c &&\
+mv -f $depbase.Tpo $depbase.Po
+depbase=`echo src/mailsearch.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+cc -DHAVE_CONFIG_H -I. -I./src/includes     -Os -fstack-clash-protection -Wformat -Werror=format-security -fno-plt -MT src/mailsearch.o -MD -MP -MF $depbase.Tpo -c -o src/mailsearch.o src/mailsearch.c &&\
+mv -f $depbase.Tpo $depbase.Po
+cc  -Os -fstack-clash-protection -Wformat -Werror=format-security -fno-plt  -Wl,--as-needed,-O1,--sort-common -Wl,-z,pack-relative-relocs -o dmitry src/output.o src/iwhois.o src/tcp_sock.o src/netcraft.o src/dmitry.o src/file.o src/nwhois.o src/portscan.o src/port_sock.o src/resolve.o src/subsearch.o src/mailsearch.o  
+>>> WARNING: dmitry: APKBUILD does not run any tests!
+    Alpine policy will soon require that packages have any relevant testsuites run during the build process.
+    To fix, either define a check() function, or declare !check in $options to indicate the package does not have a testsuite.
+>>> dmitry: Running postcheck for dmitry
+>>> WARNING: dmitry: Found /usr/share/man but package name doesn't end with -doc
+>>> ERROR: dmitry: Found uncompressed man pages:
+	/root/b/dmitry/pkg/dmitry/usr/share/man/man1/dmitry.1
+>>> ERROR: dmitry: prepare_subpackages failed
+>>> ERROR: dmitry: rootpkg failed
+>>> dmitry: Uninstalling dependencies...
+(1/1) Purging .makedepends-dmitry (20260629.133718)
+OK: 432.6 MiB in 222 packages
+### FAIL dmitry
+============================================================
+>>> BUILD foremost
+>>> foremost: Building b/foremost 1.5.7-r0 (using abuild 3.18.0_rc1-r0) started Mon, 29 Jun 2026 13:37:20 +0000
+>>> foremost: Validating /root/b/foremost/APKBUILD...
+>>> foremost: Analyzing dependencies...
+WARNING: opening /root/packages/b/x86_64/APKINDEX.tar.gz: No such file or directory
+>>> foremost: Installing for build: build-base linux-headers
+WARNING: opening /root/packages/b/x86_64/APKINDEX.tar.gz: No such file or directory
+(1/1) Installing .makedepends-foremost (20260629.133721)
+OK: 432.6 MiB in 223 packages
+>>> foremost: Cleaning up srcdir
+>>> foremost: Cleaning up pkgdir
+>>> foremost: Cleaning up tmpdir
+>>> foremost: Fetching https://foremost.sourceforge.net/pkg/foremost-1.5.7.tar.gz
+/var/cache/distfiles/foremost-1.5.7.tar.gz: OK
+>>> foremost: Fetching https://foremost.sourceforge.net/pkg/foremost-1.5.7.tar.gz
+/var/cache/distfiles/foremost-1.5.7.tar.gz: OK
+>>> foremost: Unpacking /var/cache/distfiles/foremost-1.5.7.tar.gz...
+cc -c main.c
+cc -c state.c
+cc -c helpers.c
+cc -c config.c
+cc -c cli.c
+cc -c engine.c
+cc -c dir.c
+cc -c extract.c
+cc -c api.c
+state.c: In function 'write_audit_header':
+state.c:138:51: error: 'VERSION' undeclared (first use in this function)
+  138 |         audit_msg(s, "Foremost version %s by %s", VERSION, AUTHOR);
+      |                                                   ^~~~~~~
+state.c:138:51: note: each undeclared identifier is reported only once for each function it appears in
+main.c: In function 'usage':
+main.c:64:63: error: 'VERSION' undeclared (first use in this function)
+   64 |         fprintf(stderr, "%s version %s by %s.%s", __progname, VERSION, AUTHOR, NEWLINE);
+      |                                                               ^~~~~~~
+main.c:64:63: note: each undeclared identifier is reported only once for each function it appears in
+main.c: In function 'process_command_line':
+main.c:204:48: error: 'VERSION' undeclared (first use in this function)
+  204 |                                 printf("%s%s", VERSION, NEWLINE);
+      |                                                ^~~~~~~
+make: *** [Makefile:42: main.o] Error 1
+make: *** Waiting for unfinished jobs....
+make: *** [Makefile:42: state.o] Error 1
+helpers.c: In function 'human_readable':
+helpers.c:75:41: warning: format '%llu' expects argument of type 'long long unsigned int', but argument 4 has type 'long unsigned int' [-Wformat=]
+   75 |                 snprintf(buffer, 8, "%llu %s", (u_int64_t) size, units(count));
+      |                                      ~~~^      ~~~~~~~~~~~~~~~~
+      |                                         |      |
+      |                                         |      long unsigned int
+      |                                         long long unsigned int
+      |                                      %lu
+helpers.c: In function 'print_search_specs':
+helpers.c:329:77: warning: format '%llu' expects argument of type 'long long unsigned int', but argument 5 has type 'u_int64_t' {aka 'long unsigned int'} [-Wformat=]
+  329 |                 printf("%s:\n\t footer_len:=%d, header_len:=%d, max_len:=%llu ",
+      |                                                                          ~~~^
+      |                                                                             |
+      |                                                                             long long unsigned int
+      |                                                                          %lu
+......
+  333 |                            search_spec[i].max_len);
+      |                            ~~~~~~~~~~~~~~~~~~~~~~                            
+      |                                          |
+      |                                          u_int64_t {aka long unsigned int}
+dir.c: In function 'write_to_disk':
+dir.c:345:38: warning: format '%llu' expects argument of type 'long long unsigned int', but argument 7 has type 'u_int64_t' {aka 'long unsigned int'} [-Wformat=]
+  345 |                          "%s/%s/%0*llu.%s",
+      |                                 ~~~~~^
+      |                                      |
+      |                                      long long unsigned int
+      |                                 %0*lu
+......
+  349 |                          block,
+      |                          ~~~~~        
+      |                          |
+      |                          u_int64_t {aka long unsigned int}
+dir.c:358:46: warning: format '%llu' expects argument of type 'long long unsigned int', but argument 7 has type 'u_int64_t' {aka 'long unsigned int'} [-Wformat=]
+  358 |                                  "%s/%s/%0*llu_%d.%s",
+      |                                         ~~~~~^
+      |                                              |
+      |                                              long long unsigned int
+      |                                         %0*lu
+......
+  362 |                                  block,
+      |                                  ~~~~~        
+      |                                  |
+      |                                  u_int64_t {aka long unsigned int}
+extract.c: In function 'extract_wmv':
+extract.c:1183:66: warning: format '%llu' expects argument of type 'long long unsigned int', but argument 3 has type 'u_int64_t' {aka 'long unsigned int'} [-Wformat=]
+ 1183 |                 printf("WMV err num_header_objs=%d headerSize=%llu\n",numberofHeaderObjects,headerSize);
+      |                                                               ~~~^                          ~~~~~~~~~~
+      |                                                                  |                          |
+      |                                                                  long long unsigned int     u_int64_t {aka long unsigned int}
+      |                                                               %lu
+extract.c: In function 'extract_exe':
+extract.c:2148:26: warning: format not a string literal and no format arguments [-Wformat-security]
+ 2148 |         sprintf(comment, ascii_time);
+      |                          ^~~~~~~~~~
+>>> ERROR: foremost: build failed
+>>> foremost: Uninstalling dependencies...
+(1/1) Purging .makedepends-foremost (20260629.133721)
+OK: 432.6 MiB in 222 packages
+### FAIL foremost
+============================================================
+>>> BUILD dirb
+>>> dirb: Building b/dirb 2.22-r0 (using abuild 3.18.0_rc1-r0) started Mon, 29 Jun 2026 13:37:23 +0000
+>>> dirb: Validating /root/b/dirb/APKBUILD...
+>>> dirb: Analyzing dependencies...
+WARNING: opening /root/packages/b/x86_64/APKINDEX.tar.gz: No such file or directory
+>>> dirb: Installing for build: build-base curl-dev
+WARNING: opening /root/packages/b/x86_64/APKINDEX.tar.gz: No such file or directory
+(1/1) Installing .makedepends-dirb (20260629.133724)
+OK: 432.6 MiB in 223 packages
+>>> dirb: Cleaning up srcdir
+>>> dirb: Cleaning up pkgdir
+>>> dirb: Cleaning up tmpdir
+>>> dirb: Fetching dirb-2.22.tar.gz::https://downloads.sourceforge.net/project/dirb/dirb/2.22/dirb222.tar.gz
+/var/cache/distfiles/dirb-2.22.tar.gz: OK
+>>> dirb: Fetching dirb-2.22.tar.gz::https://downloads.sourceforge.net/project/dirb/dirb/2.22/dirb222.tar.gz
+/var/cache/distfiles/dirb-2.22.tar.gz: OK
+>>> dirb: Unpacking /var/cache/distfiles/dirb-2.22.tar.gz...
+/usr/bin/abuild: line 14: ./configure: Permission denied
+>>> ERROR: dirb: build failed
+>>> dirb: Uninstalling dependencies...
+(1/1) Purging .makedepends-dirb (20260629.133724)
+OK: 432.6 MiB in 222 packages
+### FAIL dirb
+============================================================
+>>> BUILD medusa
+>>> medusa: Building b/medusa 2.2-r0 (using abuild 3.18.0_rc1-r0) started Mon, 29 Jun 2026 13:37:25 +0000
+>>> medusa: Validating /root/b/medusa/APKBUILD...
+>>> medusa: Analyzing dependencies...
+WARNING: opening /root/packages/b/x86_64/APKINDEX.tar.gz: No such file or directory
+>>> medusa: Installing for build: build-base autoconf automake libtool openssl-dev libssh2-dev ncurses-dev
+WARNING: opening /root/packages/b/x86_64/APKINDEX.tar.gz: No such file or directory
+(1/1) Installing .makedepends-medusa (20260629.133726)
+OK: 432.6 MiB in 223 packages
+>>> medusa: Cleaning up srcdir
+>>> medusa: Cleaning up pkgdir
+>>> medusa: Cleaning up tmpdir
+>>> medusa: Fetching medusa-2.2.tar.gz::https://github.com/jmk-foofus/medusa/archive/refs/tags/2.2.tar.gz
+/var/cache/distfiles/medusa-2.2.tar.gz: OK
+>>> medusa: Fetching medusa-2.2.tar.gz::https://github.com/jmk-foofus/medusa/archive/refs/tags/2.2.tar.gz
+/var/cache/distfiles/medusa-2.2.tar.gz: OK
+>>> medusa: Unpacking /var/cache/distfiles/medusa-2.2.tar.gz...
+tar: medusa-2.2/README: Cannot change mode to rwxr-xr-x: Operation not permitted
+tar: Exiting with failure status due to previous errors
+>>> ERROR: medusa: unpack failed
+>>> medusa: Uninstalling dependencies...
+(1/1) Purging .makedepends-medusa (20260629.133726)
+OK: 432.6 MiB in 222 packages
+### FAIL medusa
+============================================================
+>>> BUILD chkrootkit
+>>> chkrootkit: Building b/chkrootkit 0.58b-r0 (using abuild 3.18.0_rc1-r0) started Mon, 29 Jun 2026 13:37:26 +0000
+>>> chkrootkit: Validating /root/b/chkrootkit/APKBUILD...
+>>> chkrootkit: Analyzing dependencies...
+WARNING: opening /root/packages/b/x86_64/APKINDEX.tar.gz: No such file or directory
+>>> chkrootkit: Installing for build: build-base
+WARNING: opening /root/packages/b/x86_64/APKINDEX.tar.gz: No such file or directory
+(1/1) Installing .makedepends-chkrootkit (20260629.133727)
+OK: 432.6 MiB in 223 packages
+>>> chkrootkit: Cleaning up srcdir
+>>> chkrootkit: Cleaning up pkgdir
+>>> chkrootkit: Cleaning up tmpdir
+>>> chkrootkit: Fetching chkrootkit-0.58b.tar.gz::https://github.com/Magentron/chkrootkit/archive/refs/heads/master.tar.gz
+/var/cache/distfiles/chkrootkit-0.58b.tar.gz: OK
+>>> chkrootkit: Fetching chkrootkit-0.58b.tar.gz::https://github.com/Magentron/chkrootkit/archive/refs/heads/master.tar.gz
+/var/cache/distfiles/chkrootkit-0.58b.tar.gz: OK
+>>> chkrootkit: Unpacking /var/cache/distfiles/chkrootkit-0.58b.tar.gz...
+cc -Os -fstack-clash-protection -Wformat -Werror=format-security -fno-plt -o chklastlog chklastlog.c
+cc -Os -fstack-clash-protection -Wformat -Werror=format-security -fno-plt -o chkwtmp chkwtmp.c
+cc -Os -fstack-clash-protection -Wformat -Werror=format-security -fno-plt -Wl,--as-needed,-O1,--sort-common -Wl,-z,pack-relative-relocs  -D_FILE_OFFSET_BITS=64 -o ifpromisc ifpromisc.c
+cc -Wl,--as-needed,-O1,--sort-common -Wl,-z,pack-relative-relocs -o chkproc chkproc.c
+cc -Wl,--as-needed,-O1,--sort-common -Wl,-z,pack-relative-relocs -o chkdirs chkdirs.c
+cc -Wl,--as-needed,-O1,--sort-common -Wl,-z,pack-relative-relocs -o check_wtmpx check_wtmpx.c
+cc -static -Wl,--as-needed,-O1,--sort-common -Wl,-z,pack-relative-relocs -o strings-static strings.c
+cc -Wl,--as-needed,-O1,--sort-common -Wl,-z,pack-relative-relocs -o chkutmp chkutmp.c
+chkdirs.c:46:25: error: 'PATH_MAX' undeclared here (not in a function)
+   46 | #define NAME_MAX        PATH_MAX
+      |                         ^~~~~~~~
+chkdirs.c:50:35: note: in expansion of macro 'NAME_MAX'
+   50 |   char                   dil_name[NAME_MAX+1];
+      |                                   ^~~~~~~~
+make: *** [Makefile:59: chkdirs] Error 1
+make: *** Waiting for unfinished jobs....
+chkwtmp.c: In function 'printit':
+chkwtmp.c:45:6: warning: old-style function definition [-Wold-style-definition]
+   45 | void printit(counter, start, end)
+      |      ^~~~~~~
+chkwtmp.c: In function 'main':
+chkwtmp.c:77:25: error: implicit declaration of function 'open'; did you mean 'popen'? [-Wimplicit-function-declaration]
+   77 |         if ((filehandle=open(wtmpfile,O_RDONLY)) < 0) {
+      |                         ^~~~
+      |                         popen
+chkwtmp.c:77:39: error: 'O_RDONLY' undeclared (first use in this function)
+   77 |         if ((filehandle=open(wtmpfile,O_RDONLY)) < 0) {
+      |                                       ^~~~~~~~
+chkwtmp.c:77:39: note: each undeclared identifier is reported only once for each function it appears in
+make: *** [Makefile:47: chkwtmp] Error 1
+chklastlog.c: In function 'main':
+chklastlog.c:133:25: error: passing argument 2 of 'signal' from incompatible pointer type [-Wincompatible-pointer-types]
+  133 |         signal(SIGALRM, read_status);
+      |                         ^~~~~~~~~~~
+      |                         |
+      |                         void (*)(void)
+In file included from chklastlog.c:46:
+/usr/include/signal.h:289:20: note: expected 'void (*)(int)' but argument is of type 'void (*)(void)'
+  289 | void (*signal(int, void (*)(int)))(int);
+      |                    ^~~~~~~~~~~~~
+chklastlog.c:80:6: note: 'read_status' declared here
+   80 | void read_status();
+      |      ^~~~~~~~~~~
+chklastlog.c:138:25: error: implicit declaration of function 'open'; did you mean 'popen'? [-Wimplicit-function-declaration]
+  138 |         if ((fh_lastlog=open(lastlogfile,O_RDONLY)) < 0) {
+      |                         ^~~~
+      |                         popen
+chklastlog.c:138:42: error: 'O_RDONLY' undeclared (first use in this function)
+  138 |         if ((fh_lastlog=open(lastlogfile,O_RDONLY)) < 0) {
+      |                                          ^~~~~~~~
+chklastlog.c:138:42: note: each undeclared identifier is reported only once for each function it appears in
+chklastlog.c:170:49: warning: format '%ld' expects argument of type 'long int', but argument 3 has type 'int' [-Wformat=]
+  170 |                    fprintf(stderr, "MAX_ID is %ld and current uid is %ld, please check\n\r", MAX_ID, *uid );
+      |                                               ~~^
+      |                                                 |
+      |                                                 long int
+      |                                               %d
+chklastlog.c:170:72: warning: format '%ld' expects argument of type 'long int', but argument 4 has type 'uid_t' {aka 'unsigned int'} [-Wformat=]
+  170 |                    fprintf(stderr, "MAX_ID is %ld and current uid is %ld, please check\n\r", MAX_ID, *uid );
+      |                                                                      ~~^                             ~~~~
+      |                                                                        |                             |
+      |                                                                        long int                      uid_t {aka unsigned int}
+      |                                                                      %d
+make: *** [Makefile:43: chklastlog] Error 1
+>>> ERROR: chkrootkit: build failed
+>>> chkrootkit: Uninstalling dependencies...
+(1/1) Purging .makedepends-chkrootkit (20260629.133727)
+OK: 432.6 MiB in 222 packages
+### FAIL chkrootkit
+============================================================
+>>> BUILD rkhunter
+>>> rkhunter: Building b/rkhunter 1.4.6-r0 (using abuild 3.18.0_rc1-r0) started Mon, 29 Jun 2026 13:37:28 +0000
+>>> rkhunter: Validating /root/b/rkhunter/APKBUILD...
+>>> rkhunter: Analyzing dependencies...
+WARNING: opening /root/packages/b/x86_64/APKINDEX.tar.gz: No such file or directory
+>>> rkhunter: Installing for build: build-base bash
+WARNING: opening /root/packages/b/x86_64/APKINDEX.tar.gz: No such file or directory
+(1/1) Installing .makedepends-rkhunter (20260629.133728)
+OK: 432.6 MiB in 223 packages
+>>> rkhunter: Cleaning up srcdir
+>>> rkhunter: Cleaning up pkgdir
+>>> rkhunter: Cleaning up tmpdir
+>>> rkhunter: Fetching rkhunter-1.4.6.tar.gz::https://downloads.sourceforge.net/project/rkhunter/rkhunter/1.4.6/rkhunter-1.4.6.tar.gz
+/var/cache/distfiles/rkhunter-1.4.6.tar.gz: OK
+>>> rkhunter: Fetching rkhunter-1.4.6.tar.gz::https://downloads.sourceforge.net/project/rkhunter/rkhunter/1.4.6/rkhunter-1.4.6.tar.gz
+/var/cache/distfiles/rkhunter-1.4.6.tar.gz: OK
+>>> rkhunter: Unpacking /var/cache/distfiles/rkhunter-1.4.6.tar.gz...
+>>> WARNING: rkhunter: APKBUILD does not run any tests!
+    Alpine policy will soon require that packages have any relevant testsuites run during the build process.
+    To fix, either define a check() function, or declare !check in $options to indicate the package does not have a testsuite.
+Standalone installation into /root/b/rkhunter/src/rkhunter-1.4.6/files
+[H[JChecking system for:
+ Rootkit Hunter installer files: found
+ A web file download command: wget found
+Starting installation:
+ Checking installation directory ".": it exists and is writable.
+Installation complete
+>>> rkhunter: Running postcheck for rkhunter
+>>> rkhunter: Preparing package rkhunter...
+>>> rkhunter: Tracing dependencies...
+	bash
+>>> rkhunter: Package size: 1.7 MB
+>>> rkhunter: Compressing data...
+>>> rkhunter: Create checksum...
+>>> rkhunter: Create rkhunter-1.4.6-r0.apk
+>>> rkhunter: Build complete at Mon, 29 Jun 2026 13:37:29 +0000 elapsed time 0h 0m 1s
+>>> rkhunter: Cleaning up srcdir
+>>> rkhunter: Cleaning up pkgdir
+>>> rkhunter: Cleaning up tmpdir
+>>> rkhunter: Uninstalling dependencies...
+(1/1) Purging .makedepends-rkhunter (20260629.133728)
+OK: 432.6 MiB in 222 packages
+>>> rkhunter: Updating the b/x86_64 repository index...
+ERROR: rkhunter-1.4.6-r0.apk: UNTRUSTED signature
+>>> ERROR: rkhunter: Failed to create index
+>>> rkhunter: Uninstalling dependencies...
+ERROR: No such package: .makedepends-rkhunter
+### FAIL rkhunter
+============================================================
+>>> BUILD scalpel
+>>> scalpel: Building b/scalpel 1.60-r0 (using abuild 3.18.0_rc1-r0) started Mon, 29 Jun 2026 13:37:30 +0000
+>>> scalpel: Validating /root/b/scalpel/APKBUILD...
+>>> scalpel: Analyzing dependencies...
+WARNING: opening /root/packages/b/x86_64/APKINDEX.tar.gz: No such file or directory
+>>> scalpel: Installing for build: build-base
+WARNING: opening /root/packages/b/x86_64/APKINDEX.tar.gz: No such file or directory
+(1/1) Installing .makedepends-scalpel (20260629.133730)
+OK: 432.6 MiB in 223 packages
+>>> scalpel: Cleaning up srcdir
+>>> scalpel: Cleaning up pkgdir
+>>> scalpel: Cleaning up tmpdir
+>>> scalpel: Fetching scalpel-1.60.tar.gz::https://github.com/machn1k/Scalpel-2.0/archive/refs/heads/master.tar.gz
+/var/cache/distfiles/scalpel-1.60.tar.gz: OK
+>>> scalpel: Fetching scalpel-1.60.tar.gz::https://github.com/machn1k/Scalpel-2.0/archive/refs/heads/master.tar.gz
+/var/cache/distfiles/scalpel-1.60.tar.gz: OK
+>>> scalpel: Unpacking /var/cache/distfiles/scalpel-1.60.tar.gz...
+make: *** No targets specified and no makefile found.  Stop.
+make: *** No targets specified and no makefile found.  Stop.
+>>> ERROR: scalpel: build failed
+>>> scalpel: Uninstalling dependencies...
+(1/1) Purging .makedepends-scalpel (20260629.133730)
+OK: 432.6 MiB in 222 packages
+### FAIL scalpel
+============================================================
+>>> BUILD stegseek
+>>> stegseek: Building b/stegseek 0.6-r0 (using abuild 3.18.0_rc1-r0) started Mon, 29 Jun 2026 13:37:31 +0000
+>>> stegseek: Validating /root/b/stegseek/APKBUILD...
+>>> stegseek: Analyzing dependencies...
+WARNING: opening /root/packages/b/x86_64/APKINDEX.tar.gz: No such file or directory
+ERROR: unable to select packages:
+  .makedepends-stegseek-20260629.133732:
+    masked in: cache
+    satisfies: world[.makedepends-stegseek=20260629.133732]
+  mhash-dev (no such package):
+    required by: .makedepends-stegseek-20260629.133732[mhash-dev]
+>>> ERROR: stegseek: builddeps failed
+>>> stegseek: Uninstalling dependencies...
+ERROR: No such package: .makedepends-stegseek
+### FAIL stegseek
+============================================================
+>>> BUILD bulk-extractor
+>>> bulk-extractor: Building b/bulk-extractor 2.0.0-r0 (using abuild 3.18.0_rc1-r0) started Mon, 29 Jun 2026 13:37:33 +0000
+>>> bulk-extractor: Validating /root/b/bulk-extractor/APKBUILD...
+>>> bulk-extractor: Analyzing dependencies...
+WARNING: opening /root/packages/b/x86_64/APKINDEX.tar.gz: No such file or directory
+>>> bulk-extractor: Installing for build: build-base autoconf automake libtool openssl-dev zlib-dev expat-dev re2-dev linux-headers flex bison
+WARNING: opening /root/packages/b/x86_64/APKINDEX.tar.gz: No such file or directory
+(1/1) Installing .makedepends-bulk-extractor (20260629.133733)
+OK: 432.6 MiB in 223 packages
+>>> bulk-extractor: Cleaning up srcdir
+>>> bulk-extractor: Cleaning up pkgdir
+>>> bulk-extractor: Cleaning up tmpdir
+>>> bulk-extractor: Fetching bulk-extractor-2.0.0.tar.gz::https://github.com/simsong/bulk_extractor/releases/download/v2.0.0/bulk_extractor-2.0.0.tar.gz
+/var/cache/distfiles/bulk-extractor-2.0.0.tar.gz: OK
+>>> bulk-extractor: Fetching bulk-extractor-2.0.0.tar.gz::https://github.com/simsong/bulk_extractor/releases/download/v2.0.0/bulk_extractor-2.0.0.tar.gz
+/var/cache/distfiles/bulk-extractor-2.0.0.tar.gz: OK
+>>> bulk-extractor: Unpacking /var/cache/distfiles/bulk-extractor-2.0.0.tar.gz...
+configure: Compiling under .
+configure: checking /usr/local/include
+configure: checking /opt/local/include
+configure: checking /sw/include
+configure: checking /usr/local/ssl/include
+configure:  CPPFLAGS =  
+configure:  LDFLAGS = -Wl,--as-needed,-O1,--sort-common -Wl,-z,pack-relative-relocs 
+configure: Including dfxml_configure.m4 from dfxml
+configure: Note: checks for libewf.h should be in the caller, so they can be disabled
+checking for gcc... cc
+checking whether the C compiler works... yes
+checking for C compiler default output file name... a.out
+checking for suffix of executables... 
+checking whether we are cross compiling... no
+checking for suffix of object files... o
+checking whether the compiler supports GNU C... yes
+checking whether cc accepts -g... yes
+checking for cc option to enable C11 features... none needed
+checking whether cc understands -c and -o together... yes
+checking for stdio.h... yes
+checking for stdlib.h... yes
+checking for string.h... yes
+checking for inttypes.h... yes
+checking for stdint.h... yes
+checking for strings.h... yes
+checking for sys/stat.h... yes
+checking for sys/types.h... yes
+checking for unistd.h... yes
+checking for expat.h... yes
+checking for sys/resource.h... yes
+checking for sys/utsname.h... yes
+checking for unistd.h... (cached) yes
+checking for winsock2.h... no
+checking for boost/version.hpp... no
+checking for pwd.h... yes
+checking for uuid/uuid.h... no
+checking for gmtime_r... yes
+checking for getuid... yes
+checking for gethostname... yes
+checking for getpwuid... yes
+checking for getrusage... yes
+checking for vasprintf... yes
+checking for expat.h... (cached) yes
+checking for XML_ParserCreate in -lexpat... yes
+checking for git... true
+configure: WARNING: git not found
+checking for CommonCrypto/CommonDigest.h... no
+checking for gcrypt.h... no
+checking for gpg_strerror in -lgpg-error... no
+checking for gcry_md_open in -lgcrypt... no
+checking for openssl/aes.h... yes
+checking for openssl/bio.h... yes
+checking for openssl/evp.h... yes
+checking for openssl/hmac.h... yes
+checking for openssl/md5.h... yes
+checking for openssl/pem.h... yes
+checking for openssl/rand.h... yes
+checking for openssl/rsa.h... yes
+checking for openssl/sha.h... yes
+checking for openssl/pem.h... (cached) yes
+checking for openssl/x509.h... yes
+checking for EVP_get_digestbyname in -lcrypto... yes
+checking for SSL_library_init in -lssl... no
+checking for gcry_md_open... no
+checking for CC_MD2_Init... no
+checking for EVP_get_digestbyname... yes
+configure: Including be20_configure.m4 from be20_api
+checking whether C++ compiler understands ... Adding -pthread to CXXFLAGS
+checking whether byte ordering is bigendian... no
+checking for dlfcn.h... yes
+checking for fcntl.h... yes
+checking for limits.h... yes
+checking for limits/limits.h... no
+checking for linux/if_ether.h... yes
+checking for net/ethernet.h... yes
+checking for netinet/if_ether.h... yes
+checking for netinet/in.h... yes
+checking for pcap.h... no
+checking for pcap/pcap.h... no
+checking for sqlite3.h... no
+checking for sys/cdefs.h... no
+checking for sys/mman.h... yes
+checking for sys/stat.h... (cached) yes
+checking for sys/time.h... yes
+checking for sys/types.h... (cached) yes
+checking for sys/vmmeter.h... no
+checking for unistd.h... (cached) yes
+checking for windows.h... no
+checking for windows.h... (cached) no
+checking for windowsx.h... no
+checking for winsock2.h... (cached) no
+checking for wpcap/pcap.h... no
+checking for mach/mach.h... no
+checking for mach-o/dyld.h... no
+checking for gmtime_r... (cached) yes
+checking for ishexnumber... no
+checking for isxdigit... yes
+checking for localtime_r... yes
+checking for unistd.h... no
+checking for mmap... yes
+checking for err... yes
+checking for errx... yes
+checking for warn... yes
+checking for warnx... yes
+checking for pread64... no
+checking for pread... yes
+checking for strptime... yes
+checking for _lseeki64... no
+checking for task_info... no
+checking for utimes... yes
+checking for host_statistics64... no
+checking for sqlite3_libversion in -lsqlite3... no
+checking for sqlite3_create_function_v2... no
+checking for sysctlbyname... no
+checking for a BSD-compatible install... /usr/bin/install -c
+checking whether build environment is sane... yes
+checking for a race-free mkdir -p... ./build-aux/install-sh -c -d
+checking for gawk... no
+checking for mawk... no
+checking for nawk... no
+checking for awk... awk
+checking whether make sets $(MAKE)... yes
+checking whether make supports the include directive... yes (GNU style)
+checking whether make supports nested variables... yes
+checking dependency style of cc... gcc3
+checking whether to enable maintainer-specific portions of Makefiles... no
+checking for gcc... (cached) cc
+checking whether the compiler supports GNU C... (cached) yes
+checking whether cc accepts -g... (cached) yes
+checking for cc option to enable C11 features... (cached) none needed
+checking whether cc understands -c and -o together... (cached) yes
+checking whether the compiler supports GNU C++... yes
+checking whether c++ accepts -g... yes
+checking for c++ option to enable C++11 features... none needed
+checking dependency style of c++... gcc3
+checking for flex... flex
+checking for lex output file root... lex.yy
+checking for lex library... none needed
+checking whether yytext is a pointer... yes
+checking whether c++ supports C++17 features with -std=c++17... yes
+checking for filesystem... yes
+checking for string... yes
+configure: C++ Warnings to test: -Wall -MD -Wpointer-arith     -Wshadow -Wwrite-strings -Wcast-align      -Wredundant-decls -Wdisabled-optimization     -Wfloat-equal -Wmultichar -Wmissing-noreturn     -Woverloaded-virtual -Wsign-promo     -funit-at-a-time  -Weffc++
+checking whether g++ understands -Wall... yes
+checking whether g++ understands -MD... yes
+checking whether g++ understands -Wpointer-arith... yes
+checking whether g++ understands -Wshadow... yes
+checking whether g++ understands -Wwrite-strings... yes
+checking whether g++ understands -Wcast-align... yes
+checking whether g++ understands -Wredundant-decls... yes
+checking whether g++ understands -Wdisabled-optimization... yes
+checking whether g++ understands -Wfloat-equal... yes
+checking whether g++ understands -Wmultichar... yes
+checking whether g++ understands -Wmissing-noreturn... yes
+checking whether g++ understands -Woverloaded-virtual... yes
+checking whether g++ understands -Wsign-promo... yes
+checking whether g++ understands -funit-at-a-time... yes
+checking whether g++ understands -Weffc++... yes
+configure: flex supports -R
+checking for int64_t... yes
+checking for special C compiler options needed for large files... no
+checking for _FILE_OFFSET_BITS value needed for large files... no
+checking POSIX termios... yes
+checking for dlfcn.h... (cached) yes
+checking for fcntl.h... (cached) yes
+checking for inttypes.h... (cached) yes
+checking for libgen.h... yes
+checking for limits.h... (cached) yes
+checking for mmap.h... no
+checking for pwd.h... (cached) yes
+checking for signal.h... yes
+checking for stdint.h... (cached) yes
+checking for sys/cdefs.h... (cached) no
+checking for curses.h... yes
+checking for sys/disk.h... no
+checking for sys/fcntl.h... yes
+checking for sys/ioctl.h... yes
+checking for sys/mman.h... (cached) yes
+checking for sys/mmap.h... no
+checking for sys/mount.h... yes
+checking for sys/param.h... yes
+checking for sys/socket.h... yes
+checking for sys/stat.h... (cached) yes
+checking for sys/types.h... (cached) yes
+checking for sys/time.h... (cached) yes
+checking for sys/resource.h... (cached) yes
+checking for sys/sysctl.h... no
+checking for sys/vmmeter.h... (cached) no
+checking for term.h... yes
+checking for time.h... yes
+checking for unistd.h... (cached) yes
+checking for windows.h... (cached) no
+checking for CoreServices/CoreServices.h... no
+checking for mach-o/dyld.h... (cached) no
+checking for getuid... (cached) yes
+checking for getpwuid... (cached) yes
+checking for gethostname... (cached) yes
+checking for getrusage... (cached) yes
+checking for gmtime_r... (cached) yes
+checking for getprogname... no
+checking for isxdigit... (cached) yes
+checking for ishexnumber... (cached) no
+checking for le64toh... no
+checking for localtime_r... (cached) yes
+checking for _lseeki64... (cached) no
+checking for inet_ntop... yes
+checking for ioctl... yes
+checking for isatty... yes
+checking for pread64... (cached) no
+checking for pread... (cached) yes
+checking for printf... yes
+checking for mmap... (cached) yes
+checking for munmap... yes
+checking for MD5... yes
+checking for mkstemp... yes
+checking for mktemp... yes
+checking for sleep... yes
+checking for SleepEx... no
+checking for strptime... (cached) yes
+checking for usleep... yes
+checking for vasprintf... (cached) yes
+checking for _NSGetExecutablePath... no
+checking for CreateProcess... no
+checking for LoadLibrary... no
+checking for IncrementAtomic... no
+checking for InterlockedIncrement... no
+checking for tgetstr in -ltermcap... no
+checking for dlopen in -ldl... yes
+checking for dlopen... yes
+checking for dlopen_preflight... no
+checking for arpa/inet.h... yes
+checking for netinet/in.h... (cached) yes
+checking for wsipx.h... no
+checking for netinet/ip.h... yes
+checking for struct winsize.ws_col... yes
+checking for struct sockaddr_in.sin_len... no
+checking for uncompress in -lz... yes
+checking for expat.h... (cached) yes
+checking for XML_ParserCreate in -lexpat... (cached) yes
+checking for main in -lstdc++... yes
+configure: libewf is yes
+checking for libewf.h... no
+configure: WARNING: libewf.h not found; no E01 support
+checking for libewf_handle_get_utf8_header_value_notes... no
+checking for libewf_error_backtrace_fprint... no
+checking for libewf_handle_close... no
+checking for libewf_handle_free... no
+checking for libewf_handle_read_buffer_at_offset... no
+checking for libewf_handle_read_random... no
+configure: libewf is now no
+configure: adding -O3 to CFLAGS and CXXFLAGS
+configure: *************************************
+configure: *************************************
+configure:   PACKAGE_NAME:     BULK_EXTRACTOR
+configure:   PACKAGE_VERSION:  2.0.0
+configure:   CC:               cc
+configure:   CXX:              c++ -std=c++17
+configure:   CPPFLAGS:          -DUTC_OFFSET=+0000
+configure:   CFLAGS:           -g -Os -fstack-clash-protection -Wformat -Werror=format-security -fno-plt -fPIC -O3
+configure:   CXXFLAGS:         -g -Os -fstack-clash-protection -Wformat -Werror=format-security -D_GLIBCXX_ASSERTIONS=1 -D_LIBCPP_ENABLE_THREAD_SAFETY_ANNOTATIONS=1 -D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_FAST -fno-plt -pthread -Wall -MD -Wpointer-arith -Wshadow -Wwrite-strings -Wcast-align -Wredundant-decls -Wdisabled-optimization -Wfloat-equal -Wmultichar -Wmissing-noreturn -Woverloaded-virtual -Wsign-promo -funit-at-a-time -Weffc++ -fPIC -O3
+configure:   LIBS:             -lstdc++ -lexpat -lz -ldl -lcrypto -lexpat 
+configure:   LDFLAGS:          -Wl,--as-needed,-O1,--sort-common -Wl,-z,pack-relative-relocs
+configure: WARNING: libewf not installed. Please install libewf-devel for E01 support. See the etc/ directory for details.
+checking that generated files are newer than configure... done
+configure: creating ./config.status
+config.status: creating Makefile
+config.status: creating doc/Makefile
+config.status: creating doc/latex_manuals/Makefile
+config.status: creating src/Makefile
+config.status: creating src/tests/Makefile
+config.status: creating man/Makefile
+config.status: creating python/Makefile
+config.status: creating specfiles/Makefile
+config.status: creating specfiles/bulk_extractor.spec.m4
+config.status: creating tests/Makefile
+config.status: creating config.h
+config.status: executing depfiles commands
+make  all-recursive
+make[1]: Entering directory '/root/b/bulk-extractor/src/bulk_extractor-2.0.0'
+Making all in doc
+make[2]: Entering directory '/root/b/bulk-extractor/src/bulk_extractor-2.0.0/doc'
+make[2]: Nothing to be done for 'all'.
+make[2]: Leaving directory '/root/b/bulk-extractor/src/bulk_extractor-2.0.0/doc'
+Making all in doc/latex_manuals
+make[2]: Entering directory '/root/b/bulk-extractor/src/bulk_extractor-2.0.0/doc/latex_manuals'
+echo type \"make doc\" to create documentation
+type "make doc" to create documentation
+make[2]: Leaving directory '/root/b/bulk-extractor/src/bulk_extractor-2.0.0/doc/latex_manuals'
+Making all in man
+make[2]: Entering directory '/root/b/bulk-extractor/src/bulk_extractor-2.0.0/man'
+make[2]: Nothing to be done for 'all'.
+make[2]: Leaving directory '/root/b/bulk-extractor/src/bulk_extractor-2.0.0/man'
+Making all in src
+make[2]: Entering directory '/root/b/bulk-extractor/src/bulk_extractor-2.0.0/src'
+depbase=`echo base64_forensic.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+c++ -std=c++17 -DHAVE_CONFIG_H -I. -I..  -I../src/be20_api -DUTC_OFFSET=+0000  -g -Os -fstack-clash-protection -Wformat -Werror=format-security -D_GLIBCXX_ASSERTIONS=1 -D_LIBCPP_ENABLE_THREAD_SAFETY_ANNOTATIONS=1 -D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_FAST -fno-plt -pthread -Wall -MD -Wpointer-arith -Wshadow -Wwrite-strings -Wcast-align -Wredundant-decls -Wdisabled-optimization -Wfloat-equal -Wmultichar -Wmissing-noreturn -Woverloaded-virtual -Wsign-promo -funit-at-a-time -Weffc++ -fPIC -O3 -MT base64_forensic.o -MD -MP -MF $depbase.Tpo -c -o base64_forensic.o base64_forensic.cpp &&\
+mv -f $depbase.Tpo $depbase.Po
+depbase=`echo bulk_extractor.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+c++ -std=c++17 -DHAVE_CONFIG_H -I. -I..  -I../src/be20_api -DUTC_OFFSET=+0000  -g -Os -fstack-clash-protection -Wformat -Werror=format-security -D_GLIBCXX_ASSERTIONS=1 -D_LIBCPP_ENABLE_THREAD_SAFETY_ANNOTATIONS=1 -D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_FAST -fno-plt -pthread -Wall -MD -Wpointer-arith -Wshadow -Wwrite-strings -Wcast-align -Wredundant-decls -Wdisabled-optimization -Wfloat-equal -Wmultichar -Wmissing-noreturn -Woverloaded-virtual -Wsign-promo -funit-at-a-time -Weffc++ -fPIC -O3 -MT bulk_extractor.o -MD -MP -MF $depbase.Tpo -c -o bulk_extractor.o bulk_extractor.cpp &&\
+mv -f $depbase.Tpo $depbase.Po
+depbase=`echo image_process.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+c++ -std=c++17 -DHAVE_CONFIG_H -I. -I..  -I../src/be20_api -DUTC_OFFSET=+0000  -g -Os -fstack-clash-protection -Wformat -Werror=format-security -D_GLIBCXX_ASSERTIONS=1 -D_LIBCPP_ENABLE_THREAD_SAFETY_ANNOTATIONS=1 -D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_FAST -fno-plt -pthread -Wall -MD -Wpointer-arith -Wshadow -Wwrite-strings -Wcast-align -Wredundant-decls -Wdisabled-optimization -Wfloat-equal -Wmultichar -Wmissing-noreturn -Woverloaded-virtual -Wsign-promo -funit-at-a-time -Weffc++ -fPIC -O3 -MT image_process.o -MD -MP -MF $depbase.Tpo -c -o image_process.o image_process.cpp &&\
+mv -f $depbase.Tpo $depbase.Po
+depbase=`echo notify_thread.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+c++ -std=c++17 -DHAVE_CONFIG_H -I. -I..  -I../src/be20_api -DUTC_OFFSET=+0000  -g -Os -fstack-clash-protection -Wformat -Werror=format-security -D_GLIBCXX_ASSERTIONS=1 -D_LIBCPP_ENABLE_THREAD_SAFETY_ANNOTATIONS=1 -D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_FAST -fno-plt -pthread -Wall -MD -Wpointer-arith -Wshadow -Wwrite-strings -Wcast-align -Wredundant-decls -Wdisabled-optimization -Wfloat-equal -Wmultichar -Wmissing-noreturn -Woverloaded-virtual -Wsign-promo -funit-at-a-time -Weffc++ -fPIC -O3 -MT notify_thread.o -MD -MP -MF $depbase.Tpo -c -o notify_thread.o notify_thread.cpp &&\
+mv -f $depbase.Tpo $depbase.Po
+depbase=`echo phase1.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+c++ -std=c++17 -DHAVE_CONFIG_H -I. -I..  -I../src/be20_api -DUTC_OFFSET=+0000  -g -Os -fstack-clash-protection -Wformat -Werror=format-security -D_GLIBCXX_ASSERTIONS=1 -D_LIBCPP_ENABLE_THREAD_SAFETY_ANNOTATIONS=1 -D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_FAST -fno-plt -pthread -Wall -MD -Wpointer-arith -Wshadow -Wwrite-strings -Wcast-align -Wredundant-decls -Wdisabled-optimization -Wfloat-equal -Wmultichar -Wmissing-noreturn -Woverloaded-virtual -Wsign-promo -funit-at-a-time -Weffc++ -fPIC -O3 -MT phase1.o -MD -MP -MF $depbase.Tpo -c -o phase1.o phase1.cpp &&\
+mv -f $depbase.Tpo $depbase.Po
+depbase=`echo sbuf_decompress.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+c++ -std=c++17 -DHAVE_CONFIG_H -I. -I..  -I../src/be20_api -DUTC_OFFSET=+0000  -g -Os -fstack-clash-protection -Wformat -Werror=format-security -D_GLIBCXX_ASSERTIONS=1 -D_LIBCPP_ENABLE_THREAD_SAFETY_ANNOTATIONS=1 -D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_FAST -fno-plt -pthread -Wall -MD -Wpointer-arith -Wshadow -Wwrite-strings -Wcast-align -Wredundant-decls -Wdisabled-optimization -Wfloat-equal -Wmultichar -Wmissing-noreturn -Woverloaded-virtual -Wsign-promo -funit-at-a-time -Weffc++ -fPIC -O3 -MT sbuf_decompress.o -MD -MP -MF $depbase.Tpo -c -o sbuf_decompress.o sbuf_decompress.cpp &&\
+mv -f $depbase.Tpo $depbase.Po
+depbase=`echo bulk_extractor_scanners.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+c++ -std=c++17 -DHAVE_CONFIG_H -I. -I..  -I../src/be20_api -DUTC_OFFSET=+0000  -g -Os -fstack-clash-protection -Wformat -Werror=format-security -D_GLIBCXX_ASSERTIONS=1 -D_LIBCPP_ENABLE_THREAD_SAFETY_ANNOTATIONS=1 -D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_FAST -fno-plt -pthread -Wall -MD -Wpointer-arith -Wshadow -Wwrite-strings -Wcast-align -Wredundant-decls -Wdisabled-optimization -Wfloat-equal -Wmultichar -Wmissing-noreturn -Woverloaded-virtual -Wsign-promo -funit-at-a-time -Weffc++ -fPIC -O3 -MT bulk_extractor_scanners.o -MD -MP -MF $depbase.Tpo -c -o bulk_extractor_scanners.o bulk_extractor_scanners.cpp &&\
+mv -f $depbase.Tpo $depbase.Po
+depbase=`echo scan_aes.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+c++ -std=c++17 -DHAVE_CONFIG_H -I. -I..  -I../src/be20_api -DUTC_OFFSET=+0000  -g -Os -fstack-clash-protection -Wformat -Werror=format-security -D_GLIBCXX_ASSERTIONS=1 -D_LIBCPP_ENABLE_THREAD_SAFETY_ANNOTATIONS=1 -D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_FAST -fno-plt -pthread -Wall -MD -Wpointer-arith -Wshadow -Wwrite-strings -Wcast-align -Wredundant-decls -Wdisabled-optimization -Wfloat-equal -Wmultichar -Wmissing-noreturn -Woverloaded-virtual -Wsign-promo -funit-at-a-time -Weffc++ -fPIC -O3 -MT scan_aes.o -MD -MP -MF $depbase.Tpo -c -o scan_aes.o scan_aes.cpp &&\
+mv -f $depbase.Tpo $depbase.Po
+depbase=`echo scan_base64.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+c++ -std=c++17 -DHAVE_CONFIG_H -I. -I..  -I../src/be20_api -DUTC_OFFSET=+0000  -g -Os -fstack-clash-protection -Wformat -Werror=format-security -D_GLIBCXX_ASSERTIONS=1 -D_LIBCPP_ENABLE_THREAD_SAFETY_ANNOTATIONS=1 -D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_FAST -fno-plt -pthread -Wall -MD -Wpointer-arith -Wshadow -Wwrite-strings -Wcast-align -Wredundant-decls -Wdisabled-optimization -Wfloat-equal -Wmultichar -Wmissing-noreturn -Woverloaded-virtual -Wsign-promo -funit-at-a-time -Weffc++ -fPIC -O3 -MT scan_base64.o -MD -MP -MF $depbase.Tpo -c -o scan_base64.o scan_base64.cpp &&\
+mv -f $depbase.Tpo $depbase.Po
+depbase=`echo scan_ccns2.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+c++ -std=c++17 -DHAVE_CONFIG_H -I. -I..  -I../src/be20_api -DUTC_OFFSET=+0000  -g -Os -fstack-clash-protection -Wformat -Werror=format-security -D_GLIBCXX_ASSERTIONS=1 -D_LIBCPP_ENABLE_THREAD_SAFETY_ANNOTATIONS=1 -D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_FAST -fno-plt -pthread -Wall -MD -Wpointer-arith -Wshadow -Wwrite-strings -Wcast-align -Wredundant-decls -Wdisabled-optimization -Wfloat-equal -Wmultichar -Wmissing-noreturn -Woverloaded-virtual -Wsign-promo -funit-at-a-time -Weffc++ -fPIC -O3 -MT scan_ccns2.o -MD -MP -MF $depbase.Tpo -c -o scan_ccns2.o scan_ccns2.cpp &&\
+mv -f $depbase.Tpo $depbase.Po
+depbase=`echo scan_elf.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+c++ -std=c++17 -DHAVE_CONFIG_H -I. -I..  -I../src/be20_api -DUTC_OFFSET=+0000  -g -Os -fstack-clash-protection -Wformat -Werror=format-security -D_GLIBCXX_ASSERTIONS=1 -D_LIBCPP_ENABLE_THREAD_SAFETY_ANNOTATIONS=1 -D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_FAST -fno-plt -pthread -Wall -MD -Wpointer-arith -Wshadow -Wwrite-strings -Wcast-align -Wredundant-decls -Wdisabled-optimization -Wfloat-equal -Wmultichar -Wmissing-noreturn -Woverloaded-virtual -Wsign-promo -funit-at-a-time -Weffc++ -fPIC -O3 -MT scan_elf.o -MD -MP -MF $depbase.Tpo -c -o scan_elf.o scan_elf.cpp &&\
+mv -f $depbase.Tpo $depbase.Po
+depbase=`echo scan_evtx.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+c++ -std=c++17 -DHAVE_CONFIG_H -I. -I..  -I../src/be20_api -DUTC_OFFSET=+0000  -g -Os -fstack-clash-protection -Wformat -Werror=format-security -D_GLIBCXX_ASSERTIONS=1 -D_LIBCPP_ENABLE_THREAD_SAFETY_ANNOTATIONS=1 -D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_FAST -fno-plt -pthread -Wall -MD -Wpointer-arith -Wshadow -Wwrite-strings -Wcast-align -Wredundant-decls -Wdisabled-optimization -Wfloat-equal -Wmultichar -Wmissing-noreturn -Woverloaded-virtual -Wsign-promo -funit-at-a-time -Weffc++ -fPIC -O3 -MT scan_evtx.o -MD -MP -MF $depbase.Tpo -c -o scan_evtx.o scan_evtx.cpp &&\
+mv -f $depbase.Tpo $depbase.Po
+In file included from image_process.cpp:25:
+/usr/include/sys/fcntl.h:1:2: warning: #warning redirecting incorrect #include <sys/fcntl.h> to <fcntl.h> [-Wcpp]
+    1 | #warning redirecting incorrect #include <sys/fcntl.h> to <fcntl.h>
+      |  ^~~~~~~
+depbase=`echo scan_exif.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+c++ -std=c++17 -DHAVE_CONFIG_H -I. -I..  -I../src/be20_api -DUTC_OFFSET=+0000  -g -Os -fstack-clash-protection -Wformat -Werror=format-security -D_GLIBCXX_ASSERTIONS=1 -D_LIBCPP_ENABLE_THREAD_SAFETY_ANNOTATIONS=1 -D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_FAST -fno-plt -pthread -Wall -MD -Wpointer-arith -Wshadow -Wwrite-strings -Wcast-align -Wredundant-decls -Wdisabled-optimization -Wfloat-equal -Wmultichar -Wmissing-noreturn -Woverloaded-virtual -Wsign-promo -funit-at-a-time -Weffc++ -fPIC -O3 -MT scan_exif.o -MD -MP -MF $depbase.Tpo -c -o scan_exif.o scan_exif.cpp &&\
+mv -f $depbase.Tpo $depbase.Po
+In file included from be20_api/histogram_def.h:9,
+                 from be20_api/scanner_params.h:29,
+                 from scan_base64.cpp:10:
+be20_api/unicode_escape.h: In function 'const std::u16string convert_utf8_to_utf16(const std::string&)':
+be20_api/unicode_escape.h:94:17: warning: 'template<class _Codecvt, class _Elem, class _Wide_alloc, class _Byte_alloc> class std::__cxx11::wstring_convert' is deprecated [-Wdeprecated-declarations]
+   94 |     return std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t>{}.from_bytes(utf8.data());
+      |                 ^~~~~~~~~~~~~~~
+In file included from /usr/include/c++/15.2.0/locale:47,
+                 from /usr/include/c++/15.2.0/bits/fs_path.h:36,
+                 from /usr/include/c++/15.2.0/filesystem:54,
+                 from be20_api/utils.h:19,
+                 from be20_api/scanner_params.h:28:
+/usr/include/c++/15.2.0/bits/locale_conv.h:262:33: note: declared here
+  262 |     class _GLIBCXX17_DEPRECATED wstring_convert
+      |                                 ^~~~~~~~~~~~~~~
+be20_api/unicode_escape.h: In function 'const std::u32string convert_utf8_to_utf32(std::string)':
+be20_api/unicode_escape.h:98:17: warning: 'template<class _Codecvt, class _Elem, class _Wide_alloc, class _Byte_alloc> class std::__cxx11::wstring_convert' is deprecated [-Wdeprecated-declarations]
+   98 |     return std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t>{}.from_bytes(utf8);
+      |                 ^~~~~~~~~~~~~~~
+/usr/include/c++/15.2.0/bits/locale_conv.h:262:33: note: declared here
+  262 |     class _GLIBCXX17_DEPRECATED wstring_convert
+      |                                 ^~~~~~~~~~~~~~~
+In file included from be20_api/histogram_def.h:9,
+                 from be20_api/scanner_params.h:29,
+                 from scan_evtx.cpp:19:
+be20_api/unicode_escape.h: In function 'const std::u16string convert_utf8_to_utf16(const std::string&)':
+be20_api/unicode_escape.h:94:17: warning: 'template<class _Codecvt, class _Elem, class _Wide_alloc, class _Byte_alloc> class std::__cxx11::wstring_convert' is deprecated [-Wdeprecated-declarations]
+   94 |     return std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t>{}.from_bytes(utf8.data());
+      |                 ^~~~~~~~~~~~~~~
+In file included from /usr/include/c++/15.2.0/locale:47,
+                 from /usr/include/c++/15.2.0/bits/fs_path.h:36,
+                 from /usr/include/c++/15.2.0/filesystem:54,
+                 from be20_api/utils.h:19,
+                 from be20_api/scanner_params.h:28:
+/usr/include/c++/15.2.0/bits/locale_conv.h:262:33: note: declared here
+  262 |     class _GLIBCXX17_DEPRECATED wstring_convert
+      |                                 ^~~~~~~~~~~~~~~
+be20_api/unicode_escape.h: In function 'const std::u32string convert_utf8_to_utf32(std::string)':
+be20_api/unicode_escape.h:98:17: warning: 'template<class _Codecvt, class _Elem, class _Wide_alloc, class _Byte_alloc> class std::__cxx11::wstring_convert' is deprecated [-Wdeprecated-declarations]
+   98 |     return std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t>{}.from_bytes(utf8);
+      |                 ^~~~~~~~~~~~~~~
+/usr/include/c++/15.2.0/bits/locale_conv.h:262:33: note: declared here
+  262 |     class _GLIBCXX17_DEPRECATED wstring_convert
+      |                                 ^~~~~~~~~~~~~~~
+In file included from be20_api/histogram_def.h:9,
+                 from be20_api/scanner_params.h:29,
+                 from scan_aes.cpp:35:
+be20_api/unicode_escape.h: In function 'const std::u16string convert_utf8_to_utf16(const std::string&)':
+be20_api/unicode_escape.h:94:17: warning: 'template<class _Codecvt, class _Elem, class _Wide_alloc, class _Byte_alloc> class std::__cxx11::wstring_convert' is deprecated [-Wdeprecated-declarations]
+   94 |     return std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t>{}.from_bytes(utf8.data());
+      |                 ^~~~~~~~~~~~~~~
+In file included from /usr/include/c++/15.2.0/locale:47,
+                 from /usr/include/c++/15.2.0/bits/fs_path.h:36,
+                 from /usr/include/c++/15.2.0/filesystem:54,
+                 from be20_api/utils.h:19,
+                 from be20_api/scanner_params.h:28:
+/usr/include/c++/15.2.0/bits/locale_conv.h:262:33: note: declared here
+  262 |     class _GLIBCXX17_DEPRECATED wstring_convert
+      |                                 ^~~~~~~~~~~~~~~
+be20_api/unicode_escape.h: In function 'const std::u32string convert_utf8_to_utf32(std::string)':
+be20_api/unicode_escape.h:98:17: warning: 'template<class _Codecvt, class _Elem, class _Wide_alloc, class _Byte_alloc> class std::__cxx11::wstring_convert' is deprecated [-Wdeprecated-declarations]
+   98 |     return std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t>{}.from_bytes(utf8);
+      |                 ^~~~~~~~~~~~~~~
+/usr/include/c++/15.2.0/bits/locale_conv.h:262:33: note: declared here
+  262 |     class _GLIBCXX17_DEPRECATED wstring_convert
+      |                                 ^~~~~~~~~~~~~~~
+In file included from be20_api/histogram_def.h:9,
+                 from be20_api/scanner_params.h:29,
+                 from scan_elf.cpp:10:
+be20_api/unicode_escape.h: In function 'const std::u16string convert_utf8_to_utf16(const std::string&)':
+be20_api/unicode_escape.h:94:17: warning: 'template<class _Codecvt, class _Elem, class _Wide_alloc, class _Byte_alloc> class std::__cxx11::wstring_convert' is deprecated [-Wdeprecated-declarations]
+   94 |     return std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t>{}.from_bytes(utf8.data());
+      |                 ^~~~~~~~~~~~~~~
+In file included from /usr/include/c++/15.2.0/locale:47,
+                 from /usr/include/c++/15.2.0/bits/fs_path.h:36,
+                 from /usr/include/c++/15.2.0/filesystem:54,
+                 from be20_api/utils.h:19,
+                 from be20_api/scanner_params.h:28:
+/usr/include/c++/15.2.0/bits/locale_conv.h:262:33: note: declared here
+  262 |     class _GLIBCXX17_DEPRECATED wstring_convert
+      |                                 ^~~~~~~~~~~~~~~
+be20_api/unicode_escape.h: In function 'const std::u32string convert_utf8_to_utf32(std::string)':
+be20_api/unicode_escape.h:98:17: warning: 'template<class _Codecvt, class _Elem, class _Wide_alloc, class _Byte_alloc> class std::__cxx11::wstring_convert' is deprecated [-Wdeprecated-declarations]
+   98 |     return std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t>{}.from_bytes(utf8);
+      |                 ^~~~~~~~~~~~~~~
+/usr/include/c++/15.2.0/bits/locale_conv.h:262:33: note: declared here
+  262 |     class _GLIBCXX17_DEPRECATED wstring_convert
+      |                                 ^~~~~~~~~~~~~~~
+In file included from be20_api/histogram_def.h:9,
+                 from be20_api/scanner_params.h:29,
+                 from be20_api/scanner_set.h:22,
+                 from bulk_extractor_scanners.h:11,
+                 from bulk_extractor_scanners.cpp:25:
+be20_api/unicode_escape.h: In function 'const std::u16string convert_utf8_to_utf16(const std::string&)':
+be20_api/unicode_escape.h:94:17: warning: 'template<class _Codecvt, class _Elem, class _Wide_alloc, class _Byte_alloc> class std::__cxx11::wstring_convert' is deprecated [-Wdeprecated-declarations]
+   94 |     return std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t>{}.from_bytes(utf8.data());
+      |                 ^~~~~~~~~~~~~~~
+In file included from /usr/include/c++/15.2.0/locale:47,
+                 from /usr/include/c++/15.2.0/bits/fs_path.h:36,
+                 from /usr/include/c++/15.2.0/filesystem:54,
+                 from be20_api/utils.h:19,
+                 from be20_api/scanner_set.h:18:
+/usr/include/c++/15.2.0/bits/locale_conv.h:262:33: note: declared here
+  262 |     class _GLIBCXX17_DEPRECATED wstring_convert
+      |                                 ^~~~~~~~~~~~~~~
+be20_api/unicode_escape.h: In function 'const std::u32string convert_utf8_to_utf32(std::string)':
+be20_api/unicode_escape.h:98:17: warning: 'template<class _Codecvt, class _Elem, class _Wide_alloc, class _Byte_alloc> class std::__cxx11::wstring_convert' is deprecated [-Wdeprecated-declarations]
+   98 |     return std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t>{}.from_bytes(utf8);
+      |                 ^~~~~~~~~~~~~~~
+/usr/include/c++/15.2.0/bits/locale_conv.h:262:33: note: declared here
+  262 |     class _GLIBCXX17_DEPRECATED wstring_convert
+      |                                 ^~~~~~~~~~~~~~~
+depbase=`echo exif_reader.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+c++ -std=c++17 -DHAVE_CONFIG_H -I. -I..  -I../src/be20_api -DUTC_OFFSET=+0000  -g -Os -fstack-clash-protection -Wformat -Werror=format-security -D_GLIBCXX_ASSERTIONS=1 -D_LIBCPP_ENABLE_THREAD_SAFETY_ANNOTATIONS=1 -D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_FAST -fno-plt -pthread -Wall -MD -Wpointer-arith -Wshadow -Wwrite-strings -Wcast-align -Wredundant-decls -Wdisabled-optimization -Wfloat-equal -Wmultichar -Wmissing-noreturn -Woverloaded-virtual -Wsign-promo -funit-at-a-time -Weffc++ -fPIC -O3 -MT exif_reader.o -MD -MP -MF $depbase.Tpo -c -o exif_reader.o exif_reader.cpp &&\
+mv -f $depbase.Tpo $depbase.Po
+In file included from be20_api/histogram_def.h:9,
+                 from be20_api/scanner_params.h:29,
+                 from scan_ccns2.cpp:16:
+be20_api/unicode_escape.h: In function 'const std::u16string convert_utf8_to_utf16(const std::string&)':
+be20_api/unicode_escape.h:94:17: warning: 'template<class _Codecvt, class _Elem, class _Wide_alloc, class _Byte_alloc> class std::__cxx11::wstring_convert' is deprecated [-Wdeprecated-declarations]
+   94 |     return std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t>{}.from_bytes(utf8.data());
+      |                 ^~~~~~~~~~~~~~~
+In file included from /usr/include/c++/15.2.0/locale:47,
+                 from /usr/include/c++/15.2.0/bits/fs_path.h:36,
+                 from /usr/include/c++/15.2.0/filesystem:54,
+                 from be20_api/sbuf.h:40,
+                 from scan_ccns2.h:4,
+                 from scan_ccns2.cpp:11:
+/usr/include/c++/15.2.0/bits/locale_conv.h:262:33: note: declared here
+  262 |     class _GLIBCXX17_DEPRECATED wstring_convert
+      |                                 ^~~~~~~~~~~~~~~
+be20_api/unicode_escape.h: In function 'const std::u32string convert_utf8_to_utf32(std::string)':
+be20_api/unicode_escape.h:98:17: warning: 'template<class _Codecvt, class _Elem, class _Wide_alloc, class _Byte_alloc> class std::__cxx11::wstring_convert' is deprecated [-Wdeprecated-declarations]
+   98 |     return std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t>{}.from_bytes(utf8);
+      |                 ^~~~~~~~~~~~~~~
+/usr/include/c++/15.2.0/bits/locale_conv.h:262:33: note: declared here
+  262 |     class _GLIBCXX17_DEPRECATED wstring_convert
+      |                                 ^~~~~~~~~~~~~~~
+In file included from be20_api/histogram_def.h:9,
+                 from be20_api/scanner_params.h:29,
+                 from bulk_extractor.cpp:37:
+be20_api/unicode_escape.h: In function 'const std::u16string convert_utf8_to_utf16(const std::string&)':
+be20_api/unicode_escape.h:94:17: warning: 'template<class _Codecvt, class _Elem, class _Wide_alloc, class _Byte_alloc> class std::__cxx11::wstring_convert' is deprecated [-Wdeprecated-declarations]
+   94 |     return std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t>{}.from_bytes(utf8.data());
+      |                 ^~~~~~~~~~~~~~~
+In file included from /usr/include/c++/15.2.0/locale:47,
+                 from /usr/include/c++/15.2.0/bits/fs_path.h:36,
+                 from /usr/include/c++/15.2.0/filesystem:54,
+                 from ../src/be20_api/dfxml_cpp/src/dfxml_writer.h:36,
+                 from bulk_extractor.cpp:33:
+/usr/include/c++/15.2.0/bits/locale_conv.h:262:33: note: declared here
+  262 |     class _GLIBCXX17_DEPRECATED wstring_convert
+      |                                 ^~~~~~~~~~~~~~~
+In file included from be20_api/histogram_def.h:9,
+                 from be20_api/scanner_params.h:29,
+                 from scan_exif.h:5,
+                 from scan_exif.cpp:21:
+be20_api/unicode_escape.h: In function 'const std::u16string convert_utf8_to_utf16(const std::string&)':
+be20_api/unicode_escape.h:94:17: warning: 'template<class _Codecvt, class _Elem, class _Wide_alloc, class _Byte_alloc> class std::__cxx11::wstring_convert' is deprecated [-Wdeprecated-declarations]
+   94 |     return std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t>{}.from_bytes(utf8.data());
+      |                 ^~~~~~~~~~~~~~~
+be20_api/unicode_escape.h: In function 'const std::u32string convert_utf8_to_utf32(std::string)':
+be20_api/unicode_escape.h:98:17: warning: 'template<class _Codecvt, class _Elem, class _Wide_alloc, class _Byte_alloc> class std::__cxx11::wstring_convert' is deprecated [-Wdeprecated-declarations]
+   98 |     return std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t>{}.from_bytes(utf8);
+      |                 ^~~~~~~~~~~~~~~
+/usr/include/c++/15.2.0/bits/locale_conv.h:262:33: note: declared here
+  262 |     class _GLIBCXX17_DEPRECATED wstring_convert
+      |                                 ^~~~~~~~~~~~~~~
+In file included from /usr/include/c++/15.2.0/locale:47,
+                 from /usr/include/c++/15.2.0/iomanip:53,
+                 from scan_exif.cpp:16:
+/usr/include/c++/15.2.0/bits/locale_conv.h:262:33: note: declared here
+  262 |     class _GLIBCXX17_DEPRECATED wstring_convert
+      |                                 ^~~~~~~~~~~~~~~
+be20_api/unicode_escape.h: In function 'const std::u32string convert_utf8_to_utf32(std::string)':
+be20_api/unicode_escape.h:98:17: warning: 'template<class _Codecvt, class _Elem, class _Wide_alloc, class _Byte_alloc> class std::__cxx11::wstring_convert' is deprecated [-Wdeprecated-declarations]
+   98 |     return std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t>{}.from_bytes(utf8);
+      |                 ^~~~~~~~~~~~~~~
+/usr/include/c++/15.2.0/bits/locale_conv.h:262:33: note: declared here
+  262 |     class _GLIBCXX17_DEPRECATED wstring_convert
+      |                                 ^~~~~~~~~~~~~~~
+In file included from be20_api/histogram_def.h:9,
+                 from be20_api/scanner_params.h:29,
+                 from be20_api/scanner_set.h:22,
+                 from phase1.h:8,
+                 from phase1.cpp:7:
+be20_api/unicode_escape.h: In function 'const std::u16string convert_utf8_to_utf16(const std::string&)':
+be20_api/unicode_escape.h:94:17: warning: 'template<class _Codecvt, class _Elem, class _Wide_alloc, class _Byte_alloc> class std::__cxx11::wstring_convert' is deprecated [-Wdeprecated-declarations]
+   94 |     return std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t>{}.from_bytes(utf8.data());
+      |                 ^~~~~~~~~~~~~~~
+In file included from /usr/include/c++/15.2.0/locale:47,
+                 from /usr/include/c++/15.2.0/bits/fs_path.h:36,
+                 from /usr/include/c++/15.2.0/filesystem:54,
+                 from be20_api/utils.h:19,
+                 from be20_api/scanner_set.h:18:
+/usr/include/c++/15.2.0/bits/locale_conv.h:262:33: note: declared here
+  262 |     class _GLIBCXX17_DEPRECATED wstring_convert
+      |                                 ^~~~~~~~~~~~~~~
+be20_api/unicode_escape.h: In function 'const std::u32string convert_utf8_to_utf32(std::string)':
+be20_api/unicode_escape.h:98:17: warning: 'template<class _Codecvt, class _Elem, class _Wide_alloc, class _Byte_alloc> class std::__cxx11::wstring_convert' is deprecated [-Wdeprecated-declarations]
+   98 |     return std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t>{}.from_bytes(utf8);
+      |                 ^~~~~~~~~~~~~~~
+/usr/include/c++/15.2.0/bits/locale_conv.h:262:33: note: declared here
+  262 |     class _GLIBCXX17_DEPRECATED wstring_convert
+      |                                 ^~~~~~~~~~~~~~~
+In file included from be20_api/histogram_def.h:9,
+                 from be20_api/scanner_params.h:29,
+                 from be20_api/scanner_set.h:22,
+                 from bulk_extractor.h:8,
+                 from notify_thread.cpp:2:
+be20_api/unicode_escape.h: In function 'const std::u16string convert_utf8_to_utf16(const std::string&)':
+be20_api/unicode_escape.h:94:17: warning: 'template<class _Codecvt, class _Elem, class _Wide_alloc, class _Byte_alloc> class std::__cxx11::wstring_convert' is deprecated [-Wdeprecated-declarations]
+   94 |     return std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t>{}.from_bytes(utf8.data());
+      |                 ^~~~~~~~~~~~~~~
+In file included from /usr/include/c++/15.2.0/locale:47,
+                 from /usr/include/c++/15.2.0/bits/fs_path.h:36,
+                 from /usr/include/c++/15.2.0/filesystem:54,
+                 from be20_api/utils.h:19,
+                 from be20_api/scanner_set.h:18:
+/usr/include/c++/15.2.0/bits/locale_conv.h:262:33: note: declared here
+  262 |     class _GLIBCXX17_DEPRECATED wstring_convert
+      |                                 ^~~~~~~~~~~~~~~
+be20_api/unicode_escape.h: In function 'const std::u32string convert_utf8_to_utf32(std::string)':
+be20_api/unicode_escape.h:98:17: warning: 'template<class _Codecvt, class _Elem, class _Wide_alloc, class _Byte_alloc> class std::__cxx11::wstring_convert' is deprecated [-Wdeprecated-declarations]
+   98 |     return std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t>{}.from_bytes(utf8);
+      |                 ^~~~~~~~~~~~~~~
+/usr/include/c++/15.2.0/bits/locale_conv.h:262:33: note: declared here
+  262 |     class _GLIBCXX17_DEPRECATED wstring_convert
+      |                                 ^~~~~~~~~~~~~~~
+In file included from exif_reader.h:19,
+                 from exif_reader.cpp:17:
+exif_entry.h:15:11: error: 'uint16_t' does not name a type
+   15 |     const uint16_t ifd_type {};
+      |           ^~~~~~~~
+exif_entry.h:6:1: note: 'uint16_t' is defined in header '<cstdint>'; this is probably fixable by adding '#include <cstdint>'
+    5 | #include <memory>
+  +++ |+#include <cstdint>
+    6 | 
+exif_entry.h:18:24: error: expected ')' before 'ifd_type_'
+   18 |     exif_entry(uint16_t ifd_type_, const std::string &name_, const std::string &value_);
+      |               ~        ^~~~~~~~~~
+      |                        )
+make[2]: *** [Makefile:1378: exif_reader.o] Error 1
+make[2]: *** Waiting for unfinished jobs....
+make[2]: Leaving directory '/root/b/bulk-extractor/src/bulk_extractor-2.0.0/src'
+make[1]: *** [Makefile:416: all-recursive] Error 1
+make[1]: Leaving directory '/root/b/bulk-extractor/src/bulk_extractor-2.0.0'
+make: *** [Makefile:357: all] Error 2
+>>> ERROR: bulk-extractor: build failed
+>>> bulk-extractor: Uninstalling dependencies...
+(1/1) Purging .makedepends-bulk-extractor (20260629.133733)
+OK: 432.6 MiB in 222 packages
+### FAIL bulk-extractor
+============================================================
+RIEPILOGO: FAIL:dmitry FAIL:foremost FAIL:dirb FAIL:medusa FAIL:chkrootkit FAIL:rkhunter FAIL:scalpel FAIL:stegseek FAIL:bulk-extractor

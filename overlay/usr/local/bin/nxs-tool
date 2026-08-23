@@ -1,0 +1,10 @@
+#!/bin/sh
+# NexusSec OS - gestore profili e tool isolati (bubblewrap). Vedi:
+#   nxs-tool help
+for c in python3 python3.9 python3.11 python3.7; do
+  if command -v "$c" >/dev/null 2>&1; then
+    exec env PYTHONPATH=/usr/local/lib "$c" -m nxs_profiles.cli "$@"
+  fi
+done
+echo "nxs-tool: python3 non disponibile" >&2
+exit 1

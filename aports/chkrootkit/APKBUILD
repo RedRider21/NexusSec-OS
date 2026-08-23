@@ -1,0 +1,35 @@
+# Maintainer: NexusSec <deplano.d@gmail.com>
+pkgname=chkrootkit
+pkgver=0.58b
+pkgrel=0
+pkgdesc="Rilevazione locale di rootkit"
+url="http://www.chkrootkit.org/"
+arch="all"
+license="BSD-2-Clause"
+makedepends="linux-headers"
+# Mirror Magentron senza tag 0.58b (404) e sito ufficiale offline -> pin al
+# commit immutabile del branch master.
+_commit=c00b5a40f61cc969e56fa2fe3375741c4164c896
+source="$pkgname-$pkgver.tar.gz::https://github.com/Magentron/chkrootkit/archive/$_commit.tar.gz"
+builddir="$srcdir/$pkgname-$_commit"
+build() {
+	cd "$builddir"
+	# I force-include vanno dentro CC, NON in CFLAGS: alcune regole del Makefile
+	# (es. chkdirs) usano solo ${LDFLAGS} e ignorano ${CFLAGS}, quindi limits.h
+	# (PATH_MAX) non arriverebbe. Mettendoli in CC raggiungono OGNI regola.
+	# Lascio CFLAGS=-DHAVE_LASTLOG_H del Makefile (non lo sovrascrivo).
+	make sense CC="gcc -fcommon -D_GNU_SOURCE \
+		-include fcntl.h -include limits.h -include signal.h -include unistd.h \
+		-Wno-error=implicit-function-declaration -Wno-error=int-conversion \
+		-Wno-error=incompatible-pointer-types -Wno-error=implicit-int"
+}
+package() {
+	cd "$builddir"
+	for b in chkrootkit chklastlog chkwtmp ifpromisc chkproc chkdirs chkutmp; do
+		[ -f "$b" ] && install -Dm755 "$b" "$pkgdir"/usr/lib/chkrootkit/"$b" || true
+	done
+	install -Dm755 chkrootkit "$pkgdir"/usr/bin/chkrootkit
+}
+sha512sums="
+fd13bafcffff157a43b65058cb2f5a05b39503aceef1a26293abaaa073845463388ef3a5659e68cdc5457acd4829232f02b21f6d23ccbd7577c4a76eabcabf67  chkrootkit-0.58b.tar.gz
+"

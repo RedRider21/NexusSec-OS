@@ -1,0 +1,16 @@
+#!/bin/sh
+# NexusSec OS - launcher Centro di Controllo (Alpine).
+# Trova python3 e lancia il modulo nxs_cc con PYTHONPATH corretto. Tutto
+# l'output (errori inclusi) va in /tmp/nxs-cc.log per la diagnostica.
+set -e
+LOG=/tmp/nxs-cc.log
+
+# GTK_IM_MODULE "simple": senza, un TextView editabile puo' tentare di caricare
+# un modulo input-method assente e crashare (segfault) su X minimale.
+IMENV="GTK_IM_MODULE=gtk-im-context-simple"
+
+if command -v python3 >/dev/null 2>&1; then
+  exec env $IMENV PYTHONPATH=/usr/local/lib python3 -m nxs_cc "$@" >>"$LOG" 2>&1
+fi
+echo "nxs-control-center: python3 non disponibile (apk add python3)" >&2
+exit 1

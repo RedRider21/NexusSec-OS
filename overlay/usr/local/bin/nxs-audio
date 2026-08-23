@@ -1,0 +1,42 @@
+#!/bin/sh
+# nxs-audio - controllo volume/uscite audio via wpctl (PipeWire + WirePlumber).
+# Usato dal widget audio del pannello (nxs_cc.panel). Best-effort: se PipeWire
+# non e' attivo stampa uno stato neutro senza errori.
+SINK="@DEFAULT_AUDIO_SINK@"
+
+_have() { command -v wpctl >/dev/null 2>&1; }
+
+case "${1:-get}" in
+  get)
+    # stampa: "<pct> <muted:0|1>"  (pct 0-100)
+    if ! _have; then echo "0 1"; exit 0; fi
+    line=$(wpctl get-volume "$SINK" 2>/dev/null) || { echo "0 1"; exit 0; }
+    vol=$(echo "$line" | awk '{print $2}')
+    [ -n "$vol" ] || vol=0
+    pct=$(awk "BEGIN{printf \"%d\", ($vol)*100}")
+    if echo "$line" | grep -q MUTED; then m=1; else m=0; fi
+    echo "$pct $m"
+    ;;
+  set)  _have && wpctl set-volume "$SINK" "${2:-50}%" 2>/dev/null ;;
+  up)   _have && wpctl set-volume -l 1.5 "$SINK" 5%+ 2>/dev/null ;;
+  down) _have && wpctl set-volume "$SINK" 5%- 2>/dev/null ;;
+  mute) _have && wpctl set-mute "$SINK" toggle 2>/dev/null ;;
+  sinks)
+    # elenco uscite: "id<TAB>nome<TAB>*"(default) - best-effort dal wpctl status
+    _have || exit 0
+    wpctl status 2>/dev/null | awk '
+      /Sinks:/   {s=1; next}
+      /Sources:|Filters:|Streams:|Devices:/ {s=0}
+      s && match($0, /[0-9]+\./) {
+        def = ($0 ~ /\*/) ? "*" : ""
+        id  = substr($0, RSTART, RLENGTH-1)
+        rest = substr($0, RSTART+RLENGTH+1)
+        sub(/ *\[vol:.*/, "", rest)
+        gsub(/^[ \t]+|[ \t]+$/, "", rest)
+        if (id != "" && rest != "") printf "%s\t%s\t%s\n", id, rest, def
+      }'
+    ;;
+  default) [ -n "${2:-}" ] && _have && wpctl set-default "$2" 2>/dev/null ;;
+  *) echo "uso: nxs-audio {get|set PCT|up|down|mute|sinks|default ID}" >&2; exit 2 ;;
+esac
+exit 0

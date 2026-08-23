@@ -1,0 +1,13 @@
+# Maintainer: NexusSec <deplano.d@gmail.com>
+# Meta-pacchetto del profilo Digital Forensics.
+pkgname=sec-profile-forensics
+pkgver=1.0.0
+pkgrel=0
+pkgdesc="NexusSec - profilo Digital Forensics (meta)"
+url="https://github.com/thecloners21"
+arch="noarch"
+license="MIT"
+# NB: solo pacchetti apk REALI (validati). Tool pip/container/non-in-apk -> on-demand via nxs-tool.
+depends="sleuthkit binwalk testdisk ddrescue exiftool yara clamav steghide"
+options="!check"
+package() { mkdir -p "$pkgdir"; }

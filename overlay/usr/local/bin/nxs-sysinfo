@@ -1,0 +1,21 @@
+#!/bin/sh
+# NexusSec - riepilogo sistema (per menu Openbox / Centro di Controllo).
+echo "=== uname ==="
+uname -a
+echo
+echo "=== CPU ==="
+grep -E '^model name|^cpu cores' /proc/cpuinfo 2>/dev/null | head -4
+echo
+echo "=== Memoria ==="
+free -h 2>/dev/null || free
+echo
+echo "=== Dischi ==="
+df -h 2>/dev/null
+echo
+echo "=== Uptime ==="
+uptime
+echo
+echo "=== Pacchetti apk installati ==="
+apk info 2>/dev/null | wc -l
+echo
+printf "Premi invio per chiudere "; read junk

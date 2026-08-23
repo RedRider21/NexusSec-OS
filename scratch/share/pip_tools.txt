@@ -1,0 +1,12 @@
+commix commix
+enum4linux enum4linux-ng
+fierce fierce
+holehe holehe
+metagoofil metagoofil
+netexec nxc
+smbmap smbmap
+sublist3r sublist3r
+theharvester theHarvester
+wafw00f wafw00f
+wfuzz wfuzz
+wifite wifite

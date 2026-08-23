@@ -1,0 +1,13 @@
+# Maintainer: NexusSec <deplano.d@gmail.com>
+# Meta-pacchetto del profilo OSINT.
+pkgname=sec-profile-osint
+pkgver=1.0.0
+pkgrel=0
+pkgdesc="NexusSec - profilo OSINT (meta)"
+url="https://github.com/thecloners21"
+arch="noarch"
+license="MIT"
+# NB: solo pacchetti apk REALI (validati). Tool pip/container/non-in-apk -> on-demand via nxs-tool.
+depends="dnsrecon dnsenum whois"
+options="!check"
+package() { mkdir -p "$pkgdir"; }

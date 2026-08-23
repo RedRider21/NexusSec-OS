@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Profilo operativo
+Comment=Seleziona la modalita' (Pen Testing, Forensics, OSINT, Web): menu e sfondo si adattano
+Exec=nxs-profile
+Icon=preferences-system
+Terminal=false
+Categories=Settings;System;Security;

@@ -1,0 +1,81 @@
+#!/bin/sh
+# NexusSec - gestione schermi via xrandr (per l'applet del pannello).
+#
+# Uso:
+#   nxs-screens outputs           "NOME<TAB>connected|disconnected<TAB>primary|-<TAB>WxH"
+#   nxs-screens modes NOME        risoluzioni disponibili per l'output
+#   nxs-screens mirror            duplica su tutti gli output connessi
+#   nxs-screens extend            estende (primario + altri a destra)
+#   nxs-screens only NOME         solo quell'output (gli altri spenti)
+#   nxs-screens mode NOME WxH     imposta risoluzione
+#   nxs-screens primary NOME      imposta output primario
+#
+# xrandr agisce sulla sessione X dell'utente: nessun privilegio necessario.
+
+connected() { xrandr --query 2>/dev/null | awk '/ connected/{print $1}'; }
+primary_out() { xrandr --query 2>/dev/null | awk '/ connected primary/{print $1; exit}'; }
+
+case "${1:-}" in
+  outputs)
+    xrandr --query 2>/dev/null | awk '
+      / connected/ {
+        name=$1; prim=($3=="primary"||$4=="primary")?"primary":"-";
+        res="-";
+        for(i=3;i<=NF;i++) if($i ~ /^[0-9]+x[0-9]+\+/){split($i,a,"+"); res=a[1]; break}
+        print name"\tconnected\t"prim"\t"res
+      }
+      / disconnected/ { print $1"\tdisconnected\t-\t-" }'
+    ;;
+
+  modes)
+    xrandr --query 2>/dev/null | awk -v o="$2" '
+      $1==o {f=1; next}
+      / connected/||/ disconnected/ {f=0}
+      f && $1 ~ /^[0-9]+x[0-9]+$/ {print $1}'
+    ;;
+
+  mirror)
+    outs=$(connected); first=$(echo "$outs" | head -1)
+    [ -n "$first" ] || exit 1
+    set -- --output "$first" --auto --primary
+    for o in $outs; do
+      [ "$o" = "$first" ] && continue
+      set -- "$@" --output "$o" --auto --same-as "$first"
+    done
+    xrandr "$@"
+    ;;
+
+  extend)
+    outs=$(connected); prev=""
+    for o in $outs; do
+      if [ -z "$prev" ]; then
+        xrandr --output "$o" --auto --primary
+      else
+        xrandr --output "$o" --auto --right-of "$prev"
+      fi
+      prev="$o"
+    done
+    ;;
+
+  only)
+    keep="$2"; [ -n "$keep" ] || exit 1
+    for o in $(connected); do
+      if [ "$o" = "$keep" ]; then xrandr --output "$o" --auto --primary
+      else xrandr --output "$o" --off; fi
+    done
+    ;;
+
+  mode)
+    [ -n "$2" ] && [ -n "$3" ] || exit 1
+    xrandr --output "$2" --mode "$3"
+    ;;
+
+  primary)
+    [ -n "$2" ] || exit 1
+    xrandr --output "$2" --primary
+    ;;
+
+  *)
+    echo "uso: nxs-screens {outputs|modes NOME|mirror|extend|only NOME|mode NOME WxH|primary NOME}" >&2
+    exit 2 ;;
+esac

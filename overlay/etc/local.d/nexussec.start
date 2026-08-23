@@ -1,0 +1,91 @@
+#!/bin/sh
+# NexusSec - inizializzazione runtime (servizio OpenRC 'local').
+# Abilitare con: rc-update add local default
+LOG=/var/log/nxs-boot.log
+exec >>"$LOG" 2>&1
+echo "=== NexusSec local.d $(date) ==="
+
+# CRITICO: l'apkovl viene impacchettato con owner=0 (root), quindi /home/nexus
+# risulta di root -> nexus non puo' scrivere ~/.Xauthority ne creare il log di
+# Xorg (rootless) -> startx fallisce. Riportiamo la home a nexus e creiamo le
+# dir che Xorg/desktop si aspettano.
+chown -R nexus:nexus /home/nexus 2>/dev/null || true
+install -d -o nexus -g nexus /home/nexus/.local/share/xorg \
+        /home/nexus/.cache /home/nexus/.config \
+        /home/nexus/.local/state /home/nexus/.local/bin \
+        /home/nexus/.local/share 2>/dev/null || true
+# pipx (install tool 'pip') scrive in ~/.local/{state,share,bin}: se mancano,
+# fallisce con FileNotFoundError/permessi e NESSUN tool pip si installa. Le
+# creiamo qui (di proprieta' nexus) e mettiamo ~/.local/bin nel PATH (sotto).
+
+# Stato profili scrivibile dall'utente desktop.
+mkdir -p /etc/sec_os
+chown -R nexus:nexus /etc/sec_os 2>/dev/null || true
+
+# Cartella loot condivisa coi container Podman.
+install -d -o nexus -g nexus /home/nexus/NexusSec-loot 2>/dev/null || true
+
+# Repository runtime: NON tocchiamo /etc/apk/repositories a boot-time (la live
+# installa la base dal repo sul media). Qui, A SISTEMA AVVIATO, aggiungiamo i
+# repo internet edge + il nostro repo locale (meta sec-profile-*), cosi'
+# l'attivazione profili e l'install on-demand dei tool funzionano. Idempotente.
+REPOF=/etc/apk/repositories
+add_repo() { grep -qxF "$1" "$REPOF" 2>/dev/null || echo "$1" >> "$REPOF"; }
+if [ -f "$REPOF" ]; then
+	add_repo "http://dl-cdn.alpinelinux.org/alpine/edge/main"
+	add_repo "http://dl-cdn.alpinelinux.org/alpine/edge/community"
+	add_repo "http://dl-cdn.alpinelinux.org/alpine/edge/testing"
+	[ -d /var/lib/nexussec-repo ] && add_repo "/var/lib/nexussec-repo"
+	# Repo online dei pacchetti NexusSec (firmato; chiave in /etc/apk/keys).
+	# Sorgente aggiornata dei nostri tool oltre alla copia locale sul media.
+	add_repo "https://redrider21.github.io/NexusSec-OS"
+fi
+
+# --- Persistenza dati (opzionale): partizione con label NXSDATA --------------
+# La live gira in RAM (tmpfs): lo storage di Podman starebbe in RAM e i pull
+# grossi (container/kali) esaurirebbero la memoria. Se l'utente ha creato una
+# partizione dati persistente con `nxs-persist`, la montiamo e ci spostiamo:
+#   - lo storage di Podman (immagini container/kali) -> ARSENALE PERSISTENTE
+#     che sopravvive al riavvio e NON riempie la RAM;
+#   - lo stato dei tool (~/.config/nxs: profilo, ambiente Kali) e il loot.
+# Podman gira ROOTLESS come 'nexus', quindi tutto dev'essere di sua proprieta.
+NXSDATA="$(findfs LABEL=NXSDATA 2>/dev/null || blkid -L NXSDATA 2>/dev/null || true)"
+if [ -n "$NXSDATA" ]; then
+	echo "persistenza: NXSDATA su $NXSDATA -> monto /var/nxs-data"
+	mkdir -p /var/nxs-data
+	mountpoint -q /var/nxs-data || mount "$NXSDATA" /var/nxs-data
+	for d in containers nxs-state loot apk-cache; do
+		install -d -o nexus -g nexus "/var/nxs-data/$d"
+	done
+	# 1) Podman rootless: graphroot su disco -> immagini persistenti (overlay via
+	#    fuse-overlayfs, l'unico driver rootless efficiente su ext4).
+	install -d -o nexus -g nexus /home/nexus/.config/containers
+	cat > /home/nexus/.config/containers/storage.conf <<STOR
+[storage]
+driver = "overlay"
+graphroot = "/var/nxs-data/containers"
+[storage.options.overlay]
+mount_program = "/usr/bin/fuse-overlayfs"
+STOR
+	# 2) Stato tool (~/.config/nxs) e loot: link dalla home effimera al disco.
+	install -d -o nexus -g nexus /home/nexus/.config /home/nexus/.local/share
+	rm -rf /home/nexus/.config/nxs /home/nexus/NexusSec-loot
+	ln -sfn /var/nxs-data/nxs-state /home/nexus/.config/nxs
+	ln -sfn /var/nxs-data/loot      /home/nexus/NexusSec-loot
+	# 3) Cache apk su disco (meno ri-download tra le sessioni).
+	ln -sfn /var/nxs-data/apk-cache /etc/apk/cache 2>/dev/null || true
+	chown -h nexus:nexus /home/nexus/.config/nxs /home/nexus/NexusSec-loot \
+		/home/nexus/.config/containers/storage.conf 2>/dev/null || true
+	echo "persistenza ATTIVA: podman graphroot + stato tool + loot su disco"
+else
+	# Nessuna NXSDATA: se il sistema e INSTALLATO su disco, lo storage Podman
+	# di default (~/.local/share/containers) e gia su disco => persistente. Se
+	# invece e una live, resta in RAM (effimero): l'utente puo creare NXSDATA.
+	if findmnt -no FSTYPE / 2>/dev/null | grep -qE 'tmpfs|overlay|ramfs'; then
+		echo "persistenza: live in RAM (effimera). Crea con: nxs-persist"
+	else
+		echo "persistenza: sistema su disco -> storage Podman gia persistente"
+	fi
+fi
+
+echo "stato: openbox=$(command -v openbox) feh=$(command -v feh) podman=$(command -v podman)"

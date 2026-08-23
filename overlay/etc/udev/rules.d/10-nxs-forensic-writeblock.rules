@@ -1,0 +1,20 @@
+# NexusSec OS - write-blocker forense (regola udev).
+#
+# Estende la protezione "sola lettura" ai dischi collegati DOPO l'attivazione del
+# profilo Forensics. E' ATTIVA SOLO quando esiste il flag /run/nxs/forensic-lock
+# (creato da 'nxs-writeblock on', agganciato al profilo Forensics). In qualunque
+# altro profilo la regola esce subito: e' un no-op immediato, nessuna collisione
+# con l'uso multi-profilo della distro (le SD/USB restano scrivibili altrove).
+#
+# I device virtuali/di sistema (loop, device-mapper, ram, md, ottici) sono esclusi.
+
+ACTION!="add|change", GOTO="nxs_wb_end"
+SUBSYSTEM!="block", GOTO="nxs_wb_end"
+# Gate: senza il flag del profilo Forensics non facciamo nulla.
+TEST!="/run/nxs/forensic-lock", GOTO="nxs_wb_end"
+# Non toccare i device virtuali/di sistema (non sono "prove").
+KERNEL=="loop*|dm-*|ram*|zram*|md*|sr*|fd*|nbd*", GOTO="nxs_wb_end"
+# Ogni disco/partizione fisico appena comparso -> sola lettura a livello di blocco.
+KERNEL=="sd*|nvme*|mmcblk*|vd*|hd*", RUN+="/usr/local/bin/nxs-writeblock _udev %k"
+
+LABEL="nxs_wb_end"

@@ -1,0 +1,29 @@
+#!/bin/sh
+# NexusSec - spegnimento/riavvio/logout (Alpine, OpenRC).
+#
+# Su una live con persistenza apkovl (Alpine Local Backup), le modifiche di
+# configurazione si salvano con 'lbu commit'. Se lbu e' presente e c'e' una
+# destinazione configurata, salviamo prima di spegnere.
+#
+# Uso: nxs-shutdown [poweroff|reboot|logout]
+ACT="${1:-poweroff}"
+
+priv() { if command -v doas >/dev/null 2>&1; then doas "$@"; \
+         elif command -v sudo >/dev/null 2>&1; then sudo "$@"; else "$@"; fi; }
+
+if [ "$ACT" != "logout" ] && command -v lbu >/dev/null 2>&1; then
+  if [ -n "$(lbu package - 2>/dev/null | head -c1)" ]; then
+    echo "Salvataggio configurazione (lbu commit)..."
+    priv lbu commit -d 2>/dev/null || true
+  fi
+fi
+
+# NB: 'priv' e' una FUNZIONE shell -> NON usare 'exec priv ...': exec sostituisce
+# il processo con un BINARIO e non vede le funzioni ("exec: priv: not found"),
+# ed era il motivo per cui Spegni/Riavvia non facevano NULLA (Esci usa
+# 'exec openbox --exit', un vero binario, quindi funzionava). Niente exec qui.
+case "$ACT" in
+  reboot) priv reboot ;;
+  logout) exec openbox --exit ;;
+  *)      priv poweroff ;;
+esac

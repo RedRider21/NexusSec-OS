@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Terminale
+Comment=Apri un terminale
+Exec=nxs-terminal
+Icon=utilities-terminal
+Terminal=false
+Categories=System;TerminalEmulator;

@@ -1,0 +1,11 @@
+#!/bin/sh
+# NexusSec lxappearance wrapper — assicura HOME/.config + .gtkrc e logga stderr.
+LOG=/tmp/nxs-lxappearance.log
+: > "$LOG"
+mkdir -p "$HOME/.config/gtk-3.0" "$HOME/.local/share" 2>>"$LOG"
+[ -f "$HOME/.gtkrc-2.0" ] || : > "$HOME/.gtkrc-2.0"
+export XDG_CONFIG_HOME="$HOME/.config"
+export XDG_DATA_HOME="$HOME/.local/share"
+export XDG_DATA_DIRS="${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
+echo "[$(date +%T)] launching lxappearance; PATH=$PATH" >>"$LOG"
+exec lxappearance "$@" 2>>"$LOG"

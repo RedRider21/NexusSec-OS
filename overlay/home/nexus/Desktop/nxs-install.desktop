@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Installa su disco
+Comment=Installa NexusSec OS sul disco fisso (setup-disk)
+Exec=nxs-term nxs-install
+Icon=drive-harddisk
+Terminal=false
+Categories=System;

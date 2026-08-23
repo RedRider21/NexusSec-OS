@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Editor di testo
+Comment=Editor di testo (pluma): sintassi, schede, cerca/sostituisci
+Exec=pluma
+Icon=accessories-text-editor
+Terminal=false
+Categories=Utility;TextEditor;

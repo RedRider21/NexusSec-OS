@@ -1,0 +1,43 @@
+#!/bin/sh
+# NexusSec - diagnostica rapida: binari, profilo, pannello, GTK, log (Alpine).
+# Eseguire dal terminale: nxs-diag
+echo "================= NexusSec diag ================="
+echo "== SISTEMA =="
+printf "  %-20s %s\n" "alpine" "$(cat /etc/alpine-release 2>/dev/null || echo 'n/d')"
+printf "  %-20s %s\n" "init" "$(command -v openrc-init >/dev/null 2>&1 && echo OpenRC || echo '?')"
+
+echo
+echo "== BINARI =="
+for b in openbox pcmanfm nxs-control-center nxs-panel nxs-profile nxs-tool \
+         python3 lxterminal feh wmctrl xdotool bwrap apk; do
+  printf "  %-20s %s\n" "$b" "$(command -v "$b" 2>/dev/null || echo MANCANTE)"
+done
+
+echo
+echo "== PROFILO =="
+nxs-tool profile 2>/dev/null || echo "  (nxs-tool non disponibile)"
+
+echo
+echo "== PANNELLO (nxs_cc.panel import) =="
+if command -v python3 >/dev/null 2>&1; then
+  PYTHONPATH=/usr/local/lib python3 - <<'PY' 2>&1 | tail -6
+import gi
+gi.require_version("Gtk", "3.0"); gi.require_version("Gdk", "3.0")
+from gi.repository import Gtk
+from nxs_cc import panel  # noqa
+print("GTK import OK - versione", Gtk.get_major_version(), Gtk.get_minor_version())
+print("nxs_cc.panel import OK; finestre wmctrl:", len(panel._wmctrl_list()))
+PY
+else
+  echo "  python3 non trovato"
+fi
+
+echo
+echo "== FINESTRE (wmctrl -l) =="
+wmctrl -l 2>&1 | head -8 || echo "  (wmctrl non disponibile)"
+
+echo
+echo "== LOG autostart (coda) =="
+tail -15 /tmp/nxs-autostart.log 2>/dev/null || echo "  (assente)"
+echo "============================================="
+printf "Premi invio per chiudere "; read junk

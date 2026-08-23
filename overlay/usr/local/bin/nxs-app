@@ -1,0 +1,15 @@
+#!/bin/sh
+# NexusSec - lancia un'app GUI; se manca, mostra come installarla con apk.
+# Uso: nxs-app BINARIO [PACCHETTO_APK]
+BIN="$1"; PKG="${2:-$1}"
+[ -z "$BIN" ] && exit 1
+if command -v "$BIN" >/dev/null 2>&1; then
+  exec "$BIN"
+fi
+MSG="$BIN non installato. Esegui: doas apk add $PKG"
+if command -v xmessage >/dev/null 2>&1; then
+  exec xmessage -center "$MSG"
+elif command -v lxterminal >/dev/null 2>&1; then
+  exec lxterminal --title="$BIN non installato" -e sh -c "echo '$MSG'; read x"
+fi
+echo "$MSG" >&2

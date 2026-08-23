@@ -1,0 +1,20 @@
+#!/bin/sh
+# NexusSec OS - procedure guidate (wizard). Apre la GUI o esegue da CLI:
+#   nxs-wizard               -> GUI (scelta procedura)
+#   nxs-wizard gui <id>      -> GUI sul wizard <id>
+#   nxs-wizard list          -> elenca le procedure
+#   nxs-wizard run <id> k=v  -> esegue headless
+# Log GUI in /tmp/nxs-wizard.log per diagnostica.
+LOG=/tmp/nxs-wizard.log
+# GTK_IM_MODULE "simple": evita crash dei TextView su X minimale (vedi nxs-cc).
+IMENV="GTK_IM_MODULE=gtk-im-context-simple"
+if command -v python3 >/dev/null 2>&1; then
+  case "${1:-}" in
+    list|ls|run)   # CLI: output diretto al terminale
+      exec env PYTHONPATH=/usr/local/lib python3 -m nxs_wizards.cli "$@" ;;
+    *)             # GUI: log su file
+      exec env $IMENV PYTHONPATH=/usr/local/lib python3 -m nxs_wizards.cli "$@" >>"$LOG" 2>&1 ;;
+  esac
+fi
+echo "nxs-wizard: python3 non disponibile (apk add python3)" >&2
+exit 1

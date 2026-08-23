@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=File
+Comment=Gestore file PCManFM
+Exec=pcmanfm
+Icon=system-file-manager
+Terminal=false
+Categories=System;FileManager;

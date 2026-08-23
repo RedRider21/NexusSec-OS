@@ -1,0 +1,266 @@
+📊 Tabella Comparativa Completa degli Strumenti di Hacking
+La tabella seguente elenca tutti gli strumenti di hacking inclusi nei metapacchetti kali-linux-everything e parrot-tools-full. Per ciascuno strumento, è indicata la presenza (✅) o assenza (❌) in ciascuna distribuzione.
+
+In base a questa tabella confronta tutto il nostro arsenale e se manca qualche cosa aggiorna ed inserisci.
+
+| Nome Programma | Kali Linux (`kali-linux-everything`) | Parrot Security (`parrot-tools-full`) |
+| :--- | :---: | :---: |
+| **🔍 Information Gathering** | | |
+| `0trace` | ✅ | ✅ |
+| `2ping` | ✅ | ✅ |
+| `aadict` | ✅ | ✅ |
+| `aardwolf` | ✅ | ✅ |
+| `aesedb` | ✅ | ✅ |
+| `afflib-tools` | ✅ | ✅ |
+| `afl++` | ✅ | ✅ |
+| `aiocmd` | ✅ | ✅ |
+| `aioconsole` | ✅ | ✅ |
+| `aiohttp-apispec` | ✅ | ✅ |
+| `aiomultiprocess` | ✅ | ✅ |
+| `aiosmb` | ✅ | ✅ |
+| `aiowinreg` | ✅ | ✅ |
+| `aircrack-ng` | ✅ | ✅ |
+| `airgeddon` | ✅ | ✅ |
+| `altdns` | ✅ | ✅ |
+| `amap` | ✅ | ✅ |
+| `amass` | ✅ | ✅ |
+| `arpwatch` | ✅ | ✅ |
+| `arjun` | ✅ | ✅ |
+| `assetfinder` | ✅ | ✅ |
+| `autorecon` | ✅ | ✅ |
+| `bettercap` | ✅ | ✅ |
+| `bluelog` | ✅ | ✅ |
+| `bluesnarfer` | ✅ | ✅ |
+| `btscanner` | ✅ | ✅ |
+| `blueranger` | ✅ | ✅ |
+| `burpsuite` | ✅ | ✅ |
+| `caido` | ✅ | ✅ |
+| `caido-cli` | ✅ | ✅ |
+| `crlfuzz` | ✅ | ✅ |
+| `davtest` | ✅ | ✅ |
+| `dirb` | ✅ | ✅ |
+| `dirbuster` | ✅ | ✅ |
+| `dirsearch` | ✅ | ✅ |
+| `dmitry` | ✅ | ✅ |
+| `dnsenum` | ✅ | ✅ |
+| `dnsmap` | ✅ | ✅ |
+| `dnsrecon` | ✅ | ✅ |
+| `dnstracer` | ✅ | ✅ |
+| `dnswalk` | ✅ | ✅ |
+| `emailharvester` | ✅ | ✅ |
+| `email2phonenumber` | ✅ | ✅ |
+| `feroxbuster` | ✅ | ✅ |
+| `ffuf` | ✅ | ✅ |
+| `findomain` | ✅ | ✅ |
+| `gobuster` | ✅ | ✅ |
+| `gospider` | ✅ | ✅ |
+| `heartleech` | ✅ | ✅ |
+| `instaloader` | ✅ | ✅ |
+| `joomscan` | ✅ | ✅ |
+| `kismet` | ✅ | ✅ |
+| `lbd` | ✅ | ✅ |
+| `legion` | ✅ | ✅ |
+| `linkedin2username` | ✅ | ✅ |
+| `massdns` | ✅ | ✅ |
+| `metagoofil` | ✅ | ✅ |
+| `nmap` | ✅ | ✅ |
+| `nikto` | ✅ | ✅ |
+| `nuclei` | ✅ | ✅ |
+| `owasp-mantra-ff` | ✅ | ✅ |
+| `parsero` | ✅ | ✅ |
+| `paros` | ✅ | ✅ |
+| `photon` | ✅ | ✅ |
+| `recon-ng` | ✅ | ✅ |
+| `sherlock` | ✅ | ✅ |
+| `skipfish` | ✅ | ✅ |
+| `sparrow-wifi` | ✅ | ✅ |
+| `spiderfoot` | ✅ | ✅ |
+| `spiderfoot-cli` | ✅ | ✅ |
+| `subfinder` | ✅ | ✅ |
+| `sublist3r` | ✅ | ✅ |
+| `sstimap` | ✅ | ✅ |
+| `subjack` | ✅ | ✅ |
+| `theHarvester` | ✅ | ✅ |
+| `tinja` | ✅ | ✅ |
+| `tookie-osint` | ✅ | ✅ |
+| `unicornscan` | ✅ | ✅ |
+| `uniscan-gui` | ✅ | ✅ |
+| `urlcrazy` | ✅ | ✅ |
+| `uro` | ✅ | ✅ |
+| `wapiti` | ✅ | ✅ |
+| `wash` | ✅ | ✅ |
+| `watobo` | ✅ | ✅ |
+| `wcvs` | ✅ | ✅ |
+| `webscarab` | ✅ | ✅ |
+| `whatweb` | ✅ | ✅ |
+| `wfuzz` | ✅ | ✅ |
+| `wpprobe` | ✅ | ✅ |
+| `wpscan` | ✅ | ✅ |
+| `zenmap` | ✅ | ✅ |
+| `zaproxy` | ✅ | ✅ |
+| **🛡️ Vulnerability Analysis** | | |
+| `CAT` | ✅ | ✅ |
+| `gvm-start` | ✅ | ✅ |
+| `openvas` | ✅ | ✅ |
+| `sqlmap` | ✅ | ✅ |
+| **🌐 Web Application Analysis** | | |
+| `armitage` | ✅ | ✅ |
+| `beef-xss` | ✅ | ✅ |
+| `burpsuite` | ✅ | ✅ |
+| `commix` | ✅ | ✅ |
+| `crackmapexec` | ✅ | ✅ |
+| `empire` | ✅ | ✅ |
+| `metasploit-framework` | ✅ | ✅ |
+| `msfpc` | ✅ | ✅ |
+| `set` (Social-Engineer Toolkit) | ✅ | ✅ |
+| `setoolkit` | ✅ | ✅ |
+| **🔑 Password Attacks** | | |
+| `cewl` | ✅ | ✅ |
+| `crunch` | ✅ | ✅ |
+| `hashcat` | ✅ | ✅ |
+| `hydra` | ✅ | ✅ |
+| `john` | ✅ | ✅ |
+| `medusa` | ✅ | ✅ |
+| `ncrack` | ✅ | ✅ |
+| `patator` | ✅ | ✅ |
+| `thc-hydra` | ✅ | ✅ |
+| **📶 Wireless Attacks** | | |
+| `asleap` | ✅ | ✅ |
+| `aircrack-ng` | ✅ | ✅ |
+| `airgeddon` | ✅ | ✅ |
+| `bettercap` | ✅ | ✅ |
+| `bluelog` | ✅ | ✅ |
+| `bluesnarfer` | ✅ | ✅ |
+| `btscanner` | ✅ | ✅ |
+| `blueranger` | ✅ | ✅ |
+| `fang` | ✅ | ✅ |
+| `kismet` | ✅ | ✅ |
+| `sparrow-wifi` | ✅ | ✅ |
+| `spooftooph` | ✅ | ✅ |
+| `ubertooth-util` | ✅ | ✅ |
+| `wash` | ✅ | ✅ |
+| **🔧 Reverse Engineering** | | |
+| `edb-debugger` | ✅ | ✅ |
+| `ghidra` | ✅ | ✅ |
+| `radare2` | ✅ | ✅ |
+| `retdec` | ✅ | ✅ |
+| `rizin` | ✅ | ✅ |
+| **💥 Exploitation Tools** | | |
+| `armitage` | ✅ | ✅ |
+| `beef-xss` | ✅ | ✅ |
+| `commix` | ✅ | ✅ |
+| `crackmapexec` | ✅ | ✅ |
+| `empire` | ✅ | ✅ |
+| `evil-winrm` | ✅ | ✅ |
+| `metasploit-framework` | ✅ | ✅ |
+| `msfpc` | ✅ | ✅ |
+| `set` (Social-Engineer Toolkit) | ✅ | ✅ |
+| `setoolkit` | ✅ | ✅ |
+| **📡 Sniffing & Spoofing** | | |
+| `arpspoof` | ✅ | ✅ |
+| `bettercap` | ✅ | ✅ |
+| `dsniff` | ✅ | ✅ |
+| `ettercap` | ✅ | ✅ |
+| `macchanger` | ✅ | ✅ |
+| `msgsnarf` | ✅ | ✅ |
+| `urlsnarf` | ✅ | ✅ |
+| `webspy` | ✅ | ✅ |
+| **🚨 Post Exploitation** | | |
+| `bloodhound` | ✅ | ✅ |
+| `crackmapexec` | ✅ | ✅ |
+| `evil-winrm` | ✅ | ✅ |
+| `mimikatz` | ✅ | ✅ |
+| `powersploit` | ✅ | ✅ |
+| **🕵️ Forensics** | | |
+| `autopsy` | ✅ | ✅ |
+| `bulk_extractor` | ✅ | ✅ |
+| `foremost` | ✅ | ✅ |
+| `rekall` | ✅ | ✅ |
+| `sleuthkit` | ✅ | ✅ |
+| `volatility` | ✅ | ✅ |
+| **📊 Reporting Tools** | | |
+| `cherrytree` | ✅ | ✅ |
+| `cutycapt` | ✅ | ✅ |
+| `freemind` | ✅ | ✅ |
+| `recordmydesktop` | ✅ | ✅ |
+| **🔧 Hardware Hacking** | | |
+| `arduino` | ✅ | ✅ |
+| `gtkterm` | ✅ | ✅ |
+| `minicom` | ✅ | ✅ |
+| `rfcat` | ✅ | ✅ |
+| `simtrace` | ✅ | ✅ |
+| **🔐 Cryptography & Steganography** | | |
+| `cryptcat` | ✅ | ✅ |
+| `gpa` | ✅ | ✅ |
+| `openssl` | ✅ | ✅ |
+| `outguess` | ✅ | ✅ |
+| `seahorse` | ✅ | ✅ |
+| `stegcracker` | ✅ | ✅ |
+| `steghide` | ✅ | ✅ |
+| `veracrypt` | ✅ | ✅ |
+| **🎭 Social Engineering** | | |
+| `set` (Social-Engineer Toolkit) | ✅ | ✅ |
+| `setoolkit` | ✅ | ✅ |
+| **🧪 Fuzzing** | | |
+| `afl++` | ✅ | ✅ |
+| `honggfuzz` | ✅ | ✅ |
+| `libfuzzer` | ✅ | ✅ |
+| **🎮 GPU Tools** | | |
+| `cuda-tools` | ✅ | ✅ |
+| `opencl-headers` | ✅ | ✅ |
+| **🚗 Automotive** | | |
+| `kayomba` | ❌ | ✅ |
+| **🤖 AI Tools** | | |
+| `hexstrike-ai` | ❌ | ✅ |
+| **🎙️ VoIP Tools** | | |
+| `sipvicious` | ✅ | ✅ |
+| `voiper` | ✅ | ✅ |
+| **📶 RFID/NFC** | | |
+| `libnfc` | ✅ | ✅ |
+| `rfcat` | ✅ | ✅ |
+| **📻 SDR (Software Defined Radio)** | | |
+| `gnuradio` | ✅ | ✅ |
+| `gqrx` | ✅ | ✅ |
+| `hackrf` | ✅ | ✅ |
+| **🪟 Windows Resources** | | |
+| `mimikatz` | ✅ | ✅ |
+| `powersploit` | ✅ | ✅ |
+| **🧩 Labs & Practice Environments** | | |
+| `kali-linux-labs` | ✅ | ❌ |
+| **📦 Large & Everything Metapackages** | | |
+| `kali-linux-large` | ✅ | ✅ |
+| `kali-linux-everything` | ✅ | ✅ |
+| **📱 NetHunter (Mobile)** | | |
+| `kali-linux-nethunter` | ✅ | ❌ |
+| **🔧 System Tools (Esclusi)** | | |
+| `kali-system-cli` | ✅ | ✅ |
+| `kali-system-gui` | ✅ | ✅ |
+| **🛠️ Tools Detect/Identify** | | |
+| `kali-tools-detect` | ✅ | ✅ |
+| `kali-tools-identify` | ✅ | ✅ |
+| **🧰 Tools Protect/Recover** | | |
+| `kali-tools-protect` | ✅ | ✅ |
+| `kali-tools-recover` | ✅ | ✅ |
+| **🚨 Tools Respond** | | |
+| `kali-tools-respond` | ✅ | ✅ |
+| **🎯 Tools Top10** | | |
+| `kali-tools-top10` | ✅ | ✅ |
+
+📈 Conteggio Totale dei Programmi
+Basato sull'analisi dei file di controllo dei metapacchetti:
+
+| Distribuzione | Totale Strumenti di Hacking | Note |
+| :--- | :---: | :--- |
+| **Kali Linux** (`kali-linux-everything`) | **~600** | Include tutti i metapacchetti e strumenti elencati nella sua documentazione . |
+| **Parrot Security** (`parrot-tools-full`) | **~926** | Il sito ufficiale elenca 926 strumenti disponibili . |
+
+ Limitazioni e Note
+Strumenti Esclusi: La tabella include solo strumenti di hacking e penetration testing. Sono esclusi:
+Strumenti di sistema (es. kali-system-cli, kali-system-gui)
+Ambienti desktop (es. kali-desktop-gnome, parrot-desktop-kde)
+Firmware e driver (es. kali-linux-firmware)
+Dinamicità delle Liste: Le liste degli strumenti cambiano con gli aggiornamenti. Per la lista più aggiornata, consulta i repository ufficiali:
+Kali Linux: GitLab di Kali Linux
+Parrot Security: GitHub di ParrotSec
+Condivisione di Strumenti: Entrambe le distribuzioni condividono la maggior parte degli strumenti essendo basate su Debian. Tuttavia, le differenze nelle categorizzazioni e negli strumenti specifici (es. automotive, AI) riflettono le filosofie diverse delle due distribuzioni.
+

@@ -1,0 +1,438 @@
+# NexusSec - fonti dei tool (link attivi e funzionanti)
+# Generato da build/nxs-sources-check.py - NON modificare a mano.
+# Tool totali: 433   Rotti: 0
+#
+# TOOL                    STATO  METODO    FONTE
+0trace                  OK     kali      kali-rolling apt:0trace
+2ping                   OK     kali      kali-rolling apt:2ping
+7zip                    OK     kali      kali-rolling apt:7zip
+above                   OK     kali      kali-rolling apt:above
+aesfix                  OK     kali      kali-rolling apt:aesfix
+aeskeyfind              OK     kali      kali-rolling apt:aeskeyfind
+afflib-tools            OK     kali      kali-rolling apt:afflib-tools
+afl++                   OK     kali      kali-rolling apt:afl++
+aircrack-ng             OK     apk       apk:aircrack-ng
+airgeddon               OK     kali      kali-rolling apt:airgeddon
+altdns                  OK     kali      kali-rolling apt:altdns
+amap                    OK     kali      kali-rolling apt:amap
+amass                   OK     container docker.io/caffix/amass:latest
+apache-users            OK     kali      kali-rolling apt:apache-users
+apktool                 OK     kali      kali-rolling apt:apktool
+arduino                 OK     kali      kali-rolling apt:arduino
+arjun                   OK     kali      kali-rolling apt:arjun
+armitage                OK     kali      kali-rolling apt:armitage
+arp-scan                OK     apk       apk:arp-scan
+arping                  OK     kali      kali-rolling apt:arping
+arpspoof                OK     kali      kali-rolling apt:dsniff
+arpwatch                OK     kali      kali-rolling apt:arpwatch
+asleap                  OK     kali      kali-rolling apt:asleap
+assetfinder             OK     kali      kali-rolling apt:assetfinder
+autopsy                 OK     kali      kali-rolling apt:autopsy
+autorecon               OK     pip       pypi:autorecon
+bed                     OK     kali      kali-rolling apt:bed
+beef-xss                OK     kali      kali-rolling apt:beef-xss
+bettercap               OK     apk       apk:bettercap
+binutils                OK     apk       apk:binutils
+binwalk                 OK     apk       apk:binwalk
+binwalk3                OK     kali      kali-rolling apt:binwalk3
+bloodhound              OK     kali      kali-rolling apt:bloodhound
+bloodhound-python       OK     pip       pypi:bloodhound
+blue-hydra              OK     kali      kali-rolling apt:blue-hydra
+bluelog                 OK     kali      kali-rolling apt:bluelog
+blueranger              OK     kali      kali-rolling apt:blueranger
+bluesnarfer             OK     kali      kali-rolling apt:bluesnarfer
+braa                    OK     kali      kali-rolling apt:braa
+btscanner               OK     kali      kali-rolling apt:btscanner
+bulk-extractor          OK     apk       apk:bulk-extractor
+bully                   OK     kali      kali-rolling apt:bully
+burpsuite               OK     kali      kali-rolling apt:burpsuite
+bytecode-viewer         OK     kali      kali-rolling apt:bytecode-viewer
+cabextract              OK     kali      kali-rolling apt:cabextract
+cadaver                 OK     kali      kali-rolling apt:cadaver
+caido                   OK     kali      kali-rolling apt:caido
+ccrypt                  OK     kali      kali-rolling apt:ccrypt
+cewl                    OK     kali      kali-rolling apt:cewl
+cherrytree              OK     apk       apk:cherrytree
+chirp                   OK     kali      kali-rolling apt:chirp
+chkrootkit              OK     apk       apk:chkrootkit
+chntpw                  OK     kali      kali-rolling apt:chntpw
+cisco-auditing-tool     OK     kali      kali-rolling apt:cisco-auditing-tool
+cisco-global-exploiter  OK     kali      kali-rolling apt:cisco-global-exploiter
+cisco-ocs               OK     kali      kali-rolling apt:cisco-ocs
+cisco-torch             OK     kali      kali-rolling apt:cisco-torch
+clamav                  OK     apk       apk:clamav-scanner
+clang                   OK     kali      kali-rolling apt:clang
+cmospwd                 OK     kali      kali-rolling apt:cmospwd
+commix                  OK     pip       pypi:commix
+copy-router-config      OK     kali      kali-rolling apt:copy-router-config
+cowpatty                OK     kali      kali-rolling apt:cowpatty
+crackle                 OK     kali      kali-rolling apt:crackle
+crackmapexec            OK     kali      kali-rolling apt:crackmapexec
+creddump7               OK     kali      kali-rolling apt:creddump7
+crlfuzz                 OK     kali      kali-rolling apt:crlfuzz
+crowbar                 OK     kali      kali-rolling apt:crowbar
+crunch                  OK     kali      kali-rolling apt:crunch
+cryptcat                OK     kali      kali-rolling apt:cryptcat
+cutycapt                OK     kali      kali-rolling apt:cutycapt
+cymothoa                OK     kali      kali-rolling apt:cymothoa
+dalfox                  OK     container ghcr.io/hahwul/dalfox:latest
+darkstat                OK     kali      kali-rolling apt:darkstat
+davtest                 OK     kali      kali-rolling apt:davtest
+dbd                     OK     kali      kali-rolling apt:dbd
+dc3dd                   OK     kali      kali-rolling apt:dc3dd
+dcfldd                  OK     kali      kali-rolling apt:dcfldd
+ddrescue                OK     apk       apk:ddrescue
+dex2jar                 OK     kali      kali-rolling apt:dex2jar
+dhcpig                  OK     kali      kali-rolling apt:dhcpig
+dirb                    OK     kali      kali-rolling apt:dirb
+dirbuster               OK     kali      kali-rolling apt:dirbuster
+dirsearch               OK     kali      kali-rolling apt:dirsearch
+dmitry                  OK     apk       apk:dmitry
+dns2tcp                 OK     kali      kali-rolling apt:dns2tcp
+dnschef                 OK     kali      kali-rolling apt:dnschef
+dnsenum                 OK     kali      kali-rolling apt:dnsenum
+dnsmap                  OK     kali      kali-rolling apt:dnsmap
+dnsrecon                OK     apk       apk:dnsrecon
+dnstracer               OK     kali      kali-rolling apt:dnstracer
+dnswalk                 OK     kali      kali-rolling apt:dnswalk
+dotdotpwn               OK     kali      kali-rolling apt:dotdotpwn
+dradis                  OK     kali      kali-rolling apt:dradis
+driftnet                OK     kali      kali-rolling apt:driftnet
+dsniff                  OK     kali      kali-rolling apt:dsniff
+dumpzilla               OK     kali      kali-rolling apt:dumpzilla
+eapmd5pass              OK     kali      kali-rolling apt:eapmd5pass
+edb-debugger            OK     kali      kali-rolling apt:edb-debugger
+email2phonenumber       OK     kali      kali-rolling apt:email2phonenumber
+emailharvester          OK     kali      kali-rolling apt:emailharvester
+empire                  OK     kali      kali-rolling apt:powershell-empire
+enum4linux              OK     pip       git+https://github.com/cddmp/enum4linux-ng.git   (pip da git)
+enumiax                 OK     kali      kali-rolling apt:enumiax
+ettercap                OK     apk       apk:ettercap
+ettercap-graphical      OK     kali      kali-rolling apt:ettercap-graphical
+evil-winrm              OK     container docker.io/parrotsec/evil-winrm:latest
+ewf-tools               OK     kali      kali-rolling apt:ewf-tools
+exe2hexbat              OK     kali      kali-rolling apt:exe2hexbat
+exifprobe               OK     kali      kali-rolling apt:exifprobe
+exiftool                OK     apk       apk:exiftool
+exiv2                   OK     kali      kali-rolling apt:exiv2
+exploitdb               OK     kali      kali-rolling apt:exploitdb
+ext3grep                OK     kali      kali-rolling apt:ext3grep
+ext4magic               OK     kali      kali-rolling apt:ext4magic
+extundelete             OK     apk       apk:extundelete
+eyewitness              OK     kali      kali-rolling apt:eyewitness
+faraday                 OK     kali      kali-rolling apt:faraday
+fcrackzip               OK     kali      kali-rolling apt:fcrackzip
+fern-wifi-cracker       OK     kali      kali-rolling apt:fern-wifi-cracker
+feroxbuster             OK     kali      kali-rolling apt:feroxbuster
+ferret-sidejack         OK     kali      kali-rolling apt:ferret-sidejack
+ffuf                    OK     apk       apk:ffuf
+fierce                  OK     kali      kali-rolling apt:fierce
+fiked                   OK     kali      kali-rolling apt:fiked
+findomain               OK     kali      kali-rolling apt:findomain
+firewalk                OK     kali      kali-rolling apt:firewalk
+flare-floss             OK     pip       pypi:flare-floss
+foremost                OK     apk       apk:foremost
+forensics-colorize      OK     kali      kali-rolling apt:forensics-colorize
+fping                   OK     apk       apk:fping
+fragrouter              OK     kali      kali-rolling apt:fragrouter
+freeradius-wpe          OK     kali      kali-rolling apt:freeradius-wpe
+freerdp3-x11            OK     kali      kali-rolling apt:freerdp3-x11
+ftester                 OK     kali      kali-rolling apt:ftester
+galleta                 OK     kali      kali-rolling apt:galleta
+gdb                     OK     apk       apk:gdb
+ghex                    OK     apk       apk:ghex
+ghidra                  OK     apk       apk:ghidra
+gnuradio                OK     kali      kali-rolling apt:gnuradio
+gobuster                OK     apk       apk:gobuster
+gospider                OK     kali      kali-rolling apt:gospider
+gpart                   OK     kali      kali-rolling apt:gpart
+gparted                 OK     kali      kali-rolling apt:gparted
+gpp-decrypt             OK     kali      kali-rolling apt:gpp-decrypt
+gqrx-sdr                OK     kali      kali-rolling apt:gqrx-sdr
+gr-air-modes            OK     kali      kali-rolling apt:gr-air-modes
+gr-osmosdr              OK     kali      kali-rolling apt:gr-osmosdr
+grokevt                 OK     kali      kali-rolling apt:grokevt
+gtkterm                 OK     kali      kali-rolling apt:gtkterm
+guymager                OK     kali      kali-rolling apt:guymager
+hackrf                  OK     kali      kali-rolling apt:hackrf
+hakrawler               OK     kali      kali-rolling apt:hakrawler
+hamster-sidejack        OK     kali      kali-rolling apt:hamster-sidejack
+hash-identifier         OK     kali      kali-rolling apt:hash-identifier
+hashcat                 OK     apk       apk:hashcat
+hashdeep                OK     kali      kali-rolling apt:hashdeep
+hashid                  OK     kali      kali-rolling apt:hashid
+heartleech              OK     kali      kali-rolling apt:heartleech
+hexedit                 OK     apk       apk:hexedit
+hexinject               OK     kali      kali-rolling apt:hexinject
+holehe                  OK     pip       pypi:holehe
+hostapd-wpe             OK     kali      kali-rolling apt:hostapd-wpe
+hping3                  OK     apk       apk:hping3
+httprint                OK     kali      kali-rolling apt:httprint
+httrack                 OK     apk       apk:httrack
+hydra                   OK     apk       apk:hydra
+hydra-gtk               OK     kali      kali-rolling apt:hydra-gtk
+iaxflood                OK     kali      kali-rolling apt:iaxflood
+ike-scan                OK     kali      kali-rolling apt:ike-scan
+impacket                OK     kali      kali-rolling apt:impacket-scripts
+inetsim                 OK     kali      kali-rolling apt:inetsim
+inspectrum              OK     kali      kali-rolling apt:inspectrum
+instaloader             OK     kali      kali-rolling apt:instaloader
+intrace                 OK     kali      kali-rolling apt:intrace
+inviteflood             OK     kali      kali-rolling apt:inviteflood
+iodine                  OK     kali      kali-rolling apt:iodine
+irpas                   OK     kali      kali-rolling apt:irpas
+isr-evilgrade           OK     kali      kali-rolling apt:isr-evilgrade
+iw                      OK     kali      kali-rolling apt:iw
+jadx                    OK     apk       apk:jadx
+javasnoop               OK     kali      kali-rolling apt:javasnoop
+jboss-autopwn           OK     kali      kali-rolling apt:jboss-autopwn
+jd-gui                  OK     kali      kali-rolling apt:jd-gui
+john                    OK     apk       apk:john
+johnny                  OK     kali      kali-rolling apt:johnny
+joomscan                OK     kali      kali-rolling apt:joomscan
+jsql-injection          OK     kali      kali-rolling apt:jsql-injection
+kalibrate-rtl           OK     kali      kali-rolling apt:kalibrate-rtl
+kismet                  OK     apk       apk:kismet
+laudanum                OK     kali      kali-rolling apt:laudanum
+lbd                     OK     kali      kali-rolling apt:lbd
+legion                  OK     kali      kali-rolling apt:legion
+libnfc                  OK     kali      kali-rolling apt:libnfc-bin
+linkedin2username       OK     kali      kali-rolling apt:linkedin2username
+ltrace                  OK     apk       apk:ltrace
+lvm2                    OK     kali      kali-rolling apt:lvm2
+lynis                   OK     apk       apk:lynis
+mac-robber              OK     kali      kali-rolling apt:mac-robber
+macchanger              OK     apk       apk:macchanger
+magicrescue             OK     kali      kali-rolling apt:magicrescue
+maltego                 OK     kali      kali-rolling apt:maltego
+maskprocessor           OK     kali      kali-rolling apt:maskprocessor
+masscan                 OK     apk       apk:masscan
+massdns                 OK     kali      kali-rolling apt:massdns
+mdbtools                OK     kali      kali-rolling apt:mdbtools
+mdk3                    OK     kali      kali-rolling apt:mdk3
+mdk4                    OK     kali      kali-rolling apt:mdk4
+medusa                  OK     apk       apk:medusa
+memdump                 OK     kali      kali-rolling apt:memdump
+metacam                 OK     kali      kali-rolling apt:metacam
+metagoofil              OK     git       https://github.com/opsdisk/metagoofil.git
+metasploit              OK     container docker.io/metasploitframework/metasploit-framework:latest
+mimikatz                OK     kali      kali-rolling apt:mimikatz
+minicom                 OK     kali      kali-rolling apt:minicom
+miredo                  OK     kali      kali-rolling apt:miredo
+missidentify            OK     kali      kali-rolling apt:missidentify
+mitmproxy               OK     apk       apk:mitmproxy
+msfpc                   OK     kali      kali-rolling apt:msfpc
+msgsnarf                OK     kali      kali-rolling apt:dsniff
+multimon-ng             OK     kali      kali-rolling apt:multimon-ng
+myrescue                OK     kali      kali-rolling apt:myrescue
+naabu                   OK     apk       apk:naabu
+nasm                    OK     kali      kali-rolling apt:nasm
+nasty                   OK     kali      kali-rolling apt:nasty
+nbtscan                 OK     apk       apk:nbtscan
+ncat                    OK     apk       apk:nmap-ncat
+ncrack                  OK     kali      kali-rolling apt:ncrack
+netcat                  OK     apk       apk:netcat-openbsd
+netdiscover             OK     apk       apk:netdiscover
+netexec                 OK     container docker.io/parrotsec/netexec:latest
+netmask                 OK     kali      kali-rolling apt:netmask
+netsniff-ng             OK     kali      kali-rolling apt:netsniff-ng
+ngrep                   OK     apk       apk:ngrep
+nikto                   OK     apk       apk:nikto
+nishang                 OK     kali      kali-rolling apt:nishang
+nmap                    OK     apk       apk:nmap
+nuclei                  OK     apk       apk:nuclei
+oclgausscrack           OK     kali      kali-rolling apt:oclgausscrack
+ohrwurm                 OK     kali      kali-rolling apt:ohrwurm
+ollydbg                 OK     kali      kali-rolling apt:ollydbg
+onesixtyone             OK     kali      kali-rolling apt:onesixtyone
+ophcrack                OK     kali      kali-rolling apt:ophcrack-cli
+oscanner                OK     kali      kali-rolling apt:oscanner
+owasp-mantra-ff         OK     kali      kali-rolling apt:owasp-mantra-ff
+p0f                     OK     kali      kali-rolling apt:p0f
+pack                    OK     kali      kali-rolling apt:pack
+pack2                   OK     kali      kali-rolling apt:pack2
+padbuster               OK     kali      kali-rolling apt:padbuster
+paros                   OK     kali      kali-rolling apt:paros
+parsero                 OK     kali      kali-rolling apt:parsero
+parted                  OK     kali      kali-rolling apt:parted
+pasco                   OK     kali      kali-rolling apt:pasco
+passing-the-hash        OK     kali      kali-rolling apt:passing-the-hash
+patator                 OK     kali      kali-rolling apt:patator
+pdf-parser              OK     kali      kali-rolling apt:pdf-parser
+pdfcrack                OK     apk       apk:pdfcrack
+pdfid                   OK     kali      kali-rolling apt:pdfid
+peass                   OK     kali      kali-rolling apt:peass
+pev                     OK     apk       apk:pev
+photon                  OK     kali      kali-rolling apt:photon
+pipal                   OK     kali      kali-rolling apt:pipal
+pixiewps                OK     apk       apk:pixiewps
+polenum                 OK     kali      kali-rolling apt:polenum
+powersploit             OK     kali      kali-rolling apt:powersploit
+protos-sip              OK     kali      kali-rolling apt:protos-sip
+proxmark3               OK     kali      kali-rolling apt:proxmark3
+proxychains-ng          OK     apk       apk:proxychains-ng
+proxychains4            OK     kali      kali-rolling apt:proxychains4
+proxytunnel             OK     kali      kali-rolling apt:proxytunnel
+pst-utils               OK     kali      kali-rolling apt:pst-utils
+ptunnel                 OK     kali      kali-rolling apt:ptunnel
+pupy                    OK     pip       git+https://github.com/n1nj4sec/pupy.git   (pip da git)
+pwnat                   OK     kali      kali-rolling apt:pwnat
+qsslcaudit              OK     kali      kali-rolling apt:qsslcaudit
+radare2                 OK     apk       apk:radare2
+rainbowcrack            OK     kali      kali-rolling apt:rainbowcrack
+rarcrack                OK     kali      kali-rolling apt:rarcrack
+rcracki-mt              OK     kali      kali-rolling apt:rcracki-mt
+readpe                  OK     kali      kali-rolling apt:readpe
+reaver                  OK     kali      kali-rolling apt:reaver
+rebind                  OK     kali      kali-rolling apt:rebind
+recon-ng                OK     apk       apk:recon-ng
+recordmydesktop         OK     kali      kali-rolling apt:recordmydesktop
+recoverdm               OK     kali      kali-rolling apt:recoverdm
+recoverjpeg             OK     kali      kali-rolling apt:recoverjpeg
+redfang                 OK     kali      kali-rolling apt:redfang
+redsocks                OK     kali      kali-rolling apt:redsocks
+reglookup               OK     kali      kali-rolling apt:reglookup
+regripper               OK     kali      kali-rolling apt:regripper
+rephrase                OK     kali      kali-rolling apt:rephrase
+responder               OK     apk       apk:responder
+rfcat                   OK     kali      kali-rolling apt:rfcat
+rfdump                  OK     kali      kali-rolling apt:rfdump
+rfkill                  OK     kali      kali-rolling apt:rfkill
+rifiuti                 OK     kali      kali-rolling apt:rifiuti
+rifiuti2                OK     kali      kali-rolling apt:rifiuti2
+rizin                   OK     kali      kali-rolling apt:rizin
+rizin-cutter            OK     kali      kali-rolling apt:rizin-cutter
+rkhunter                OK     apk       apk:rkhunter
+routersploit            OK     kali      kali-rolling apt:routersploit
+rsakeyfind              OK     kali      kali-rolling apt:rsakeyfind
+rsmangler               OK     kali      kali-rolling apt:rsmangler
+rtpbreak                OK     kali      kali-rolling apt:rtpbreak
+rtpflood                OK     kali      kali-rolling apt:rtpflood
+rtpinsertsound          OK     kali      kali-rolling apt:rtpinsertsound
+rtpmixsound             OK     kali      kali-rolling apt:rtpmixsound
+safecopy                OK     kali      kali-rolling apt:safecopy
+sakis3g                 OK     kali      kali-rolling apt:sakis3g
+samdump2                OK     kali      kali-rolling apt:samdump2
+sbd                     OK     kali      kali-rolling apt:sbd
+scalpel                 OK     kali      kali-rolling apt:scalpel
+scrounge-ntfs           OK     kali      kali-rolling apt:scrounge-ntfs
+sctpscan                OK     kali      kali-rolling apt:sctpscan
+seahorse                OK     kali      kali-rolling apt:seahorse
+seclists                OK     kali      kali-rolling apt:seclists
+set                     OK     kali      kali-rolling apt:set
+sfuzz                   OK     kali      kali-rolling apt:sfuzz
+shellnoob               OK     kali      kali-rolling apt:shellnoob
+shellter                OK     kali      kali-rolling apt:shellter
+sherlock                OK     container docker.io/sherlock/sherlock:latest
+shodan                  OK     apk       apk:py3-shodan
+sidguesser              OK     kali      kali-rolling apt:sidguesser
+siege                   OK     kali      kali-rolling apt:siege
+siparmyknife            OK     kali      kali-rolling apt:siparmyknife
+sipcrack                OK     kali      kali-rolling apt:sipcrack
+sipp                    OK     kali      kali-rolling apt:sipp
+sipsak                  OK     kali      kali-rolling apt:sipsak
+sipvicious              OK     kali      kali-rolling apt:sipvicious
+skipfish                OK     kali      kali-rolling apt:skipfish
+sleuthkit               OK     apk       apk:sleuthkit
+slowhttptest            OK     kali      kali-rolling apt:slowhttptest
+smbmap                  OK     pip       pypi:smbmap
+smtp-user-enum          OK     kali      kali-rolling apt:smtp-user-enum
+sniffjoke               OK     kali      kali-rolling apt:sniffjoke
+snmp-check              OK     kali      kali-rolling apt:snmpcheck
+snmpwalk                OK     apk       apk:net-snmp-tools
+socat                   OK     apk       apk:socat
+sparrow-wifi            OK     kali      kali-rolling apt:sparrow-wifi
+spiderfoot              OK     kali      kali-rolling apt:spiderfoot
+spike                   OK     kali      kali-rolling apt:spike
+spooftooph              OK     kali      kali-rolling apt:spooftooph
+sqldict                 OK     kali      kali-rolling apt:sqldict
+sqlitebrowser           OK     kali      kali-rolling apt:sqlitebrowser
+sqlmap                  OK     apk       apk:sqlmap
+sqlninja                OK     kali      kali-rolling apt:sqlninja
+sqlsus                  OK     kali      kali-rolling apt:sqlsus
+ssdeep                  OK     kali      kali-rolling apt:ssdeep
+ssldump                 OK     kali      kali-rolling apt:ssldump
+sslh                    OK     kali      kali-rolling apt:sslh
+sslscan                 OK     apk       apk:sslscan
+sslsniff                OK     kali      kali-rolling apt:sslsniff
+sslsplit                OK     kali      kali-rolling apt:sslsplit
+sslyze                  OK     kali      kali-rolling apt:sslyze
+sstimap                 OK     kali      kali-rolling apt:sstimap
+statsprocessor          OK     kali      kali-rolling apt:statsprocessor
+stegcracker             OK     kali      kali-rolling apt:stegcracker
+steghide                OK     apk       apk:steghide
+stegosuite              OK     kali      kali-rolling apt:stegosuite
+stegseek                OK     container docker.io/rickdejager/stegseek:latest
+stegsnow                OK     kali      kali-rolling apt:stegsnow
+strace                  OK     apk       apk:strace
+subfinder               OK     container docker.io/projectdiscovery/subfinder:latest
+subjack                 OK     kali      kali-rolling apt:subjack
+sublist3r               OK     kali      kali-rolling apt:sublist3r
+sucrack                 OK     kali      kali-rolling apt:sucrack
+swaks                   OK     kali      kali-rolling apt:swaks
+t50                     OK     kali      kali-rolling apt:t50
+tcpdump                 OK     apk       apk:tcpdump
+tcpflow                 OK     kali      kali-rolling apt:tcpflow
+tcpick                  OK     kali      kali-rolling apt:tcpick
+tcpreplay               OK     kali      kali-rolling apt:tcpreplay
+termineter              OK     kali      kali-rolling apt:termineter
+testdisk                OK     apk       apk:testdisk
+thc-ipv6                OK     kali      kali-rolling apt:thc-ipv6
+thc-pptp-bruter         OK     kali      kali-rolling apt:thc-pptp-bruter
+thc-ssl-dos             OK     kali      kali-rolling apt:thc-ssl-dos
+theharvester            OK     container ghcr.io/laramies/theharvester:latest
+tinja                   OK     kali      kali-rolling apt:tinja
+tlssled                 OK     kali      kali-rolling apt:tlssled
+tnscmd10g               OK     kali      kali-rolling apt:tnscmd10g
+tookie-osint            OK     kali      kali-rolling apt:tookie-osint
+tor                     OK     apk       apk:tor
+torsocks                OK     apk       apk:torsocks
+truecrack               OK     kali      kali-rolling apt:truecrack
+tshark                  OK     apk       apk:tshark
+twofi                   OK     kali      kali-rolling apt:twofi
+ubertooth               OK     kali      kali-rolling apt:ubertooth
+udptunnel               OK     kali      kali-rolling apt:udptunnel
+uhd-host                OK     kali      kali-rolling apt:uhd-host
+undbx                   OK     kali      kali-rolling apt:undbx
+unhide                  OK     kali      kali-rolling apt:unhide
+unicornscan             OK     kali      kali-rolling apt:unicornscan
+uniscan                 OK     kali      kali-rolling apt:uniscan
+uniscan-gui             OK     kali      kali-rolling apt:uniscan
+unix-privesc-check      OK     kali      kali-rolling apt:unix-privesc-check
+unrar                   OK     kali      kali-rolling apt:unrar
+upx                     OK     kali      kali-rolling apt:upx-ucl
+urlcrazy                OK     kali      kali-rolling apt:urlcrazy
+urlsnarf                OK     kali      kali-rolling apt:dsniff
+uro                     OK     kali      kali-rolling apt:uro
+veil                    OK     kali      kali-rolling apt:veil
+vinetto                 OK     kali      kali-rolling apt:vinetto
+voiphopper              OK     kali      kali-rolling apt:voiphopper
+volatility3             OK     apk       apk:volatility3
+wafw00f                 OK     pip       pypi:wafw00f
+wapiti                  OK     kali      kali-rolling apt:wapiti
+wash                    OK     kali      kali-rolling apt:reaver
+watobo                  OK     kali      kali-rolling apt:watobo
+wce                     OK     kali      kali-rolling apt:wce
+webacoo                 OK     kali      kali-rolling apt:webacoo
+webscarab               OK     kali      kali-rolling apt:webscarab
+webshells               OK     kali      kali-rolling apt:webshells
+webspy                  OK     kali      kali-rolling apt:dsniff
+weevely                 OK     kali      kali-rolling apt:weevely
+wfuzz                   OK     kali      kali-rolling apt:wfuzz
+whatweb                 OK     container docker.io/secsi/whatweb:latest
+whois                   OK     apk       apk:whois
+wifi-honey              OK     kali      kali-rolling apt:wifi-honey
+wifiphisher             OK     kali      kali-rolling apt:wifiphisher
+wifite                  OK     pip       git+https://github.com/derv82/wifite2.git   (pip da git)
+winregfs                OK     kali      kali-rolling apt:winregfs
+wireshark               OK     apk       apk:wireshark
+wordlists               OK     kali      kali-rolling apt:wordlists
+wpprobe                 OK     kali      kali-rolling apt:wpprobe
+wpscan                  OK     container docker.io/wpscanteam/wpscan:latest
+xmount                  OK     kali      kali-rolling apt:xmount
+xplico                  OK     kali      kali-rolling apt:xplico
+xsser                   OK     kali      kali-rolling apt:xsser
+yara                    OK     apk       apk:yara
+yersinia                OK     kali      kali-rolling apt:yersinia
+zaproxy                 OK     apk       apk:zaproxy
+zenmap                  OK     kali      kali-rolling apt:zenmap

@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Centro di Controllo
+Comment=Strumenti di configurazione del sistema NexusSec
+Exec=nxs-control-center
+Icon=preferences-system
+Terminal=false
+Categories=Settings;System;

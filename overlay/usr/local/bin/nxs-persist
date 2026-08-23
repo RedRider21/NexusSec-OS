@@ -1,0 +1,87 @@
+#!/bin/sh
+# nxs-persist - crea/gestisce la PERSISTENZA dati della live NexusSec.
+#
+# La live gira in RAM (tmpfs): senza persistenza, le immagini container/kali
+# (l'arsenale) e lo stato dei tool si perdono al riavvio e riempiono la RAM.
+# Questo script formatta una partizione come "NXSDATA": al boot, nexussec.start
+# la monta in /var/nxs-data e ci sposta lo storage di Podman + stato + loot.
+#
+# Uso:  nxs-persist            (interattivo)
+#       nxs-persist status     (mostra stato persistenza)
+#       nxs-persist /dev/sdX1   (formatta quella partizione come NXSDATA)
+#
+# NB: FORMATTARE CANCELLA i dati della partizione scelta. Serve una partizione
+# gia esistente e VUOTA (creane una con 'cfdisk /dev/sdX' se necessario).
+set -eu
+
+priv() { if [ "$(id -u)" = 0 ]; then "$@"; \
+         elif command -v doas >/dev/null 2>&1; then doas "$@"; \
+         else sudo "$@"; fi; }
+
+LABEL=NXSDATA
+
+status() {
+	dev="$(findfs LABEL=$LABEL 2>/dev/null || blkid -L $LABEL 2>/dev/null || true)"
+	if [ -n "$dev" ]; then
+		echo "Persistenza: partizione $LABEL su $dev"
+		if mountpoint -q /var/nxs-data 2>/dev/null; then
+			echo "  montata su /var/nxs-data (ATTIVA)"
+			du -sh /var/nxs-data/containers 2>/dev/null | \
+				awk '{print "  immagini container/kali: "$1}'
+		else
+			echo "  presente ma non montata: riavvia per attivarla."
+		fi
+	else
+		echo "Persistenza: NON configurata (live effimera in RAM)."
+		echo "Crea una partizione dati con: nxs-persist /dev/sdX1"
+	fi
+}
+
+list_parts() {
+	echo "Dischi e partizioni disponibili:"
+	lsblk -o NAME,SIZE,TYPE,FSTYPE,LABEL,MOUNTPOINT 2>/dev/null \
+		|| blkid 2>/dev/null || true
+}
+
+format_part() {
+	part="$1"
+	[ -b "$part" ] || { echo "ERRORE: $part non e un dispositivo a blocchi."; exit 1; }
+	# rifiuta di formattare la radice montata / il media di boot
+	root_src="$(findmnt -no SOURCE / 2>/dev/null || true)"
+	if [ "$part" = "$root_src" ]; then
+		echo "ERRORE: $part e la radice montata. Scegli un'altra partizione."; exit 1
+	fi
+	echo
+	echo "  !!! ATTENZIONE: sto per FORMATTARE $part e CANCELLARE tutto"
+	echo "      cio che contiene, etichettandola come $LABEL."
+	lsblk -o NAME,SIZE,FSTYPE,LABEL "$part" 2>/dev/null || true
+	printf "  Scrivi ESATTAMENTE 'FORMATTA' per procedere: "
+	read ans
+	[ "$ans" = "FORMATTA" ] || { echo "  annullato."; exit 0; }
+	priv umount "$part" 2>/dev/null || true
+	echo "  mkfs.ext4 -L $LABEL $part ..."
+	priv mkfs.ext4 -F -L "$LABEL" "$part"
+	# attiva subito senza riavvio: monta e prepara le cartelle.
+	priv mkdir -p /var/nxs-data
+	priv mount "$part" /var/nxs-data
+	for d in containers nxs-state loot apk-cache; do
+		priv install -d -o nexus -g nexus "/var/nxs-data/$d"
+	done
+	echo
+	echo "  Persistenza creata e montata su /var/nxs-data."
+	echo "  RIAVVIA per attivarla del tutto (Podman/stato tool passano su disco)."
+}
+
+case "${1:-}" in
+	""|menu)
+		echo "  NexusSec - persistenza dati (arsenale che sopravvive al riavvio)"
+		echo
+		status; echo
+		list_parts; echo
+		echo "  Per creare la persistenza: nxs-persist /dev/sdX1"
+		echo "  (la partizione dev'essere gia esistente e verra FORMATTATA)"
+		;;
+	status) status ;;
+	/dev/*) format_part "$1" ;;
+	*) echo "uso: nxs-persist [status | /dev/sdX1]"; exit 1 ;;
+esac

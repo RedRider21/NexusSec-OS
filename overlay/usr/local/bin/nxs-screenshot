@@ -1,0 +1,11 @@
+#!/bin/sh
+# NexusSec - screenshot fullscreen in /tmp (scrot). Notifica via xmessage.
+F="/tmp/nxs-shot-$(date +%Y%m%d-%H%M%S).png"
+if command -v scrot >/dev/null 2>&1; then
+  scrot "$F" && MSG="Screenshot salvato:
+$F" || MSG="Errore durante lo screenshot."
+  command -v xmessage >/dev/null 2>&1 && xmessage -center -timeout 3 "$MSG"
+else
+  command -v lxterminal >/dev/null 2>&1 && \
+    exec lxterminal --title="scrot mancante" -e nxs-missing scrot scrot
+fi
