@@ -1,0 +1,50 @@
+#!/bin/sh
+# nxs-bluetooth - controllo Bluetooth via bluetoothctl (BlueZ). Usato dal widget
+# del pannello. Best-effort: senza adattatore stampa "noadapter" senza errori.
+_have() { command -v bluetoothctl >/dev/null 2>&1; }
+
+case "${1:-status}" in
+  status)
+    # "noadapter" | "off" | "on"
+    _have || { echo noadapter; exit 0; }
+    show=$(bluetoothctl show 2>/dev/null)
+    [ -z "$show" ] && { echo noadapter; exit 0; }
+    echo "$show" | grep -q "Powered: yes" && echo on || echo off
+    ;;
+  on)
+    command -v rfkill >/dev/null 2>&1 && rfkill unblock bluetooth 2>/dev/null
+    _have && bluetoothctl power on >/dev/null 2>&1
+    _have && bluetoothctl agent on >/dev/null 2>&1
+    _have && bluetoothctl pairable on >/dev/null 2>&1
+    ;;
+  off) _have && bluetoothctl power off >/dev/null 2>&1 ;;
+  scan)
+    # scansione breve, poi elenco device: "mac<TAB>nome<TAB>stato(conn|paired|"")"
+    _have || exit 0
+    bluetoothctl --timeout "${2:-6}" scan on >/dev/null 2>&1
+    bluetoothctl devices 2>/dev/null | while read -r _dev mac name; do
+      [ -n "$mac" ] || continue
+      info=$(bluetoothctl info "$mac" 2>/dev/null)
+      st=""
+      echo "$info" | grep -q "Connected: yes" && st="conn"
+      [ -z "$st" ] && echo "$info" | grep -q "Paired: yes" && st="paired"
+      printf '%s\t%s\t%s\n' "$mac" "$name" "$st"
+    done
+    ;;
+  devices)
+    _have || exit 0
+    bluetoothctl devices 2>/dev/null | while read -r _dev mac name; do
+      [ -n "$mac" ] || continue
+      info=$(bluetoothctl info "$mac" 2>/dev/null)
+      st=""
+      echo "$info" | grep -q "Connected: yes" && st="conn"
+      [ -z "$st" ] && echo "$info" | grep -q "Paired: yes" && st="paired"
+      printf '%s\t%s\t%s\n' "$mac" "$name" "$st"
+    done
+    ;;
+  connect)    [ -n "${2:-}" ] && _have && bluetoothctl connect "$2" 2>&1 ;;
+  disconnect) [ -n "${2:-}" ] && _have && bluetoothctl disconnect "$2" 2>&1 ;;
+  pair)       [ -n "${2:-}" ] && _have && { bluetoothctl pair "$2" 2>&1; bluetoothctl trust "$2" >/dev/null 2>&1; } ;;
+  *) echo "uso: nxs-bluetooth {status|on|off|scan [sec]|devices|connect MAC|disconnect MAC|pair MAC}" >&2; exit 2 ;;
+esac
+exit 0

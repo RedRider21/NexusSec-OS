@@ -92,6 +92,12 @@ depends="
 	tor
 	torsocks
 	tzdata
+	pipewire
+	pipewire-pulse
+	pipewire-alsa
+	wireplumber
+	bluez
+	bluez-openrc
 	"
 
 # Driver video/guest specifici per architettura (risolti al build dal $CARCH del

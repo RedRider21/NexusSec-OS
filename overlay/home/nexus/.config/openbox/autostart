@@ -10,6 +10,15 @@ echo "=== autostart $(date) ==="
 #    tty12, nascosto.)
 command -v nxs-boot-splash >/dev/null 2>&1 && nxs-boot-splash &
 
+# 0bis) Audio: PipeWire + WirePlumber (session manager) + compat Pulse. Girano
+#    come servizi UTENTE (la live non ha logind): li avviamo qui. XDG_RUNTIME_DIR
+#    e' esportato in .profile e /run/user/1000 la crea local.d. Best-effort.
+if command -v pipewire >/dev/null 2>&1; then
+  pipewire &
+  (sleep 1; command -v wireplumber   >/dev/null 2>&1 && exec wireplumber) &
+  (sleep 1; command -v pipewire-pulse >/dev/null 2>&1 && exec pipewire-pulse) &
+fi
+
 # 1) Desktop manager pcmanfm (icone + SFONDO). DEVE partire PRIMA, perche'
 #    lo sfondo del profilo viene impostato via "pcmanfm --set-wallpaper".
 command -v pcmanfm >/dev/null 2>&1 && pcmanfm --desktop --profile=NexusSec &

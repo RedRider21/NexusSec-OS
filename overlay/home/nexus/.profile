@@ -7,6 +7,11 @@ case ":$PATH:" in
   *) PATH="$HOME/.local/bin:$PATH"; export PATH ;;
 esac
 
+# XDG_RUNTIME_DIR per PipeWire/WirePlumber (la live non ha logind/elogind).
+# La dir /run/user/<uid> la crea local.d (di proprieta' nexus). Lo esportiamo
+# qui, PRIMA di startx, cosi' X, il pannello e i tool audio lo ereditano.
+export XDG_RUNTIME_DIR="/run/user/$(id -u)"
+
 # Avvia la sessione grafica sulla prima console. Se X FALLISCE, NON va in loop:
 # mostra l'errore di Xorg + stato driver/DRM e lascia una shell (diagnostica).
 if [ -z "$DISPLAY" ] && [ "$(tty)" = "/dev/tty1" ]; then

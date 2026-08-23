@@ -490,6 +490,18 @@ class Panel(Gtk.Window):
         wifi_btn.connect("clicked", self._toggle_wifi)
         right.pack_start(wifi_btn, False, False, 0)
 
+        # Audio (volume/uscite via wpctl-PipeWire): clic = popup, rotella = +/-.
+        self.vol_btn = _icon_button("audio-volume-medium-symbolic", "Audio")
+        self.vol_btn.connect("clicked", self._toggle_volume)
+        self.vol_btn.add_events(Gdk.EventMask.SCROLL_MASK)
+        self.vol_btn.connect("scroll-event", self._vol_scroll)
+        right.pack_start(self.vol_btn, False, False, 0)
+
+        # Bluetooth (bluetoothctl-BlueZ): clic = popup accensione/scan/connetti.
+        self.bt_btn = _icon_button("bluetooth-active-symbolic", "Bluetooth")
+        self.bt_btn.connect("clicked", self._toggle_bluetooth)
+        right.pack_start(self.bt_btn, False, False, 0)
+
         right.pack_start(Gtk.Separator(orientation=Gtk.Orientation.VERTICAL),
                          False, False, 0)
 
@@ -523,6 +535,9 @@ class Panel(Gtk.Window):
         self._refresh_tasks()
         GLib.timeout_add(POLL_MS, self._refresh_tasks)
         GLib.timeout_add(1000, self._tick_clock)
+        # icone audio/bluetooth aggiornate periodicamente (non bloccante)
+        self._refresh_media()
+        GLib.timeout_add(4000, self._refresh_media)
 
     # --- geometria ---
     def _place(self):
@@ -1101,6 +1116,223 @@ class Panel(Gtk.Window):
             return ""
 
     # --- applet WiFi (scan/connessione via nxs-wifi) ---
+    # --- Audio (PipeWire/wpctl) e Bluetooth (BlueZ) --------------------------
+    def _bg(self, cmd):
+        """Esegue un comando in background (fire-and-forget), non blocca la UI."""
+        threading.Thread(target=lambda: self._run_out(cmd, 8), daemon=True).start()
+
+    def _refresh_media(self):
+        def worker():
+            pct = None; muted = False
+            try:
+                o = self._run_out(["nxs-audio", "get"]).split()
+                pct = int(o[0]); muted = (o[1] == "1")
+            except Exception:                       # noqa: BLE001
+                pass
+            try:
+                bt = self._run_out(["nxs-bluetooth", "status"]).strip()
+            except Exception:                       # noqa: BLE001
+                bt = "noadapter"
+            GLib.idle_add(self._apply_media_icons, pct, muted, bt)
+        threading.Thread(target=worker, daemon=True).start()
+        return True
+
+    def _apply_media_icons(self, pct, muted, bt):
+        if pct is None or muted or pct <= 0:
+            ai = "audio-volume-muted-symbolic"
+        elif pct < 34:
+            ai = "audio-volume-low-symbolic"
+        elif pct < 67:
+            ai = "audio-volume-medium-symbolic"
+        else:
+            ai = "audio-volume-high-symbolic"
+        self.vol_btn.set_image(Gtk.Image.new_from_icon_name(
+            ai, Gtk.IconSize.LARGE_TOOLBAR))
+        bi = "bluetooth-active-symbolic" if bt == "on" else "bluetooth-disabled-symbolic"
+        self.bt_btn.set_image(Gtk.Image.new_from_icon_name(
+            bi, Gtk.IconSize.LARGE_TOOLBAR))
+        return False
+
+    def _vol_scroll(self, _w, ev):
+        up = down = False
+        if ev.direction == Gdk.ScrollDirection.UP:
+            up = True
+        elif ev.direction == Gdk.ScrollDirection.DOWN:
+            down = True
+        elif ev.direction == Gdk.ScrollDirection.SMOOTH:
+            _ok, _dx, dy = ev.get_scroll_deltas()
+            up = dy < 0; down = dy > 0
+        if up:
+            self._bg(["nxs-audio", "up"])
+        elif down:
+            self._bg(["nxs-audio", "down"])
+        GLib.timeout_add(200, self._refresh_media)
+        return True
+
+    def _toggle_volume(self, _btn):
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
+        box.get_style_context().add_class("nxs-calbox")
+        box.set_size_request(300, -1)
+        title = Gtk.Label(); title.set_markup("<b>Audio</b>"); title.set_xalign(0)
+        box.pack_start(title, False, False, 0)
+
+        row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        mute_b = Gtk.Button(); mute_b.set_relief(Gtk.ReliefStyle.NONE)
+        mute_b.get_style_context().add_class("nxs-icon")
+        mute_b.set_image(Gtk.Image.new_from_icon_name(
+            "audio-volume-high-symbolic", Gtk.IconSize.MENU))
+        row.pack_start(mute_b, False, False, 0)
+        scale = Gtk.Scale.new_with_range(Gtk.Orientation.HORIZONTAL, 0, 100, 1)
+        scale.set_draw_value(True); scale.set_value_pos(Gtk.PositionType.RIGHT)
+        scale.set_hexpand(True)
+        row.pack_start(scale, True, True, 0)
+        box.pack_start(row, False, False, 0)
+
+        status = Gtk.Label(label="..."); status.set_xalign(0)
+        status.get_style_context().add_class("nxs-clock-date")
+        box.pack_start(status, False, False, 0)
+        outs = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
+        box.pack_start(outs, False, False, 0)
+        self._spawn_popup("audio", box, align="right", autoclose=False)
+
+        def on_scale(s):
+            self._bg(["nxs-audio", "set", str(int(s.get_value()))])
+            GLib.timeout_add(150, self._refresh_media)
+
+        def fill(pct, muted, sinks):
+            if "audio" not in self._popups:
+                return False
+            scale.set_value(pct if pct is not None else 0)
+            scale.connect("value-changed", on_scale)
+            mute_b.connect("clicked", lambda _w: (
+                self._bg(["nxs-audio", "mute"]),
+                GLib.timeout_add(150, self._refresh_media)))
+            if pct is None:
+                status.set_text("PipeWire non attivo o nessuna uscita audio.")
+            else:
+                status.set_text("Uscita audio:" if sinks else "")
+            for sid, name, is_def in sinks:
+                b = Gtk.Button(); b.set_relief(Gtk.ReliefStyle.NONE)
+                b.get_style_context().add_class("nxs-menu-item")
+                lab = Gtk.Label(label=("● " if is_def else "○ ") + name)
+                lab.set_xalign(0); b.add(lab)
+                b.connect("clicked", lambda _w, i=sid: (
+                    self._bg(["nxs-audio", "default", i]),
+                    self._close_popup("audio")))
+                outs.pack_start(b, False, False, 0)
+            outs.show_all()
+            return False
+
+        def worker():
+            pct = None; muted = False
+            try:
+                o = self._run_out(["nxs-audio", "get"]).split()
+                pct = int(o[0]); muted = (o[1] == "1")
+            except Exception:                       # noqa: BLE001
+                pass
+            sinks = []
+            for line in self._run_out(["nxs-audio", "sinks"]).splitlines():
+                p = line.split("\t")
+                if len(p) >= 2 and p[0].strip():
+                    sinks.append((p[0], p[1], len(p) > 2 and p[2] == "*"))
+            GLib.idle_add(fill, pct, muted, sinks)
+        threading.Thread(target=worker, daemon=True).start()
+
+    def _toggle_bluetooth(self, _btn):
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
+        box.get_style_context().add_class("nxs-calbox")
+        box.set_size_request(320, -1)
+        head = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        title = Gtk.Label(); title.set_markup("<b>Bluetooth</b>"); title.set_xalign(0)
+        head.pack_start(title, True, True, 0)
+        sw = Gtk.Switch(); sw.set_valign(Gtk.Align.CENTER)
+        head.pack_end(sw, False, False, 0)
+        box.pack_start(head, False, False, 0)
+
+        status = Gtk.Label(label="..."); status.set_xalign(0)
+        status.set_line_wrap(True)
+        status.get_style_context().add_class("nxs-clock-date")
+        box.pack_start(status, False, False, 0)
+
+        scan_b = Gtk.Button(label="Scansiona dispositivi")
+        scan_b.get_style_context().add_class("nxs-menu-item")
+        box.pack_start(scan_b, False, False, 0)
+        devlist = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
+        box.pack_start(devlist, False, False, 0)
+        self._spawn_popup("bt", box, align="right", autoclose=False)
+
+        def render_devs(devs):
+            if "bt" not in self._popups:
+                return False
+            for c in devlist.get_children():
+                devlist.remove(c)
+            for mac, name, st in devs:
+                b = Gtk.Button(); b.set_relief(Gtk.ReliefStyle.NONE)
+                b.get_style_context().add_class("nxs-menu-item")
+                hb = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+                ico = "bluetooth-active-symbolic" if st == "conn" else "bluetooth-symbolic"
+                hb.pack_start(Gtk.Image.new_from_icon_name(ico, Gtk.IconSize.MENU),
+                              False, False, 0)
+                lab = Gtk.Label(label=name or mac); lab.set_xalign(0)
+                hb.pack_start(lab, True, True, 0)
+                if st:
+                    tag = Gtk.Label(label="connesso" if st == "conn" else "abbinato")
+                    tag.get_style_context().add_class("nxs-clock-date")
+                    hb.pack_start(tag, False, False, 0)
+                b.add(hb)
+                b.connect("clicked", lambda _w, m=mac, s=st: self._bt_toggle_dev(m, s))
+                devlist.pack_start(b, False, False, 0)
+            devlist.show_all()
+            return False
+
+        def do_scan(_w=None):
+            status.set_text("Scansione in corso (qualche secondo)...")
+            def worker():
+                devs = []
+                for line in self._run_out(["nxs-bluetooth", "scan", "6"], 15).splitlines():
+                    p = line.split("\t")
+                    if len(p) >= 2:
+                        devs.append((p[0], p[1], p[2] if len(p) > 2 else ""))
+                GLib.idle_add(lambda: (status.set_text(
+                    "Clic su un dispositivo per connettere/disconnettere:"
+                    if devs else "Nessun dispositivo trovato."), render_devs(devs)))
+            threading.Thread(target=worker, daemon=True).start()
+        scan_b.connect("clicked", do_scan)
+
+        def on_switch(s, state):
+            self._bg(["nxs-bluetooth", "on" if state else "off"])
+            GLib.timeout_add(400, self._refresh_media)
+            return False
+        def load():
+            st = self._run_out(["nxs-bluetooth", "status"]).strip()
+            devs = []
+            if st == "on":
+                for line in self._run_out(["nxs-bluetooth", "devices"]).splitlines():
+                    p = line.split("\t")
+                    if len(p) >= 2:
+                        devs.append((p[0], p[1], p[2] if len(p) > 2 else ""))
+            def apply():
+                if "bt" not in self._popups:
+                    return False
+                if st == "noadapter":
+                    status.set_text("Nessun adattatore Bluetooth rilevato. In VM "
+                                    "non e' disponibile: usa un dongle USB.")
+                    sw.set_sensitive(False); scan_b.set_sensitive(False)
+                    return False
+                sw.set_active(st == "on")
+                sw.connect("state-set", on_switch)
+                status.set_text("Bluetooth acceso." if st == "on"
+                                else "Bluetooth spento.")
+                render_devs(devs)
+                return False
+            GLib.idle_add(apply)
+        threading.Thread(target=load, daemon=True).start()
+
+    def _bt_toggle_dev(self, mac, st):
+        act = "disconnect" if st == "conn" else "connect"
+        self._bg(["nxs-bluetooth", act, mac])
+        self._close_popup("bt")
+
     def _toggle_wifi(self, _btn):
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
         box.get_style_context().add_class("nxs-calbox")

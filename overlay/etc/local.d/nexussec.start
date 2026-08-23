@@ -25,6 +25,12 @@ chown -R nexus:nexus /etc/sec_os 2>/dev/null || true
 # Cartella loot condivisa coi container Podman.
 install -d -o nexus -g nexus /home/nexus/NexusSec-loot 2>/dev/null || true
 
+# XDG_RUNTIME_DIR per PipeWire/WirePlumber: la live NON ha logind/elogind, quindi
+# /run/user/1000 non viene creata da sola. La creiamo qui (di proprieta' nexus);
+# .profile esporta XDG_RUNTIME_DIR e l'autostart lancia pipewire/wireplumber/
+# pipewire-pulse. Senza questa dir l'audio non parte.
+install -d -o nexus -g nexus -m 700 /run/user/1000 2>/dev/null || true
+
 # Repository runtime: NON tocchiamo /etc/apk/repositories a boot-time (la live
 # installa la base dal repo sul media). Qui, A SISTEMA AVVIATO, aggiungiamo i
 # repo internet edge + il nostro repo locale (meta sec-profile-*), cosi'
