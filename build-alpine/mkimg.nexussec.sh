@@ -48,30 +48,21 @@ profile_nexussec() {
 	#     la finestra di silenzio (i ~170s). KOPT_blacklist scrive modprobe.d
 	#     NELL'INITRAMFS, scartato allo switch_root -> la SD resta usabile a
 	#     sistema avviato (hwdrivers/udev). Su ARM NO: microSD = media di boot.
-	#   * boot CONFERMATO OK su HW reale (chiavetta dd).
-	# SPLASH VERA (fbsplash nativo Alpine): l'init dell'initramfs, se trova
-	#   /media/*/fbsplash.ppm (iniettato in build-in-container.sh) e KOPT_splash
-	#   != no (default attivo), lancia `setsid fbsplash -T 16 -s fbsplash.ppm`:
-	#   disegna l'immagine sul framebuffer di una VT DEDICATA (tty16) e ci
-	#   commuta sopra -> copre TUTTO il boot (initramfs + OpenRC), nascondendo il
-	#   testo senza bisogno di console=tty12. La fbsplash NON viene chiusa a
-	#   switch_root (il codice la termina solo con splash=init): resta finche' X
-	#   non prende una nuova VT. Sequenza reale: immagine fbsplash (boot) ->
-	#   X-splash animata identica (primo autostart Openbox) -> desktop.
-	# PERCHE' NIENTE console=tty12: con fbsplash il testo e' gia' coperto da
-	#   -T 16; togliere console=tty12 rende il FALLBACK SICURO -> se il
-	#   framebuffer manca (nessun /dev/fb0), invece di un nero muto su una VT
-	#   non visibile si vede un boot testuale 'quiet' e poi il desktop.
-	#   'vt.global_cursor_default=0' toglie il cursore lampeggiante.
+	#   * boot CONFERMATO OK su HW reale (chiavetta dd). Avvio PULITO: 'quiet' +
+	#     'console=tty12' spostano TUTTO il testo di boot su una VT non visibile
+	#     (tty1 resta nero pulito: l'autologin/agetty di tty1 e' esplicito in
+	#     inittab, indipendente da console=). Cosi' allo sguardo: schermo pulito
+	#     -> splash grafica (client X nxs-boot-splash, primo autostart) -> desktop.
+	#     'vt.global_cursor_default=0' toglie il cursore lampeggiante.
 	# NB Ventoy resta lento a prescindere (espone molti block device: dm delle
 	# ISO, exfat, VTOYEFI -> nlplug li scandisce tutti). Uso reale = chiavetta
-	# SOLO-NexusSec scritta con `dd`. Diagnosi: al menu togliere 'quiet' e
-	# aggiungere 'debug_init splash=no' -> si rivedono i messaggi su tty1.
+	# SOLO-NexusSec scritta con `dd`. Diagnosi: al menu togliere 'quiet console=tty12'
+	# e aggiungere 'debug_init' -> si rivedono i messaggi su tty1.
 	_nxs_black=
 	if [ "$arch" != "aarch64" ]; then
 		_nxs_black=" blacklist=sdhci,sdhci_pci,sdhci_acpi,mmc_block,mmc_core"
 	fi
-	initfs_cmdline="modules=loop,squashfs,sd-mod,usb-storage${_nxs_black} quiet vt.global_cursor_default=0"
+	initfs_cmdline="modules=loop,squashfs,sd-mod,usb-storage${_nxs_black} quiet console=tty12 vt.global_cursor_default=0"
 	# --- cgroups v2 (unified) per Podman ROOTLESS (root-cause fix) -----------
 	# Sintomo: attivando un profilo e lanciando un tool via container Kali,
 	# `crun` abortiva con "invalid file system type on /sys/fs/cgroup" e Podman

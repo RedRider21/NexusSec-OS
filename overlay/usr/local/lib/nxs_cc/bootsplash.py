@@ -10,10 +10,9 @@ Compone gli asset pre-renderizzati (build/make-plymouth-theme.py ->
   - scanline che scorre; fade da/verso nero.
 
 Parte come PRIMO client X (autostart), a tutto schermo, sopra tutto; copre la
-preparazione del desktop e si chiude da sola (o con ESC/click). SUBENTRA senza
-stacco alla fbsplash nativa dell'initramfs (stessa grafica, immagine statica
-gia' a schermo dal boot): fade-in a 0. Sequenza allo sguardo:
-fbsplash statica (tutto il boot) -> questa X-splash animata -> desktop.
+preparazione del desktop e si chiude da sola (o con ESC/click). Il boot testuale
+e' nascosto (console su tty12), quindi allo sguardo la sequenza e':
+schermo pulito -> questa splash -> desktop.
 """
 from __future__ import annotations
 
@@ -28,10 +27,7 @@ from gi.repository import Gtk, Gdk, GdkPixbuf, GLib  # noqa: E402
 ASSETS = os.environ.get("NXS_SPLASH_DIR", "/usr/local/share/nexussec/splash")
 
 DURATION_MS = 6500      # durata visibile (poi fade-out e chiusura)
-# FADE_IN a 0: la X-splash SUBENTRA alla fbsplash nativa (stessa immagine gia'
-# a schermo dal boot) -> nessun fade dal nero, transizione senza stacco. Il
-# fade-out resta, per sfumare sul desktop.
-FADE_IN_MS = 0
+FADE_IN_MS = 550
 FADE_OUT_MS = 650
 STEP_MS = 33            # ~30 fps
 HARD_TIMEOUT_MS = 9500  # rete di sicurezza: chiude comunque

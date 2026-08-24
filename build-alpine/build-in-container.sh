@@ -192,21 +192,6 @@ REPOS
     fi
   fi
 
-  # SPLASH VERA: inietta fbsplash.ppm nella ROOT del media. Linit dellinitramfs
-  # (KOPT_splash attivo di default) lo trova come /media/*/fbsplash.ppm e lancia
-  # `fbsplash -T 16` -> immagine sul framebuffer per TUTTO il boot, poi X-splash
-  # animata identica -> desktop. Stesso xorriso replay del fast-boot (preserva
-  # El Torito BIOS+EFI e MBR ibrido). Sempre attivo (non gated da NXS_FASTBOOT).
-  iso=$(ls -t /work/out/alpine-nexussec-*-"$NXS_ARCH".iso | head -1)
-  if [ -f /work/build-alpine/fbsplash.ppm ] && [ -n "$iso" ]; then
-    echo "[ctr] inietto fbsplash.ppm (splash nativa) in $iso"
-    xorriso -indev "$iso" -outdev "$iso".new -boot_image any replay \
-      -map /work/build-alpine/fbsplash.ppm /fbsplash.ppm \
-      && mv "$iso".new "$iso"
-  else
-    echo "[ctr] ATTENZIONE: fbsplash.ppm assente, splash nativa NON iniettata"
-  fi
-
   echo "[ctr] FATTO. ISO in /work/out:"
   ls -lh /work/out/*.iso
 ')

@@ -126,16 +126,11 @@ for s in local dbus udev udev-trigger networking cgroups bluetooth; do
   ln -sf "/etc/init.d/$s" "$tmp/etc/runlevels/default/$s"
 done
 
-# Splash di avvio a DUE stadi, senza servizi OpenRC da aggiungere qui:
-#  1) fbsplash NATIVO (initramfs Alpine): l'init trova /media/*/fbsplash.ppm
-#     (iniettato da build-in-container.sh) e lo mostra sul framebuffer via
-#     `fbsplash -T 16`, coprendo TUTTO il boot (initramfs + OpenRC). Resta
-#     finche' X non prende una VT nuova. Nasconde il testo da solo -> in mkimg
-#     abbiamo TOLTO console=tty12 (fallback sicuro se manca il framebuffer).
-#  2) X-splash ANIMATA (nxs-boot-splash, primo autostart Openbox): stessa
-#     grafica della fbsplash ma animata -> subentra senza stacchi e sfuma sul
-#     desktop. Il selettore profili parte dopo (autostart), niente overlap.
-# (Plymouth valutato e SCARTATO: non aggancia il display in questo stack.)
+# Splash di avvio: e' un client X (nxs-boot-splash, primo autostart Openbox),
+# non un servizio OpenRC -> qui non serve nulla. Il boot testuale e' su tty12
+# (console=tty12 in mkimg), cosi' tty1 resta pulito fino allo splash.
+# (Plymouth valutato e SCARTATO: non aggancia il display in questo stack e fa
+#  riemergere la VT col testo -> peggiora il boot pulito.)
 
 chmod +x "$tmp/etc/local.d/nexussec.start" 2>/dev/null || true
 echo "$HOSTNAME" > "$tmp/etc/hostname"
