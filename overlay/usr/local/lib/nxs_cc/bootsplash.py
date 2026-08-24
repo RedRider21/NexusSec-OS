@@ -26,11 +26,11 @@ from gi.repository import Gtk, Gdk, GdkPixbuf, GLib  # noqa: E402
 
 ASSETS = os.environ.get("NXS_SPLASH_DIR", "/usr/local/share/nexussec/splash")
 
-DURATION_MS = 5000      # durata visibile (poi fade-out e chiusura)
+DURATION_MS = 6500      # durata visibile (poi fade-out e chiusura)
 FADE_IN_MS = 550
-FADE_OUT_MS = 550
+FADE_OUT_MS = 650
 STEP_MS = 33            # ~30 fps
-HARD_TIMEOUT_MS = 8000  # rete di sicurezza: chiude comunque
+HARD_TIMEOUT_MS = 9500  # rete di sicurezza: chiude comunque
 
 
 def _load(name):
@@ -206,11 +206,24 @@ class BootSplash(Gtk.Window):
             Gtk.main_quit()
         return False
 
+    def _stay_on_top(self):
+        # Il desktop (pcmanfm/pannello/selettore) si costruisce DIETRO: ci
+        # rialziamo periodicamente sopra tutto, cosi' la splash non viene
+        # "bucata" e allo sfumare rivela un desktop gia' pronto.
+        if self._done:
+            return False
+        self.set_keep_above(True)
+        w = self.get_window()
+        if w is not None:
+            w.raise_()
+        return True
+
     def run(self):
         self.connect("destroy", lambda *_: Gtk.main_quit())
         self.show_all()
         self.fullscreen()
         GLib.timeout_add(STEP_MS, self._tick)
+        GLib.timeout_add(250, self._stay_on_top)
         GLib.timeout_add(HARD_TIMEOUT_MS, self._finish)
         Gtk.main()
 

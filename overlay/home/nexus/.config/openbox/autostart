@@ -35,5 +35,6 @@ nxs-panel &
 command -v VBoxClient-all >/dev/null 2>&1 && VBoxClient-all 2>/dev/null &
 
 # 5) Selettore del profilo operativo all'avvio (Pen Testing/Forensics/OSINT/Web).
-#    Compare DOPO lo splash (che dura ~3.2s), cosi' non ci si sovrappongono.
-(sleep 3.6; nxs-profile) &
+#    Compare DOPO che la splash si e' chiusa (~6.5s + fade), cosi' non si
+#    sovrappone: la splash sfuma rivelando il desktop, POI appare il selettore.
+(sleep 7.5; nxs-profile) &
