@@ -131,6 +131,7 @@ class Browser(Gtk.Window):
         self.dark_mode = bool(config.get("dark_mode", True))
         self.stealth = bool(config.get("stealth", True))   # anonimo di default
         self.bookmarks_minimized = False
+        self._is_fullscreen = False   # stato schermo intero (F11)
         self._tab_labels = {}   # WebView -> (event_box, label, image)
         self._view_mode = {}    # WebView -> bool (True = scheda stealth)
         self._contexts = {}     # bool stealth -> WebKit2.WebContext (lazy)
@@ -171,11 +172,15 @@ class Browser(Gtk.Window):
         self.notebook.connect("switch-page", self._on_switch_page)
         self.paned.pack2(self.notebook, True, True)
 
-        # F12 -> inspector
+        # F12 -> inspector ; F11 -> schermo intero (toggle)
         accel = Gtk.AccelGroup()
         self.add_accel_group(accel)
         accel.connect(Gdk.KEY_F12, 0, Gtk.AccelFlags.VISIBLE,
                       lambda *_: (self.toggle_inspector(), True)[1])
+        accel.connect(Gdk.KEY_F11, 0, Gtk.AccelFlags.VISIBLE,
+                      lambda *_: (self.toggle_fullscreen(), True)[1])
+        # Traccia lo stato reale della finestra (per sapere se siamo in fullscreen).
+        self.connect("window-state-event", self._on_window_state)
 
     def _build_menubar(self):
         bar = Gtk.MenuBar()
@@ -612,6 +617,20 @@ class Browser(Gtk.Window):
             insp = v.get_inspector()
             if insp:
                 insp.show()
+
+    def toggle_fullscreen(self):
+        """F11: schermo intero on/off. Lo stato reale arriva da
+        window-state-event (_on_window_state), cosi' resta coerente anche se il
+        WM cambia lo stato da solo."""
+        if self._is_fullscreen:
+            self.unfullscreen()
+        else:
+            self.fullscreen()
+
+    def _on_window_state(self, _w, event):
+        self._is_fullscreen = bool(
+            event.new_window_state & Gdk.WindowState.FULLSCREEN)
+        return False
 
     # ----------------------------------------------------------- preferiti
     def _read_bookmarks(self):

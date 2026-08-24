@@ -12,15 +12,25 @@ LOG=/tmp/nxs-browser.log
 # (fornisce WebKit2-4.1.typelib). Usarlo, altrimenti apk add fallisce sempre.
 PKG=webkit2gtk-4.1
 
-# Ambiente robusto per WebKit2 su X minimale/VM (niente GPU/GL):
+# Ambiente robusto per WebKit2 su X minimale/VM/live (niente GPU/GL reale):
 #  - GTK_IM_MODULE simple: evita il crash da modulo input-method assente.
-#  - WEBKIT_DISABLE_COMPOSITING_MODE: niente compositing accelerato (no GL).
-#  - LIBGL_ALWAYS_SOFTWARE: rendering software se mesa c'e'.
+#  - WEBKIT_DISABLE_DMABUF_RENDERER=1: DISATTIVA il renderer DMABUF. E' LA causa
+#    principale del "freeze improvviso a meta' pagina" (es. YouTube Music) su
+#    stack SENZA GPU vera: WebKitGTK recente condivide i buffer di rendering via
+#    DMABUF, che sull'efifb/software si impianta e blocca l'intero web process.
+#  - WEBKIT_DISABLE_COMPOSITING_MODE=1: niente compositing accelerato (no GL).
+#  - LIBGL_ALWAYS_SOFTWARE=1 + GALLIUM_DRIVER=llvmpipe: rendering software
+#    deterministico se mesa c'e' (niente tentativi GL hardware che si piantano).
+#  - GST_GL_DISABLED=1: la pipeline media di WebKit (GStreamer) NON usa il sink
+#    GL -> l'audio/video (YouTube Music) non si blocca sul sink GL assente.
 #  - WEBKIT_FORCE_SANDBOX=0: il sandbox a user-namespace puo' non essere
 #    disponibile e impedirebbe l'avvio del web process.
 IMENV="GTK_IM_MODULE=gtk-im-context-simple \
+WEBKIT_DISABLE_DMABUF_RENDERER=1 \
 WEBKIT_DISABLE_COMPOSITING_MODE=1 \
 LIBGL_ALWAYS_SOFTWARE=1 \
+GALLIUM_DRIVER=llvmpipe \
+GST_GL_DISABLED=1 \
 WEBKIT_FORCE_SANDBOX=0"
 
 priv() { if command -v doas >/dev/null 2>&1; then doas "$@"; \
