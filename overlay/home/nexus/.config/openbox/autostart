@@ -4,49 +4,51 @@
 exec >>/tmp/nxs-autostart.log 2>&1
 echo "=== autostart $(date) ==="
 
-# SEQUENZA splash -> desktop (richiesta esplicita: "se non finisce la prima non
-# viene fuori il desktop"). La splash e' un CANCELLO: gira in FOREGROUND
-# (bloccante) e finche' non si chiude questo script NON prosegue al selettore.
-# Il desktop di BASE (sfondo + pannello) si costruisce DIETRO la splash durante
-# i suoi ~6.5s, cosi' quando sfuma rivela un desktop gia' pronto; il selettore
-# profili (l'elemento che "spuntava") parte SOLO DOPO. Ordine allo sguardo:
-#   splash piena -> sfuma su sfondo+pannello pronti -> appare il selettore.
+# SEQUENZA splash -> desktop, SENZA "sbirciata" del desktop prima della splash.
+# Ordine che risolve entrambe le cose (glimpse + sovrapposizione):
+#   1) la SPLASH parte per PRIMA (background) e ha un attimo di vantaggio per
+#      MAPPARE e coprire lo schermo su NERO, prima che esista qualunque finestra
+#      del desktop -> niente lampo di desktop prima della splash;
+#   2) sfondo + pannello si costruiscono DIETRO la splash (che li tiene coperti
+#      col re-raise) durante i suoi ~6.5s;
+#   3) il selettore profili aspetta la FINE della splash (wait sul suo PID) e
+#      compare solo dopo -> non si sovrappone mai.
+# Allo sguardo: nero pulito -> splash piena -> sfuma su sfondo+pannello pronti
+# -> appare il selettore.
 
-# 0bis) Audio: PipeWire + WirePlumber (session manager) + compat Pulse. Girano
-#    come servizi UTENTE (la live non ha logind): li avviamo subito, sono
-#    indipendenti dalla grafica. XDG_RUNTIME_DIR e' esportato in .profile e
-#    /run/user/1000 la crea local.d. Best-effort.
+# 1) SPLASH per prima, in background; ne teniamo il PID come "cancello".
+SPLASH_PID=""
+if command -v nxs-boot-splash >/dev/null 2>&1; then
+  nxs-boot-splash &
+  SPLASH_PID=$!
+  # Vantaggio: lascia mappare e dipingere la splash su schermo nero PRIMA che
+  # partano pcmanfm/pannello (che comparirebbero altrimenti per un istante).
+  sleep 0.8
+fi
+
+# 2) Audio: PipeWire + WirePlumber (session manager) + compat Pulse. Servizi
+#    UTENTE (la live non ha logind), indipendenti dalla grafica. Best-effort.
 if command -v pipewire >/dev/null 2>&1; then
   pipewire &
   (sleep 1; command -v wireplumber   >/dev/null 2>&1 && exec wireplumber) &
   (sleep 1; command -v pipewire-pulse >/dev/null 2>&1 && exec pipewire-pulse) &
 fi
 
-# 1) Desktop manager pcmanfm (icone + SFONDO). Parte PRIMA della splash e si
-#    costruisce DIETRO di lei: lo sfondo del profilo va impostato via
-#    "pcmanfm --set-wallpaper" (vedi passo 2), quindi pcmanfm deve gia' esserci.
+# 3) Desktop manager pcmanfm (icone + SFONDO), DIETRO la splash. Lo sfondo del
+#    profilo va impostato via "pcmanfm --set-wallpaper", quindi deve gia' esserci.
 command -v pcmanfm >/dev/null 2>&1 && pcmanfm --desktop --profile=NexusSec &
 
-# 2) Sfondo + accent del profilo corrente (quando pcmanfm e' pronto).
-#    'apply' non reinstalla nulla: imposta solo wallpaper (via pcmanfm) + accent.
+# 4) Sfondo + accent del profilo corrente (quando pcmanfm e' pronto).
 (sleep 1.5; nxs-tool apply) &
 
-# 3) Pannello inferiore nativo GTK3 (la barra Python). Anche lui si costruisce
-#    dietro la splash, cosi' e' pronto quando la splash sfuma.
+# 5) Pannello inferiore nativo GTK3 (la barra Python), anch'esso dietro la splash.
 nxs-panel &
 
-# 4) Integrazione VirtualBox (mouse seamless + auto-resize). Su hardware reale
-#    o altre VM VBoxClient-all esce subito: innocuo.
+# 6) Integrazione VirtualBox (mouse seamless + auto-resize). Innocuo altrove.
 command -v VBoxClient-all >/dev/null 2>&1 && VBoxClient-all 2>/dev/null &
 
-# 5) SPLASH in FOREGROUND (il cancello). Copre tutto e resta sopra finche' non
-#    completa la sua animazione+fade; SOLO ALLORA questo script prosegue. Se la
-#    splash non c'e' (o esce subito), si prosegue comunque: nessun blocco.
-if command -v nxs-boot-splash >/dev/null 2>&1; then
-  nxs-boot-splash
-fi
-
-# 6) Selettore del profilo operativo: parte DOPO che la splash si e' chiusa,
-#    quindi non puo' MAI sovrapporsi ad essa (garanzia di sequenza, non piu' una
-#    stima a tempo). La splash ha sfumato rivelando sfondo+pannello, POI questo.
+# 7) CANCELLO: aspetta che la splash abbia finito (animazione + fade), POI il
+#    selettore. Cosi' il desktop "operativo" non esce finche' la splash non e'
+#    conclusa. Se la splash non c'era, si prosegue subito.
+[ -n "$SPLASH_PID" ] && wait "$SPLASH_PID" 2>/dev/null
 nxs-profile &

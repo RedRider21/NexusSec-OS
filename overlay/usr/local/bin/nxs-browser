@@ -11,6 +11,10 @@ LOG=/tmp/nxs-browser.log
 # In Alpine il pacchetto NON e' "webkit2gtk" (non esiste) ma "webkit2gtk-4.1"
 # (fornisce WebKit2-4.1.typelib). Usarlo, altrimenti apk add fallisce sempre.
 PKG=webkit2gtk-4.1
+# Codec media (GStreamer): senza questi la pagina CARICA ma il play NON produce
+# audio/video (es. YouTube Music: clic su play e non parte nulla). good+bad+libav
+# coprono VP8/VP9/H.264/AAC/Opus/MP3. Installati on-demand INSIEME a WebKit.
+MEDIA_PKGS="gst-plugins-good gst-plugins-bad gst-libav"
 
 # Ambiente robusto per WebKit2 su X minimale/VM/live (niente GPU/GL reale):
 #  - GTK_IM_MODULE simple: evita il crash da modulo input-method assente.
@@ -44,8 +48,8 @@ have_webkit() {
 }
 
 if ! have_webkit; then
-  echo "NexusSec Browser: installo WebKit2 con apk (solo la prima volta)..." | tee -a "$LOG" >&2
-  priv apk add --no-cache "$PKG" >>"$LOG" 2>&1 || true
+  echo "NexusSec Browser: installo WebKit2 + codec media con apk (solo la prima volta)..." | tee -a "$LOG" >&2
+  priv apk add --no-cache "$PKG" $MEDIA_PKGS >>"$LOG" 2>&1 || true
 fi
 
 if ! have_webkit; then

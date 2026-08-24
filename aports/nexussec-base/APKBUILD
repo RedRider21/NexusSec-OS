@@ -98,6 +98,8 @@ depends="
 	wireplumber
 	bluez
 	bluez-openrc
+	brightnessctl
+	alsa-utils
 	"
 
 # Driver video/guest specifici per architettura (risolti al build dal $CARCH del

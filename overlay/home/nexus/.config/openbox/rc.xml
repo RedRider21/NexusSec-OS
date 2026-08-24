@@ -199,6 +199,14 @@
   <keybind key="W-d"><action name="ToggleShowDesktop"/></keybind>
   <keybind key="Print"><action name="Execute"><command>nxs-screenshot</command></action></keybind>
 
+  <!-- Tasti Fn del portatile: luminosita' schermo (backlight hw o gamma sw) -->
+  <keybind key="XF86MonBrightnessUp"><action name="Execute"><command>nxs-brightness up</command></action></keybind>
+  <keybind key="XF86MonBrightnessDown"><action name="Execute"><command>nxs-brightness down</command></action></keybind>
+  <!-- Tasti Fn del portatile: volume audio (PipeWire via nxs-audio) -->
+  <keybind key="XF86AudioRaiseVolume"><action name="Execute"><command>nxs-audio up</command></action></keybind>
+  <keybind key="XF86AudioLowerVolume"><action name="Execute"><command>nxs-audio down</command></action></keybind>
+  <keybind key="XF86AudioMute"><action name="Execute"><command>nxs-audio mute</command></action></keybind>
+
   <!-- Keybindings for desktop switching -->
   <keybind key="C-A-Left">
     <action name="GoToDesktop"><to>left</to><wrap>no</wrap></action>

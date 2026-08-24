@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Test Audio
+Comment=Riproduce un brano di prova per verificare l'uscita audio (PipeWire)
+Exec=lxterminal -e nxs-audio-test
+Icon=audio-x-generic
+Terminal=false
+Categories=AudioVideo;Audio;
