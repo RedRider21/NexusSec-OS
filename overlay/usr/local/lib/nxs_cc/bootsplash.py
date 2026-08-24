@@ -223,7 +223,11 @@ class BootSplash(Gtk.Window):
         self.show_all()
         self.fullscreen()
         GLib.timeout_add(STEP_MS, self._tick)
-        GLib.timeout_add(250, self._stay_on_top)
+        # Re-raise frequente (150ms): il desktop di base (pcmanfm/pannello) si
+        # costruisce DIETRO durante la splash -> ci teniamo sopra a tutto cosi'
+        # non lampeggia nulla prima che la splash sfumi. (Il selettore ora parte
+        # solo DOPO la splash, vedi autostart: quello non serve piu' coprirlo.)
+        GLib.timeout_add(150, self._stay_on_top)
         GLib.timeout_add(HARD_TIMEOUT_MS, self._finish)
         Gtk.main()
 

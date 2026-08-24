@@ -4,37 +4,49 @@
 exec >>/tmp/nxs-autostart.log 2>&1
 echo "=== autostart $(date) ==="
 
-# 0) Splash di avvio a schermo intero (grafica "cyber command" animata). Parte
-#    per PRIMA, sopra tutto, e copre la preparazione del desktop chiudendosi da
-#    sola. (Splash X: soluzione verificata funzionante; il boot testuale e' su
-#    tty12, nascosto.)
-command -v nxs-boot-splash >/dev/null 2>&1 && nxs-boot-splash &
+# SEQUENZA splash -> desktop (richiesta esplicita: "se non finisce la prima non
+# viene fuori il desktop"). La splash e' un CANCELLO: gira in FOREGROUND
+# (bloccante) e finche' non si chiude questo script NON prosegue al selettore.
+# Il desktop di BASE (sfondo + pannello) si costruisce DIETRO la splash durante
+# i suoi ~6.5s, cosi' quando sfuma rivela un desktop gia' pronto; il selettore
+# profili (l'elemento che "spuntava") parte SOLO DOPO. Ordine allo sguardo:
+#   splash piena -> sfuma su sfondo+pannello pronti -> appare il selettore.
 
 # 0bis) Audio: PipeWire + WirePlumber (session manager) + compat Pulse. Girano
-#    come servizi UTENTE (la live non ha logind): li avviamo qui. XDG_RUNTIME_DIR
-#    e' esportato in .profile e /run/user/1000 la crea local.d. Best-effort.
+#    come servizi UTENTE (la live non ha logind): li avviamo subito, sono
+#    indipendenti dalla grafica. XDG_RUNTIME_DIR e' esportato in .profile e
+#    /run/user/1000 la crea local.d. Best-effort.
 if command -v pipewire >/dev/null 2>&1; then
   pipewire &
   (sleep 1; command -v wireplumber   >/dev/null 2>&1 && exec wireplumber) &
   (sleep 1; command -v pipewire-pulse >/dev/null 2>&1 && exec pipewire-pulse) &
 fi
 
-# 1) Desktop manager pcmanfm (icone + SFONDO). DEVE partire PRIMA, perche'
-#    lo sfondo del profilo viene impostato via "pcmanfm --set-wallpaper".
+# 1) Desktop manager pcmanfm (icone + SFONDO). Parte PRIMA della splash e si
+#    costruisce DIETRO di lei: lo sfondo del profilo va impostato via
+#    "pcmanfm --set-wallpaper" (vedi passo 2), quindi pcmanfm deve gia' esserci.
 command -v pcmanfm >/dev/null 2>&1 && pcmanfm --desktop --profile=NexusSec &
 
 # 2) Sfondo + accent del profilo corrente (quando pcmanfm e' pronto).
 #    'apply' non reinstalla nulla: imposta solo wallpaper (via pcmanfm) + accent.
 (sleep 1.5; nxs-tool apply) &
 
-# 3) Pannello inferiore nativo GTK3 (la barra Python).
+# 3) Pannello inferiore nativo GTK3 (la barra Python). Anche lui si costruisce
+#    dietro la splash, cosi' e' pronto quando la splash sfuma.
 nxs-panel &
 
 # 4) Integrazione VirtualBox (mouse seamless + auto-resize). Su hardware reale
 #    o altre VM VBoxClient-all esce subito: innocuo.
 command -v VBoxClient-all >/dev/null 2>&1 && VBoxClient-all 2>/dev/null &
 
-# 5) Selettore del profilo operativo all'avvio (Pen Testing/Forensics/OSINT/Web).
-#    Compare DOPO che la splash si e' chiusa (~6.5s + fade), cosi' non si
-#    sovrappone: la splash sfuma rivelando il desktop, POI appare il selettore.
-(sleep 7.5; nxs-profile) &
+# 5) SPLASH in FOREGROUND (il cancello). Copre tutto e resta sopra finche' non
+#    completa la sua animazione+fade; SOLO ALLORA questo script prosegue. Se la
+#    splash non c'e' (o esce subito), si prosegue comunque: nessun blocco.
+if command -v nxs-boot-splash >/dev/null 2>&1; then
+  nxs-boot-splash
+fi
+
+# 6) Selettore del profilo operativo: parte DOPO che la splash si e' chiusa,
+#    quindi non puo' MAI sovrapporsi ad essa (garanzia di sequenza, non piu' una
+#    stima a tempo). La splash ha sfumato rivelando sfondo+pannello, POI questo.
+nxs-profile &
