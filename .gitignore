@@ -3,7 +3,9 @@ out/
 *.iso
 *.ppm
 *.apk
-build-alpine/fbsplash.ppm
+# ECCEZIONE: la splash nativa di boot e' un ASSET sorgente (rigenerata da
+# overlay/.../splash/scene.png), la versioniamo -> build self-contained + rollback.
+!build-alpine/fbsplash.ppm
 # abuild: sorgenti scaricati e pkg intermedi
 aports/*/src/
 aports/*/pkg/
