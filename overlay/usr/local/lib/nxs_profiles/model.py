@@ -426,7 +426,7 @@ def write_openbox_theme(style: str | None = None, key: str | None = None) -> Non
         style = get_window_style()
     ac = accent(key)
     g2 = "#0a1220"          # fondo finestra "vetro" del mockup
-    title_top = _mix(ac, g2, 0.20)     # velatura d'accento in cima alla barra
+    title_top = _mix(ac, g2, 0.28)     # velatura d'accento in cima alla barra
     title_bot = g2
     dim = _mix(ac, "#050a14", 0.45)    # accent tenue (bordo inattivo/telaio)
     if style == "telaio":
@@ -441,9 +441,12 @@ def write_openbox_theme(style: str | None = None, key: str | None = None) -> Non
         title_bg = ("window.active.title.bg: flat solid\n"
                     "window.active.title.bg.color: #0a1a26\n")
         handle_c = "#0a1a26"
-    else:                  # vetro (default): titlebar a gradiente velato
-        border_w = 2
-        act_border = ac
+    else:                  # vetro (default): NIENTE cornice colorata: il colore
+        # sta SOLO in alto (barra del titolo con velatura d'accento), come nel
+        # mockup. Il bordo laterale/inferiore e' scuro e discreto (solo per
+        # afferrare il resize), non piu' il filo ciano attorno alla finestra.
+        border_w = 1
+        act_border = "#122536"
         title_bg = ("window.active.title.bg: gradient vertical\n"
                     "window.active.title.bg.color: %s\n"
                     "window.active.title.bg.colorTo: %s\n" % (title_top, title_bot))

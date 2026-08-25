@@ -3,7 +3,7 @@
 # NON modificare a mano: viene sovrascritto al cambio profilo/stile.
 padding.width: 4
 padding.height: 3
-border.width: 2
+border.width: 1
 window.client.padding.width: 0
 window.handle.width: 6
 window.active.handle.bg: flat solid
@@ -16,12 +16,12 @@ window.inactive.grip.bg: flat solid
 window.inactive.grip.bg.color: #1a3a52
 
 # Bordi
-window.active.border.color: #00e5ff
+window.active.border.color: #122536
 window.inactive.border.color: #1a3a52
 
 # Barra del titolo
 window.active.title.bg: gradient vertical
-window.active.title.bg.color: #083c4d
+window.active.title.bg.color: #074d5e
 window.active.title.bg.colorTo: #0a1220
 window.inactive.title.bg: flat solid
 window.inactive.title.bg.color: #050a14
