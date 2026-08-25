@@ -221,6 +221,8 @@ def write_accent_css(key: str | None = None) -> None:
 .nxs-panel button.nxs-task-active {{
   color: {ac}; background-color: rgba({rgb},0.14);
   border-color: transparent; box-shadow: inset 0 -2px {ac}; }}
+.nxs-panel button.nxs-pager-active {{
+  color: #050a14; background-color: {ac}; border-color: {ac}; }}
 
 /* --- MENU: striscia, categorie a tag, hover e selezione --- */
 .nxs-menu-strip {{ background-image: linear-gradient(to top, #03070f, {ac} 60%, {ac}); }}

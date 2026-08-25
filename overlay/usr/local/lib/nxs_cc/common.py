@@ -131,6 +131,16 @@ spinner { color: #00e5ff; }
   color: #00e5ff; background-color: rgba(0,229,255,0.12);
   border-color: #1a3a52;
 }
+/* Pager desktop virtuali (workspaces) */
+.nxs-panel button.nxs-pager-btn {
+  color: #5a8a9a; padding: 1px 8px; margin: 4px 1px; font-size: 9pt;
+  min-width: 20px; border: 1px solid #163040; border-radius: 6px;
+}
+.nxs-panel button.nxs-pager-btn:hover { color: #c8f5ff; }
+.nxs-panel button.nxs-pager-active {
+  color: #050a14; background-color: #00e5ff; border-color: #00e5ff;
+  font-weight: bold;
+}
 .nxs-panel label.nxs-clock { color: #c8f5ff; font-size: 10pt; padding: 0 6px; }
 .nxs-panel label.nxs-clock-date { color: #5a8a9a; font-size: 8pt; padding: 0 6px; }
 .nxs-panel separator { background-color: #1a3a52; margin: 5px 4px; }

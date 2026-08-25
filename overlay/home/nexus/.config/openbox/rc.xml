@@ -128,10 +128,13 @@
 
        use obconf if you want to change these without having to log out
        and back in -->
-  <number>1</number>
+  <number>4</number>
   <firstdesk>1</firstdesk>
   <names>
-    <name>NexusSec</name>
+    <name>1</name>
+    <name>2</name>
+    <name>3</name>
+    <name>4</name>
   </names>
   <popupTime>875</popupTime>
   <!-- The number of milliseconds to show the popup for when switching

@@ -70,7 +70,8 @@ TOOL_CAT_LABEL = {k: v[0] for k, v in TOOL_CATEGORIES}
 TOOL_CAT_ICON = {k: v[1] for k, v in TOOL_CATEGORIES}
 TOOL_CAT_ORDER = [k for k, _ in TOOL_CATEGORIES]
 
-PANEL_HEIGHT = panelcfg.PANEL_HEIGHT
+PANEL_HEIGHT = panelcfg.get_height()
+ICON_PX = panelcfg.get_icon_px()
 POLL_MS = 1000
 
 # Fusi orari offerti nel popup dell'orologio (cambio al volo senza aprire il
@@ -126,6 +127,28 @@ def _wmctrl_list():
     return wins
 
 
+def _wmctrl_desktops():
+    """Ritorna (numero_desktop, indice_corrente) via 'wmctrl -d'."""
+    try:
+        out = subprocess.run(["wmctrl", "-d"], capture_output=True,
+                             text=True, timeout=3).stdout
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        return (0, -1)
+    count = 0; cur = -1
+    for line in out.splitlines():
+        parts = line.split()
+        if not parts:
+            continue
+        try:
+            idx = int(parts[0])
+        except ValueError:
+            continue
+        count += 1
+        if len(parts) > 1 and parts[1] == "*":
+            cur = idx
+    return (count, cur)
+
+
 def _active_window():
     """ID esadecimale della finestra attiva (via Gdk, nessuna dipendenza)."""
     try:
@@ -137,13 +160,19 @@ def _active_window():
     return None
 
 
+def _tray_img(icon_name):
+    """Immagine per la barra, dimensionata a ICON_PX (configurabile)."""
+    img = Gtk.Image.new_from_icon_name(icon_name, Gtk.IconSize.LARGE_TOOLBAR)
+    img.set_pixel_size(ICON_PX)
+    return img
+
+
 def _icon_button(icon_name, tooltip, css_class="nxs-icon"):
     b = Gtk.Button()
     b.set_relief(Gtk.ReliefStyle.NONE)
     b.set_tooltip_text(tooltip)
     b.get_style_context().add_class(css_class)
-    img = Gtk.Image.new_from_icon_name(icon_name, Gtk.IconSize.LARGE_TOOLBAR)
-    b.set_image(img)
+    b.set_image(_tray_img(icon_name))
     b.set_always_show_image(True)
     return b
 
@@ -470,6 +499,16 @@ class Panel(Gtk.Window):
 
         left.pack_start(Gtk.Separator(orientation=Gtk.Orientation.VERTICAL),
                         False, False, 0)
+
+        # --- Pager desktop virtuali (workspaces): compare solo se > 1 ---
+        self.pager = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=2)
+        self.pager.get_style_context().add_class("nxs-pager")
+        left.pack_start(self.pager, False, False, 2)
+        self.pager_sep = Gtk.Separator(orientation=Gtk.Orientation.VERTICAL)
+        left.pack_start(self.pager_sep, False, False, 0)
+        self._pager_btns = {}
+        self._n_desktops = 0
+        self._cur_desktop = -1
 
         # --- Centro: lista finestre ---
         self.tasks = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=0)
@@ -1213,8 +1252,7 @@ class Panel(Gtk.Window):
             ai = "audio-volume-medium-symbolic"
         else:
             ai = "audio-volume-high-symbolic"
-        self.vol_btn.set_image(Gtk.Image.new_from_icon_name(
-            ai, Gtk.IconSize.LARGE_TOOLBAR))
+        self.vol_btn.set_image(_tray_img(ai))
         # Bluetooth: conn=dispositivo collegato, on=acceso, altrimenti spento.
         if bt == "conn":
             bi = "bluetooth-active-symbolic"
@@ -1222,8 +1260,7 @@ class Panel(Gtk.Window):
             bi = "bluetooth-symbolic"
         else:
             bi = "bluetooth-disabled-symbolic"
-        self.bt_btn.set_image(Gtk.Image.new_from_icon_name(
-            bi, Gtk.IconSize.LARGE_TOOLBAR))
+        self.bt_btn.set_image(_tray_img(bi))
         self.bt_btn.set_tooltip_text(
             {"conn": "Bluetooth: dispositivo connesso", "on": "Bluetooth acceso",
              "off": "Bluetooth spento",
@@ -1240,14 +1277,12 @@ class Panel(Gtk.Window):
         else:
             wi = "network-wireless-disabled-symbolic"
             self.wifi_btn.set_tooltip_text("WiFi non disponibile")
-        self.wifi_btn.set_image(Gtk.Image.new_from_icon_name(
-            wi, Gtk.IconSize.LARGE_TOOLBAR))
+        self.wifi_btn.set_image(_tray_img(wi))
         # Batteria / alimentazione
         if batt == "nobattery":
             self.batt_btn.hide()
         elif batt == "ac-only":
-            self.batt_btn.set_image(Gtk.Image.new_from_icon_name(
-                "ac-adapter-symbolic", Gtk.IconSize.LARGE_TOOLBAR))
+            self.batt_btn.set_image(_tray_img("ac-adapter-symbolic"))
             self.batt_btn.set_tooltip_text("Alimentazione da rete elettrica")
             self.batt_btn.show()
         else:
@@ -1257,8 +1292,7 @@ class Panel(Gtk.Window):
                 bac = p[2] if len(p) > 2 else "0"
             except (ValueError, IndexError):
                 bpct, bstate, bac = 0, "unknown", "0"
-            self.batt_btn.set_image(Gtk.Image.new_from_icon_name(
-                self._batt_icon(bpct, bstate), Gtk.IconSize.LARGE_TOOLBAR))
+            self.batt_btn.set_image(_tray_img(self._batt_icon(bpct, bstate)))
             lab = {"charging": "in carica", "discharging": "in scarica",
                    "full": "carica", "notcharging": "non in carica"}.get(
                        bstate, "")
@@ -1955,7 +1989,43 @@ class Panel(Gtk.Window):
                 pass
         return xids
 
+    def _refresh_pager(self):
+        count, cur = _wmctrl_desktops()
+        # ricostruisci i pulsanti se e' cambiato il numero di desktop
+        if count != self._n_desktops:
+            self._n_desktops = count
+            for c in self.pager.get_children():
+                self.pager.remove(c)
+            self._pager_btns = {}
+            if count > 1:
+                for i in range(count):
+                    b = Gtk.Button(label=str(i + 1))
+                    b.set_relief(Gtk.ReliefStyle.NONE)
+                    b.get_style_context().add_class("nxs-pager-btn")
+                    b.set_tooltip_text("Passa al desktop %d" % (i + 1))
+                    b.connect("clicked", self._on_pager, i)
+                    self.pager.pack_start(b, False, False, 0)
+                    self._pager_btns[i] = b
+                self.pager.show_all()
+                self.pager_sep.show()
+            else:
+                self.pager_sep.hide()
+        # evidenzia il desktop corrente
+        if cur != self._cur_desktop:
+            self._cur_desktop = cur
+            for i, b in self._pager_btns.items():
+                ctx = b.get_style_context()
+                if i == cur:
+                    ctx.add_class("nxs-pager-active")
+                else:
+                    ctx.remove_class("nxs-pager-active")
+
+    def _on_pager(self, _btn, idx):
+        run_bg(["wmctrl", "-s", str(idx)])
+        GLib.timeout_add(120, self._refresh_pager)
+
     def _refresh_tasks(self):
+        self._refresh_pager()
         own = self._own_xids()
         wins = [(wid, d, t) for (wid, d, t) in _wmctrl_list()
                 if _xid_int(wid) not in own]

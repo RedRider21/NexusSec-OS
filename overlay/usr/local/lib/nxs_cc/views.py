@@ -973,7 +973,7 @@ def _panel_restart():
 
 
 def open_statusbar(_btn=None):
-    win, body = panel_window("Pannello inferiore", 520, 360)
+    win, body = panel_window("Pannello inferiore", 540, 680)
 
     card = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
     card.get_style_context().add_class("nxs-card")
@@ -1018,6 +1018,70 @@ def open_statusbar(_btn=None):
     pbox.pack_end(b_applypos, False, False, 0)
     frame_pos.add(pbox)
     body.pack_start(frame_pos, False, False, 0)
+
+    # Dimensioni: altezza barra + grandezza icone
+    frame_dim = Gtk.Frame(label="Dimensioni")
+    dbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
+    dbox.set_margin_top(8); dbox.set_margin_bottom(8)
+    dbox.set_margin_start(10); dbox.set_margin_end(10)
+
+    r_h = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+    l_h = Gtk.Label(label="Altezza della barra (px)"); l_h.set_xalign(0)
+    r_h.pack_start(l_h, True, True, 0)
+    spin_h = Gtk.SpinButton.new_with_range(panelcfg.MIN_HEIGHT,
+                                           panelcfg.MAX_HEIGHT, 1)
+    spin_h.set_value(panelcfg.get_height())
+    r_h.pack_end(spin_h, False, False, 0)
+    dbox.pack_start(r_h, False, False, 0)
+
+    r_i = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+    l_i = Gtk.Label(label="Grandezza icone della barra (px)"); l_i.set_xalign(0)
+    r_i.pack_start(l_i, True, True, 0)
+    spin_i = Gtk.SpinButton.new_with_range(panelcfg.MIN_ICON_PX,
+                                           panelcfg.MAX_ICON_PX, 1)
+    spin_i.set_value(panelcfg.get_icon_px())
+    r_i.pack_end(spin_i, False, False, 0)
+    dbox.pack_start(r_i, False, False, 0)
+
+    b_applydim = Gtk.Button(label="Applica dimensioni")
+    b_applydim.get_style_context().add_class("nxs-primary")
+
+    def apply_dim(_b):
+        panelcfg.apply_layout(height=int(spin_h.get_value()),
+                              icon_px=int(spin_i.get_value()))
+        info_dialog("Barra aggiornata",
+                    "Altezza e icone applicate. Pannello riavviato.", parent=win)
+    b_applydim.connect("clicked", apply_dim)
+    row_bd = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+    row_bd.pack_end(b_applydim, False, False, 0)
+    dbox.pack_start(row_bd, False, False, 0)
+    frame_dim.add(dbox)
+    body.pack_start(frame_dim, False, False, 0)
+
+    # Desktop virtuali (workspaces)
+    frame_ws = Gtk.Frame(label="Desktop virtuali (workspaces)")
+    wbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+    wbox.set_margin_top(8); wbox.set_margin_bottom(8)
+    wbox.set_margin_start(10); wbox.set_margin_end(10)
+    l_ws = Gtk.Label(label="Numero di desktop"); l_ws.set_xalign(0)
+    wbox.pack_start(l_ws, True, True, 0)
+    spin_ws = Gtk.SpinButton.new_with_range(panelcfg.MIN_DESKTOPS,
+                                            panelcfg.MAX_DESKTOPS, 1)
+    spin_ws.set_value(panelcfg.get_desktops())
+    wbox.pack_start(spin_ws, False, False, 0)
+    b_applyws = Gtk.Button(label="Applica")
+    b_applyws.get_style_context().add_class("nxs-primary")
+
+    def apply_ws(_b):
+        panelcfg.set_desktops(int(spin_ws.get_value()))
+        info_dialog("Desktop aggiornati",
+                    "Ora hai %d desktop virtuali. Il selettore compare nella "
+                    "barra a sinistra (se piu' di uno)."
+                    % int(spin_ws.get_value()), parent=win)
+    b_applyws.connect("clicked", apply_ws)
+    wbox.pack_end(b_applyws, False, False, 0)
+    frame_ws.add(wbox)
+    body.pack_start(frame_ws, False, False, 0)
 
     # Stato
     state = Gtk.Label()
