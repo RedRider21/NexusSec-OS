@@ -62,7 +62,11 @@ profile_nexussec() {
 	if [ "$arch" != "aarch64" ]; then
 		_nxs_black=" blacklist=sdhci,sdhci_pci,sdhci_acpi,mmc_block,mmc_core"
 	fi
-	initfs_cmdline="modules=loop,squashfs,sd-mod,usb-storage${_nxs_black} quiet console=tty12 vt.global_cursor_default=0"
+	# Avvio VERBOSE (scelta esplicita): NIENTE 'quiet'/'console=tty12', cosi' su
+	# tty1 SCORRONO i messaggi del bootstrap (moduli, storage, servizi OpenRC)
+	# come su una Alpine standard -> poi Xorg -> splash -> desktop. Per un avvio
+	# pulito senza testo si rimette 'quiet console=tty12'.
+	initfs_cmdline="modules=loop,squashfs,sd-mod,usb-storage${_nxs_black} vt.global_cursor_default=0"
 	# --- cgroups v2 (unified) per Podman ROOTLESS (root-cause fix) -----------
 	# Sintomo: attivando un profilo e lanciando un tool via container Kali,
 	# `crun` abortiva con "invalid file system type on /sys/fs/cgroup" e Podman

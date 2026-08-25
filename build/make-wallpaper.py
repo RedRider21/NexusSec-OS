@@ -237,23 +237,61 @@ def glow_compose(base, layer, radius=9):
     return Image.alpha_composite(base, layer)
 
 
+def _hexpts(cx, cy, r, rot=math.pi / 6):
+    return [(cx + r * math.cos(rot + math.pi / 3 * i),
+             cy + r * math.sin(rot + math.pi / 3 * i)) for i in range(6)]
+
+
 def make(name, accent_hex, deep_hex, label, focal=(W // 2, H // 2)):
+    """Sfondo stile 'badge' (2026-08-25): stesso impianto per tutti i profili,
+    cambia solo l'accent. GRIGLIA esagonale mantenuta in sottofondo + emblema
+    esagonale con monogramma N + wordmark 'NexusSec' + tag del profilo, con
+    aloni radiali soffusi (colorazione raffinata). Coerente coi badge del sito."""
     accent = hx(accent_hex)
     deep = hx(deep_hex)
-    img = background(accent, deep, focal)
-    img = Image.alpha_composite(img, starfield(hash(name) & 0xffff))
-    img = Image.alpha_composite(img, honeycomb(accent))
-    img = glow_compose(img, node_network(accent, hash(name) & 0xffff, focal), 4)
-    img = glow_compose(img, emblem(name, accent), 10)
-    img = Image.alpha_composite(img, corner_hud(accent))
-    img = glow_compose(img, brand_badge(accent), 6)   # monogramma NXS in alto
+    img = background(accent, deep, focal)                    # gradiente radiale
+    img = Image.alpha_composite(img, honeycomb(accent))      # GRIGLIA (mantenuta)
 
-    # filigrana: nome del profilo in basso a destra (il marchio e' in alto).
-    d = ImageDraw.Draw(img)
-    if label:
-        d.text((W - 70, H - 86), label, font=font(40),
-               fill=accent + (110,), anchor="ra")
-    d.text((70, H - 74), "SECURE LIVE OS", font=font(20), fill=accent + (70,))
+    # aloni accento soffusi (raffinati, non campiture piatte)
+    glow = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    gd = ImageDraw.Draw(glow)
+    gd.ellipse([W * 0.52, -H * 0.42, W * 1.32, H * 0.6], fill=accent + (46,))
+    gd.ellipse([-W * 0.3, H * 0.5, W * 0.42, H * 1.28], fill=accent + (26,))
+    img = Image.alpha_composite(img, glow.filter(ImageFilter.GaussianBlur(200)))
+
+    cx, cy = W // 2, int(H * 0.44)
+    # bagliore dietro l'emblema
+    eg = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    ImageDraw.Draw(eg).ellipse([cx - 300, cy - 300, cx + 300, cy + 300],
+                               fill=accent + (30,))
+    img = Image.alpha_composite(img, eg.filter(ImageFilter.GaussianBlur(120)))
+
+    d = ImageDraw.Draw(img, "RGBA")
+    R = 150
+    pts = _hexpts(cx, cy, R)
+    d.polygon(pts, fill=(9, 15, 26, 235), outline=accent + (255,))
+    d.line(pts + [pts[0]], fill=accent + (120,), width=2)
+    fN = font(190)
+    tw = d.textlength("N", font=fN)
+    d.text((cx - tw / 2, cy - 118), "N", font=fN, fill=(236, 251, 255, 255))
+    # wordmark
+    fW = font(72)
+    wm = "NexusSec"
+    ww = d.textlength(wm, font=fW)
+    d.text((cx - ww / 2, cy + 180), wm, font=fW, fill=(226, 246, 255, 255))
+    # tag del profilo (pillola accento, lettere spaziate)
+    tag = (label or name).upper()
+    ft = font(30)
+    spaced = " ".join(tag)
+    lw = d.textlength(spaced, font=ft)
+    px, py = cx - lw / 2 - 28, cy + 292
+    # fill SOLIDO tinto (l'alpha diretto diventerebbe opaco al convert RGB):
+    # scuro con un 20% di accent -> il testo accento risalta bene.
+    pill = mix((8, 13, 22), accent, 0.20)
+    d.rounded_rectangle([px, py, cx + lw / 2 + 28, py + 56], radius=28,
+                        fill=pill, outline=accent + (255,))
+    d.text((cx - lw / 2, py + 11), spaced, font=ft, fill=accent + (255,))
+
     out = os.path.join(DEST, name_to_file(name))
     img.convert("RGB").save(out, "PNG")
     print("generato", out)
@@ -265,9 +303,9 @@ def name_to_file(name):
 
 if __name__ == "__main__":
     os.makedirs(DEST, exist_ok=True)
-    make("base",      "#00e5ff", "#020611", "",            (W * 0.5,  H * 0.45))
-    make("pentest",   "#ff3b5c", "#0c0205", "PEN TESTING", (W * 0.5,  H * 0.5))
-    make("forensics", "#ffb000", "#05070f", "FORENSICS",   (W * 0.42, H * 0.45))
-    make("osint",     "#23d18b", "#02100a", "OSINT",       (W * 0.5,  H * 0.5))
-    make("web",       "#a06bff", "#070310", "WEB PENTEST", (W * 0.5,  H * 0.48))
+    make("base",      "#00e5ff", "#020611", "Base",        (W * 0.5, H * 0.44))
+    make("pentest",   "#ff3b5c", "#0c0205", "Pen Testing", (W * 0.5, H * 0.44))
+    make("forensics", "#ffb000", "#05070f", "Forensics",   (W * 0.5, H * 0.44))
+    make("osint",     "#23d18b", "#02100a", "OSINT",       (W * 0.5, H * 0.44))
+    make("web",       "#a06bff", "#070310", "Web",         (W * 0.5, H * 0.44))
     print("[wallpaper] fatto.")

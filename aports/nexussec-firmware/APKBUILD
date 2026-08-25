@@ -8,10 +8,15 @@
 # pentest: Atheros (ath9k_htc/ath10k/ath11k), Realtek (rtlwifi/rtw88/rtw89/
 # rtl_nic), Broadcom/Cypress, MediaTek (mt76). + wireless-regdb (regolatoria).
 # NB: +122MB sull'ISO -> scelta esplicita per l'usabilita' su portatile.
+# AUDIO: include anche "sof-firmware" (Sound Open Firmware). Sui portatili
+# Intel/AMD moderni il codec audio e' dietro un DSP (SOF): SENZA questo firmware
+# il kernel crea un nodo "Analog Stereo" fantoccio che NON emette nulla (ne'
+# altoparlanti ne' cuffie) -> in VM l'audio va (HDA emulata), su HW reale no.
+# Va nel modloop perche' il driver lo carica al coldplug (dopo il mount modloop).
 pkgname=nexussec-firmware
 pkgver=1.0.0
-pkgrel=1
-pkgdesc="NexusSec OS - firmware wireless (subset per modloop: WiFi USB + Intel, senza GPU)"
+pkgrel=2
+pkgdesc="NexusSec OS - firmware wireless + audio SOF (subset per modloop: WiFi USB + Intel + sof, senza GPU)"
 url="https://github.com/thecloners21"
 arch="noarch"
 license="MIT"
@@ -28,6 +33,7 @@ depends="
 	linux-firmware-brcm
 	linux-firmware-cypress
 	linux-firmware-mediatek
+	sof-firmware
 	"
 options="!check"
 

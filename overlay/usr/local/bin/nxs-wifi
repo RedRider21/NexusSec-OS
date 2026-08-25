@@ -53,10 +53,22 @@ case "${1:-}" in
 
   scan)
     ensure_up || { echo ""; exit 0; }
-    priv wpa_cli -i "$IFACE" scan >/dev/null 2>&1
-    sleep 2
+    # Alla PRIMA apertura wpa_supplicant e' appena partito e i risultati non
+    # sono ancora pronti: il popup usciva vuoto e serviva riaprirlo. Riproviamo
+    # lo scan finche' arrivano reti (o si esaurisce il tempo), cosi' la prima
+    # apertura funziona come le successive.
+    results=""
+    i=0
+    while [ "$i" -lt 4 ]; do
+      priv wpa_cli -i "$IFACE" scan >/dev/null 2>&1
+      sleep 2
+      results=$(priv wpa_cli -i "$IFACE" scan_results 2>/dev/null)
+      # oltre la riga di intestazione = almeno una rete trovata
+      [ "$(printf '%s\n' "$results" | wc -l)" -gt 1 ] && break
+      i=$((i + 1))
+    done
     # scan_results: bssid  freq  signal  flags  ssid
-    priv wpa_cli -i "$IFACE" scan_results 2>/dev/null | awk '
+    printf '%s\n' "$results" | awk '
       NR>1 {
         sig=$3; flags=$4; ssid="";
         for (i=5;i<=NF;i++) ssid=ssid (i>5?" ":"") $i;

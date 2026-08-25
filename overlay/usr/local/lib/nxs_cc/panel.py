@@ -94,7 +94,15 @@ _DISK_RE = re.compile(r'^(sd[a-z]+|vd[a-z]+|hd[a-z]+|xvd[a-z]+|'
 # Finestre da NON mostrare nella tasklist: la finestra "desktop" di
 # pcmanfm (--desktop) e simili. Il file manager vero ha come titolo il
 # nome della cartella, quindi non viene filtrato.
-_SKIP_TITLES = {"pcmanfm", "desktop", "pcmanfm-desktop", ""}
+_SKIP_TITLES = {"pcmanfm", "desktop", "pcmanfm-desktop", "", "nxs-popup"}
+
+
+def _xid_int(wid):
+    """Converte un id finestra di wmctrl (es. '0x0a000005') in intero."""
+    try:
+        return int(wid, 16)
+    except (TypeError, ValueError):
+        return -1
 
 
 def _wmctrl_list():
@@ -441,7 +449,7 @@ class Panel(Gtk.Window):
         left = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=0)
         root.pack_start(left, False, False, 0)
 
-        menu_btn = _icon_button("open-menu-symbolic", "Menu NexusSec", "nxs-menu")
+        menu_btn = _icon_button("nxs-logo", "Menu NexusSec", "nxs-menu")
         menu_btn.connect("clicked", self._on_menu)
         left.pack_start(menu_btn, False, False, 0)
 
@@ -486,9 +494,9 @@ class Panel(Gtk.Window):
         scr_btn.connect("clicked", self._toggle_screens)
         right.pack_start(scr_btn, False, False, 0)
 
-        wifi_btn = _icon_button("network-wireless-symbolic", "Reti WiFi")
-        wifi_btn.connect("clicked", self._toggle_wifi)
-        right.pack_start(wifi_btn, False, False, 0)
+        self.wifi_btn = _icon_button("network-wireless-offline-symbolic", "Reti WiFi")
+        self.wifi_btn.connect("clicked", self._toggle_wifi)
+        right.pack_start(self.wifi_btn, False, False, 0)
 
         # Audio (volume/uscite via wpctl-PipeWire): clic = popup, rotella = +/-.
         self.vol_btn = _icon_button("audio-volume-medium-symbolic", "Audio")
@@ -501,6 +509,13 @@ class Panel(Gtk.Window):
         self.bt_btn = _icon_button("bluetooth-active-symbolic", "Bluetooth")
         self.bt_btn.connect("clicked", self._toggle_bluetooth)
         right.pack_start(self.bt_btn, False, False, 0)
+
+        # Batteria / alimentazione (sysfs): l'applet compare solo se presente
+        # una batteria o un alimentatore (su desktop fissi resta nascosto).
+        self.batt_btn = _icon_button("battery-missing-symbolic", "Batteria")
+        self.batt_btn.connect("clicked", self._toggle_battery)
+        self.batt_btn.set_no_show_all(True)      # la visibilita' la decide il poll
+        right.pack_start(self.batt_btn, False, False, 0)
 
         right.pack_start(Gtk.Separator(orientation=Gtk.Orientation.VERTICAL),
                          False, False, 0)
@@ -576,6 +591,7 @@ class Panel(Gtk.Window):
         w = Gtk.Window(type=Gtk.WindowType.TOPLEVEL)
         w.set_decorated(False)
         w.set_resizable(False)
+        w.set_title("nxs-popup")          # filtrato dalla tasklist (vedi _SKIP_TITLES)
         w.set_skip_taskbar_hint(True)
         w.set_skip_pager_hint(True)
         w.set_keep_above(True)
@@ -606,15 +622,13 @@ class Panel(Gtk.Window):
         w.move(x, y)
 
         def on_focus_out(*_a):
-            if key in self._popups:
-                self._popups.pop(key, None)
-                self._popup_closed[key] = time.time()
-                w.destroy()
+            # Chiusura al clic FUORI, ma DIFFERITA e "intelligente": se il focus
+            # e' passato a un combo/menu interno (che tiene un grab GTK) o e'
+            # subito rientrato nel popup, NON chiudere -> cosi' i popup con combo
+            # (fuso orario, schermi) restano aperti mentre scegli una voce, ma un
+            # clic sul desktop o su un'altra finestra li chiude come atteso.
+            GLib.timeout_add(150, self._autoclose_check, key)
             return False
-        # autoclose=False per i popup con widget interattivi (combo/spin): il
-        # dropdown della combo ruba il focus -> il focus-out chiudeva tutto e non
-        # si riusciva a scegliere il fuso/ora. Quelli si chiudono con Esc, con un
-        # nuovo clic sul pulsante, o dopo "Imposta".
         if autoclose:
             w.connect("focus-out-event", on_focus_out)
 
@@ -631,6 +645,33 @@ class Panel(Gtk.Window):
         if key in self._popups:
             self._popups.pop(key).destroy()
             self._popup_closed[key] = time.time()
+
+    def _autoclose_check(self, key):
+        """Decide (dopo il focus-out differito) se chiudere il popup. Chiude solo
+        se il focus e' uscito DAVVERO: resta aperto se il popup ha riottenuto il
+        focus o se un combo/menu interno tiene un grab GTK (sceglierne una voce
+        chiuderebbe tutto). Cosi' il clic-fuori chiude, ma i combo funzionano."""
+        w = self._popups.get(key)
+        if w is None:
+            return False
+        try:
+            if w.has_toplevel_focus():
+                return False
+        except Exception:                # noqa: BLE001
+            pass
+        # combo/menu interno aperto (fa un grab GTK) -> non chiudere ora
+        if Gtk.grab_get_current() is not None:
+            return False
+        self._close_popup(key)
+        return False
+
+    def _refresh_media_once(self):
+        """Aggiornamento icone audio/BT ONE-SHOT per GLib.timeout_add: come
+        _refresh_media ma ritorna False, cosi' NON ri-arma un timer periodico.
+        (Bug precedente: ogni scroll/mute/toggle lasciava un poller permanente
+        perche' _refresh_media ritorna True -> i timer si accumulavano.)"""
+        self._refresh_media()
+        return False
 
     # --- menu NexusSec (stile Windows, con banda verticale) ---
     def _menu_item(self, key, icon, label, cmd=None, move_to=None, confirm=None):
@@ -1133,11 +1174,37 @@ class Panel(Gtk.Window):
                 bt = self._run_out(["nxs-bluetooth", "status"]).strip()
             except Exception:                       # noqa: BLE001
                 bt = "noadapter"
-            GLib.idle_add(self._apply_media_icons, pct, muted, bt)
+            try:
+                wifi = self._run_out(["nxs-wifi", "status"]).strip()
+            except Exception:                       # noqa: BLE001
+                wifi = "no-wifi"
+            try:
+                batt = self._run_out(["nxs-battery", "status"]).strip()
+            except Exception:                       # noqa: BLE001
+                batt = "nobattery"
+            GLib.idle_add(self._apply_media_icons, pct, muted, bt, wifi, batt)
         threading.Thread(target=worker, daemon=True).start()
         return True
 
-    def _apply_media_icons(self, pct, muted, bt):
+    def _batt_icon(self, pct, state):
+        """Nome-icona simbolica batteria dal livello e dallo stato di carica."""
+        charging = state in ("charging",)
+        # nomi presenti in Adwaita: full/good/low/caution/empty (+ -charging)
+        if pct >= 80:
+            lvl = "full"
+        elif pct >= 45:
+            lvl = "good"
+        elif pct >= 20:
+            lvl = "low"
+        else:
+            lvl = "caution"
+        if state == "full":
+            return "battery-full-charged-symbolic"
+        if charging:
+            return "battery-%s-charging-symbolic" % lvl
+        return "battery-%s-symbolic" % lvl
+
+    def _apply_media_icons(self, pct, muted, bt, wifi="no-wifi", batt="nobattery"):
         if pct is None or muted or pct <= 0:
             ai = "audio-volume-muted-symbolic"
         elif pct < 34:
@@ -1148,9 +1215,60 @@ class Panel(Gtk.Window):
             ai = "audio-volume-high-symbolic"
         self.vol_btn.set_image(Gtk.Image.new_from_icon_name(
             ai, Gtk.IconSize.LARGE_TOOLBAR))
-        bi = "bluetooth-active-symbolic" if bt == "on" else "bluetooth-disabled-symbolic"
+        # Bluetooth: conn=dispositivo collegato, on=acceso, altrimenti spento.
+        if bt == "conn":
+            bi = "bluetooth-active-symbolic"
+        elif bt == "on":
+            bi = "bluetooth-symbolic"
+        else:
+            bi = "bluetooth-disabled-symbolic"
         self.bt_btn.set_image(Gtk.Image.new_from_icon_name(
             bi, Gtk.IconSize.LARGE_TOOLBAR))
+        self.bt_btn.set_tooltip_text(
+            {"conn": "Bluetooth: dispositivo connesso", "on": "Bluetooth acceso",
+             "off": "Bluetooth spento",
+             "noadapter": "Bluetooth non disponibile"}.get(bt, "Bluetooth"))
+        # WiFi: connesso (mostra SSID nel tooltip) / disconnesso / assente.
+        if wifi.startswith("connected"):
+            wi = "network-wireless-signal-excellent-symbolic"
+            ssid = wifi[len("connected"):].strip()
+            self.wifi_btn.set_tooltip_text("WiFi: connesso a %s" % ssid if ssid
+                                           else "WiFi: connesso")
+        elif wifi == "disconnected":
+            wi = "network-wireless-offline-symbolic"
+            self.wifi_btn.set_tooltip_text("WiFi: non connesso")
+        else:
+            wi = "network-wireless-disabled-symbolic"
+            self.wifi_btn.set_tooltip_text("WiFi non disponibile")
+        self.wifi_btn.set_image(Gtk.Image.new_from_icon_name(
+            wi, Gtk.IconSize.LARGE_TOOLBAR))
+        # Batteria / alimentazione
+        if batt == "nobattery":
+            self.batt_btn.hide()
+        elif batt == "ac-only":
+            self.batt_btn.set_image(Gtk.Image.new_from_icon_name(
+                "ac-adapter-symbolic", Gtk.IconSize.LARGE_TOOLBAR))
+            self.batt_btn.set_tooltip_text("Alimentazione da rete elettrica")
+            self.batt_btn.show()
+        else:
+            try:
+                p = batt.split("\t")
+                bpct = int(p[0]); bstate = p[1] if len(p) > 1 else "unknown"
+                bac = p[2] if len(p) > 2 else "0"
+            except (ValueError, IndexError):
+                bpct, bstate, bac = 0, "unknown", "0"
+            self.batt_btn.set_image(Gtk.Image.new_from_icon_name(
+                self._batt_icon(bpct, bstate), Gtk.IconSize.LARGE_TOOLBAR))
+            lab = {"charging": "in carica", "discharging": "in scarica",
+                   "full": "carica", "notcharging": "non in carica"}.get(
+                       bstate, "")
+            tip = "Batteria: %d%%" % bpct
+            if lab:
+                tip += " (%s)" % lab
+            if bac == "1" and bstate != "full":
+                tip += " — rete collegata"
+            self.batt_btn.set_tooltip_text(tip)
+            self.batt_btn.show()
         return False
 
     def _vol_scroll(self, _w, ev):
@@ -1166,7 +1284,7 @@ class Panel(Gtk.Window):
             self._bg(["nxs-audio", "up"])
         elif down:
             self._bg(["nxs-audio", "down"])
-        GLib.timeout_add(200, self._refresh_media)
+        GLib.timeout_add(200, self._refresh_media_once)
         return True
 
     def _toggle_volume(self, _btn):
@@ -1191,13 +1309,23 @@ class Panel(Gtk.Window):
         status = Gtk.Label(label="..."); status.set_xalign(0)
         status.get_style_context().add_class("nxs-clock-date")
         box.pack_start(status, False, False, 0)
+        # Sblocco audio a un clic (utile su portatile reale: se non si sente,
+        # forza unmute+volume su ALSA hardware e sink PipeWire, con ritentativi).
+        unmute_b = Gtk.Button(label="Sblocca audio (HW)")
+        unmute_b.get_style_context().add_class("nxs-menu-item")
+        unmute_b.set_tooltip_text("Se non senti nulla: sblocca e alza l'audio su "
+                                  "tutti i livelli (ALSA + PipeWire).")
+        unmute_b.connect("clicked", lambda _w: (
+            self._bg(["nxs-audio-unmute", "2"]),
+            GLib.timeout_add(400, self._refresh_media_once)))
+        box.pack_start(unmute_b, False, False, 0)
         outs = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
         box.pack_start(outs, False, False, 0)
-        self._spawn_popup("audio", box, align="right", autoclose=False)
+        self._spawn_popup("audio", box, align="right")
 
         def on_scale(s):
             self._bg(["nxs-audio", "set", str(int(s.get_value()))])
-            GLib.timeout_add(150, self._refresh_media)
+            GLib.timeout_add(150, self._refresh_media_once)
 
         def fill(pct, muted, sinks):
             if "audio" not in self._popups:
@@ -1206,7 +1334,7 @@ class Panel(Gtk.Window):
             scale.connect("value-changed", on_scale)
             mute_b.connect("clicked", lambda _w: (
                 self._bg(["nxs-audio", "mute"]),
-                GLib.timeout_add(150, self._refresh_media)))
+                GLib.timeout_add(150, self._refresh_media_once)))
             if pct is None:
                 status.set_text("PipeWire non attivo o nessuna uscita audio.")
             else:
@@ -1238,6 +1366,100 @@ class Panel(Gtk.Window):
             GLib.idle_add(fill, pct, muted, sinks)
         threading.Thread(target=worker, daemon=True).start()
 
+    def _toggle_battery(self, _btn):
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
+        box.get_style_context().add_class("nxs-calbox")
+        box.set_size_request(320, -1)
+        title = Gtk.Label(); title.set_markup("<b>Alimentazione</b>")
+        title.set_xalign(0)
+        box.pack_start(title, False, False, 0)
+
+        big = Gtk.Label(); big.set_xalign(0)
+        big.get_style_context().add_class("nxs-clock")
+        box.pack_start(big, False, False, 0)
+        bar = Gtk.ProgressBar(); bar.set_show_text(False)
+        box.pack_start(bar, False, False, 0)
+        state_lbl = Gtk.Label(); state_lbl.set_xalign(0)
+        state_lbl.get_style_context().add_class("nxs-clock-date")
+        box.pack_start(state_lbl, False, False, 0)
+
+        grid = Gtk.Grid(); grid.set_row_spacing(4); grid.set_column_spacing(14)
+        box.pack_start(grid, False, False, 4)
+        self._spawn_popup("battery", box, align="right")
+
+        def add_row(r, k, v):
+            kl = Gtk.Label(label=k); kl.set_xalign(0)
+            kl.get_style_context().add_class("nxs-clock-date")
+            vl = Gtk.Label(label=v); vl.set_xalign(1); vl.set_hexpand(True)
+            grid.attach(kl, 0, r, 1, 1)
+            grid.attach(vl, 1, r, 1, 1)
+
+        def fill(info):
+            if "battery" not in self._popups:
+                return False
+            for c in grid.get_children():
+                grid.remove(c)
+            if info.get("battery") != "1":
+                big.set_text("Rete elettrica")
+                bar.set_fraction(1.0)
+                state_lbl.set_text("Alimentazione da rete (nessuna batteria).")
+                grid.show_all()
+                return False
+            pct = int(info.get("percent", "0") or 0)
+            big.set_text("%d%%" % pct)
+            bar.set_fraction(max(0.0, min(1.0, pct / 100.0)))
+            st = info.get("state", "unknown")
+            stmap = {"charging": "In carica", "discharging": "In scarica",
+                     "full": "Carica completa", "notcharging": "Non in carica",
+                     "unknown": "Stato sconosciuto"}
+            ac = info.get("ac", "0") == "1"
+            state_lbl.set_text(stmap.get(st, st) +
+                               (" — rete collegata" if ac and st != "full" else
+                                (" — a batteria" if not ac else "")))
+            r = 0
+            eta = info.get("eta_min")
+            if eta:
+                try:
+                    m = int(eta); hh, mm = m // 60, m % 60
+                    lab = ("%dh %02dmin" % (hh, mm)) if hh else ("%d min" % mm)
+                    add_row(r, "Autonomia residua" if st == "discharging"
+                            else "Tempo alla carica", lab); r += 1
+                except ValueError:
+                    pass
+            if info.get("power_w"):
+                try:
+                    add_row(r, "Potenza", "%.1f W" % (int(info["power_w"]) / 10.0))
+                    r += 1
+                except ValueError:
+                    pass
+            if info.get("voltage_mv"):
+                try:
+                    add_row(r, "Tensione", "%.2f V" % (int(info["voltage_mv"]) / 1000.0))
+                    r += 1
+                except ValueError:
+                    pass
+            if info.get("health"):
+                add_row(r, "Salute batteria", info["health"] + "%"); r += 1
+            if info.get("cycles"):
+                add_row(r, "Cicli di carica", info["cycles"]); r += 1
+            if info.get("technology"):
+                add_row(r, "Tecnologia", info["technology"]); r += 1
+            if info.get("model"):
+                add_row(r, "Modello", info["model"]); r += 1
+            if info.get("manufacturer"):
+                add_row(r, "Produttore", info["manufacturer"]); r += 1
+            grid.show_all()
+            return False
+
+        def worker():
+            info = {}
+            for line in self._run_out(["nxs-battery", "info"]).splitlines():
+                if "=" in line:
+                    k, v = line.split("=", 1)
+                    info[k.strip()] = v.strip()
+            GLib.idle_add(fill, info)
+        threading.Thread(target=worker, daemon=True).start()
+
     def _toggle_bluetooth(self, _btn):
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
         box.get_style_context().add_class("nxs-calbox")
@@ -1257,9 +1479,15 @@ class Panel(Gtk.Window):
         scan_b = Gtk.Button(label="Scansiona dispositivi")
         scan_b.get_style_context().add_class("nxs-menu-item")
         box.pack_start(scan_b, False, False, 0)
+        adv_b = Gtk.Button(label="Gestione avanzata…")
+        adv_b.get_style_context().add_class("nxs-menu-item")
+        adv_b.connect("clicked", lambda _w: (
+            self._close_popup("bt"),
+            run_bg(["nxs-control-center", "bluetooth"])))
+        box.pack_start(adv_b, False, False, 0)
         devlist = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
         box.pack_start(devlist, False, False, 0)
-        self._spawn_popup("bt", box, align="right", autoclose=False)
+        self._spawn_popup("bt", box, align="right")
 
         def render_devs(devs):
             if "bt" not in self._popups:
@@ -1285,6 +1513,9 @@ class Panel(Gtk.Window):
             devlist.show_all()
             return False
 
+        # riferimenti per aggiornare lo stesso popup da _bt_toggle_dev
+        self._bt_ui = {"status": status, "render": render_devs}
+
         def do_scan(_w=None):
             status.set_text("Scansione in corso (qualche secondo)...")
             def worker():
@@ -1301,7 +1532,12 @@ class Panel(Gtk.Window):
 
         def on_switch(s, state):
             self._bg(["nxs-bluetooth", "on" if state else "off"])
-            GLib.timeout_add(400, self._refresh_media)
+            # L'adattatore impiega un attimo ad accendersi/spegnersi davvero:
+            # aggiorniamo l'icona in barra piu' volte finche' lo stato si
+            # stabilizza (prima con un solo refresh a 400ms l'indicatore non
+            # cambiava perche' il power on non era ancora completo).
+            for d in (500, 1500, 3000):
+                GLib.timeout_add(d, self._refresh_media_once)
             return False
         def load():
             st = self._run_out(["nxs-bluetooth", "status"]).strip()
@@ -1330,68 +1566,147 @@ class Panel(Gtk.Window):
 
     def _bt_toggle_dev(self, mac, st):
         act = "disconnect" if st == "conn" else "connect"
-        self._bg(["nxs-bluetooth", act, mac])
-        self._close_popup("bt")
+        ui = getattr(self, "_bt_ui", None)
+        if ui and "bt" in self._popups:
+            ui["status"].set_text("Disconnessione in corso..." if act == "disconnect"
+                                  else "Connessione in corso...")
+
+        def worker():
+            self._run_out(["nxs-bluetooth", act, mac], 25)
+            # aggiorna l'indicatore in barra subito e finche' lo stato si assesta
+            GLib.idle_add(self._refresh_media_once)
+            for d in (800, 2000, 3500):
+                GLib.timeout_add(d, self._refresh_media_once)
+            # ricarica l'elenco (stato conn/paired aggiornato) nel popup aperto
+            devs = []
+            for line in self._run_out(["nxs-bluetooth", "devices"]).splitlines():
+                p = line.split("\t")
+                if len(p) >= 2:
+                    devs.append((p[0], p[1], p[2] if len(p) > 2 else ""))
+            def apply():
+                u = getattr(self, "_bt_ui", None)
+                if u and "bt" in self._popups:
+                    conn = any(s == "conn" for _m, _n, s in devs)
+                    u["status"].set_text("Dispositivo connesso." if conn
+                                         else "Nessun dispositivo connesso.")
+                    u["render"](devs)
+                return False
+            GLib.idle_add(apply)
+        threading.Thread(target=worker, daemon=True).start()
 
     def _toggle_wifi(self, _btn):
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
         box.get_style_context().add_class("nxs-calbox")
-        box.set_size_request(300, -1)
+        box.set_size_request(320, -1)
+        head = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
         title = Gtk.Label(); title.set_markup("<b>Reti WiFi</b>"); title.set_xalign(0)
-        box.pack_start(title, False, False, 0)
+        head.pack_start(title, True, True, 0)
+        rescan = Gtk.Button(); rescan.set_relief(Gtk.ReliefStyle.NONE)
+        rescan.set_tooltip_text("Aggiorna elenco reti")
+        rescan.set_image(Gtk.Image.new_from_icon_name(
+            "view-refresh-symbolic", Gtk.IconSize.MENU))
+        rescan.connect("clicked", lambda _w: self._wifi_scan())
+        head.pack_end(rescan, False, False, 0)
+        box.pack_start(head, False, False, 0)
         status = Gtk.Label(label="Scansione in corso..."); status.set_xalign(0)
         status.set_line_wrap(True)
         status.get_style_context().add_class("nxs-clock-date")
         box.pack_start(status, False, False, 0)
         listbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
         box.pack_start(listbox, False, False, 0)
-        self._spawn_popup("wifi", box, align="right", autoclose=False)
+        self._spawn_popup("wifi", box, align="right")
+        # riferimenti per aggiornare lo stesso popup da scan/connect
+        self._wifi_ui = (status, listbox)
+        self._wifi_scan()
 
-        def populate(nets, iface):
-            if "wifi" not in self._popups:
-                return False
-            for c in listbox.get_children():
-                listbox.remove(c)
-            if not iface:
-                status.set_text("Nessuna scheda WiFi rilevata. In una macchina "
-                                "virtuale il WiFi non e' disponibile: usa Ethernet "
-                                "o passa un adattatore WiFi USB.")
-                return False
-            if not nets:
-                status.set_text("Nessuna rete in portata (WiFi acceso, nessuna rete "
-                                "trovata).")
-                return False
-            status.set_text("Clic su una rete per connetterti:")
-            for ssid, sig, flags in nets:
-                locked = any(x in flags for x in ("WPA", "PSK", "WEP", "SAE"))
-                b = Gtk.Button(); b.set_relief(Gtk.ReliefStyle.NONE)
-                b.get_style_context().add_class("nxs-menu-item")
-                hb = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
-                ico = ("network-wireless-encrypted-symbolic" if locked
-                       else "network-wireless-symbolic")
-                hb.pack_start(Gtk.Image.new_from_icon_name(
-                    ico, Gtk.IconSize.MENU), False, False, 0)
-                lab = Gtk.Label(label=ssid); lab.set_xalign(0)
-                hb.pack_start(lab, True, True, 0)
-                sg = Gtk.Label(label="%s dBm" % sig)
-                sg.get_style_context().add_class("nxs-clock-date")
-                hb.pack_start(sg, False, False, 0)
-                b.add(hb)
-                b.connect("clicked",
-                          lambda _w, s=ssid, lk=locked: self._wifi_connect(s, lk))
-                listbox.pack_start(b, False, False, 0)
-            listbox.show_all()
-            return False
+    def _wifi_scan(self):
+        ui = getattr(self, "_wifi_ui", None)
+        if not ui or "wifi" not in self._popups:
+            return
+        status, _listbox = ui
+        status.set_text("Scansione in corso...")
 
         def worker():
             iface = self._run_out(["nxs-wifi", "iface"]).strip()
+            cur = self._run_out(["nxs-wifi", "status"]).strip()
+            connected = (cur[len("connected"):].strip()
+                         if cur.startswith("connected") else "")
             out = self._run_out(["nxs-wifi", "scan"]) if iface else ""
             nets = []
             for line in out.splitlines():
                 p = line.split("\t")
                 if len(p) >= 3 and p[0].strip():
                     nets.append((p[0], p[1], p[2]))
-            GLib.idle_add(populate, nets, iface)
+            GLib.idle_add(self._wifi_populate, nets, iface, connected)
+        threading.Thread(target=worker, daemon=True).start()
+
+    def _wifi_populate(self, nets, iface, connected):
+        ui = getattr(self, "_wifi_ui", None)
+        if not ui or "wifi" not in self._popups:
+            return False
+        status, listbox = ui
+        for c in listbox.get_children():
+            listbox.remove(c)
+        if not iface:
+            status.set_text("Nessuna scheda WiFi rilevata. In una macchina "
+                            "virtuale il WiFi non e' disponibile: usa Ethernet "
+                            "o passa un adattatore WiFi USB.")
+            return False
+        if not nets:
+            status.set_text("Nessuna rete in portata (WiFi acceso, nessuna rete "
+                            "trovata).")
+            return False
+        status.set_text("Connesso a «%s». Clic per disconnettere o scegliere "
+                        "un'altra rete:" % connected if connected
+                        else "Clic su una rete per connetterti:")
+        # rete connessa in cima
+        nets = sorted(nets, key=lambda n: (n[0] != connected))
+        for ssid, sig, flags in nets:
+            locked = any(x in flags for x in ("WPA", "PSK", "WEP", "SAE"))
+            is_conn = (ssid == connected and connected != "")
+            b = Gtk.Button(); b.set_relief(Gtk.ReliefStyle.NONE)
+            b.get_style_context().add_class("nxs-menu-item")
+            hb = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+            if is_conn:
+                ico = "network-wireless-connected-symbolic"
+            elif locked:
+                ico = "network-wireless-encrypted-symbolic"
+            else:
+                ico = "network-wireless-symbolic"
+            hb.pack_start(Gtk.Image.new_from_icon_name(
+                ico, Gtk.IconSize.MENU), False, False, 0)
+            lab = Gtk.Label(); lab.set_xalign(0)
+            if is_conn:
+                lab.set_markup("<b>%s</b>" % GLib.markup_escape_text(ssid))
+            else:
+                lab.set_text(ssid)
+            hb.pack_start(lab, True, True, 0)
+            if is_conn:
+                tag = Gtk.Label(label="✓ connesso")
+                tag.get_style_context().add_class("nxs-stealth-on")
+                hb.pack_start(tag, False, False, 0)
+            else:
+                sg = Gtk.Label(label="%s dBm" % sig)
+                sg.get_style_context().add_class("nxs-clock-date")
+                hb.pack_start(sg, False, False, 0)
+            b.add(hb)
+            if is_conn:
+                b.connect("clicked", lambda _w, s=ssid: self._wifi_disconnect(s))
+            else:
+                b.connect("clicked",
+                          lambda _w, s=ssid, lk=locked: self._wifi_connect(s, lk))
+            listbox.pack_start(b, False, False, 0)
+        listbox.show_all()
+        return False
+
+    def _wifi_disconnect(self, ssid):
+        ui = getattr(self, "_wifi_ui", None)
+        if ui and "wifi" in self._popups:
+            ui[0].set_text("Disconnessione da «%s»..." % ssid)
+        def worker():
+            self._run_out(["nxs-wifi", "disconnect"], 10)
+            GLib.idle_add(self._refresh_media_once)
+            GLib.idle_add(self._wifi_scan)
         threading.Thread(target=worker, daemon=True).start()
 
     def _wifi_connect(self, ssid, locked):
@@ -1400,10 +1715,34 @@ class Panel(Gtk.Window):
             psk = self._ask_password("Password per la rete «%s»" % ssid)
             if psk is None:
                 return
-        self._close_popup("wifi")
-        threading.Thread(
-            target=lambda: self._run_out(["nxs-wifi", "connect", ssid, psk], 30),
-            daemon=True).start()
+        ui = getattr(self, "_wifi_ui", None)
+        if ui and "wifi" in self._popups:
+            ui[0].set_text("Connessione a «%s»..." % ssid)
+
+        def worker():
+            self._run_out(["nxs-wifi", "connect", ssid, psk], 30)
+            # verifica reale: attende che wpa_state=COMPLETED sull'SSID scelto
+            ok = False
+            for _ in range(15):
+                time.sleep(1)
+                st = self._run_out(["nxs-wifi", "status"]).strip()
+                if st.startswith("connected") and st[len("connected"):].strip() == ssid:
+                    ok = True
+                    break
+            GLib.idle_add(self._wifi_after_connect, ssid, ok)
+        threading.Thread(target=worker, daemon=True).start()
+
+    def _wifi_after_connect(self, ssid, ok):
+        self._refresh_media_once()   # aggiorna subito l'icona WiFi in barra
+        ui = getattr(self, "_wifi_ui", None)
+        if ui and "wifi" in self._popups:
+            if ok:
+                ui[0].set_text("Connesso a «%s»." % ssid)
+                self._wifi_scan()    # ridisegna con il badge "✓ connesso"
+            else:
+                ui[0].set_text("Connessione a «%s» non riuscita (password errata "
+                               "o rete non raggiungibile)." % ssid)
+        return False
 
     def _ask_password(self, prompt):
         d = Gtk.Dialog(title="Connessione WiFi", modal=True)
@@ -1415,6 +1754,19 @@ class Panel(Gtk.Window):
         area.set_spacing(8); area.set_border_width(12)
         area.add(Gtk.Label(label=prompt))
         e = Gtk.Entry(); e.set_visibility(False); e.set_activates_default(True)
+        # Occhio per mostrare/nascondere quello che si digita.
+        e.set_icon_from_icon_name(Gtk.EntryIconPosition.SECONDARY,
+                                  "view-reveal-symbolic")
+        e.set_icon_tooltip_text(Gtk.EntryIconPosition.SECONDARY,
+                                "Mostra/nascondi la password")
+
+        def _toggle_eye(entry, _pos, _ev):
+            vis = not entry.get_visibility()
+            entry.set_visibility(vis)
+            entry.set_icon_from_icon_name(
+                Gtk.EntryIconPosition.SECONDARY,
+                "view-conceal-symbolic" if vis else "view-reveal-symbolic")
+        e.connect("icon-press", _toggle_eye)
         area.add(e)
         d.show_all()
         resp = d.run()
@@ -1477,7 +1829,7 @@ class Panel(Gtk.Window):
                     oc.pack_start(bo, False, False, 0)
                 box.pack_start(oc, False, False, 0)
 
-        self._spawn_popup("screens", box, align="right", autoclose=False)
+        self._spawn_popup("screens", box, align="right")
 
     def _screens_apply(self, args):
         self._close_popup("screens")
@@ -1586,11 +1938,27 @@ class Panel(Gtk.Window):
         tz_row.pack_end(apply_tz, False, False, 0)
         cal_box.pack_start(tz_row, False, False, 0)
 
-        self._spawn_popup("calendar", cal_box, align="right", autoclose=False)
+        self._spawn_popup("calendar", cal_box, align="right")
 
     # --- lista finestre ---
+    def _own_xids(self):
+        """XID (interi) delle NOSTRE finestre-popup (menu, audio, wifi, bt,
+        calendario, schermi): non devono comparire nella tasklist come se
+        fossero programmi aperti. Il menu start resta cosi' fuori dalla barra."""
+        xids = set()
+        for w in list(self._popups.values()):
+            try:
+                gw = w.get_window()
+                if gw is not None:
+                    xids.add(int(gw.get_xid()))
+            except Exception:               # noqa: BLE001
+                pass
+        return xids
+
     def _refresh_tasks(self):
-        wins = _wmctrl_list()
+        own = self._own_xids()
+        wins = [(wid, d, t) for (wid, d, t) in _wmctrl_list()
+                if _xid_int(wid) not in own]
         active = _active_window()
         sig = tuple((w, t) for w, _d, t in wins)
         if sig != self._last_sig:

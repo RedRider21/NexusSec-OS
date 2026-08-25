@@ -293,11 +293,84 @@ def g_close(d, accent):
     d.line([R - 94, 94, 94, R - 94], fill=WHITE, width=20)
 
 
+def g_logo(d, accent):
+    """Logo NexusSec per il pulsante Start della barra: esagono PIENO in accent
+    con monogramma N scuro. Full-color (non simbolico) -> resta tinto per profilo
+    senza essere ricolorato dal CSS del pannello."""
+    import math
+    cx = cy = R // 2
+    r = R * 0.44
+    pts = [(cx + r * math.cos(math.pi / 6 + math.pi / 3 * i),
+            cy + r * math.sin(math.pi / 6 + math.pi / 3 * i)) for i in range(6)]
+    d.polygon(pts, fill=accent)
+    w = 24
+    x0, x1 = cx - 42, cx + 42
+    yt, yb = cy - 54, cy + 54
+    d.line([x0, yb, x0, yt], fill=DARK, width=w)
+    d.line([x1, yb, x1, yt], fill=DARK, width=w)
+    d.line([x0, yt, x1, yb], fill=DARK, width=w)
+
+
+def g_screensaver(d, accent):
+    """Salvaschermo: monitor con stelle/nebulosa (per preferences-desktop-
+    screensaver, che Adwaita a colori non copre piu')."""
+    tile(d, accent)
+    d.rounded_rectangle([58, 72, R - 58, R - 104], radius=14, fill=WHITE)
+    d.rectangle([76, 90, R - 76, R - 120], fill=shade(accent, 0.85))
+    # piede
+    d.rectangle([R // 2 - 28, R - 104, R // 2 + 28, R - 84], fill=WHITE)
+    d.rounded_rectangle([R // 2 - 58, R - 86, R // 2 + 58, R - 66],
+                        radius=8, fill=WHITE)
+    # stelline nello schermo
+    for sx, sy, rr in [(112, 128, 7), (150, 108, 5), (176, 150, 6),
+                       (200, 120, 4), (132, 160, 4)]:
+        d.ellipse([sx - rr, sy - rr, sx + rr, sy + rr], fill=WHITE)
+
+
+def g_video(d, accent):
+    """Visualizzatore video: tile accent + schermo bianco con triangolo play.
+
+    Per Icon=nxs-video (nxs-video.desktop): senza, il tema userebbe un'icona
+    generica grigia. Cosi' segue l'accent del profilo come le altre app."""
+    tile(d, accent)
+    # schermo bianco arrotondato
+    d.rounded_rectangle([64, 84, R - 64, R - 84], radius=16, fill=WHITE)
+    # triangolo play in accent al centro
+    cx, cy = R // 2, R // 2
+    d.polygon([(cx - 26, cy - 40), (cx - 26, cy + 40), (cx + 42, cy)],
+              fill=accent)
+
+
+def g_player(d, accent):
+    """Lettore audio: tile accent + nota musicale (croma) bianca.
+
+    Serve per Icon=nxs-player (nxs-player.desktop). Senza, il tema di sistema
+    userebbe 'multimedia-player' che Adwaita recente rende grigia (non tinta
+    col profilo). Cosi' segue l'accent del profilo come le altre icone-app."""
+    tile(d, accent)
+    # gambo destro
+    d.line([R - 96, 78, R - 96, R - 96], fill=WHITE, width=16)
+    # gambo sinistro
+    d.line([120, 104, 120, R - 78], fill=WHITE, width=16)
+    # traversa che unisce le due teste (bandierina della nota doppia)
+    d.polygon([(120, 78), (R - 88, 60), (R - 88, 104), (120, 122)], fill=WHITE)
+    # testa sinistra
+    d.ellipse([80, R - 118, 152, R - 62], fill=WHITE)
+    # testa destra
+    d.ellipse([R - 136, R - 136, R - 64, R - 80], fill=WHITE)
+
+
 # nome-icona -> (funzione, contesto)
 ICONS = {
     "nxs-browser":          (g_browser, "apps"),
     "applications-internet": (g_browser, "apps"),
     "web-browser":          (g_browser, "apps"),
+    "nxs-player":           (g_player, "apps"),
+    "multimedia-player":    (g_player, "apps"),
+    "audio-x-generic":      (g_player, "apps"),
+    "nxs-video":            (g_video, "apps"),
+    "video-x-generic":      (g_video, "apps"),
+    "nxs-logo":             (g_logo, "apps"),
     "utilities-terminal":   (g_terminal, "apps"),
     "preferences-system":   (g_gear, "apps"),
     "drive-harddisk":       (g_disk, "apps"),
@@ -321,6 +394,8 @@ ICONS = {
     "network-wired":                 (g_network, "apps"),
     "network-transmit-receive":      (g_network, "apps"),
     "system-run":                    (g_run, "apps"),
+    "media-playback-start":          (g_run, "apps"),
+    "preferences-desktop-screensaver": (g_screensaver, "apps"),
     "preferences-desktop-locale":    (g_browser, "apps"),
     "emblem-ok":                     (g_check, "apps"),
     "view-refresh":                  (g_refresh, "apps"),

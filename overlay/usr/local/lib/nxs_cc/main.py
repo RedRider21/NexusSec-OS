@@ -94,7 +94,10 @@ VIEW_MAP = {
     "tema-gtk": views.open_gtk_theme,
     "tastiera": views.open_keyboard,
     "sfondo": views.open_wallpaper,
+    "salvaschermo": views.open_screensaver,
+    "screensaver": views.open_screensaver,
     "autostart": views.open_autostart,
+    "bluetooth": views.open_bluetooth,
 }
 
 
@@ -176,6 +179,8 @@ def build_window() -> Gtk.Window:
              "Tema GTK, set di icone e cursori (lxappearance)", launch("tema-gtk")),
         Tile("preferences-desktop-wallpaper", "Sfondo",
              "Scegli l'immagine di sfondo", launch("sfondo")),
+        Tile("preferences-desktop-screensaver", "Salvaschermo",
+             "Salvaschermo animato: attivazione, tempo e stile", launch("salvaschermo")),
     ]), False, False, 0)
 
     body.pack_start(section("Openbox e pannello", [
@@ -202,6 +207,9 @@ def build_window() -> Gtk.Window:
         Tile("input-keyboard", "Tastiera", "Layout italiano / US", launch("tastiera")),
         Tile("network-wired", "Rete",
              "Interfacce, IP e test di connessione", launch("rete")),
+        Tile("bluetooth", "Bluetooth",
+             "Accensione, scansione, abbinamento e connessione dispositivi",
+             launch("bluetooth")),
     ]), False, False, 0)
 
     body.pack_start(section("Personale", [

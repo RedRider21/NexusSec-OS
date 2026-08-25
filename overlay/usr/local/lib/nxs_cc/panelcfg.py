@@ -1,9 +1,10 @@
-"""Configurazione condivisa del pannello NexusSec (posizione e margini Openbox).
+"""Configurazione condivisa del pannello NexusSec.
 
-Usato sia da `panel.py` (legge la posizione all'avvio) sia dal Centro di
-Controllo (la cambia). La posizione e' persistita in ~/.config/nxs/panel.conf
-e riflessa nei <margins> di rc.xml cosi' le finestre massimizzate non
-coprono il pannello, sia in basso che in alto.
+Usato sia da `panel.py` (legge posizione/altezza/dimensione icone all'avvio)
+sia dal Centro di Controllo (le cambia). Tutto persistito in
+~/.config/nxs/panel.conf. La posizione e l'altezza sono riflesse nei
+<margins> di rc.xml cosi' le finestre massimizzate non coprono il pannello.
+Il numero di desktop virtuali (workspaces) e' gestito in rc.xml <desktops>.
 """
 from __future__ import annotations
 
@@ -15,41 +16,125 @@ from pathlib import Path
 HOME = Path(os.path.expanduser("~"))
 CONF = HOME / ".config/nxs/panel.conf"
 RC_XML = HOME / ".config/openbox/rc.xml"
-PANEL_HEIGHT = 34
+
+# default e limiti
+PANEL_HEIGHT = 34          # compatibilita': altezza di default
+DEF_HEIGHT = 34
+MIN_HEIGHT, MAX_HEIGHT = 24, 64
+DEF_ICON_PX = 22
+MIN_ICON_PX, MAX_ICON_PX = 16, 40
+MIN_DESKTOPS, MAX_DESKTOPS = 1, 12
 
 
-def get_position() -> str:
-    """Ritorna 'bottom' (default) o 'top'."""
+def _read_conf() -> dict:
+    cfg = {}
     try:
         for line in CONF.read_text().splitlines():
             line = line.strip()
-            if line.startswith("position"):
-                val = line.split("=", 1)[1].strip().lower()
-                if val in ("top", "bottom"):
-                    return val
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            k, v = line.split("=", 1)
+            cfg[k.strip()] = v.strip()
     except OSError:
         pass
-    return "bottom"
+    return cfg
+
+
+def _write_conf(cfg: dict) -> None:
+    CONF.parent.mkdir(parents=True, exist_ok=True)
+    lines = ["# Configurazione pannello NexusSec"]
+    for k in ("position", "height", "icon_px"):
+        if k in cfg:
+            lines.append("%s = %s" % (k, cfg[k]))
+    CONF.write_text("\n".join(lines) + "\n")
+
+
+def _clamp(v, lo, hi, default):
+    try:
+        v = int(v)
+    except (TypeError, ValueError):
+        return default
+    return max(lo, min(hi, v))
+
+
+def get_position() -> str:
+    val = _read_conf().get("position", "bottom").lower()
+    return val if val in ("top", "bottom") else "bottom"
+
+
+def get_height() -> int:
+    return _clamp(_read_conf().get("height"), MIN_HEIGHT, MAX_HEIGHT, DEF_HEIGHT)
+
+
+def get_icon_px() -> int:
+    return _clamp(_read_conf().get("icon_px"), MIN_ICON_PX, MAX_ICON_PX,
+                  DEF_ICON_PX)
+
+
+def set_config(position=None, height=None, icon_px=None) -> None:
+    """Aggiorna solo le chiavi indicate, preservando le altre."""
+    cfg = _read_conf()
+    if "position" not in cfg:
+        cfg["position"] = get_position()
+    if "height" not in cfg:
+        cfg["height"] = str(get_height())
+    if "icon_px" not in cfg:
+        cfg["icon_px"] = str(get_icon_px())
+    if position in ("top", "bottom"):
+        cfg["position"] = position
+    if height is not None:
+        cfg["height"] = str(_clamp(height, MIN_HEIGHT, MAX_HEIGHT, DEF_HEIGHT))
+    if icon_px is not None:
+        cfg["icon_px"] = str(_clamp(icon_px, MIN_ICON_PX, MAX_ICON_PX,
+                                    DEF_ICON_PX))
+    _write_conf(cfg)
 
 
 def set_position(pos: str) -> None:
-    if pos not in ("top", "bottom"):
-        return
-    CONF.parent.mkdir(parents=True, exist_ok=True)
-    CONF.write_text("# Configurazione pannello NexusSec\nposition = %s\n" % pos)
+    set_config(position=pos)
 
 
-def apply_openbox_margin(pos: str) -> None:
-    """Riserva PANEL_HEIGHT sul lato giusto nei <margins> di rc.xml."""
+def apply_openbox_margin(pos: str, height: int | None = None) -> None:
+    """Riserva l'altezza del pannello sul lato giusto nei <margins> di rc.xml."""
     try:
         txt = RC_XML.read_text()
     except OSError:
         return
-    top = PANEL_HEIGHT if pos == "top" else 0
-    bottom = PANEL_HEIGHT if pos == "bottom" else 0
+    h = height if height is not None else get_height()
+    top = h if pos == "top" else 0
+    bottom = h if pos == "bottom" else 0
     txt = re.sub(r"<top>\d+</top>", "<top>%d</top>" % top, txt, count=1)
-    txt = re.sub(r"<bottom>\d+</bottom>", "<bottom>%d</bottom>" % bottom, txt, count=1)
+    txt = re.sub(r"<bottom>\d+</bottom>", "<bottom>%d</bottom>" % bottom,
+                 txt, count=1)
     RC_XML.write_text(txt)
+
+
+# ---- Desktop virtuali (workspaces) --------------------------------------
+def get_desktops() -> int:
+    try:
+        txt = RC_XML.read_text()
+    except OSError:
+        return 1
+    m = re.search(r"<desktops>.*?<number>\s*(\d+)\s*</number>", txt, re.S)
+    if m:
+        return _clamp(m.group(1), MIN_DESKTOPS, MAX_DESKTOPS, 1)
+    return 1
+
+
+def set_desktops(n: int) -> None:
+    n = _clamp(n, MIN_DESKTOPS, MAX_DESKTOPS, 1)
+    try:
+        txt = RC_XML.read_text()
+    except OSError:
+        return
+    # sostituisce il primo <number> dentro <desktops>...</desktops>
+    def repl(m):
+        return re.sub(r"(<number>\s*)\d+(\s*</number>)",
+                      r"\g<1>%d\g<2>" % n, m.group(0), count=1)
+    new = re.sub(r"<desktops>.*?</desktops>", repl, txt, count=1, flags=re.S)
+    if new != txt:
+        RC_XML.write_text(new)
+        openbox_reconfigure()
 
 
 def openbox_reconfigure() -> None:
@@ -61,18 +146,9 @@ def openbox_reconfigure() -> None:
 
 
 def restart_panel() -> None:
-    # Riavvio ROBUSTO anche quando la chiamata parte DAL pannello stesso (voce
-    # "Sposta pannello" del menu). Il vecchio approccio faceva
-    # `subprocess.run(pkill -f nxs_cc.panel)` DENTRO il pannello: il segnale
-    # uccideva il pannello corrente PRIMA di arrivare alla Popen del nuovo, e la
-    # barra spariva senza tornare (con nxs-profile funzionava solo perche' il
-    # restart partiva da un altro processo).
-    #
-    # Fix: delego kill+riavvio a un processo DETACHED (start_new_session) che
-    # uccide il vecchio pannello PER PID (non per pattern). Cosi':
-    #  - il suo argv contiene solo un numero e "nxs-panel": niente "nxs_cc.panel"
-    #    -> il killer non si auto-uccide (gotcha noto);
-    #  - il pannello corrente resta vivo finche' il nuovo non e' pronto a partire.
+    # Riavvio ROBUSTO anche quando la chiamata parte DAL pannello stesso.
+    # Delego kill+riavvio a un processo DETACHED che uccide il vecchio pannello
+    # PER PID (non per pattern), cosi' il killer non si auto-uccide.
     old_pid = os.getpid()
     subprocess.Popen(
         ["sh", "-c",
@@ -85,5 +161,14 @@ def move_panel(pos: str) -> None:
     """Cambia posizione: persiste, aggiorna i margini, ricarica, riavvia."""
     set_position(pos)
     apply_openbox_margin(pos)
+    openbox_reconfigure()
+    restart_panel()
+
+
+def apply_layout(position=None, height=None, icon_px=None) -> None:
+    """Salva altezza/icone/posizione, aggiorna i margini Openbox e riavvia."""
+    set_config(position=position, height=height, icon_px=icon_px)
+    pos = get_position()
+    apply_openbox_margin(pos, get_height())
     openbox_reconfigure()
     restart_panel()

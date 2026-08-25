@@ -2,8 +2,13 @@
 # NexusSec Browser - launcher (Alpine).
 #
 # Il browser e' Python GTK3 + WebKit2 (in /usr/local/lib/nxs_browser). Su
-# Alpine il motore web e' il pacchetto apk 'webkit2gtk': NON e' nel set base
-# (e' pesante), lo installiamo ON-DEMAND alla prima apertura con apk.
+# Alpine il motore web e' il pacchetto apk 'webkit2gtk-4.1'.
+#
+# DAL 2026.08.25 e' PREINSTALLATO nell'ISO (dipendenza di nexussec-base): il
+# primo avvio e' ISTANTANEO e funziona OFFLINE. Prima era on-demand via apk:
+# scaricava ~50MB alla prima apertura ("ci mette un secolo") e da chiavetta
+# senza rete NON partiva affatto. I blocchi apk qui sotto restano SOLO come
+# fallback (se webkit manca) e, se e' gia' presente, sono no-op immediati.
 #
 # Tutto l'output (errori inclusi) va in /tmp/nxs-browser.log per diagnostica.
 set -e
@@ -48,8 +53,12 @@ have_webkit() {
 }
 
 if ! have_webkit; then
-  echo "NexusSec Browser: installo WebKit2 + codec media con apk (solo la prima volta)..." | tee -a "$LOG" >&2
-  priv apk add --no-cache "$PKG" $MEDIA_PKGS >>"$LOG" 2>&1 || true
+  echo "NexusSec Browser: installo WebKit2 con apk (solo la prima volta)..." | tee -a "$LOG" >&2
+  # SOLO WebKit qui: apk e' ATOMICO, quindi unire i codec media alla stessa
+  # transazione faceva fallire TUTTO l'install (browser incluso) se anche solo
+  # un pacchetto gst non si risolveva -> il browser non partiva piu'. WebKit va
+  # installato per conto suo e DEVE riuscire.
+  priv apk add --no-cache "$PKG" >>"$LOG" 2>&1 || true
 fi
 
 if ! have_webkit; then
@@ -57,6 +66,18 @@ if ! have_webkit; then
   echo "$MSG" >&2
   command -v xmessage >/dev/null 2>&1 && xmessage -center "$MSG"
   exit 1
+fi
+
+# Codec media (GStreamer), best-effort e SEPARATI da WebKit: senza questi la
+# pagina carica ma il play non produce audio/video. Li installiamo UNO ALLA
+# VOLTA (non in blocco) cosi' un pacchetto assente in un repo non fa fallire gli
+# altri e, soprattutto, NON tocca piu' l'avvio del browser. Marker: se libav e'
+# gia' presente, non ritentiamo a ogni avvio.
+if [ ! -f /usr/lib/gstreamer-1.0/libgstlibav.so ]; then
+  echo "NexusSec Browser: installo i codec media (best-effort)..." | tee -a "$LOG" >&2
+  for m in $MEDIA_PKGS; do
+    priv apk add --no-cache "$m" >>"$LOG" 2>&1 || true
+  done
 fi
 
 # Il browser e' STEALTH di default (anonimo via Tor). Serve il binario 'tor':

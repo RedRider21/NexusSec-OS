@@ -1,0 +1,34 @@
+#!/bin/sh
+# NexusSec - Lettore audio (GTK3 + GStreamer). Sostituisce il vecchio
+# "Test Audio": e' un vero lettore (playlist, seek, volume, prev/next) che
+# serve ANCHE a provare l'uscita audio (pulsante "Prova audio").
+#
+# GStreamer + i suoi plugin e la gir Gst NON sono nel set base (pesanti): li
+# installiamo ON-DEMAND alla prima apertura, UNO ALLA VOLTA (apk e' atomico:
+# in blocco un solo pacchetto assente farebbe fallire tutto). Log in $LOG.
+set -e
+LOG=/tmp/nxs-player.log
+# gstreamer -> core + gir Gst-1.0.typelib ; -base -> playbin/decodebin ;
+# good/bad/libav -> codec (MP3/AAC/Opus/FLAC/OGG/WAV...). py3-gobject3 per gi.
+GST_PKGS="gstreamer gst-plugins-base gst-plugins-good gst-plugins-bad gst-libav py3-gobject3"
+
+priv() { if command -v doas >/dev/null 2>&1; then doas "$@"; \
+         elif command -v sudo >/dev/null 2>&1; then sudo "$@"; else "$@"; fi; }
+
+have_gst() { [ -f /usr/lib/girepository-1.0/Gst-1.0.typelib ]; }
+
+if ! have_gst; then
+  echo "NexusSec Player: installo GStreamer (solo la prima volta)..." | tee -a "$LOG" >&2
+  for p in $GST_PKGS; do
+    priv apk add --no-cache "$p" >>"$LOG" 2>&1 || true
+  done
+fi
+
+if ! have_gst; then
+  MSG="GStreamer non disponibile: impossibile avviare il Lettore audio. Vedi $LOG"
+  echo "$MSG" >&2
+  command -v xmessage >/dev/null 2>&1 && xmessage -center "$MSG"
+  exit 1
+fi
+
+exec env PYTHONPATH=/usr/local/lib python3 -m nxs_player "$@" >>"$LOG" 2>&1

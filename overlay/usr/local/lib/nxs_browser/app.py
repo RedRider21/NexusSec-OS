@@ -58,53 +58,84 @@ SIDEBAR_MIN = 60
 # Temi (palette dell'originale: chiaro default, scuro stile VS Code Dark+)
 # ---------------------------------------------------------------------------
 CSS_LIGHT = b"""
-.nxs-browser { background: #f5f5f5; color: #333333; }
-.nxs-toolbar { background: #f5f5f5; border-bottom: 1px solid #dddddd; padding: 3px 4px; }
-.nxs-toolbar button { background: transparent; border: none; border-radius: 4px;
-  padding: 4px 8px; color: #333333; }
-.nxs-toolbar button:hover { background: #e0e0e0; }
-.nxs-urlbar { border: 1px solid #dddddd; border-radius: 4px; padding: 4px 8px;
-  background: #ffffff; color: #333333; }
-.nxs-urlbar:focus { border-color: #4a90d9; }
-.nxs-sidebar { background: #f5f5f5; border-right: 1px solid #dddddd; }
-.nxs-sidebar-head { background: #f5f5f5; border-bottom: 1px solid #dddddd; padding: 3px; }
-.nxs-sidebar-head button { padding: 1px 3px; min-width: 0; min-height: 0; margin: 0; }
-.nxs-bm-list { background: #ffffff; color: #333333; }
-.nxs-bm-list row:selected { background: #4a90d9; color: #ffffff; }
-.nxs-bm-title { font-weight: bold; }
-.nxs-bm-url { color: #888888; font-size: 8pt; }
-notebook header { background: #f5f5f5; }
-notebook tab { padding: 2px 6px; color: #666666; }
-notebook tab:checked { color: #4a90d9; font-weight: bold; }
-menubar { background: #f5f5f5; color: #333333; }
-paned > separator { background: #dddddd; min-width: 5px; min-height: 5px; }
+.nxs-browser { background: #eef1f5; color: #1e2833;
+  font-family: "DejaVu Sans", "Cantarell", sans-serif; }
+.nxs-toolbar { background: #f4f6f9; padding: 7px 8px; }
+.nxs-toolbar button { background: transparent; border: none; border-radius: 9px;
+  padding: 6px 8px; color: #1e2833; box-shadow: none; outline: none;
+  transition: background 120ms ease, color 120ms ease; }
+.nxs-toolbar button:hover { background: #e4e9ef; }
+.nxs-urlbar { border: 1px solid #d3dae2; border-radius: 16px; padding: 7px 16px;
+  background: #ffffff; color: #1e2833; }
+.nxs-urlbar:focus { border-color: #b9c4d0; }
+.nxs-sidebar { background: #f4f6f9; border-right: 1px solid #e2e7ee; }
+.nxs-sidebar-head { background: #f4f6f9; padding: 7px 8px; }
+.nxs-sidebar-head button { padding: 3px 5px; min-width: 0; min-height: 0; margin: 0;
+  border-radius: 8px; }
+.nxs-bm-list { background: #ffffff; color: #1e2833; padding: 4px; }
+.nxs-bm-list row { border-radius: 9px; padding: 3px; margin: 1px 2px; }
+.nxs-bm-list row:hover { background: #eef1f5; }
+.nxs-bm-list row:selected { background: #e6ebf1; }
+.nxs-bm-title { font-weight: 600; }
+.nxs-bm-url { color: #8595a5; font-size: 8pt; }
+notebook header { background: #f4f6f9; border: none; }
+notebook tab { padding: 6px 12px; margin: 2px 1px 0 1px; color: #6b7a89;
+  border-radius: 8px 8px 0 0; }
+notebook tab:hover { background: #e9edf2; }
+notebook tab:checked { color: #1e2833; font-weight: 600; background: #ffffff; }
+menubar { background: #eef1f5; color: #1e2833; }
+menubar > menuitem { padding: 4px 10px; border-radius: 8px; }
+menubar > menuitem:hover { background: #e4e9ef; }
+menu { background: #ffffff; color: #1e2833; border: 1px solid #e2e7ee;
+  border-radius: 10px; padding: 4px; }
+menu menuitem { border-radius: 7px; padding: 5px 10px; }
+paned > separator { background: #e2e7ee; min-width: 1px; min-height: 1px; }
 """
 
 CSS_DARK = b"""
-.nxs-browser { background: #050a14; color: #c8f5ff; }
-.nxs-toolbar { background: #0a1a26; border-bottom: 1px solid #1a3a52; padding: 3px 4px; }
-.nxs-toolbar button { background: transparent; border: none; border-radius: 4px;
-  padding: 4px 8px; color: #c8f5ff; }
-.nxs-toolbar button:hover { background: #1a3a52; }
-.nxs-urlbar { border: 1px solid #1a3a52; border-radius: 4px; padding: 4px 8px;
-  background: #050a14; color: #c8f5ff; }
-.nxs-urlbar:focus { border-color: #00e5ff; }
-.nxs-sidebar { background: #0a1a26; border-right: 1px solid #1a3a52; }
-.nxs-sidebar-head { background: #0a1a26; border-bottom: 1px solid #1a3a52; padding: 3px; }
-.nxs-sidebar-head button { padding: 1px 3px; min-width: 0; min-height: 0; margin: 0; }
-.nxs-bm-list { background: #0a1a26; color: #c8f5ff; }
-.nxs-bm-list row:selected { background: #00e5ff; color: #050a14; }
-.nxs-bm-title { font-weight: bold; }
-.nxs-bm-url { color: #5a8a9a; font-size: 8pt; }
-notebook header { background: #0a1a26; }
-notebook tab { padding: 2px 6px; color: #5a8a9a; }
-notebook tab:checked { color: #00e5ff; font-weight: bold; }
-menubar { background: #050a14; color: #c8f5ff; }
-menubar > menuitem { color: #c8f5ff; padding: 2px 8px; }
-menubar > menuitem:hover { background: #1a3a52; }
-menu { background: #0a1a26; color: #c8f5ff; }
-menu menuitem:hover { background: #1a3a52; }
-paned > separator { background: #1a3a52; min-width: 5px; min-height: 5px; }
+.nxs-browser { background: #070b12; color: #dff6ff;
+  font-family: "DejaVu Sans", "Cantarell", sans-serif; }
+.nxs-toolbar { background: #0b1119; padding: 7px 8px; }
+.nxs-toolbar button { background: transparent; border: none; border-radius: 9px;
+  padding: 6px 8px; color: #dff6ff; box-shadow: none; outline: none;
+  transition: background 120ms ease, color 120ms ease; }
+.nxs-toolbar button image { color: #cfe9f5; }
+.nxs-toolbar button:hover { background: #17293a; }
+.nxs-toolbar button:active { background: #1e3346; }
+/* URL bar a pillola, piatta. */
+.nxs-urlbar { border: 1px solid #17293a; border-radius: 16px; padding: 7px 16px;
+  background: #0d1622; color: #eaf9ff; caret-color: #dff6ff; }
+.nxs-urlbar:focus { border-color: #2a4a63; }
+.nxs-urlbar image { color: #6f93a6; }
+.nxs-urlbar progress, .nxs-urlbar trough { min-height: 2px; }
+.nxs-sidebar { background: #0b1119; border-right: 1px solid #12202e; }
+.nxs-sidebar-head { background: #0b1119; padding: 7px 8px; }
+.nxs-sidebar-head button { padding: 3px 5px; min-width: 0; min-height: 0; margin: 0;
+  border-radius: 8px; }
+.nxs-bm-list { background: #0b1119; color: #dff6ff; padding: 4px; }
+.nxs-bm-list row { border-radius: 9px; padding: 3px; margin: 1px 2px; }
+.nxs-bm-list row:hover { background: #12202e; }
+.nxs-bm-list row:selected { background: #14202e; }
+.nxs-bm-title { font-weight: 600; }
+.nxs-bm-url { color: #6f93a6; font-size: 8pt; }
+notebook { background: #070b12; }
+notebook header { background: #0b1119; border: none; }
+notebook header.top { box-shadow: inset 0 -1px #12202e; }
+notebook tab { padding: 6px 12px; margin: 2px 1px 0 1px; color: #8fb0c0;
+  background: transparent; border: none; border-radius: 8px 8px 0 0; }
+notebook tab:hover { background: #101b28; color: #dff6ff; }
+notebook tab:checked { color: #eaf9ff; font-weight: 600; background: #0d1622; }
+notebook tab button { padding: 0; min-width: 18px; min-height: 18px;
+  border-radius: 50%; }
+notebook tab button:hover { background: #24384c; }
+menubar { background: #070b12; color: #dff6ff; }
+menubar > menuitem { color: #dff6ff; padding: 4px 10px; border-radius: 8px; }
+menubar > menuitem:hover { background: #17293a; }
+menu { background: #0d1622; color: #dff6ff; border: 1px solid #17293a;
+  border-radius: 10px; padding: 4px; }
+menu menuitem { border-radius: 7px; padding: 5px 10px; }
+menu menuitem:hover { background: #17293a; }
+paned > separator { background: #12202e; min-width: 1px; min-height: 1px; }
 """
 
 
@@ -914,19 +945,34 @@ class Browser(Gtk.Window):
 
     def _accent_css(self):
         """Override CSS che colora di accent gli elementi chiave dell'interfaccia
-        (bordo superiore toolbar, focus URL, tab attiva, preferito selezionato)."""
+        (accento toolbar, focus URL con alone, tab attiva sottolineata, preferito
+        selezionato, badge stealth). Usa rgba per hover/aloni morbidi e piatti."""
         a = self._profile_accent()
+        try:
+            h = a.lstrip("#")
+            r, g, b = (int(h[i:i + 2], 16) for i in (0, 2, 4))
+        except (ValueError, IndexError):
+            r, g, b = 0, 229, 255
+        rgb = "%d,%d,%d" % (r, g, b)
         return ("""
-.nxs-toolbar { border-top: 2px solid %(a)s; }
-.nxs-toolbar button:hover { color: %(a)s; }
-.nxs-urlbar:focus { border-color: %(a)s; }
-.nxs-bm-list row:selected { background: %(a)s; color: #ffffff; }
-notebook tab:checked { color: %(a)s; font-weight: bold; }
-.nxs-sidebar-head { border-bottom: 2px solid %(a)s; }
-menubar { border-bottom: 1px solid %(a)s; }
+.nxs-toolbar { box-shadow: inset 0 2px %(a)s; }
+.nxs-toolbar button:hover { background: rgba(%(rgb)s,0.16); color: %(a)s; }
+.nxs-toolbar button:hover image { color: %(a)s; }
+.nxs-toolbar button:active { background: rgba(%(rgb)s,0.26); }
+.nxs-urlbar:focus { border-color: %(a)s; box-shadow: 0 0 0 3px rgba(%(rgb)s,0.18); }
+.nxs-urlbar:focus image { color: %(a)s; }
+.nxs-bm-list row:hover { background: rgba(%(rgb)s,0.10); }
+.nxs-bm-list row:selected { background: rgba(%(rgb)s,0.20); }
+.nxs-bm-list row:selected .nxs-bm-title { color: %(a)s; }
+notebook tab:checked { color: %(a)s; font-weight: 600;
+  box-shadow: inset 0 -2px %(a)s; }
+notebook tab:hover { color: %(a)s; }
+.nxs-sidebar-head button:hover { background: rgba(%(rgb)s,0.16); color: %(a)s; }
+menubar > menuitem:hover { background: rgba(%(rgb)s,0.16); color: %(a)s; }
+menu menuitem:hover { background: rgba(%(rgb)s,0.18); }
 .nxs-stealth-on { color: %(a)s; font-weight: bold; }
-.nxs-stealth-off { color: #888888; font-weight: normal; }
-""" % {"a": a}).encode()
+.nxs-stealth-off { color: #6f8494; font-weight: normal; }
+""" % {"a": a, "rgb": rgb}).encode()
 
     def apply_theme(self):
         base = CSS_DARK if self.dark_mode else CSS_LIGHT

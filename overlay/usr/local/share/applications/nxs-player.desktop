@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Lettore audio
+Comment=Lettore audio NexusSec (playlist, seek, volume) - serve anche a provare l'audio
+Exec=nxs-player %F
+Icon=nxs-player
+Terminal=false
+Categories=AudioVideo;Player;Audio;
+MimeType=audio/mpeg;audio/flac;audio/ogg;audio/x-wav;audio/x-vorbis+ogg;audio/mp4;audio/aac;

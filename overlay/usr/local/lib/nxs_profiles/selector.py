@@ -51,7 +51,9 @@ class Selector(Gtk.Window):
         Gtk.StyleContext.add_provider_for_screen(
             Gdk.Screen.get_default(), prov, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
 
-        self.set_default_size(720, 480)
+        # Altezza generosa: con 5 profili su 3 colonne la seconda riga deve
+        # vedersi interamente (prima l'ultima riga risultava tagliata a meta').
+        self.set_default_size(760, 660)
         self.set_position(Gtk.WindowPosition.CENTER)
         self.set_keep_above(True)
         self.connect("destroy", Gtk.main_quit)

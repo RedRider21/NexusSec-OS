@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Visualizzatore video
+Comment=Riproduttore video NexusSec (GTK3 + GStreamer): playlist, seek, schermo intero
+Exec=nxs-video %F
+Icon=nxs-video
+Terminal=false
+Categories=AudioVideo;Player;Video;
+MimeType=video/mp4;video/x-matroska;video/webm;video/x-msvideo;video/quicktime;video/mpeg;video/x-flv;video/ogg;

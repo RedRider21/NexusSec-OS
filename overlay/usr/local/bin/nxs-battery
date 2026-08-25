@@ -1,0 +1,126 @@
+#!/bin/sh
+# nxs-battery - stato alimentazione da /sys/class/power_supply (nessuna dipendenza).
+# Usato dall'applet del pannello.
+#   nxs-battery status  -> "nobattery" | "ac-only" | "<pct>\t<stato>\t<ac 0|1>"
+#                          stato: charging|discharging|full|notcharging|unknown
+#   nxs-battery info    -> righe key=value con tutti i dettagli disponibili
+PS=/sys/class/power_supply
+
+_read() { [ -f "$1" ] && cat "$1" 2>/dev/null || echo ""; }
+
+# trova la prima batteria e il primo alimentatore AC
+_find_bat() {
+  for d in "$PS"/*; do
+    [ -d "$d" ] || continue
+    t="$(_read "$d/type")"
+    [ "$t" = "Battery" ] && { echo "$d"; return; }
+  done
+}
+_ac_online() {
+  for d in "$PS"/*; do
+    [ -d "$d" ] || continue
+    t="$(_read "$d/type")"
+    case "$t" in Mains|USB|USB_PD|USB_PD_DRP|USB_C)
+      [ "$(_read "$d/online")" = "1" ] && { echo 1; return; } ;;
+    esac
+  done
+  echo 0
+}
+_have_ac() {
+  for d in "$PS"/*; do
+    [ -d "$d" ] || continue
+    case "$(_read "$d/type")" in Mains|USB|USB_PD|USB_PD_DRP|USB_C) echo 1; return ;; esac
+  done
+  echo 0
+}
+
+# percentuale: usa 'capacity' se c'e', altrimenti energy_now/full o charge_now/full
+_pct() {
+  b="$1"
+  cap="$(_read "$b/capacity")"
+  if [ -n "$cap" ]; then echo "$cap"; return; fi
+  en="$(_read "$b/energy_now")"; ef="$(_read "$b/energy_full")"
+  [ -z "$en" ] && { en="$(_read "$b/charge_now")"; ef="$(_read "$b/charge_full")"; }
+  if [ -n "$en" ] && [ -n "$ef" ] && [ "$ef" -gt 0 ] 2>/dev/null; then
+    echo $(( en * 100 / ef )); return
+  fi
+  echo ""
+}
+
+# stato normalizzato
+_state() {
+  s="$(_read "$1/status")"
+  case "$s" in
+    Charging) echo charging ;;
+    Discharging) echo discharging ;;
+    Full) echo full ;;
+    "Not charging") echo notcharging ;;
+    *) echo unknown ;;
+  esac
+}
+
+BAT="$(_find_bat)"
+
+case "${1:-status}" in
+  status)
+    if [ -z "$BAT" ]; then
+      [ "$(_have_ac)" = "1" ] && echo "ac-only" || echo "nobattery"
+      exit 0
+    fi
+    pct="$(_pct "$BAT")"; [ -z "$pct" ] && pct=0
+    printf '%s\t%s\t%s\n' "$pct" "$(_state "$BAT")" "$(_ac_online)"
+    ;;
+  info)
+    ac="$(_ac_online)"
+    echo "ac=$ac"
+    if [ -z "$BAT" ]; then
+      echo "battery=0"
+      exit 0
+    fi
+    echo "battery=1"
+    pct="$(_pct "$BAT")"
+    echo "percent=${pct:-0}"
+    echo "state=$(_state "$BAT")"
+    # energie/cariche in unita' native (uWh o uAh)
+    en="$(_read "$BAT/energy_now")"; ef="$(_read "$BAT/energy_full")"
+    efd="$(_read "$BAT/energy_full_design")"; pw="$(_read "$BAT/power_now")"
+    vn="$(_read "$BAT/voltage_now")"
+    if [ -z "$en" ]; then
+      # sistemi charge_* (uAh): converti a energia con la tensione
+      cn="$(_read "$BAT/charge_now")"; cf="$(_read "$BAT/charge_full")"
+      cfd="$(_read "$BAT/charge_full_design")"; cur="$(_read "$BAT/current_now")"
+      if [ -n "$vn" ] && [ "$vn" -gt 0 ] 2>/dev/null; then
+        [ -n "$cn" ] && en=$(( cn * vn / 1000000 ))
+        [ -n "$cf" ] && ef=$(( cf * vn / 1000000 ))
+        [ -n "$cfd" ] && efd=$(( cfd * vn / 1000000 ))
+        [ -n "$cur" ] && pw=$(( cur * vn / 1000000 ))
+      fi
+    fi
+    # potenza in W (una cifra decimale) e tensione in V
+    if [ -n "$pw" ] && [ "$pw" -gt 0 ] 2>/dev/null; then
+      echo "power_w=$(( pw / 100000 ))"     # decimi di W (es. 78 = 7.8 W)
+    fi
+    [ -n "$vn" ] && [ "$vn" -gt 0 ] 2>/dev/null && echo "voltage_mv=$(( vn / 1000 ))"
+    # salute = energy_full / energy_full_design
+    if [ -n "$ef" ] && [ -n "$efd" ] && [ "$efd" -gt 0 ] 2>/dev/null; then
+      echo "health=$(( ef * 100 / efd ))"
+    fi
+    # tempo residuo (minuti): carica o scarica
+    st="$(_state "$BAT")"
+    if [ -n "$pw" ] && [ "$pw" -gt 0 ] 2>/dev/null; then
+      if [ "$st" = "discharging" ] && [ -n "$en" ]; then
+        echo "eta_min=$(( en * 60 / pw ))"
+      elif [ "$st" = "charging" ] && [ -n "$en" ] && [ -n "$ef" ]; then
+        rem=$(( ef - en )); [ "$rem" -lt 0 ] && rem=0
+        echo "eta_min=$(( rem * 60 / pw ))"
+      fi
+    fi
+    cyc="$(_read "$BAT/cycle_count")"; [ -n "$cyc" ] && [ "$cyc" -gt 0 ] 2>/dev/null && echo "cycles=$cyc"
+    tech="$(_read "$BAT/technology")"; [ -n "$tech" ] && echo "technology=$tech"
+    man="$(_read "$BAT/manufacturer")"; [ -n "$man" ] && echo "manufacturer=$man"
+    mod="$(_read "$BAT/model_name")"; [ -n "$mod" ] && echo "model=$mod"
+    lvl="$(_read "$BAT/capacity_level")"; [ -n "$lvl" ] && echo "level=$lvl"
+    ;;
+  *) echo "uso: nxs-battery {status|info}" >&2; exit 2 ;;
+esac
+exit 0

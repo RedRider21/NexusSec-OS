@@ -34,6 +34,14 @@ if command -v pipewire >/dev/null 2>&1; then
   (sleep 1; command -v pipewire-pulse >/dev/null 2>&1 && exec pipewire-pulse) &
 fi
 
+# 2b) Sblocco audio ROBUSTO (ALSA hardware + sink PipeWire, con ritentativi).
+#     Su macchina REALE (avvio da chiavetta) la scheda c'e' e il sink "Analog
+#     Stereo" esiste, ma parte MUTO (Master/Speaker/Headphone/"Auto-Mute") e a
+#     volte l'UCM lo rimette muto poco dopo -> in VM l'audio va, dallo stick no.
+#     nxs-audio-unmute agisce su entrambi i livelli e ripete alcune passate per
+#     battere l'inizializzazione tardiva del codec. Parte dopo PipeWire.
+command -v nxs-audio-unmute >/dev/null 2>&1 && (sleep 2; nxs-audio-unmute) &
+
 # 3) Desktop manager pcmanfm (icone + SFONDO), DIETRO la splash. Lo sfondo del
 #    profilo va impostato via "pcmanfm --set-wallpaper", quindi deve gia' esserci.
 command -v pcmanfm >/dev/null 2>&1 && pcmanfm --desktop --profile=NexusSec &
@@ -46,6 +54,11 @@ nxs-panel &
 
 # 6) Integrazione VirtualBox (mouse seamless + auto-resize). Innocuo altrove.
 command -v VBoxClient-all >/dev/null 2>&1 && VBoxClient-all 2>/dev/null &
+
+# 6b) Salvaschermo automatico: xautolock lancia nxs-screensaver dopo N minuti
+#     di inattivita' (config in ~/.config/nxs/screensaver.conf, modificabile dal
+#     Centro di Controllo). Best-effort: se disattivato o senza xautolock, esce.
+command -v nxs-screensaver-idle >/dev/null 2>&1 && (sleep 3; nxs-screensaver-idle start) &
 
 # 7) CANCELLO: aspetta che la splash abbia finito (animazione + fade), POI il
 #    selettore. Cosi' il desktop "operativo" non esce finche' la splash non e'

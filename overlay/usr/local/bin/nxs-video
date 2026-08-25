@@ -1,0 +1,35 @@
+#!/bin/sh
+# NexusSec - Visualizzatore video (GTK3 + GStreamer, sink 'gtksink').
+#
+# DAL 2026.08.25 GStreamer e i codec sono PREINSTALLATI (dep di nexussec-base,
+# incluso gst-plugins-good-gtk che fornisce 'gtksink'): l'avvio e' istantaneo e
+# offline. I blocchi apk qui sotto restano SOLO come fallback (no-op se gia'
+# presenti). Log in $LOG.
+set -e
+LOG=/tmp/nxs-video.log
+# gstreamer -> core + gir Gst-1.0.typelib ; -base -> playbin/decodebin ;
+# good + good-gtk -> gtksink (widget video GTK) ; bad/libav -> codec
+# (H.264/VP8/VP9/AAC/Opus...). py3-gobject3 per gi.
+GST_PKGS="gstreamer gst-plugins-base gst-plugins-good gst-plugins-good-gtk gst-plugins-bad gst-libav py3-gobject3"
+
+priv() { if command -v doas >/dev/null 2>&1; then doas "$@"; \
+         elif command -v sudo >/dev/null 2>&1; then sudo "$@"; else "$@"; fi; }
+
+have_gst() { [ -f /usr/lib/girepository-1.0/Gst-1.0.typelib ]; }
+have_gtksink() { [ -f /usr/lib/gstreamer-1.0/libgstgtk.so ]; }
+
+if ! have_gst || ! have_gtksink; then
+  echo "NexusSec Video: installo GStreamer/gtksink (solo la prima volta)..." | tee -a "$LOG" >&2
+  for p in $GST_PKGS; do
+    priv apk add --no-cache "$p" >>"$LOG" 2>&1 || true
+  done
+fi
+
+if ! have_gst; then
+  MSG="GStreamer non disponibile: impossibile avviare il Visualizzatore video. Vedi $LOG"
+  echo "$MSG" >&2
+  command -v xmessage >/dev/null 2>&1 && xmessage -center "$MSG"
+  exit 1
+fi
+
+exec env PYTHONPATH=/usr/local/lib python3 -m nxs_video "$@" >>"$LOG" 2>&1

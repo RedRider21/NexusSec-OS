@@ -200,16 +200,59 @@ def write_accent_css(key: str | None = None) -> None:
     """Genera ~/.config/nxs/accent.css con gli accenti del profilo (override
     mirati, caricati da nxs_cc.common.apply_css)."""
     ac = accent(key)
-    css = f"""/* accent del profilo NexusSec - generato da nxs_profiles */
+    try:
+        h = ac.lstrip("#")
+        r, g, b = (int(h[i:i + 2], 16) for i in (0, 2, 4))
+    except (ValueError, IndexError):
+        r, g, b = 0, 229, 255
+    rgb = f"{r},{g},{b}"
+    css = f"""/* accent del profilo NexusSec - generato da nxs_profiles
+   Restyle 'badge' 2026-08-25: colorazione raffinata per profilo su barra,
+   menu e finestre (accent usato con parsimonia: filetti, tag, aloni morbidi).
+   Caricato con priorita' sopra il tema base (vedi nxs_cc.common.apply_css). */
+
+/* --- BARRA: filetto accento + stati con alone morbido --- */
+.nxs-panel {{ border-top: 2px solid {ac}; }}
+.nxs-panel.nxs-panel-top {{ border-top: none; border-bottom: 2px solid {ac}; }}
 .nxs-panel button.nxs-menu, .nxs-panel button.nxs-menu image {{ color: {ac}; }}
 .nxs-panel button image {{ color: {ac}; }}
-.nxs-panel button.nxs-task-active {{ color: {ac}; }}
+.nxs-panel button:hover {{ background-color: rgba({rgb},0.14); border-color: transparent; }}
+.nxs-panel button.nxs-icon:hover image {{ color: {ac}; }}
+.nxs-panel button.nxs-task-active {{
+  color: {ac}; background-color: rgba({rgb},0.14);
+  border-color: transparent; box-shadow: inset 0 -2px {ac}; }}
+
+/* --- MENU: striscia, categorie a tag, hover e selezione --- */
 .nxs-menu-strip {{ background-image: linear-gradient(to top, #03070f, {ac} 60%, {ac}); }}
-button.nxs-primary {{ color: {ac}; border-color: {ac}; }}
-.nxs-section {{ color: {ac}; border-bottom-color: {ac}; }}
-.nxs-headerbar {{ border-bottom-color: {ac}; }}
-.nxs-headerbar label.title {{ color: {ac}; }}
+label.nxs-menu-cat {{ color: {ac}; }}
+button.nxs-menu-cat {{ border-left-color: {ac}; }}
+button.nxs-menu-cat:hover {{ border-left-color: {ac}; color: {ac};
+  background-image: linear-gradient(to right, rgba({rgb},0.16), rgba({rgb},0)); }}
 button.nxs-menu-item image {{ color: {ac}; }}
+button.nxs-menu-item:hover {{ background-color: rgba({rgb},0.14); border-color: transparent; }}
+button.nxs-menu-item:hover label {{ color: {ac}; }}
+button.nxs-tool-item:hover {{ border-left-color: {ac}; background-color: rgba({rgb},0.12); }}
+
+/* --- FINESTRE (Centro di Controllo, viste, dialoghi): raffinato --- */
+.nxs-section {{ color: {ac}; border-bottom-color: {ac}; }}
+.nxs-headerbar {{ border-bottom-color: {ac}; box-shadow: inset 0 -2px {ac}; }}
+.nxs-headerbar label.title {{ color: {ac}; }}
+.nxs-key, .nxs-card-title {{ color: {ac}; }}
+.nxs-tile:hover, .nxs-card:hover {{ border-color: {ac}; box-shadow: inset 0 2px {ac}; }}
+button.nxs-primary {{ color: {ac}; border-color: {ac}; background-color: rgba({rgb},0.12); }}
+button.nxs-primary:hover {{ background-color: rgba({rgb},0.22); box-shadow: 0 6px 22px rgba({rgb},0.28); }}
+button:hover {{ border-color: {ac}; background-color: rgba({rgb},0.12); }}
+button:hover image {{ color: {ac}; }}
+entry:focus {{ border-color: {ac}; box-shadow: 0 0 0 3px rgba({rgb},0.18); }}
+switch:checked {{ background-color: rgba({rgb},0.30); border-color: {ac}; }}
+switch:checked slider {{ background-color: {ac}; }}
+notebook tab:checked {{ color: {ac}; box-shadow: inset 0 -2px {ac}; }}
+progressbar > trough > progress {{ background-color: {ac}; }}
+treeview:selected {{ background-color: rgba({rgb},0.20); color: {ac}; }}
+list row:selected {{ background-color: rgba({rgb},0.20); box-shadow: inset 3px 0 {ac}; }}
+list row:selected label {{ color: {ac}; }}
+scale highlight {{ background-color: {ac}; }}
+scale slider {{ background-color: {ac}; border-color: {ac}; }}
 """
     CONF_DIR.mkdir(parents=True, exist_ok=True)
     ACCENT_CSS.write_text(css)

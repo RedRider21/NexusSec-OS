@@ -222,8 +222,23 @@ ricorrenti su **musl + gcc 15**:
 - **Tool dal menu che chiudevano il terminale**: `nxs-run-tool` (wrapper) tiene
   aperto il terminale lasciando una shell dopo `nxs-tool launch`.
 - **Browser**: il pacchetto Alpine NON e' `webkit2gtk` (inesistente) ma
-  `webkit2gtk-4.1` (typelib WebKit2-4.1, che app.py richiede). Install on-demand
-  via apk (serve rete).
+  `webkit2gtk-4.1` (typelib WebKit2-4.1, che app.py richiede). DAL 2026.08.25 e'
+  **PREINSTALLATO** (dep di `nexussec-base`, con `gst-plugins-bad`+`gst-libav`):
+  NON rimuoverli. Motivo (causa a monte del "browser non parte / ci mette un
+  secolo"): l'install on-demand via apk (a) NON parte OFFLINE da chiavetta (serve
+  rete) e (b) online scarica ~50MB al primo avvio (lentissimo). Preinstallandolo
+  l'avvio e' istantaneo e offline-ready, ed e' compilato contro la stessa base
+  congelata (niente deriva di versione dell'edge rolling). Costo: ISO +~60MB,
+  RAM +~220MB. I blocchi `apk add` in `nxs-browser` restano solo come fallback
+  (no-op se gia' presente). Idem `nxs-player`: le sue dep gst sono ora nella base.
+- **Audio: in VM va, su HW reale NO** (nessun suono ne' speaker ne' cuffie pur
+  con un sink "Analog Stereo" presente). Causa a monte: mancavano `sof-firmware`
+  (DSP audio dei portatili Intel/AMD moderni; senza, il kernel crea un nodo
+  fantoccio che non pilota il codec) e `alsa-ucm-conf` (instradamento UCM per
+  PipeWire). `sof-firmware` sta nel MODLOOP (dep di `nexussec-firmware`),
+  `alsa-ucm-conf` nel root (dep di `nexussec-base`). In VM non servono (HDA
+  emulata). NON rimuoverli. Lo sblocco mixer (`nxs-audio-unmute`, ALSA+wpctl con
+  ritentativi, in autostart) copre l'auto-mute ma NON basta senza il firmware.
 
 ## Vincoli (Alpine)
 

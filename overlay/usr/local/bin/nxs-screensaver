@@ -1,0 +1,6 @@
+#!/bin/sh
+# NexusSec - salvaschermo animato (GTK3 + Cairo). Nessuna dipendenza extra.
+# Uso:
+#   nxs-screensaver [nebula|matrix|starfield]   avvia il salvaschermo ora
+# Senza argomenti usa lo stile da ~/.config/nxs/screensaver.conf (default nebula).
+exec env PYTHONPATH=/usr/local/lib python3 -m nxs_screensaver "$@"
