@@ -19,6 +19,13 @@ trap cleanup EXIT
 # 1) Inietta l'intero overlay del repo (usr/local, home/nexus, etc/local.d).
 cp -a "$OVERLAY"/. "$tmp"/
 
+# 1a) CRITICO: rimuovi ogni bytecode Python (__pycache__/*.pyc). I .pyc stale
+# hanno lo stesso mtime dei .py (build deterministica) e Python li usa AL POSTO
+# dei .py aggiornati -> il sistema esegue codice VECCHIO (es. lo stile finestre
+# non cambia). Non devono MAI finire nell'apkovl: Python li rigenera a runtime.
+find "$tmp" -type d -name '__pycache__' -prune -exec rm -rf {} + 2>/dev/null || true
+find "$tmp" -type f \( -name '*.pyc' -o -name '*.pyo' \) -delete 2>/dev/null || true
+
 # 1bis) /etc/apk/world: ELENCO DEI PACCHETTI INSTALLATI AL BOOT. L'init della
 # live (initramfs) installa "alpine-base" + il contenuto di world dal repo sul
 # media. SENZA questo file la live monta solo alpine-base -> niente desktop,
