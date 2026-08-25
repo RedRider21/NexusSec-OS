@@ -134,7 +134,15 @@ def set_desktops(n: int) -> None:
     new = re.sub(r"<desktops>.*?</desktops>", repl, txt, count=1, flags=re.S)
     if new != txt:
         RC_XML.write_text(new)
-        openbox_reconfigure()
+    # rc.xml <number> e' letto SOLO all'avvio di Openbox (reconfigure NON cambia
+    # il numero di desktop a runtime): applichiamo SUBITO via EWMH con wmctrl -n
+    # (cosi' il pager si aggiorna), e teniamo rc.xml per i riavvii successivi.
+    try:
+        subprocess.Popen(["wmctrl", "-n", str(n)],
+                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except FileNotFoundError:
+        pass
+    openbox_reconfigure()
 
 
 def openbox_reconfigure() -> None:
