@@ -253,6 +253,37 @@ ricorrenti su **musl + gcc 15**:
   stack; solo un kernel `linux-virt` (solo VM) si avvicina a ~300MB.
 - La barra/CC/selettore sono **Python GTK3**: mantenerli (richiesta esplicita).
 
+## Sicurezza / hardening (2026-08-25)
+
+Modello: **una immagine, due modalità**. La live resta comoda (autologin,
+`doas nopass`, credenziali predefinite `nexus`/`nexus` impostate a boot da
+`nexussec.start`); il sistema **installato** si irrobustisce con `nxs-harden`.
+
+- **`nxs-harden`** (installato): `passwd`, disattiva autologin (edita
+  `/etc/inittab` + `kill -HUP 1`), `doas permit persist` (con password), blocco
+  VT/Zap via `/etc/X11/xorg.conf.d/50-nxs-lock.conf` (lock schermo non
+  aggirabile con Ctrl+Alt+Fn). GUI: `views.open_security`.
+- **`nxs-firewall`** (nftables, dep in base): inbound default-deny, outbound
+  libero; attivo a boot (`nxs-firewall boot` in `nexussec.start`), opt-out con
+  `/etc/nxs/firewall.disabled`; porte in `/etc/nxs/firewall.allow`. GUI:
+  `open_firewall`. NB pentest: per METTERSI IN ASCOLTO serve `allow`/`off`.
+- **LUKS persistenza** (dep `cryptsetup`): `nxs-persist` opzione cifra
+  (LUKS2 label **NXSCRYPT**); non si monta a boot (serve passphrase) →
+  `nxs-unlock-data login` chiamato da `~/.profile` PRIMA di `startx`.
+  Setup post-mount condiviso in `/usr/local/lib/nxs-persist-setup.sh` (sorgiato
+  da `nexussec.start` e `nxs-unlock-data`).
+- **`nxs-users`** (list/passwd/add/del): password **via stdin** (mai in argv).
+  GUI `open_users`. **WiFi** PSK idem via stdin + `wpa_passphrase` (niente
+  password in `ps`).
+- **Pin container per digest**: `isolation._image` usa `image@<digest>` se
+  repo.json ha `digest` (opt-in per-tool; NON pinnare kali-rolling in blocco:
+  romperebbe il modello rolling).
+- **`nxs-ai-sandbox`**: wrapper bubblewrap per il futuro agente AI (root ro,
+  home isolata, `--unshare-net` di default).
+- GUI privilegiate: le azioni sensibili (utenti/harden/persist) girano in un
+  **terminale** (`_run_priv_term`), così `doas` può chiedere la password quando
+  il sistema è hardenizzato; sul live (nopass) sono immediate.
+
 ## Cosa NON fare
 
 - Non reintrodurre TinyCore: `deb2tcz`, shim `apt`, `.tcz`, `tce-load`,
