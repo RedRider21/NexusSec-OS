@@ -271,6 +271,8 @@ _css_done = False
 
 # Accent del profilo: CSS opzionale generato da nxs_profiles (model.write_accent_css).
 ACCENT_CSS_FILE = HOME / ".config" / "nxs" / "accent.css"
+# Stile finestre (flat/vetro/telaio): CSS generato da nxs_profiles, sopra l'accent.
+WINDOW_STYLE_CSS_FILE = HOME / ".config" / "nxs" / "window-style.css"
 
 
 def apply_css() -> None:
@@ -300,7 +302,47 @@ def apply_css() -> None:
                 Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION + 1)
         except Exception:                # noqa: BLE001
             pass
+    # Stile finestre (flat/vetro/telaio): sopra l'accent cosi' il trattamento
+    # strutturale (vetro/telaio) vince dove necessario, mantenendo l'accent.
+    if WINDOW_STYLE_CSS_FILE.exists():
+        try:
+            wp = Gtk.CssProvider()
+            wp.load_from_path(str(WINDOW_STYLE_CSS_FILE))
+            Gtk.StyleContext.add_provider_for_screen(
+                Gdk.Screen.get_default(), wp,
+                Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION + 2)
+        except Exception:                # noqa: BLE001
+            pass
     _css_done = True
+
+
+_live_style_prov = None
+
+
+def apply_window_style_live() -> None:
+    """Ricarica window-style.css a caldo (dopo un cambio di stile), sostituendo
+    l'eventuale provider live precedente cosi' la finestra corrente si aggiorna
+    subito senza riavvio."""
+    global _live_style_prov
+    scr = Gdk.Screen.get_default()
+    if scr is None:
+        return
+    if _live_style_prov is not None:
+        try:
+            Gtk.StyleContext.remove_provider_for_screen(scr, _live_style_prov)
+        except Exception:                # noqa: BLE001
+            pass
+        _live_style_prov = None
+    if not WINDOW_STYLE_CSS_FILE.exists():
+        return
+    try:
+        p = Gtk.CssProvider()
+        p.load_from_path(str(WINDOW_STYLE_CSS_FILE))
+        Gtk.StyleContext.add_provider_for_screen(
+            scr, p, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION + 3)
+        _live_style_prov = p
+    except Exception:                    # noqa: BLE001
+        pass
 
 
 def have(cmd: str) -> bool:

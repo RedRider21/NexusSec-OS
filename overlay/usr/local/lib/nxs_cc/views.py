@@ -2100,3 +2100,92 @@ def open_bluetooth(_btn=None):
     refresh_adapter()
     reload_devices()
     win.show_all()
+
+
+# ---------------------------------------------------------------------------
+# Stile finestre (flat / vetro / telaio) - commutabile
+# ---------------------------------------------------------------------------
+_WSTYLES = [
+    ("vetro",  "Vetro / HUD",
+     "Velatura d'accento, filetto superiore colorato e trama a righe "
+     "nell'header. Elegante, \"console operativa\". (predefinito)"),
+    ("flat",   "Flat arrotondato",
+     "Card scure con angoli morbidi e filo d'accento leggero. Sobrio e "
+     "riposante: e' lo stile classico di NexusSec."),
+    ("telaio", "Telaio a contorno",
+     "Fondo quasi nero, elementi definiti dal bordo d'accento e da una "
+     "barretta laterale. Estetica terminale/cyber, molto tecnica."),
+]
+
+
+def open_window_style(_btn=None):
+    win, body = panel_window("Stile finestre", 560, 460)
+    try:
+        from nxs_profiles import model as _wmodel
+    except Exception:                       # noqa: BLE001
+        _wmodel = None
+
+    intro = Gtk.Label(label="Scegli come vestire le finestre del desktop. Lo "
+                            "stile si accorda all'accento del profilo attivo e "
+                            "vale per Centro di Controllo, viste e dialoghi.")
+    intro.set_xalign(0); intro.set_line_wrap(True)
+    intro.get_style_context().add_class("nxs-val")
+    body.pack_start(intro, False, False, 0)
+
+    current = _wmodel.get_window_style() if _wmodel else "vetro"
+    group = None
+    radios = {}
+    for key, name, desc in _WSTYLES:
+        card = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
+        card.get_style_context().add_class("nxs-card")
+        rb = Gtk.RadioButton.new_with_label_from_widget(group, name)
+        if group is None:
+            group = rb
+        rb.set_active(key == current)
+        radios[key] = rb
+        card.pack_start(rb, False, False, 0)
+        d = Gtk.Label(label=desc); d.set_xalign(0); d.set_line_wrap(True)
+        d.get_style_context().add_class("nxs-val")
+        d.set_margin_start(24)
+        card.pack_start(d, False, False, 0)
+        body.pack_start(card, False, False, 0)
+
+    status = Gtk.Label(label=""); status.set_xalign(0)
+    status.get_style_context().add_class("nxs-val")
+    body.pack_start(status, False, False, 0)
+
+    def chosen():
+        for k, rb in radios.items():
+            if rb.get_active():
+                return k
+        return "vetro"
+
+    def do_apply(_b=None):
+        if _wmodel is None:
+            status.set_text("Modulo profili non disponibile.")
+            return
+        style = chosen()
+        _wmodel.set_window_style(style)
+        # applica a caldo (lo stile riguarda le finestre, non la barra)
+        try:
+            from nxs_cc.common import apply_window_style_live
+            apply_window_style_live()
+        except Exception:                   # noqa: BLE001
+            pass
+        status.set_text("Stile «%s» applicato. Le finestre gia' aperte si "
+                        "aggiornano riaprendole." %
+                        dict((k, n) for k, n, _ in _WSTYLES).get(style, style))
+    # anteprima immediata anche solo cambiando la scelta
+    for rb in radios.values():
+        rb.connect("toggled", lambda w: w.get_active() and do_apply())
+
+    btns = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+    b_apply = icon_button("Applica", "emblem-ok", primary=True)
+    b_apply.connect("clicked", do_apply)
+    b_close = icon_button("Chiudi", "window-close")
+    b_close.connect("clicked", lambda _b: win.destroy())
+    btns.pack_start(b_apply, False, False, 0)
+    btns.pack_end(b_close, False, False, 0)
+    body.pack_end(btns, False, False, 0)
+
+    win.show_all()

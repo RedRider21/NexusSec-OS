@@ -98,6 +98,8 @@ VIEW_MAP = {
     "screensaver": views.open_screensaver,
     "autostart": views.open_autostart,
     "bluetooth": views.open_bluetooth,
+    "stile-finestre": views.open_window_style,
+    "window-style": views.open_window_style,
 }
 
 
@@ -181,6 +183,8 @@ def build_window() -> Gtk.Window:
              "Scegli l'immagine di sfondo", launch("sfondo")),
         Tile("preferences-desktop-screensaver", "Salvaschermo",
              "Salvaschermo animato: attivazione, tempo e stile", launch("salvaschermo")),
+        Tile("preferences-system-windows", "Stile finestre",
+             "Aspetto delle finestre: Vetro, Flat o Telaio", launch("stile-finestre")),
     ]), False, False, 0)
 
     body.pack_start(section("Openbox e pannello", [

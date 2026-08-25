@@ -258,6 +258,108 @@ scale slider {{ background-color: {ac}; border-color: {ac}; }}
 """
     CONF_DIR.mkdir(parents=True, exist_ok=True)
     ACCENT_CSS.write_text(css)
+    # rigenera anche lo stile finestre (usa lo stesso accent del profilo)
+    write_window_style_css(key=key)
+
+
+# ---- Stile finestre (flat / vetro / telaio) commutabile -------------------
+WINDOW_STYLE_CONF = CONF_DIR / "window-style"
+WINDOW_STYLE_CSS = CONF_DIR / "window-style.css"
+WINDOW_STYLES = ("flat", "vetro", "telaio")
+DEFAULT_WINDOW_STYLE = "vetro"
+
+
+def get_window_style() -> str:
+    """Ritorna lo stile finestre scelto (default 'vetro')."""
+    try:
+        s = WINDOW_STYLE_CONF.read_text().strip().lower()
+        if s in WINDOW_STYLES:
+            return s
+    except OSError:
+        pass
+    return DEFAULT_WINDOW_STYLE
+
+
+def set_window_style(style: str, key: str | None = None) -> None:
+    """Persiste lo stile e rigenera il CSS relativo con l'accent corrente."""
+    if style not in WINDOW_STYLES:
+        style = DEFAULT_WINDOW_STYLE
+    CONF_DIR.mkdir(parents=True, exist_ok=True)
+    WINDOW_STYLE_CONF.write_text(style + "\n")
+    write_window_style_css(style=style, key=key)
+
+
+def write_window_style_css(style: str | None = None, key: str | None = None) -> None:
+    """Genera ~/.config/nxs/window-style.css per lo stile scelto, tinto con
+    l'accent del profilo. Caricato SOPRA accent.css (vedi nxs_cc.common)."""
+    if style is None:
+        style = get_window_style()
+    ac = accent(key)
+    try:
+        h = ac.lstrip("#")
+        r, g, b = (int(h[i:i + 2], 16) for i in (0, 2, 4))
+    except (ValueError, IndexError):
+        r, g, b = 0, 229, 255
+    rgb = f"{r},{g},{b}"
+    head = ("/* stile finestre NexusSec: %s - generato da nxs_profiles.\n"
+            "   Caricato sopra accent.css (nxs_cc.common.apply_css). */\n" % style)
+    if style == "flat":
+        css = head + "/* Flat arrotondato: nessun override, usa il tema base + accent. */\n"
+    elif style == "telaio":
+        css = head + f"""
+/* TELAIO A CONTORNO (neon outline): fondo quasi nero, elementi definiti dal
+   bordo d'accento e da una barretta laterale. Estetica terminale/cyber. */
+window, .background, dialog {{ background-color: #05090f; }}
+.nxs-headerbar {{
+  background-color: #060d14;
+  border-bottom: 1px solid rgba({rgb},0.35);
+  border-left: 3px solid {ac};
+}}
+.nxs-tile, .nxs-card {{
+  background-color: #070d14; border: 1px solid rgba({rgb},0.26);
+  border-radius: 8px; border-left: 3px solid rgba({rgb},0.55);
+}}
+.nxs-tile:hover, .nxs-card:hover {{
+  background-color: rgba({rgb},0.08);
+  border-color: {ac}; border-left-color: {ac}; box-shadow: none; }}
+button {{ border-radius: 6px; }}
+button.nxs-primary {{ background-color: rgba({rgb},0.10); }}
+entry {{ border-radius: 6px; background-color: #070d14; }}
+frame > border {{ border-color: rgba({rgb},0.26); border-radius: 8px; }}
+notebook tab {{ border-radius: 6px 6px 0 0; }}
+progressbar > trough {{ border-radius: 4px; }}
+progressbar > trough > progress {{ border-radius: 4px; }}
+"""
+    else:  # vetro (default)
+        # NB: GTK3 vuole la sintassi vecchia dei gradienti (to bottom/to right,
+        # niente angoli/radial, color-stop singoli): stessa forma usata da accent.css.
+        css = head + f"""
+/* VETRO / HUD: velatura d'accento, filetto superiore colorato e trama a righe
+   nell'header. Console operativa ma elegante. */
+window, .background, dialog {{
+  background-color: #060c16;
+  background-image: linear-gradient(to bottom, rgba({rgb},0.06), rgba(6,12,22,0.0) 45%);
+}}
+.nxs-headerbar {{
+  background-color: #0a1a26;
+  border-top: 2px solid {ac};
+  background-image:
+    repeating-linear-gradient(to right, rgba({rgb},0.07), rgba({rgb},0.07) 1px, rgba(10,26,38,0.0) 1px, rgba(10,26,38,0.0) 7px),
+    linear-gradient(to bottom, rgba({rgb},0.14), rgba(10,26,38,0.0));
+}}
+.nxs-tile, .nxs-card {{
+  background-color: rgba({rgb},0.05);
+  border: 1px solid rgba({rgb},0.18);
+}}
+.nxs-tile:hover, .nxs-card:hover {{
+  background-color: rgba({rgb},0.13); border-color: {ac};
+  box-shadow: inset 0 0 0 1px rgba({rgb},0.30); }}
+button.nxs-primary {{ box-shadow: 0 0 18px rgba({rgb},0.35); }}
+entry {{ background-color: rgba(7,15,26,0.60); }}
+frame > border {{ border-color: rgba({rgb},0.18); }}
+"""
+    CONF_DIR.mkdir(parents=True, exist_ok=True)
+    WINDOW_STYLE_CSS.write_text(css)
 
 
 def _darken(hex_color: str, factor: float = 0.32) -> str:
