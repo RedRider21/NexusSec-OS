@@ -23,6 +23,15 @@ COL_ALERT = "#ff5a8a"
 
 CSS = b"""
 window, .background, dialog { background-color: #050a14; color: #c8f5ff; }
+/* Font dell'interfaccia (inclusi in /usr/share/fonts/nexussec): titoli ed
+   etichette in Chakra Petch (look "tech" del mockup), meta in IBM Plex Mono. */
+.nxs-headerbar label.title, .nxs-section, .nxs-key, .nxs-card-title,
+.nxs-tile label, frame > label, .nxs-primary, .nxs-primary label {
+  font-family: "Chakra Petch", "DejaVu Sans", sans-serif;
+}
+.nxs-headerbar label.subtitle, .nxs-footer {
+  font-family: "IBM Plex Mono", monospace;
+}
 .nxs-section {
   color: #00e5ff; font-weight: bold; font-size: 11pt;
   padding: 10px 4px 6px 4px; border-bottom: 1px solid #1a3a52; margin-bottom: 8px;
@@ -36,6 +45,9 @@ window, .background, dialog { background-color: #050a14; color: #c8f5ff; }
 .nxs-tile:hover { background-color: rgba(0,229,255,0.10); border-color: #00e5ff; }
 .nxs-tile:active, .nxs-tile:focus { background-color: rgba(0,229,255,0.18); border-color: #00e5ff; }
 .nxs-tile label { color: #c8f5ff; font-size: 9pt; }
+.nxs-tile-badge { background-color: rgba(0,229,255,0.14); border-radius: 9px;
+  padding: 7px; min-width: 20px; min-height: 20px; }
+.nxs-tile-badge image { color: #00e5ff; }
 .nxs-headerbar {
   background-color: #0a1a26; color: #c8f5ff;
   border-bottom: 1px solid #00e5ff; padding: 8px 14px;
@@ -302,17 +314,10 @@ def apply_css() -> None:
                 Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION + 1)
         except Exception:                # noqa: BLE001
             pass
-    # Stile finestre (flat/vetro/telaio): sopra l'accent cosi' il trattamento
-    # strutturale (vetro/telaio) vince dove necessario, mantenendo l'accent.
-    if WINDOW_STYLE_CSS_FILE.exists():
-        try:
-            wp = Gtk.CssProvider()
-            wp.load_from_path(str(WINDOW_STYLE_CSS_FILE))
-            Gtk.StyleContext.add_provider_for_screen(
-                Gdk.Screen.get_default(), wp,
-                Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION + 2)
-        except Exception:                # noqa: BLE001
-            pass
+    # Stile finestre (flat/vetro/telaio): caricato come UNICO provider tracciato
+    # (sopra l'accent), cosi' un cambio stile lo rimuove e rimpiazza in modo
+    # pulito (prima il provider d'avvio restava e i cambi non si vedevano).
+    apply_window_style_live()
     _css_done = True
 
 

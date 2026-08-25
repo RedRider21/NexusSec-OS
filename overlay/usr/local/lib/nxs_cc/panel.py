@@ -328,11 +328,13 @@ class LoadMonitor(Gtk.EventBox):
         self.get_style_context().add_class("nxs-loadmon")
         box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=3)
         box.set_valign(Gtk.Align.CENTER)
+        self.load = _Meter((1.00, 0.45, 0.58))   # rosa/rosso: carico medio
         self.cpu = _Meter((0.00, 0.898, 1.00))   # cyan
         self.mem = _Meter((0.40, 0.95, 0.65))    # verde
         self.net = _Meter((1.00, 0.72, 0.25))    # ambra
         self.disk = _Meter((0.66, 0.55, 1.00))   # viola (I/O disco)
-        for m in (self.cpu, self.mem, self.net, self.disk):
+        self._ncpu = os.cpu_count() or 1
+        for m in (self.load, self.cpu, self.mem, self.net, self.disk):
             box.pack_start(m, False, False, 0)
         self.add(box)
         self.set_tooltip_text("Risorse di sistema (clic: Monitor)")
@@ -434,9 +436,18 @@ class LoadMonitor(Gtk.EventBox):
         self._disk_peak = max(self._disk_peak * 0.98, drate, 128 * 1024.0)
         self.disk.push(drate / self._disk_peak)
 
+        # Carico medio (load average) normalizzato sui core: 1.0 = tutti i core pieni.
+        try:
+            la1, la5, la15 = os.getloadavg()
+        except OSError:
+            la1 = la5 = la15 = 0.0
+        self.load.push(min(1.0, la1 / self._ncpu))
+
         self.set_tooltip_text(
-            "CPU %d%%   RAM %d%%   Rete %s/s   Disco %s/s   (clic: Monitor)"
-            % (round(cpu * 100), round(mem * 100), _human(rate), _human(drate)))
+            "Carico %.2f/%.2f/%.2f (%d core)   CPU %d%%   RAM %d%%   "
+            "Rete %s/s   Disco %s/s   (clic: Monitor)"
+            % (la1, la5, la15, self._ncpu, round(cpu * 100), round(mem * 100),
+               _human(rate), _human(drate)))
         return self._alive
 
 

@@ -99,17 +99,13 @@ case "${1:-}" in
     id=$(priv wpa_cli -i "$IFACE" add_network 2>/dev/null | tail -1)
     priv wpa_cli -i "$IFACE" set_network "$id" ssid "\"$ssid\"" >/dev/null 2>&1
     if [ -n "$psk" ]; then
-      # Deriva l'hash PSK con wpa_passphrase (passphrase su STDIN, non in argv);
-      # a wpa_cli finisce solo l'hash a 64 hex, non la password umana.
-      hash="$(printf '%s' "$psk" | wpa_passphrase "$ssid" 2>/dev/null \
-              | sed -n 's/^[[:space:]]*psk=//p' | head -1)"
-      if [ -n "$hash" ]; then
-        priv wpa_cli -i "$IFACE" set_network "$id" psk "$hash" >/dev/null 2>&1
-      else
-        # passphrase fuori range per wpa_passphrase (<8 o >63): fallback
-        priv wpa_cli -i "$IFACE" set_network "$id" psk "\"$psk\"" >/dev/null 2>&1
-      fi
-      psk=""   # non tenerla in memoria oltre il necessario
+      # Passphrase in CHIARO (quotata): e' il metodo originale, compatibile con
+      # WPA2-PSK **e** WPA3-SAE (l'hash a 64 hex valeva solo per PSK e rompeva le
+      # reti SAE/miste). key_mgmt lo autonegozia wpa_supplicant in base allo scan
+      # (non lo forziamo: su driver senza SAE forzarlo romperebbe). La ricezione
+      # via STDIN evita comunque di esporre la password negli argomenti del pannello.
+      priv wpa_cli -i "$IFACE" set_network "$id" psk "\"$psk\"" >/dev/null 2>&1
+      psk=""
     else
       priv wpa_cli -i "$IFACE" set_network "$id" key_mgmt NONE >/dev/null 2>&1
     fi

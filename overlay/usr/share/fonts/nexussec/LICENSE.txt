@@ -1,0 +1,4 @@
+Font inclusi in NexusSec OS (SIL Open Font License 1.1, redistribuibili):
+- Chakra Petch (Cadson Demak) - titoli/etichette dell'interfaccia
+- IBM Plex Mono (IBM) - testo monospazio/meta
+Licenza OFL: https://scripts.sil.org/OFL

@@ -47,6 +47,11 @@ if [ -f "$REPOF" ]; then
 	add_repo "https://redrider21.github.io/NexusSec-OS"
 fi
 
+# --- Cache font: registra i font inclusi (Chakra Petch, IBM Plex Mono) -------
+if command -v fc-cache >/dev/null 2>&1; then
+	fc-cache -f /usr/share/fonts/nexussec >/dev/null 2>&1 || true
+fi
+
 # --- Credenziali predefinite (stile Kali) -----------------------------------
 # La live parte con utente 'nexus' e password predefinita 'nexus' (come kali/kali).
 # Serve per doas/blocco schermo/login se disattivi l'autologin. Modificabile da

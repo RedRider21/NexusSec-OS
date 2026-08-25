@@ -240,6 +240,8 @@ button.nxs-tool-item:hover {{ border-left-color: {ac}; background-color: rgba({r
 .nxs-headerbar {{ border-bottom-color: {ac}; box-shadow: inset 0 -2px {ac}; }}
 .nxs-headerbar label.title {{ color: {ac}; }}
 .nxs-key, .nxs-card-title {{ color: {ac}; }}
+.nxs-tile-badge {{ background-color: rgba({rgb},0.16); }}
+.nxs-tile-badge image {{ color: {ac}; }}
 .nxs-tile:hover, .nxs-card:hover {{ border-color: {ac}; box-shadow: inset 0 2px {ac}; }}
 button.nxs-primary {{ color: {ac}; border-color: {ac}; background-color: rgba({rgb},0.12); }}
 button.nxs-primary:hover {{ background-color: rgba({rgb},0.22); box-shadow: 0 6px 22px rgba({rgb},0.28); }}
@@ -307,56 +309,67 @@ def write_window_style_css(style: str | None = None, key: str | None = None) -> 
         css = head + "/* Flat arrotondato: nessun override, usa il tema base + accent. */\n"
     elif style == "telaio":
         css = head + f"""
-/* TELAIO A CONTORNO (neon outline): fondo quasi nero, elementi definiti dal
+/* TELAIO A CONTORNO (neon outline): fondo quasi NERO, elementi definiti da un
    bordo d'accento e da una barretta laterale. Estetica terminale/cyber. */
-window, .background, dialog {{ background-color: #05090f; }}
+window, .background, dialog {{ background-color: #04070c; }}
 .nxs-headerbar {{
-  background-color: #060d14;
-  border-bottom: 1px solid rgba({rgb},0.35);
-  border-left: 3px solid {ac};
+  background-color: #060c14;
+  border-top: none;
+  border-left: 4px solid {ac};
+  border-bottom: 1px solid rgba({rgb},0.45);
+  box-shadow: none;
 }}
 .nxs-tile, .nxs-card {{
-  background-color: #070d14; border: 1px solid rgba({rgb},0.26);
-  border-radius: 8px; border-left: 3px solid rgba({rgb},0.55);
+  background-color: #070e16;
+  border: 1px solid rgba({rgb},0.35);
+  border-left: 3px solid {ac};
+  border-radius: 6px;
 }}
 .nxs-tile:hover, .nxs-card:hover {{
-  background-color: rgba({rgb},0.08);
+  background-color: rgba({rgb},0.12);
   border-color: {ac}; border-left-color: {ac}; box-shadow: none; }}
-button {{ border-radius: 6px; }}
-button.nxs-primary {{ background-color: rgba({rgb},0.10); }}
-entry {{ border-radius: 6px; background-color: #070d14; }}
-frame > border {{ border-color: rgba({rgb},0.26); border-radius: 8px; }}
-notebook tab {{ border-radius: 6px 6px 0 0; }}
-progressbar > trough {{ border-radius: 4px; }}
+.nxs-section {{ border-bottom: 1px solid rgba({rgb},0.45); }}
+button {{ border-radius: 5px; background-color: #080f18; border: 1px solid rgba({rgb},0.40); }}
+button:hover {{ border-color: {ac}; background-color: rgba({rgb},0.12); }}
+button.nxs-primary {{ background-color: transparent; border-color: {ac}; color: {ac}; box-shadow: none; }}
+entry {{ border-radius: 5px; background-color: #05090f; border: 1px solid rgba({rgb},0.35); }}
+frame > border {{ border-color: rgba({rgb},0.35); border-radius: 6px; }}
+notebook tab {{ border-radius: 5px 5px 0 0; }}
+progressbar > trough {{ background-color: #05090f; border-radius: 4px; }}
 progressbar > trough > progress {{ border-radius: 4px; }}
+switch {{ background-color: #05090f; border-color: rgba({rgb},0.40); }}
 """
     else:  # vetro (default)
         # NB: GTK3 vuole la sintassi vecchia dei gradienti (to bottom/to right,
-        # niente angoli/radial, color-stop singoli): stessa forma usata da accent.css.
+        # niente angoli/radial): stessa forma usata da accent.css.
         css = head + f"""
-/* VETRO / HUD: velatura d'accento, filetto superiore colorato e trama a righe
-   nell'header. Console operativa ma elegante. */
+/* VETRO / HUD: fondo blu-notte piu' chiaro, header con filetto superiore
+   d'accento e velatura, tessere ben visibili e bordate, primario pieno. */
 window, .background, dialog {{
-  background-color: #060c16;
-  background-image: linear-gradient(to bottom, rgba({rgb},0.06), rgba(6,12,22,0.0) 45%);
+  background-color: #071624;
+  background-image: linear-gradient(to bottom, rgba({rgb},0.12), rgba(7,22,36,0.0) 42%);
 }}
 .nxs-headerbar {{
-  background-color: #0a1a26;
+  background-color: #0c2536;
   border-top: 2px solid {ac};
-  background-image:
-    repeating-linear-gradient(to right, rgba({rgb},0.07), rgba({rgb},0.07) 1px, rgba(10,26,38,0.0) 1px, rgba(10,26,38,0.0) 7px),
-    linear-gradient(to bottom, rgba({rgb},0.14), rgba(10,26,38,0.0));
+  border-bottom: 1px solid rgba({rgb},0.55);
+  background-image: linear-gradient(to bottom, rgba({rgb},0.26), rgba(12,37,54,0.0));
 }}
 .nxs-tile, .nxs-card {{
-  background-color: rgba({rgb},0.05);
-  border: 1px solid rgba({rgb},0.18);
+  background-color: #0d2536;
+  border: 1px solid rgba({rgb},0.38);
 }}
 .nxs-tile:hover, .nxs-card:hover {{
-  background-color: rgba({rgb},0.13); border-color: {ac};
-  box-shadow: inset 0 0 0 1px rgba({rgb},0.30); }}
-button.nxs-primary {{ box-shadow: 0 0 18px rgba({rgb},0.35); }}
-entry {{ background-color: rgba(7,15,26,0.60); }}
-frame > border {{ border-color: rgba({rgb},0.18); }}
+  background-color: rgba({rgb},0.24); border-color: {ac};
+  box-shadow: inset 0 0 0 1px rgba({rgb},0.45); }}
+button {{ background-color: #0e2a3d; border: 1px solid rgba({rgb},0.35); }}
+button:hover {{ border-color: {ac}; background-color: rgba({rgb},0.18); }}
+button.nxs-primary {{ background-color: {ac}; color: #04121a; border-color: {ac};
+  box-shadow: 0 0 16px rgba({rgb},0.55); }}
+button.nxs-primary:hover {{ background-color: {ac}; box-shadow: 0 0 22px rgba({rgb},0.75); }}
+entry {{ background-color: #08192a; border: 1px solid rgba({rgb},0.35); }}
+frame > border {{ border-color: rgba({rgb},0.38); }}
+progressbar > trough {{ background-color: #08192a; }}
 """
     CONF_DIR.mkdir(parents=True, exist_ok=True)
     WINDOW_STYLE_CSS.write_text(css)
