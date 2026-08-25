@@ -441,12 +441,14 @@ def write_openbox_theme(style: str | None = None, key: str | None = None) -> Non
         title_bg = ("window.active.title.bg: flat solid\n"
                     "window.active.title.bg.color: #0a1a26\n")
         handle_c = "#0a1a26"
-    else:                  # vetro (default): NIENTE cornice colorata: il colore
-        # sta SOLO in alto (barra del titolo con velatura d'accento), come nel
-        # mockup. Il bordo laterale/inferiore e' scuro e discreto (solo per
-        # afferrare il resize), non piu' il filo ciano attorno alla finestra.
+    else:                  # vetro (default): NIENTE cornice colorata. Il bordo
+        # Openbox e' reso INVISIBILE (colore == fondo finestra): la "riga
+        # colorata" in alto la disegna la GRAFICA GTK (border-top d'accento su
+        # .nxs-headerbar nel window-style), non piu' la cornice attorno alla
+        # finestra. Cosi' aggiriamo i limiti di Openbox (angoli/filo) e il
+        # colore resta solo in cima, come nel mockup. 1px per afferrare il resize.
         border_w = 1
-        act_border = "#122536"
+        act_border = g2
         title_bg = ("window.active.title.bg: gradient vertical\n"
                     "window.active.title.bg.color: %s\n"
                     "window.active.title.bg.colorTo: %s\n" % (title_top, title_bot))
