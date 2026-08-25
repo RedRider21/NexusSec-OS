@@ -8,7 +8,7 @@ from pathlib import Path
 
 import gi
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk, Gdk  # noqa: E402
+from gi.repository import Gtk, Gdk, GLib  # noqa: E402
 
 HOME = Path(os.path.expanduser("~"))
 
@@ -324,6 +324,37 @@ def apply_css() -> None:
 _live_style_prov = None
 
 
+def _ensure_window_style_css() -> None:
+    """Se window-style.css non esiste ancora su disco (es. profilo mai
+    applicato, oppure primo avvio prima che `nxs-tool apply` scriva i CSS), lo
+    generiamo al volo con lo stile scelto (default 'vetro'). Senza questo file
+    lo stile finestre semplicemente NON si vedrebbe: e' la causa n.1 del
+    sintomo "la grafica sulle finestre non si vede per nulla"."""
+    if WINDOW_STYLE_CSS_FILE.exists():
+        return
+    try:
+        from nxs_profiles import model            # import morbido
+        model.write_window_style_css()
+    except Exception:                              # noqa: BLE001
+        pass
+
+
+def _reset_widgets_kick() -> bool:
+    """Forza GTK a ri-applicare lo stile a TUTTI i widget gia' realizzati.
+    Necessario perche' il provider viene aggiunto quando la finestra e' gia'
+    disegnata: GTK non ristila i widget realizzati finche' non cambia stato
+    (es. perdita del focus -> :backdrop). Senza questo, lo stile appare solo
+    dopo aver aperto una seconda finestra (sintomo riportato dall'utente).
+    Ritorna False per non ripetersi (uso con GLib.idle_add)."""
+    scr = Gdk.Screen.get_default()
+    if scr is not None:
+        try:
+            Gtk.StyleContext.reset_widgets(scr)
+        except Exception:                # noqa: BLE001
+            pass
+    return False
+
+
 def apply_window_style_live() -> None:
     """Ricarica window-style.css a caldo (dopo un cambio di stile), sostituendo
     l'eventuale provider live precedente cosi' la finestra corrente si aggiorna
@@ -338,6 +369,7 @@ def apply_window_style_live() -> None:
         except Exception:                # noqa: BLE001
             pass
         _live_style_prov = None
+    _ensure_window_style_css()
     if not WINDOW_STYLE_CSS_FILE.exists():
         return
     try:
@@ -346,6 +378,13 @@ def apply_window_style_live() -> None:
         Gtk.StyleContext.add_provider_for_screen(
             scr, p, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION + 3)
         _live_style_prov = p
+    except Exception:                    # noqa: BLE001
+        return
+    # Ristila SUBITO i widget gia' realizzati (vedi _reset_widgets_kick): una
+    # volta a giro corrente e una a idle (dopo che la finestra e' mostrata).
+    _reset_widgets_kick()
+    try:
+        GLib.idle_add(_reset_widgets_kick)
     except Exception:                    # noqa: BLE001
         pass
 
