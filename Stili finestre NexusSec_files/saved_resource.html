@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<!-- saved from url=(0253)https://8cc55242-b941-477b-972b-11e0ac57b5ae.frame.claudeusercontent.com/_f/1787659859-c56d/?__frame_t=NBwMMvZvgNTnUrJcFrkqMpKO.c0428e41-3f82-453c-bd09-08ea4246de57.c4e3ef65-caf4-420f-8065-a82dd20f359d.1787690879&__frame_v=manifest.c945288877cf08c3.json -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><!-- frame-runtime --><!--<base href="/_f/1787659859-c56d/">--><base href="."><script>window.__FRAME_PREAMBLE={"capabilities":{"artifact":"artifact.oqIe8shs.js","assets":"assets.DBUJcvq_.js","comments":"comments.GLuHR3zP.js","db":"db.CRhVHzSt.js","downloads":"downloads.C3GSvEDP.js","embed":"embed.CZsbekoQ.js","mcp":"mcp.Bvma3qD7.js","network":"network.B5UA9Su4.js","permissions":"permissions.BNySkLV5.js","room":"room.DE7EMui-.js","sample":"sample.BW2Uysoh.js","self":"artifact.oqIe8shs.js","user":"user.BpKav-Rf.js"},"transforms":"_transforms.Dj21_51u.js","comments":"_comments.BOgkE6qU.js","translate":"_translate.5HCW4BJh.js"}</script><script>(function(){"use strict";var Y=["light","dark","system"],X=/^[A-Za-z0-9_-]{1,64}$/,D=/^[a-zA-Z_:][a-zA-Z0-9_:.-]{0,127}$/,G=new Set(["class","hidden","value","checked"]);function V(e){const t=e.toLowerCase();return t.startsWith("data-")||t.startsWith("aria-")||G.has(t)}var be="http://www.w3.org/1999/xhtml",Z="http://www.w3.org/2000/svg",J=new Set(["script","style","iframe","noscript","noframes","noembed","xmp","plaintext","template","title","textarea","object","embed"]),Q=new Set(["script","style"]);function ee(e){const t=e.localName.toLowerCase();return e.namespaceURI==="http://www.w3.org/1999/xhtml"?!J.has(t):e.namespaceURI===Z?!Q.has(t):!1}var te=new Set(["html","head","body","frameset"]);function re(e){return e.namespaceURI==="http://www.w3.org/1999/xhtml"&&te.has(e.localName)}function ne(e){if(e===null||typeof e!="object")return!1;const t=e;if(typeof t.target!="string"||!X.test(t.target)||t.text!==void 0&&typeof t.text!="string")return!1;if(t.attrsSet!==void 0){if(t.attrsSet===null||typeof t.attrsSet!="object")return!1;for(const[n,s]of Object.entries(t.attrsSet))if(!D.test(n)||typeof s!="string")return!1}if(t.attrsRemoved!==void 0){if(!Array.isArray(t.attrsRemoved))return!1;for(const n of t.attrsRemoved)if(typeof n!="string"||!D.test(n))return!1}return!0}function se(e,t){if(e===null||typeof e!="object")return!1;const{seq:n,elements:s}=e;if(typeof n!="number"||!Number.isSafeInteger(n)||!Array.isArray(s)||s.length===0||s.length>64)return!1;for(let o=0;o<s.length;o++)if(!t(s[o]))return!1;return!0}function ae(e){return e===null||typeof e!="object"?!1:se(e.__frame_patch,ne)}function oe(e){if(e===null||typeof e!="object")return!1;const t=e.__frame_init;return t!==null&&typeof t=="object"}function ie(e){return e!==null&&typeof e=="object"&&e.__frame_size_poke===!0}function le(e){if(e===null||typeof e!="object")return!1;const t=e.__frame_theme;if(t===null||typeof t!="object")return!1;const n=t.theme;return typeof n=="string"&&Y.includes(n)}var O="__frame_scroll",ce=150,ue=310,fe=160,pe=3e4;function de(){let e=0,t=!1,n=!1,s=!1,o=0,l=null;const c=i=>{try{sessionStorage.setItem(O,JSON.stringify({y:i}))}catch{}},f=()=>{if(clearTimeout(e),l===null)return;const i=l;l=null,c(i)},S=()=>{if(t){t=!1;return}n=!0,l=scrollY,clearTimeout(e),e=setTimeout(f,ce)};try{addEventListener("scroll",S,{passive:!0}),addEventListener("pagehide",f)}catch{}const v=()=>{let i;try{i=sessionStorage.getItem(O)}catch{return null}if(i===null)return null;let d;try{d=JSON.parse(i)}catch{d=null}const u=d?.y;if(!(typeof u=="number"&&Number.isFinite(u)&&u>=0)){try{sessionStorage.removeItem(O)}catch{}return null}return u};let b=!1;const m=i=>{try{const d=scrollY;scrollTo({top:i,left:0,behavior:"instant"}),o=i,s=!0,clearTimeout(e),l=null,c(i);const u=scrollY;u!==d&&(t=!0),u!==i&&!b&&(b=!0,addEventListener("load",()=>{try{if(scrollY===u){const h=v();m(h!==null?h:o)}}catch{}},{once:!0}))}catch{}},y=()=>{try{return!!location.hash}catch{return!0}};let g=!1;const E=()=>{try{if(g||innerWidth>ue||innerHeight>fe)return;g=!0;const i=Date.now(),d=()=>{try{removeEventListener("resize",d)}catch{}if(Date.now()-i>pe||n||y())return;const u=v();m(u!==null?u:o)};addEventListener("resize",d)}catch{}};let r=!1,p=!1;return{restore(){if(r||(r=!0,y()))return;const i=v();i!==null&&(m(i),E())},promoted(){if(p||(p=!0,y()))return;const i=v();i!==null?(m(i),E()):s&&m(o)}}}var Ee="modulepreload",Ae=function(e){return"/"+e},Re={},me=function(t,n,s){let o=Promise.resolve();function l(c){const f=new Event("vite:preloadError",{cancelable:!0});if(f.payload=c,window.dispatchEvent(f),!f.defaultPrevented)throw c}return o.then(c=>{for(const f of c||[])f.status==="rejected"&&l(f.reason);return t().catch(l)})};(function(){const e=Object.defineProperty,t=globalThis,n=["RTCPeerConnection","webkitRTCPeerConnection","RTCDataChannel","RTCIceCandidate","RTCSessionDescription","RTCRtpSender","RTCRtpReceiver"];let s=0;for(let o=0;o<n.length;o++){const l=n[o];try{e(t,l,{value:void 0,writable:!1,configurable:!1})}catch{try{delete t[l]}catch{}try{e(t,l,{value:void 0,writable:!1,configurable:!0})}catch{}}typeof t[l]=="function"&&s++}if(s&&window!==top)try{parent.postMessage({__frame_rtc_lockdown_failed:s},"*")}catch{}})();var he=1e4,_e=Object.freeze([...window.__FRAME_PREAMBLE?.origins??["https://claude.ai","https://preview.claude.ai"]]);function F(e){for(const t of _e)if(t.endsWith(":*"))try{const n=new URL(e);if(`${n.protocol}//${n.hostname}:*`===t)return!0}catch{}else if(e===t)return!0;return!1}var M=Object.freeze({...window.__FRAME_PREAMBLE?.capabilities}),j=window.__FRAME_PREAMBLE?.transforms,N=window.__FRAME_PREAMBLE?.comments,I=window.__FRAME_PREAMBLE?.translate,L=/^[\w.-]+\.js$/;function T(e){return me(()=>import("/_runtime/"+e),void 0)}function z(e,t){return{contract:e.contract,changes:new Set(e.changes??[]),flags:new Set(e.flags??[]),capabilities:e.capabilities??{},capBudgets:e.capBudgets??{},transforms:new Map,shellOrigin:t,mount:W,pipe:()=>({wrap:(n,s)=>(...o)=>{try{return s(...o)}catch(l){return Promise.reject(l)}}})}}var P=null,w=null;function q(e,t,n){try{Object.defineProperty(e,t,{value:n,writable:!1,configurable:!1,enumerable:!0})}catch{try{Object.defineProperty(e,t,{value:n,writable:!1,configurable:!0,enumerable:!0})}catch{}}}var B=!1;function ve(e,t){const n=[];for(const s of e.elements){const o=document.querySelector(`[data-id="${s.target}"]`);if(!o){parent.postMessage({__frame_patch_miss:{seq:e.seq}},t);return}if([...Object.keys(s.attrsSet??{}),...s.attrsRemoved??[]].some(l=>!V(l))){parent.postMessage({__frame_patch_miss:{seq:e.seq}},t);return}if(s.text!==void 0&&(!ee(o)||re(o))){parent.postMessage({__frame_patch_miss:{seq:e.seq}},t);return}for(const[l,c]of Object.entries(s.attrsSet??{}))if(!$(o,l)){try{o.setAttribute(l,c)}catch{}H(o,l,c)}for(const l of s.attrsRemoved??[])$(o,l)||(o.removeAttribute(l),H(o,l,null));typeof s.text=="string"&&(o.textContent=s.text),n.push(s.target)}try{document.dispatchEvent(new CustomEvent("claude:edit",{detail:{seq:e.seq,targets:n}}))}catch{}}function H(e,t,n){if(!(e instanceof HTMLInputElement))return;const s=t.toLowerCase();s==="checked"?e.checked=n!==null:s==="value"&&e.type!=="file"&&(e.value=n??"")}function $(e,t){const n=t.toLowerCase(),s=e;return n==="data-id"||(n==="value"||n==="checked")&&(s.__artifactSecret===!0||/^(password|hidden|file)$/.test(s.type??"")||/(^|\s)(cc-|one-time-code|current-password|new-password)/i.test(`${e.getAttribute("autocomplete")??""} ${s.autocomplete??""}`))}function K(e){const t=document.documentElement;e==="light"||e==="dark"?(t.dataset.theme=e,t.style.colorScheme=e,B=!0):B&&(delete t.dataset.theme,t.style.colorScheme="",B=!1)}var R=new Map;function ye(){let e;const t={u:new Promise(n=>{e=n}),r:n=>{t.done=!0,e(n)},done:!1,nulled:!1};return t}var ge=Object.freeze(Object.assign(Object.create(null),{call:Function.prototype.call,apply:Function.prototype.apply,bind:Function.prototype.bind})),W=(e,t)=>{const n=R.get(e);if(!n||n.done){n?.nulled&&w&&parent.postMessage({__frame_cap_telemetry:{kind:"cap-load-error",cap:e}},w);return}const s=typeof t=="function"?Object.setPrototypeOf(t,ge):Object.assign(Object.create(null),t);typeof s.then=="function"&&delete s.then,n.r(Object.freeze(s))},U=Object.getOwnPropertyDescriptor(window,"claude");if(window!==top&&!(U&&U.writable===!1)){const e=j&&L.test(j)?T(j).catch(()=>{}):Promise.resolve(void 0),t=r=>{if(r.type==="auxclick"&&r.button!==1)return;const p=r.target,i=p&&p.closest?p.closest("a[href],area[href]"):null;if(!i)return;const d=i.getAttribute("href");if(!d)return;let u,h;try{u=new URL(d,document.baseURI),h=new URL(document.baseURI).origin}catch{return}if((u.protocol==="http:"||u.protocol==="https:")&&u.origin!==h){r.preventDefault();const _=(i.getAttribute("target")??"").toLowerCase(),C=r.type==="auxclick"||r.metaKey||r.ctrlKey||r.shiftKey||r.altKey||!["","_self","_top","_parent"].includes(_);parent.postMessage({__frame_nav:!0,url:u.href,newTab:C},"*")}};addEventListener("click",t,!0),addEventListener("auxclick",t,!0);const n={},s=r=>{r.isTrusted&&(n.pointer=!0)},o=r=>{r.isTrusted&&(n.click=!0)};addEventListener("pointermove",s,{capture:!0,passive:!0}),addEventListener("click",o,{capture:!0,passive:!0}),e.then(r=>{r?.wireNav&&(r.wireNav(),removeEventListener("click",t,!0),removeEventListener("auxclick",t,!0),removeEventListener("pointermove",s,!0),removeEventListener("click",o,!0),r.wireEngagement?.(n))});let l=null;try{l=de()}catch{}const c=U?.value??{};q(window,"claude",c);for(const r of Object.keys(M)){if(c[r]!==void 0){q(c,r,c[r]);continue}R.set(r,ye())}if(c.use===void 0){const r=p=>{if(typeof p!="string"||!Object.hasOwn(M,p))return Promise.resolve(null);const i=R.get(p);return i?i.u:Promise.resolve(c[p]??null)};try{Object.defineProperty(c,"use",{value:r,writable:!0,configurable:!0,enumerable:!1})}catch{}}let f=null,S=null,v=0;const b=r=>{r.source!==parent||!F(r.origin)||oe(r.data)&&(f=r.data.__frame_init,w=r.origin,removeEventListener("message",b),clearTimeout(v),S?.())};addEventListener("message",b),parent.postMessage({__frame_connect:!0},"*");const m=new Promise(r=>{S=r,v=setTimeout(()=>{removeEventListener("message",b),r()},he)}),y=document.readyState==="loading"?new Promise(r=>document.addEventListener("DOMContentLoaded",()=>r(),{once:!0})):Promise.resolve();y.then(()=>{try{l?.restore()}catch{}});const g={cb:null},E=r=>{if(!(r.source!==parent||!F(r.origin))&&ie(r.data)){try{l?.promoted()}catch{}g.cb?.()}};addEventListener("message",E),m.then(async()=>{if(!f||!w){for(const a of R.values())a.nulled=!0,a.r(null);return}K(f.theme);const r=w;let p=!1,i=!1;addEventListener("message",a=>{if(a.source!==parent||a.origin!==r)return;le(a.data)&&K(a.data.__frame_theme.theme),ae(a.data)&&ve(a.data.__frame_patch,r);const k=a.data?.__fc_mode;k&&typeof k=="object"&&!p&&N&&L.test(N)&&(p=!0,T(N).then(x=>x.install?.(r,k.on===!0)).catch(()=>{}));const A=a.data?.__ft_cmd;A&&typeof A=="object"&&!i&&I&&L.test(I)&&(i=!0,T(I).then(x=>x.install?.(r,A)).catch(()=>{}))});const d=Object.keys(f.capabilities??{}).filter(a=>Object.hasOwn(M,a)).map(a=>[a,M[a]]).filter(a=>typeof a[1]=="string"&&L.test(a[1])),u=await Promise.allSettled(d.map(([,a])=>T(a))),h=await e,_=w;if(h?.buildBoot||parent.postMessage({__frame_cap_telemetry:{kind:"cap-load-error",cap:"_transforms"}},_),h?.buildBoot)try{P=h.buildBoot(f,h.TRANSFORMS??{},{shellOrigin:_,mount:W},a=>parent.postMessage({__frame_cap_telemetry:a},_))}catch{parent.postMessage({__frame_cap_telemetry:{kind:"cap-load-error",cap:"_transforms"}},_),P=z(f,_)}else P=z(f,_);const C=a=>parent.postMessage({__frame_cap_telemetry:{kind:"cap-load-error",cap:a}},_),we=P;u.forEach((a,k)=>{const A=d[k][0];if(a.status!=="fulfilled"){C(A);return}try{a.value?.install?.(we)}catch{C(A)}});for(const a of R.values())a.done||(a.nulled=!0,a.r(null));await y,parent.postMessage({__frame_ready:!0},w),e.then(a=>a?.installSizeReporter?.(_,g))})}})();</script><!-- /frame-runtime --><meta name="viewport" content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}</style></head><body>
+<title>Stili finestre NexusSec</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com/">
+<link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="">
+<link rel="stylesheet" href="./css2">
+<style>
+  :root{
+    --ground:#070c14; --ground-2:#0a1220;
+    --ink:#c8d6e0; --ink-dim:#7f95a6; --ink-faint:#54697a;
+    --hair:#173042; --hair-soft:#122536;
+    --accent:#35d0e0;              /* raffinato, meno "sparato" del ciano puro */
+    --accent-2:#1a2d3a;
+    --disp:"Chakra Petch",system-ui,sans-serif;
+    --body:"IBM Plex Sans",system-ui,sans-serif;
+    --mono:"IBM Plex Mono",ui-monospace,monospace;
+    --r:14px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:
+      radial-gradient(1100px 600px at 78% -8%, color-mix(in srgb,var(--accent) 12%, transparent), transparent 60%),
+      radial-gradient(900px 500px at 8% 108%, color-mix(in srgb,var(--accent) 8%, transparent), transparent 55%),
+      var(--ground);
+    color:var(--ink); font-family:var(--body);
+    line-height:1.55; -webkit-font-smoothing:antialiased;
+    padding:clamp(20px,4vw,56px);
+  }
+  .wrap{max-width:1160px;margin:0 auto}
+
+  header.top{margin-bottom:8px}
+  .eyebrow{
+    font-family:var(--mono); font-size:12px; letter-spacing:.28em;
+    text-transform:uppercase; color:var(--accent);
+    display:flex; align-items:center; gap:10px; margin-bottom:14px;
+  }
+  .eyebrow::before{content:"";width:26px;height:1px;background:var(--accent)}
+  h1{
+    font-family:var(--disp); font-weight:700;
+    font-size:clamp(28px,4.4vw,46px); line-height:1.05; margin:0 0 10px;
+    letter-spacing:-.01em; text-wrap:balance;
+  }
+  h1 span{color:var(--accent)}
+  .lede{max-width:64ch; color:var(--ink-dim); font-size:clamp(15px,1.5vw,17px)}
+
+  /* selettore profilo: ricolora dal vivo le finestre */
+  .profiles{
+    display:flex; flex-wrap:wrap; gap:10px; align-items:center;
+    margin:26px 0 8px; padding:14px 16px;
+    border:1px solid var(--hair); border-radius:12px;
+    background:linear-gradient(180deg,var(--ground-2),transparent);
+  }
+  .profiles .lbl{
+    font-family:var(--mono); font-size:12px; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--ink-faint); margin-right:4px;
+  }
+  .swatch{
+    appearance:none; cursor:pointer; font-family:var(--disp); font-weight:600;
+    font-size:13px; color:var(--ink); background:transparent;
+    border:1px solid var(--hair); border-radius:999px; padding:7px 15px;
+    display:inline-flex; align-items:center; gap:8px; transition:.18s;
+  }
+  .swatch i{width:11px;height:11px;border-radius:3px;background:var(--sw)}
+  .swatch:hover{border-color:var(--sw);color:#fff}
+  .swatch[aria-pressed="true"]{
+    border-color:var(--sw);
+    background:color-mix(in srgb,var(--sw) 16%, transparent);
+    box-shadow:0 0 0 1px color-mix(in srgb,var(--sw) 40%, transparent) inset;
+  }
+
+  /* griglia delle tre proposte */
+  .grid{
+    display:grid; gap:22px; margin-top:26px;
+    grid-template-columns:repeat(3,1fr);
+  }
+  @media(max-width:940px){.grid{grid-template-columns:1fr}}
+  .col{display:flex;flex-direction:column;gap:14px}
+  .col > .meta h2{
+    font-family:var(--disp); font-weight:600; font-size:19px; margin:0 0 4px;
+    letter-spacing:.01em;
+  }
+  .col > .meta .tag{
+    font-family:var(--mono);font-size:11px;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--ink-faint);
+  }
+  .col > .meta p{margin:8px 0 0;color:var(--ink-dim);font-size:13.5px}
+  .pc{display:flex;flex-direction:column;gap:5px;margin-top:10px;font-size:12.5px}
+  .pc div{display:flex;gap:8px;align-items:flex-start;color:var(--ink-dim)}
+  .pc .k{font-family:var(--mono);font-size:11px;color:var(--ink-faint);flex:0 0 22px}
+  .pc .pro .k{color:var(--accent)}
+  .pc .con .k{color:#ff6b8a}
+
+  /* ---- FINESTRA MOCKUP (comune) ---- */
+  .win{
+    border-radius:var(--r); overflow:hidden;
+    border:1px solid var(--hair);
+    background:var(--ground-2);
+    box-shadow:0 18px 40px -22px rgba(0,0,0,.8);
+    font-size:13px;
+  }
+  .win .bar{
+    display:flex;align-items:center;gap:8px;
+    padding:11px 14px; border-bottom:1px solid var(--hair-soft);
+  }
+  .win .bar .dots{display:flex;gap:6px}
+  .win .bar .dots i{width:9px;height:9px;border-radius:50%;background:#2a3f4f}
+  .win .bar .ttl{
+    font-family:var(--disp);font-weight:600;font-size:13px;letter-spacing:.02em;
+    color:var(--ink); margin-left:2px;
+  }
+  .win .bar .sub{margin-left:auto;font-family:var(--mono);font-size:10.5px;color:var(--ink-faint)}
+  .win .body{padding:14px}
+  .tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:13px}
+  .tile{
+    border:1px solid var(--hair-soft);border-radius:10px;padding:11px 12px;
+    background:rgba(255,255,255,.015);
+    display:flex;flex-direction:column;gap:7px;
+  }
+  .tile .ic{
+    width:26px;height:26px;border-radius:7px;display:grid;place-items:center;
+    background:color-mix(in srgb,var(--accent) 16%, transparent);
+  }
+  .tile .ic svg{width:15px;height:15px;stroke:var(--accent);fill:none;stroke-width:1.7}
+  .tile b{font-family:var(--disp);font-weight:600;font-size:12.5px;color:var(--ink)}
+  .row{display:flex;align-items:center;gap:10px;margin:9px 0}
+  .row .lab{font-size:12.5px;color:var(--ink-dim)}
+  .sw{
+    margin-left:auto;width:38px;height:21px;border-radius:999px;position:relative;
+    background:var(--accent);
+  }
+  .sw::after{content:"";position:absolute;top:2px;right:2px;width:17px;height:17px;border-radius:50%;background:#04121a}
+  .bar-prog{height:8px;border-radius:999px;background:var(--accent-2);overflow:hidden}
+  .bar-prog>i{display:block;height:100%;width:64%;border-radius:999px;background:var(--accent)}
+  .btns{display:flex;gap:8px;margin-top:13px}
+  .btn{
+    font-family:var(--disp);font-weight:600;font-size:12px;
+    padding:7px 14px;border-radius:9px;border:1px solid var(--hair);
+    color:var(--ink);background:transparent;
+  }
+  .btn.primary{
+    background:var(--accent);border-color:var(--accent);color:#04121a;
+  }
+  .list-row{
+    display:flex;align-items:center;gap:9px;margin-top:12px;padding:9px 11px;
+    border-radius:9px;border:1px solid var(--hair-soft);
+  }
+  .list-row .dot{width:8px;height:8px;border-radius:50%;background:var(--accent)}
+  .list-row .m{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-faint)}
+
+  /* ===== VARIANTE A: ATTUALE (flat arrotondato) ===== */
+  .v-attuale .bar{background:linear-gradient(180deg,rgba(255,255,255,.02),transparent)}
+
+  /* ===== VARIANTE B: VETRO / HUD ===== */
+  .v-vetro{
+    background:
+      linear-gradient(180deg, color-mix(in srgb,var(--accent) 6%, var(--ground-2)), var(--ground-2));
+    border-color:color-mix(in srgb,var(--accent) 22%, var(--hair));
+    box-shadow:0 20px 46px -20px rgba(0,0,0,.85),
+               0 0 0 1px color-mix(in srgb,var(--accent) 10%, transparent) inset;
+  }
+  .v-vetro .bar{
+    border-top:2px solid var(--accent);
+    background:
+      repeating-linear-gradient(90deg, color-mix(in srgb,var(--accent) 7%,transparent) 0 1px, transparent 1px 7px),
+      linear-gradient(180deg, color-mix(in srgb,var(--accent) 10%,transparent), transparent);
+  }
+  .v-vetro .tile,.v-vetro .list-row{
+    background:color-mix(in srgb,var(--accent) 5%, transparent);
+    backdrop-filter:blur(2px);
+    border-color:color-mix(in srgb,var(--accent) 16%, var(--hair-soft));
+  }
+  .v-vetro .btn.primary{box-shadow:0 0 18px -4px var(--accent)}
+
+  /* ===== VARIANTE C: TELAIO A CONTORNO (neon outline) ===== */
+  .v-telaio{
+    background:#05090f;
+    border-color:color-mix(in srgb,var(--accent) 34%, transparent);
+    border-radius:8px;
+  }
+  .v-telaio .bar{
+    border-bottom:1px solid color-mix(in srgb,var(--accent) 24%, transparent);
+    border-left:3px solid var(--accent);
+  }
+  .v-telaio .ttl{font-family:var(--mono);font-weight:500;text-transform:uppercase;letter-spacing:.12em;font-size:11.5px}
+  .v-telaio .tile,.v-telaio .list-row{
+    border-radius:6px;background:#070d14;
+    border-color:color-mix(in srgb,var(--accent) 20%, transparent);
+  }
+  .v-telaio .tile{border-left:3px solid color-mix(in srgb,var(--accent) 55%, transparent)}
+  .v-telaio .btn{border-radius:5px}
+  .v-telaio .list-row{border-left:3px solid var(--accent)}
+
+  footer.note{
+    margin-top:34px;padding:18px 20px;border:1px dashed var(--hair);
+    border-radius:12px;color:var(--ink-dim);font-size:14px;
+    background:linear-gradient(180deg,var(--ground-2),transparent);
+  }
+  footer.note b{color:var(--ink);font-family:var(--disp)}
+  footer.note code{font-family:var(--mono);font-size:12.5px;color:var(--accent)}
+  @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="eyebrow">NexusSec OS · finestre del desktop</div>
+    <h1>Tre modi di vestire <span>le stesse finestre</span></h1>
+    <p class="lede">Stesso contenuto (Centro di Controllo, interruttori, barre, pulsanti),
+      tre trattamenti diversi. Scegli un profilo qui sotto per vedere come ogni
+      stile porta la sua <em>colorazione raffinata</em>. Poi dimmi quale preferisci —
+      oppure se le finestre attuali ti convincono già così.</p>
+  </header>
+
+  <div class="profiles" role="" group="" aria-label="Profilo operativo">
+    <span class="lbl">Profilo</span>
+    <button class="swatch" style="--sw:#35d0e0" aria-pressed="true" data-a="#35d0e0"><i></i>Base</button>
+    <button class="swatch" style="--sw:#ff6b8a" aria-pressed="false" data-a="#ff6b8a"><i></i>Pen&nbsp;Testing</button>
+    <button class="swatch" style="--sw:#b98cff" aria-pressed="false" data-a="#b98cff"><i></i>Forensics</button>
+    <button class="swatch" style="--sw:#ffb454" aria-pressed="false" data-a="#ffb454"><i></i>OSINT</button>
+    <button class="swatch" style="--sw:#45e0a0" aria-pressed="false" data-a="#45e0a0"><i></i>Web</button>
+  </div>
+
+  <div class="grid">
+    <!-- ============ A: ATTUALE ============ -->
+    <section class="col">
+      <div class="meta">
+        <span class="tag">Variante A · in uso oggi</span>
+        <h2>Flat arrotondato</h2>
+        <p>Quello che hai già: card scure, angoli morbidi, filo d'accento leggero.
+          Pulito e riposante.</p>
+      </div>
+      <div class="win v-attuale">
+        <div class="bar">
+          <span class="dots"><i></i><i></i><i></i></span>
+          <span class="ttl">Centro di Controllo</span>
+          <span class="sub">nexus@nexussec</span>
+        </div>
+        <div class="body">
+          <div class="tiles">
+            <div class="tile"><span class="ic"><svg viewBox="0 0 24 24"><path d="M12 20a2 2 0 100-4 2 2 0 000 4zM5 13a9 9 0 0114 0M8.5 16a5 5 0 017 0"></path></svg></span><b>Rete</b></div>
+            <div class="tile"><span class="ic"><svg viewBox="0 0 24 24"><path d="M7 8l10 8-5 4V4l5 4L7 16"></path></svg></span><b>Bluetooth</b></div>
+          </div>
+          <div class="row"><span class="lab">Salvaschermo automatico</span><span class="sw"></span></div>
+          <div class="bar-prog"><i></i></div>
+          <div class="btns"><button class="btn primary">Applica</button><button class="btn">Annulla</button></div>
+          <div class="list-row"><span class="dot"></span>Cuffie BT-500<span class="m">connesso</span></div>
+        </div>
+      </div>
+      <div class="pc">
+        <div class="pro"><span class="k">+</span>Familiare, sobrio, leggero da disegnare.</div>
+        <div class="con"><span class="k">–</span>Poco caratterizzato: assomiglia a tante UI scure.</div>
+      </div>
+    </section>
+
+    <!-- ============ B: VETRO / HUD ============ -->
+    <section class="col">
+      <div class="meta">
+        <span class="tag">Variante B · proposta</span>
+        <h2>Vetro / HUD</h2>
+        <p>Velatura d'accento, filo superiore colorato e trama a righe nell'header.
+          Sa di “console operativa”, ma resta elegante.</p>
+      </div>
+      <div class="win v-vetro">
+        <div class="bar">
+          <span class="dots"><i></i><i></i><i></i></span>
+          <span class="ttl">Centro di Controllo</span>
+          <span class="sub">nexus@nexussec</span>
+        </div>
+        <div class="body">
+          <div class="tiles">
+            <div class="tile"><span class="ic"><svg viewBox="0 0 24 24"><path d="M12 20a2 2 0 100-4 2 2 0 000 4zM5 13a9 9 0 0114 0M8.5 16a5 5 0 017 0"></path></svg></span><b>Rete</b></div>
+            <div class="tile"><span class="ic"><svg viewBox="0 0 24 24"><path d="M7 8l10 8-5 4V4l5 4L7 16"></path></svg></span><b>Bluetooth</b></div>
+          </div>
+          <div class="row"><span class="lab">Salvaschermo automatico</span><span class="sw"></span></div>
+          <div class="bar-prog"><i></i></div>
+          <div class="btns"><button class="btn primary">Applica</button><button class="btn">Annulla</button></div>
+          <div class="list-row"><span class="dot"></span>Cuffie BT-500<span class="m">connesso</span></div>
+        </div>
+      </div>
+      <div class="pc">
+        <div class="pro"><span class="k">+</span>Identità forte, "raffinata"; l'accento profilo risalta.</div>
+        <div class="con"><span class="k">–</span>Il blur costa poco ma va dosato per non appesantire.</div>
+      </div>
+    </section>
+
+    <!-- ============ C: TELAIO NEON ============ -->
+    <section class="col">
+      <div class="meta">
+        <span class="tag">Variante C · proposta</span>
+        <h2>Telaio a contorno</h2>
+        <p>Fondo quasi nero, elementi definiti da un bordo d'accento e da una
+          barretta laterale. Estetica terminale/cyber, molto “tecnica”.</p>
+      </div>
+      <div class="win v-telaio">
+        <div class="bar">
+          <span class="dots"><i></i><i></i><i></i></span>
+          <span class="ttl">Centro di Controllo</span>
+          <span class="sub">root://cc</span>
+        </div>
+        <div class="body">
+          <div class="tiles">
+            <div class="tile"><span class="ic"><svg viewBox="0 0 24 24"><path d="M12 20a2 2 0 100-4 2 2 0 000 4zM5 13a9 9 0 0114 0M8.5 16a5 5 0 017 0"></path></svg></span><b>Rete</b></div>
+            <div class="tile"><span class="ic"><svg viewBox="0 0 24 24"><path d="M7 8l10 8-5 4V4l5 4L7 16"></path></svg></span><b>Bluetooth</b></div>
+          </div>
+          <div class="row"><span class="lab">Salvaschermo automatico</span><span class="sw"></span></div>
+          <div class="bar-prog"><i></i></div>
+          <div class="btns"><button class="btn primary">Applica</button><button class="btn">Annulla</button></div>
+          <div class="list-row"><span class="dot"></span>Cuffie BT-500<span class="m">connesso</span></div>
+        </div>
+      </div>
+      <div class="pc">
+        <div class="pro"><span class="k">+</span>Massimo carattere “security”; leggibile e ordinato.</div>
+        <div class="con"><span class="k">–</span>Più marcato: rischia di stancare su finestre molto dense.</div>
+      </div>
+    </section>
+  </div>
+
+  <footer class="note">
+    <b>Come funziona in pratica.</b> Il tema finestre è già accordato all'accento del
+    profilo (file <code>~/.config/nxs/accent.css</code> + <code>common.py</code>): cambiare
+    stile significa ritoccare quelle regole, non riscrivere le app. Possiamo anche
+    renderlo <b>scegliibile</b> dal Centro di Controllo, così passi da uno stile all'altro
+    quando vuoi. Dimmi: <b>A</b> (lascio com'è), <b>B</b> (Vetro/HUD) o <b>C</b> (Telaio) —
+    oppure un mix.
+  </footer>
+</div>
+
+<script>
+  const ICON1='<svg viewBox="0 0 24 24"><path d="M12 20a2 2 0 100-4 2 2 0 000 4zM5 13a9 9 0 0114 0M8.5 16a5 5 0 017 0"/></svg>';
+  const ICON2='<svg viewBox="0 0 24 24"><path d="M7 8l10 8-5 4V4l5 4L7 16"/></svg>';
+  document.querySelectorAll('.ic').forEach((n,i)=>{ n.innerHTML = (i%2===0)?ICON1:ICON2; });
+
+  const root=document.documentElement;
+  document.querySelectorAll('.swatch').forEach(b=>{
+    b.addEventListener('click',()=>{
+      document.querySelectorAll('.swatch').forEach(x=>x.setAttribute('aria-pressed','false'));
+      b.setAttribute('aria-pressed','true');
+      root.style.setProperty('--accent', b.dataset.a);
+    });
+  });
+</script>
+
+</body></html>
