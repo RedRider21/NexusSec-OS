@@ -66,6 +66,9 @@ class Selector(Gtk.Window):
 
         header = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
         header.get_style_context().add_class("nxs-headerbar")
+        eb = Gtk.Label(label="NEXUSSEC OS  ·  PROFILO OPERATIVO"); eb.set_xalign(0)
+        eb.get_style_context().add_class("nxs-eyebrow")
+        header.pack_start(eb, False, False, 0)
         t = Gtk.Label(label="Seleziona la modalita' operativa"); t.set_xalign(0)
         t.get_style_context().add_class("title")
         s = Gtk.Label(label="Il menu e lo sfondo si adattano al profilo scelto")

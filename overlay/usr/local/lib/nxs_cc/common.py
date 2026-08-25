@@ -54,6 +54,9 @@ window, .background, dialog { background-color: #050a14; color: #c8f5ff; }
 }
 .nxs-headerbar label.title { color: #00e5ff; font-weight: bold; font-size: 12pt; }
 .nxs-headerbar label.subtitle { color: #5a8a9a; font-size: 9pt; }
+/* Eyebrow: marchietto "NexusSec" discreto in cima all'header (mono, accent). */
+.nxs-eyebrow { color: #35d0e0; font-family: "IBM Plex Mono", monospace;
+  font-size: 8pt; margin-bottom: 2px; }
 .nxs-footer {
   background-color: #050a14; color: #5a8a9a;
   border-top: 1px solid #1a3a52; padding: 6px 12px; font-size: 8pt;

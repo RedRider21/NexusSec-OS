@@ -1,21 +1,15 @@
-# NexusSec-Core - tema finestre Openbox (cyan/teal su nero profondo).
+# NexusSec-Core - tema finestre Openbox (GENERATO da nxs_profiles).
+# Rigenerato con l'accent del profilo e lo stile finestre 'vetro'.
+# NON modificare a mano: viene sovrascritto al cambio profilo/stile.
 padding.width: 4
 padding.height: 3
-# Bordo afferrabile per il resize dai LATI (sinistro/destro/alto). A 2px era
-# quasi impossibile prenderlo col mouse; a 5px afferrabile ma la cornice
-# diventava una riga grossa e pesante. 3px = compromesso: sottile ed elegante
-# ma ancora afferrabile, col cursore che cambia in freccia di resize sui bordi.
-border.width: 3
+border.width: 2
 window.client.padding.width: 0
-# Maniglia di resize in basso: porta i grip d'angolo BL/BR colorati con
-# l'accent (evidenza permanente della zona di resize; Openbox non offre un
-# highlight animato al passaggio del mouse). 6px = grip visibili senza appesantire.
 window.handle.width: 6
 window.active.handle.bg: flat solid
-window.active.handle.bg.color: #0a1a26
+window.active.handle.bg.color: #0a1220
 window.inactive.handle.bg: flat solid
 window.inactive.handle.bg.color: #050a14
-# Colore degli angoli di resize (grip), visibili sull'handle.
 window.active.grip.bg: flat solid
 window.active.grip.bg.color: #00e5ff
 window.inactive.grip.bg: flat solid
@@ -26,8 +20,9 @@ window.active.border.color: #00e5ff
 window.inactive.border.color: #1a3a52
 
 # Barra del titolo
-window.active.title.bg: flat solid
-window.active.title.bg.color: #0a1a26
+window.active.title.bg: gradient vertical
+window.active.title.bg.color: #083c4d
+window.active.title.bg.colorTo: #0a1220
 window.inactive.title.bg: flat solid
 window.inactive.title.bg.color: #050a14
 
@@ -36,10 +31,12 @@ window.active.label.text.color: #00e5ff
 window.inactive.label.text.color: #5a8a9a
 window.label.text.justify: center
 
-# Pulsanti
+# Pulsanti (minimizza / massimizza / chiudi)
 window.active.button.unpressed.image.color: #00e5ff
 window.inactive.button.unpressed.image.color: #5a8a9a
 window.active.button.hover.image.color: #c8f5ff
+window.active.button.pressed.image.color: #ffffff
+window.active.button.disabled.image.color: #036d7e
 
 # Menu
 menu.title.bg: flat solid
@@ -49,7 +46,7 @@ menu.items.bg: flat solid
 menu.items.bg.color: #0a1a26
 menu.items.text.color: #c8f5ff
 menu.items.active.bg: flat solid
-menu.items.active.bg.color: #00334a
+menu.items.active.bg.color: #004951
 menu.items.active.text.color: #00e5ff
 
 # OSD

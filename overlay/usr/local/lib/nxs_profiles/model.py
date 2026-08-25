@@ -51,6 +51,11 @@ _OB_ACCENT_KEYS = (
 
 BG_DIR = Path(os.environ.get(
     "NXS_BG_DIR", str(HOME / ".themes" / "NexusSec-Core" / "backgrounds")))
+# themerc di Openbox: la DECORAZIONE delle finestre (cornice, barra titolo,
+# pulsanti). La rigeneriamo con l'accent del profilo e lo stile finestre scelto
+# cosi' anche il bordo/titlebar seguono vetro/telaio/flat (non piu' fisso ciano).
+OB_THEMERC = Path(os.environ.get("NXS_OB_THEMERC",
+    str(HOME / ".themes" / "NexusSec-Core" / "openbox-3" / "themerc")))
 
 
 _JSON_CACHE: dict = {}   # path -> (mtime, dati): evita di ri-parsare i cataloghi
@@ -239,6 +244,7 @@ button.nxs-tool-item:hover {{ border-left-color: {ac}; background-color: rgba({r
 .nxs-section {{ color: {ac}; border-bottom-color: {ac}; }}
 .nxs-headerbar {{ border-bottom-color: {ac}; box-shadow: inset 0 -2px {ac}; }}
 .nxs-headerbar label.title {{ color: {ac}; }}
+.nxs-eyebrow {{ color: {ac}; }}
 .nxs-key, .nxs-card-title {{ color: {ac}; }}
 .nxs-tile-badge {{ background-color: rgba({rgb},0.16); }}
 .nxs-tile-badge image {{ color: {ac}; }}
@@ -262,6 +268,8 @@ scale slider {{ background-color: {ac}; border-color: {ac}; }}
     ACCENT_CSS.write_text(css)
     # rigenera anche lo stile finestre (usa lo stesso accent del profilo)
     write_window_style_css(key=key)
+    # e la decorazione Openbox (cornice/titlebar/pulsanti) intonata al profilo
+    write_openbox_theme(key=key)
 
 
 # ---- Stile finestre (flat / vetro / telaio) commutabile -------------------
@@ -289,6 +297,7 @@ def set_window_style(style: str, key: str | None = None) -> None:
     CONF_DIR.mkdir(parents=True, exist_ok=True)
     WINDOW_STYLE_CONF.write_text(style + "\n")
     write_window_style_css(style=style, key=key)
+    write_openbox_theme(style=style, key=key)
 
 
 def write_window_style_css(style: str | None = None, key: str | None = None) -> None:
@@ -393,6 +402,116 @@ progressbar > trough > progress {{ border-radius: 999px; background-color: {ac};
 """
     CONF_DIR.mkdir(parents=True, exist_ok=True)
     WINDOW_STYLE_CSS.write_text(css)
+
+
+def _mix(fg: str, bg: str, frac: float) -> str:
+    """Miscela fg su bg (frac = quota di fg, 0..1) -> #rrggbb."""
+    def _rgb(h):
+        h = h.lstrip("#")
+        return [int(h[i:i + 2], 16) for i in (0, 2, 4)]
+    try:
+        f, b = _rgb(fg), _rgb(bg)
+    except (ValueError, IndexError):
+        return bg
+    return "#%02x%02x%02x" % tuple(
+        max(0, min(255, round(frac * f[i] + (1 - frac) * b[i]))) for i in range(3))
+
+
+def write_openbox_theme(style: str | None = None, key: str | None = None) -> None:
+    """Rigenera il themerc di Openbox (DECORAZIONE finestre: cornice, barra
+    titolo, pulsanti) intonandolo all'accent del profilo e allo stile scelto.
+    Vetro: titlebar con gradiente velato + bordo d'accento sottile. Telaio:
+    titlebar piatta scurissima + bordo d'accento fine. Flat: sobrio classico."""
+    if style is None:
+        style = get_window_style()
+    ac = accent(key)
+    g2 = "#0a1220"          # fondo finestra "vetro" del mockup
+    title_top = _mix(ac, g2, 0.20)     # velatura d'accento in cima alla barra
+    title_bot = g2
+    dim = _mix(ac, "#050a14", 0.45)    # accent tenue (bordo inattivo/telaio)
+    if style == "telaio":
+        border_w = 1
+        act_border = ac
+        title_bg = ("window.active.title.bg: flat solid\n"
+                    "window.active.title.bg.color: #070d14\n")
+        handle_c = "#070d14"
+    elif style == "flat":
+        border_w = 3
+        act_border = ac
+        title_bg = ("window.active.title.bg: flat solid\n"
+                    "window.active.title.bg.color: #0a1a26\n")
+        handle_c = "#0a1a26"
+    else:                  # vetro (default): titlebar a gradiente velato
+        border_w = 2
+        act_border = ac
+        title_bg = ("window.active.title.bg: gradient vertical\n"
+                    "window.active.title.bg.color: %s\n"
+                    "window.active.title.bg.colorTo: %s\n" % (title_top, title_bot))
+        handle_c = title_bot
+    txt = f"""# NexusSec-Core - tema finestre Openbox (GENERATO da nxs_profiles).
+# Rigenerato con l'accent del profilo e lo stile finestre '{style}'.
+# NON modificare a mano: viene sovrascritto al cambio profilo/stile.
+padding.width: 4
+padding.height: 3
+border.width: {border_w}
+window.client.padding.width: 0
+window.handle.width: 6
+window.active.handle.bg: flat solid
+window.active.handle.bg.color: {handle_c}
+window.inactive.handle.bg: flat solid
+window.inactive.handle.bg.color: #050a14
+window.active.grip.bg: flat solid
+window.active.grip.bg.color: {ac}
+window.inactive.grip.bg: flat solid
+window.inactive.grip.bg.color: #1a3a52
+
+# Bordi
+window.active.border.color: {act_border}
+window.inactive.border.color: #1a3a52
+
+# Barra del titolo
+{title_bg}window.inactive.title.bg: flat solid
+window.inactive.title.bg.color: #050a14
+
+# Testo titolo
+window.active.label.text.color: {ac}
+window.inactive.label.text.color: #5a8a9a
+window.label.text.justify: center
+
+# Pulsanti (minimizza / massimizza / chiudi)
+window.active.button.unpressed.image.color: {ac}
+window.inactive.button.unpressed.image.color: #5a8a9a
+window.active.button.hover.image.color: #c8f5ff
+window.active.button.pressed.image.color: #ffffff
+window.active.button.disabled.image.color: {dim}
+
+# Menu
+menu.title.bg: flat solid
+menu.title.bg.color: #0a1a26
+menu.title.text.color: {ac}
+menu.items.bg: flat solid
+menu.items.bg.color: #0a1a26
+menu.items.text.color: #c8f5ff
+menu.items.active.bg: flat solid
+menu.items.active.bg.color: {_darken(ac)}
+menu.items.active.text.color: {ac}
+
+# OSD
+osd.bg: flat solid
+osd.bg.color: #0a1a26
+osd.label.text.color: {ac}
+"""
+    try:
+        OB_THEMERC.parent.mkdir(parents=True, exist_ok=True)
+        OB_THEMERC.write_text(txt)
+    except OSError:
+        return
+    # applica a caldo se Openbox e' in esecuzione (best-effort)
+    try:
+        subprocess.Popen(["openbox", "--reconfigure"],
+                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except (FileNotFoundError, OSError):
+        pass
 
 
 def _darken(hex_color: str, factor: float = 0.32) -> str:
