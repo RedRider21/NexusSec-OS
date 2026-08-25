@@ -6,7 +6,9 @@
 #   nxs-wifi iface            stampa l'interfaccia WiFi (vuoto se assente)
 #   nxs-wifi status           "connected <SSID>" | "disconnected" | "no-wifi"
 #   nxs-wifi scan             elenco reti: "SSID<TAB>segnale(dBm)<TAB>flags"
-#   nxs-wifi connect SSID PSK connette (PSK vuoto = rete aperta)
+#   nxs-wifi connect SSID      connette; la passphrase si legge da STDIN
+#                              (piu' sicuro: NON compare in `ps`). Rete aperta
+#                              = STDIN vuoto. Uso legacy: connect SSID PSK.
 #   nxs-wifi disconnect       disconnette
 #
 # Elevazione: nexus e' in wheel con 'permit nopass :wheel' (doas).
@@ -81,13 +83,33 @@ case "${1:-}" in
     ;;
 
   connect)
-    ssid="$2"; psk="$3"
+    ssid="$2"
+    # Sicurezza: la passphrase NON si passa come argomento (sarebbe visibile in
+    # `ps` a tutti i processi). Si legge da STDIN quando non e' un terminale
+    # (il pannello la invia via pipe). Uso legacy CLI: 3o argomento (sconsigliato).
+    if [ -n "${3:-}" ]; then
+      psk="$3"
+    elif [ ! -t 0 ]; then
+      psk="$(cat 2>/dev/null || true)"
+    else
+      psk=""
+    fi
     ensure_up || { echo "err"; exit 1; }
     [ -n "$ssid" ] || { echo "err"; exit 1; }
     id=$(priv wpa_cli -i "$IFACE" add_network 2>/dev/null | tail -1)
     priv wpa_cli -i "$IFACE" set_network "$id" ssid "\"$ssid\"" >/dev/null 2>&1
     if [ -n "$psk" ]; then
-      priv wpa_cli -i "$IFACE" set_network "$id" psk "\"$psk\"" >/dev/null 2>&1
+      # Deriva l'hash PSK con wpa_passphrase (passphrase su STDIN, non in argv);
+      # a wpa_cli finisce solo l'hash a 64 hex, non la password umana.
+      hash="$(printf '%s' "$psk" | wpa_passphrase "$ssid" 2>/dev/null \
+              | sed -n 's/^[[:space:]]*psk=//p' | head -1)"
+      if [ -n "$hash" ]; then
+        priv wpa_cli -i "$IFACE" set_network "$id" psk "$hash" >/dev/null 2>&1
+      else
+        # passphrase fuori range per wpa_passphrase (<8 o >63): fallback
+        priv wpa_cli -i "$IFACE" set_network "$id" psk "\"$psk\"" >/dev/null 2>&1
+      fi
+      psk=""   # non tenerla in memoria oltre il necessario
     else
       priv wpa_cli -i "$IFACE" set_network "$id" key_mgmt NONE >/dev/null 2>&1
     fi

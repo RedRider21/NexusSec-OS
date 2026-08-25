@@ -1754,7 +1754,13 @@ class Panel(Gtk.Window):
             ui[0].set_text("Connessione a «%s»..." % ssid)
 
         def worker():
-            self._run_out(["nxs-wifi", "connect", ssid, psk], 30)
+            # La passphrase va su STDIN, non tra gli argomenti (niente password
+            # in chiaro in `ps`). Rete aperta = stdin vuoto.
+            try:
+                subprocess.run(["nxs-wifi", "connect", ssid], input=psk or "",
+                               capture_output=True, text=True, timeout=30)
+            except (OSError, subprocess.SubprocessError):
+                pass
             # verifica reale: attende che wpa_state=COMPLETED sull'SSID scelto
             ok = False
             for _ in range(15):

@@ -15,6 +15,9 @@ export XDG_RUNTIME_DIR="/run/user/$(id -u)"
 # Avvia la sessione grafica sulla prima console. Se X FALLISCE, NON va in loop:
 # mostra l'errore di Xorg + stato driver/DRM e lascia una shell (diagnostica).
 if [ -z "$DISPLAY" ] && [ "$(tty)" = "/dev/tty1" ]; then
+  # Persistenza CIFRATA (LUKS): se presente e non ancora sbloccata, chiedi la
+  # passphrase QUI (tty interattiva) prima di startx. Se assente, non fa nulla.
+  command -v nxs-unlock-data >/dev/null 2>&1 && nxs-unlock-data login
   startx
   ec=$?
   # X uscito pulito (logout): torna alla shell senza allarmi.

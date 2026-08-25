@@ -1,0 +1,124 @@
+#!/bin/sh
+# nxs-harden - irrobustimento di sicurezza del sistema NexusSec.
+#
+# Pensato soprattutto per il sistema INSTALLATO su disco (la live e' usa-e-getta
+# ed effimera). Applica difese che sulla live non avrebbero senso o darebbero
+# fastidio:
+#   - password per l'utente nexus (+ opz. root)
+#   - niente autologin su tty1 (compare la richiesta di login)
+#   - doas chiede la password (permit persist) invece di nopass
+#   - blocco del cambio-VT e di Ctrl+Alt+Backspace in X (lock schermo robusto)
+#   - firewall attivo
+#
+# Uso:
+#   nxs-harden status            mostra lo stato di ognuna
+#   nxs-harden apply             applica tutto (interattivo per la password)
+#   nxs-harden password          imposta solo la password di nexus
+#   nxs-harden autologin off|on  disattiva/riattiva l'autologin di tty1
+#   nxs-harden doas pass|nopass  doas con/senza password per wheel
+#   nxs-harden lockvt on|off     blocca/sblocca cambio-VT e Ctrl+Alt+Bksp in X
+set -eu
+
+priv() { if [ "$(id -u)" = 0 ]; then "$@"; \
+         elif command -v doas >/dev/null 2>&1; then doas "$@"; \
+         else sudo "$@"; fi; }
+
+INITTAB=/etc/inittab
+DOASCONF=/etc/doas.d/doas.conf
+XCONF=/etc/X11/xorg.conf.d/50-nxs-lock.conf
+
+is_live() { findmnt -no FSTYPE / 2>/dev/null | grep -qE 'tmpfs|overlay|ramfs'; }
+
+st_autologin() { grep -q 'agetty --autologin nexus' "$INITTAB" 2>/dev/null \
+                 && echo on || echo off; }
+st_doas() { grep -q 'permit nopass :wheel' "$DOASCONF" 2>/dev/null \
+            && echo nopass || echo pass; }
+st_lockvt() { [ -f "$XCONF" ] && echo on || echo off; }
+st_pass() { # nexus ha una password valida?
+  p="$(priv sh -c "getent shadow nexus 2>/dev/null | cut -d: -f2")"
+  case "$p" in ""|"!"|"*"|"!*") echo no ;; *) echo si ;; esac
+}
+
+do_password() {
+  echo "Imposta la password per l'utente 'nexus':"
+  priv passwd nexus
+}
+
+do_autologin() {
+  case "$1" in
+    off) priv sed -i 's#^tty1::respawn:/sbin/agetty --autologin nexus.*#tty1::respawn:/sbin/agetty --noclear 38400 tty1 linux#' "$INITTAB"
+         echo "Autologin disattivato (login richiesto su tty1)." ;;
+    on)  priv sed -i 's#^tty1::respawn:/sbin/agetty --noclear 38400 tty1 linux#tty1::respawn:/sbin/agetty --autologin nexus --noclear 38400 tty1 linux#' "$INITTAB"
+         echo "Autologin riattivato." ;;
+    *) echo "uso: nxs-harden autologin off|on"; return 1 ;;
+  esac
+  priv kill -HUP 1 2>/dev/null || true
+}
+
+do_doas() {
+  case "$1" in
+    pass)   priv sh -c "echo 'permit persist :wheel' > '$DOASCONF'"
+            echo "doas ora CHIEDE la password (cache per sessione)." ;;
+    nopass) priv sh -c "echo 'permit nopass :wheel' > '$DOASCONF'"
+            echo "doas SENZA password (comodo per la live)." ;;
+    *) echo "uso: nxs-harden doas pass|nopass"; return 1 ;;
+  esac
+}
+
+do_lockvt() {
+  case "$1" in
+    on) priv mkdir -p "$(dirname "$XCONF")"
+        priv sh -c "cat > '$XCONF'" <<'EOF'
+# NexusSec hardening: rende robusto il blocco schermo.
+# Disabilita il cambio-VT (Ctrl+Alt+Fx) e Ctrl+Alt+Backspace mentre X gira,
+# cosi' il salvaschermo con password non e' aggirabile passando a un'altra VT.
+Section "ServerFlags"
+    Option "DontVTSwitch" "true"
+    Option "DontZap" "true"
+EndSection
+EOF
+        echo "Blocco VT ATTIVO (ha effetto al prossimo riavvio di X)." ;;
+    off) priv rm -f "$XCONF"
+         echo "Blocco VT disattivato (al prossimo riavvio di X)." ;;
+    *) echo "uso: nxs-harden lockvt on|off"; return 1 ;;
+  esac
+}
+
+status() {
+  echo "Stato hardening NexusSec:"
+  echo "  ambiente:        $(is_live && echo 'LIVE (effimera)' || echo 'installato su disco')"
+  echo "  password nexus:  $(st_pass)"
+  echo "  autologin tty1:  $(st_autologin)"
+  echo "  doas:            $(st_doas)"
+  echo "  blocco VT (X):   $(st_lockvt)"
+  echo "  firewall:        $( [ -f /etc/nxs/firewall.disabled ] && echo disattivato || echo attivo )"
+  if is_live; then
+    echo
+    echo "NB: sei nella LIVE. Le modifiche a inittab/doas/X NON sopravvivono al"
+    echo "    riavvio finche' non installi su disco (nxs-install). Su disco"
+    echo "    'nxs-harden apply' rende il sistema robusto in modo permanente."
+  fi
+}
+
+apply_all() {
+  echo "== Hardening completo NexusSec =="
+  do_password
+  do_autologin off
+  do_doas pass
+  do_lockvt on
+  command -v nxs-firewall >/dev/null 2>&1 && priv nxs-firewall on >/dev/null 2>&1
+  echo
+  echo "Fatto. Alcune modifiche (blocco VT) valgono dal prossimo avvio di X."
+  status
+}
+
+case "${1:-status}" in
+  status) status ;;
+  apply) apply_all ;;
+  password) do_password ;;
+  autologin) do_autologin "${2:-}" ;;
+  doas) do_doas "${2:-}" ;;
+  lockvt) do_lockvt "${2:-}" ;;
+  *) echo "uso: nxs-harden {status|apply|password|autologin off|on|doas pass|nopass|lockvt on|off}" >&2; exit 2 ;;
+esac
+exit 0

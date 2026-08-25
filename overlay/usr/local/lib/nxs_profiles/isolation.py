@@ -85,7 +85,17 @@ def _apk_name(tool: str) -> str | None:
 
 
 def _image(tool: str) -> str:
-    return model.tool_data(tool).get("image", "")
+    """Immagine container del tool. Se repo.json indica un 'digest'
+    (sha256:...), l'immagine viene PINNATA per digest (integrita' della
+    supply-chain: si esegue esattamente quel contenuto). Senza digest si usa
+    il tag (comportamento rolling, adatto ai tool Kali sempre aggiornati)."""
+    data = model.tool_data(tool)
+    img = data.get("image", "")
+    digest = data.get("digest", "")
+    if img and digest and "@" not in img:
+        base = img.split(":", 1)[0] if ":" in img.rsplit("/", 1)[-1] else img
+        return "%s@%s" % (base, digest)
+    return img
 
 
 def _bin(tool: str) -> str:

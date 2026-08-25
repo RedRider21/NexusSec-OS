@@ -58,17 +58,40 @@ format_part() {
 	printf "  Scrivi ESATTAMENTE 'FORMATTA' per procedere: "
 	read ans
 	[ "$ans" = "FORMATTA" ] || { echo "  annullato."; exit 0; }
+	# Cifratura opzionale con LUKS: consigliata (loot/dati a riposo protetti).
+	enc=""
+	if command -v cryptsetup >/dev/null 2>&1; then
+		printf "  Cifrare la partizione con LUKS? (consigliato) [s/N]: "
+		read enc
+	fi
 	priv umount "$part" 2>/dev/null || true
-	echo "  mkfs.ext4 -L $LABEL $part ..."
-	priv mkfs.ext4 -F -L "$LABEL" "$part"
-	# attiva subito senza riavvio: monta e prepara le cartelle.
-	priv mkdir -p /var/nxs-data
-	priv mount "$part" /var/nxs-data
+	case "$enc" in
+		s|S|si|SI|y|Y)
+			echo "  cryptsetup luksFormat (scegli una passphrase robusta) ..."
+			priv cryptsetup luksFormat --type luks2 --label NXSCRYPT "$part"
+			echo "  Sblocco per la prima formattazione (reinserisci la passphrase) ..."
+			priv cryptsetup open "$part" nxsdata
+			echo "  mkfs.ext4 -L $LABEL /dev/mapper/nxsdata ..."
+			priv mkfs.ext4 -F -L "$LABEL" /dev/mapper/nxsdata
+			priv mkdir -p /var/nxs-data
+			priv mount /dev/mapper/nxsdata /var/nxs-data
+			CRYPTED=1 ;;
+		*)
+			echo "  mkfs.ext4 -L $LABEL $part ..."
+			priv mkfs.ext4 -F -L "$LABEL" "$part"
+			priv mkdir -p /var/nxs-data
+			priv mount "$part" /var/nxs-data
+			CRYPTED=0 ;;
+	esac
 	for d in containers nxs-state loot apk-cache; do
 		priv install -d -o nexus -g nexus "/var/nxs-data/$d"
 	done
 	echo
 	echo "  Persistenza creata e montata su /var/nxs-data."
+	if [ "${CRYPTED:-0}" = 1 ]; then
+		echo "  CIFRATA (LUKS): al prossimo avvio la passphrase verra' chiesta al"
+		echo "  login su tty1 (prima del desktop). Senza passphrase => live effimera."
+	fi
 	echo "  RIAVVIA per attivarla del tutto (Podman/stato tool passano su disco)."
 }
 

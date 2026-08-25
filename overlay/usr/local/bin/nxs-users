@@ -1,0 +1,62 @@
+#!/bin/sh
+# nxs-users - gestione utenti NexusSec (backend per Impostazioni > Gestione utenti).
+# Le password si ricevono da STDIN (mai come argomento: sarebbero in `ps`).
+#
+# Uso:
+#   nxs-users list                 elenca gli utenti umani: name<TAB>uid<TAB>gruppi
+#   nxs-users passwd <utente>      imposta la password (nuova password su STDIN)
+#   nxs-users add <utente>         crea l'utente (password su STDIN) nei gruppi desktop
+#   nxs-users del <utente>         elimina l'utente (rifiuta root e l'utente corrente)
+set -eu
+
+priv() { if [ "$(id -u)" = 0 ]; then "$@"; \
+         elif command -v doas >/dev/null 2>&1; then doas "$@"; \
+         else sudo "$@"; fi; }
+
+# gruppi desktop che rendono un utente pienamente operativo (come 'nexus')
+DESKTOP_GROUPS="wheel audio video input netdev kvm plugdev usb dialout"
+
+valid_name() { echo "$1" | grep -qE '^[a-z_][a-z0-9_-]*$'; }
+
+case "${1:-list}" in
+  list)
+    # root + utenti con uid >= 1000 (umani), escluso 'nobody'
+    getent passwd 2>/dev/null | while IFS=: read -r name _pw uid _gid _gecos _home _sh; do
+      [ "$name" = "nobody" ] && continue
+      if [ "$uid" = "0" ] || [ "$uid" -ge 1000 ] 2>/dev/null; then
+        grps="$(id -nG "$name" 2>/dev/null | tr ' ' ',')"
+        printf '%s\t%s\t%s\n' "$name" "$uid" "$grps"
+      fi
+    done
+    ;;
+  passwd)
+    u="${2:-}"; valid_name "$u" || { echo "nome utente non valido" >&2; exit 2; }
+    getent passwd "$u" >/dev/null 2>&1 || { echo "utente inesistente" >&2; exit 2; }
+    pw="$(cat)"                     # nuova password da STDIN
+    [ -n "$pw" ] || { echo "password vuota" >&2; exit 2; }
+    printf '%s:%s\n' "$u" "$pw" | priv chpasswd
+    echo "password aggiornata per $u"
+    ;;
+  add)
+    u="${2:-}"; valid_name "$u" || { echo "nome utente non valido" >&2; exit 2; }
+    getent passwd "$u" >/dev/null 2>&1 && { echo "utente gia' esistente" >&2; exit 2; }
+    priv adduser -D "$u"            # -D: niente prompt password (la mettiamo dopo)
+    for g in $DESKTOP_GROUPS; do
+      getent group "$g" >/dev/null 2>&1 && priv adduser "$u" "$g" >/dev/null 2>&1 || true
+    done
+    pw="$(cat 2>/dev/null || true)"
+    if [ -n "$pw" ]; then printf '%s:%s\n' "$u" "$pw" | priv chpasswd; fi
+    echo "utente $u creato"
+    ;;
+  del)
+    u="${2:-}"; valid_name "$u" || { echo "nome utente non valido" >&2; exit 2; }
+    [ "$u" = "root" ] && { echo "non elimino root" >&2; exit 2; }
+    [ "$u" = "$(id -un)" ] && { echo "non elimino l'utente corrente" >&2; exit 2; }
+    uid="$(id -u "$u" 2>/dev/null || echo 0)"
+    [ "$uid" -ge 1000 ] 2>/dev/null || { echo "rifiuto: non e' un utente umano" >&2; exit 2; }
+    priv deluser --remove-home "$u" 2>/dev/null || priv deluser "$u"
+    echo "utente $u eliminato"
+    ;;
+  *) echo "uso: nxs-users {list|passwd U|add U|del U}" >&2; exit 2 ;;
+esac
+exit 0

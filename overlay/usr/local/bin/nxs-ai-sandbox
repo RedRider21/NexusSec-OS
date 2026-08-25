@@ -1,0 +1,43 @@
+#!/bin/sh
+# nxs-ai-sandbox - sandbox bubblewrap per il (futuro) agente AI di NexusSec.
+#
+# L'agente AI sara' una superficie d'attacco importante (esegue codice,
+# ragiona su input non fidati). Questo wrapper e' pronto per contenerlo:
+# filesystem di sistema in SOLA LETTURA, /tmp privato, HOME isolata in una
+# workspace dedicata, niente accesso al resto della home, rete DISATTIVATA di
+# default (--net per abilitarla).
+#
+# Uso:
+#   nxs-ai-sandbox [--net] [--workspace DIR] -- <comando> [args...]
+#
+# Esempio (quando l'agente esistera'):
+#   nxs-ai-sandbox --workspace ~/NexusSec-loot/ai -- python3 -m nxs_ai
+set -eu
+
+NET=0
+WS="$HOME/.local/share/nxs-ai/workspace"
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --net) NET=1; shift ;;
+    --workspace) WS="$2"; shift 2 ;;
+    --) shift; break ;;
+    *) break ;;
+  esac
+done
+[ $# -gt 0 ] || { echo "uso: nxs-ai-sandbox [--net] [--workspace DIR] -- <comando>"; exit 2; }
+
+command -v bwrap >/dev/null 2>&1 || { echo "bubblewrap (bwrap) non installato."; exit 1; }
+mkdir -p "$WS"
+
+# rete isolata di default (--unshare-net); con --net eredita quella dell'host.
+NETOPT=""
+[ "$NET" = 0 ] && NETOPT="--unshare-net"
+
+exec bwrap \
+  --ro-bind / / \
+  --dev /dev --proc /proc \
+  --tmpfs /tmp --tmpfs /run \
+  --bind "$WS" "$HOME" --setenv HOME "$HOME" \
+  --unshare-pid --unshare-ipc --unshare-uts $NETOPT \
+  --die-with-parent --new-session \
+  "$@"

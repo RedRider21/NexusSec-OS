@@ -1,0 +1,111 @@
+#!/bin/sh
+# nxs-firewall - firewall di sicurezza NexusSec basato su nftables.
+#
+# Politica: OUTBOUND consentito (i tool offensivi devono poter uscire),
+# INBOUND default-DENY (nessuno puo' connettersi alla macchina) tranne:
+#   - loopback
+#   - connessioni gia' stabilite / correlate (le risposte al tuo traffico)
+#   - ICMP/ICMPv6 di base (ping/diagnostica)
+#   - le porte esplicitamente aperte in /etc/nxs/firewall.allow
+#
+# NB per il pentest: se devi METTERTI IN ASCOLTO (handler Metasploit, Responder,
+# un web server, reverse shell...) apri la porta con `nxs-firewall allow 4444/tcp`
+# oppure disattiva tutto con `nxs-firewall off`. Riaccendi con `nxs-firewall on`.
+#
+# Uso:
+#   nxs-firewall on|off|status
+#   nxs-firewall allow <porta[/tcp|/udp]>   apre una porta in ingresso
+#   nxs-firewall deny  <porta[/tcp|/udp]>   richiude una porta
+#   nxs-firewall boot                       applica al boot se abilitato
+set -eu
+
+priv() { if [ "$(id -u)" = 0 ]; then "$@"; \
+         elif command -v doas >/dev/null 2>&1; then doas "$@"; \
+         else sudo "$@"; fi; }
+
+CONF_DIR=/etc/nxs
+ALLOW="$CONF_DIR/firewall.allow"
+DISABLED="$CONF_DIR/firewall.disabled"
+
+have_nft() { command -v nft >/dev/null 2>&1; }
+
+_ensure_conf() {
+  priv mkdir -p "$CONF_DIR"
+  [ -f "$ALLOW" ] || priv sh -c ": > '$ALLOW'"
+}
+
+# genera il ruleset nftables leggendo le porte aperte da $ALLOW
+_build_ruleset() {
+  echo 'flush ruleset'
+  echo 'table inet nxsfw {'
+  echo '  chain input {'
+  echo '    type filter hook input priority 0; policy drop;'
+  echo '    iif "lo" accept'
+  echo '    ct state established,related accept'
+  echo '    ct state invalid drop'
+  echo '    ip protocol icmp accept'
+  echo '    ip6 nexthdr ipv6-icmp accept'
+  # porte aperte esplicitamente
+  if [ -f "$ALLOW" ]; then
+    while IFS= read -r line; do
+      line="$(echo "$line" | sed 's/#.*//;s/[[:space:]]//g')"
+      [ -z "$line" ] && continue
+      port="${line%%/*}"; proto="${line#*/}"
+      case "$line" in */*) : ;; *) proto="tcp" ;; esac
+      case "$proto" in tcp|udp) : ;; *) proto="tcp" ;; esac
+      case "$port" in ''|*[!0-9]*) continue ;; esac
+      echo "    $proto dport $port accept"
+    done < "$ALLOW"
+  fi
+  echo '  }'
+  echo '  chain forward { type filter hook forward priority 0; policy drop; }'
+  echo '  chain output  { type filter hook output  priority 0; policy accept; }'
+  echo '}'
+}
+
+fw_on() {
+  have_nft || { echo "nftables non installato."; exit 1; }
+  _ensure_conf
+  priv rm -f "$DISABLED" 2>/dev/null || true
+  _build_ruleset | priv nft -f -
+  echo "Firewall ATTIVO (inbound default-deny, outbound consentito)."
+}
+
+fw_off() {
+  have_nft || { echo "nftables non installato."; exit 1; }
+  priv nft flush ruleset 2>/dev/null || true
+  priv sh -c "mkdir -p '$CONF_DIR'; : > '$DISABLED'"
+  echo "Firewall DISATTIVATO (tutto il traffico consentito)."
+}
+
+case "${1:-status}" in
+  on)  fw_on ;;
+  off) fw_off ;;
+  status)
+    if [ -f "$DISABLED" ]; then echo "Firewall: disattivato."; fi
+    have_nft && priv nft list ruleset 2>/dev/null || echo "(nessuna regola)"
+    ;;
+  allow)
+    [ -n "${2:-}" ] || { echo "uso: nxs-firewall allow <porta[/tcp|/udp]>"; exit 2; }
+    _ensure_conf
+    priv sh -c "grep -qxF '$2' '$ALLOW' 2>/dev/null || echo '$2' >> '$ALLOW'"
+    [ -f "$DISABLED" ] || fw_on >/dev/null
+    echo "Porta $2 aperta in ingresso."
+    ;;
+  deny)
+    [ -n "${2:-}" ] || { echo "uso: nxs-firewall deny <porta[/tcp|/udp]>"; exit 2; }
+    _ensure_conf
+    priv sh -c "grep -vxF '$2' '$ALLOW' > '$ALLOW.tmp' 2>/dev/null; mv '$ALLOW.tmp' '$ALLOW'"
+    [ -f "$DISABLED" ] || fw_on >/dev/null
+    echo "Porta $2 richiusa."
+    ;;
+  boot)
+    # applicato dal boot (nexussec.start): ON salvo esplicito opt-out.
+    have_nft || exit 0
+    [ -f "$DISABLED" ] && exit 0
+    _ensure_conf
+    _build_ruleset | priv nft -f - 2>/dev/null || true
+    ;;
+  *) echo "uso: nxs-firewall {on|off|status|allow PORTA|deny PORTA|boot}" >&2; exit 2 ;;
+esac
+exit 0

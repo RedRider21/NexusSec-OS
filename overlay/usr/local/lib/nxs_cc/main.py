@@ -100,6 +100,11 @@ VIEW_MAP = {
     "bluetooth": views.open_bluetooth,
     "stile-finestre": views.open_window_style,
     "window-style": views.open_window_style,
+    "sicurezza": views.open_security,
+    "security": views.open_security,
+    "firewall": views.open_firewall,
+    "utenti": views.open_users,
+    "users": views.open_users,
 }
 
 
@@ -214,6 +219,16 @@ def build_window() -> Gtk.Window:
         Tile("bluetooth", "Bluetooth",
              "Accensione, scansione, abbinamento e connessione dispositivi",
              launch("bluetooth")),
+    ]), False, False, 0)
+
+    body.pack_start(section("Sicurezza", [
+        Tile("security-high", "Sicurezza e hardening",
+             "Password, autologin, doas, blocco VT, stato difese", launch("sicurezza")),
+        Tile("network-firewall", "Firewall",
+             "Inbound default-deny, porte in ascolto (nftables)", launch("firewall")),
+        Tile("system-users", "Gestione utenti",
+             "Utenti, password (predefinita nexus/nexus), aggiungi/elimina",
+             launch("utenti")),
     ]), False, False, 0)
 
     body.pack_start(section("Personale", [

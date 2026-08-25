@@ -1,0 +1,59 @@
+#!/bin/sh
+# nxs-unlock-data - sblocca e monta la persistenza CIFRATA (LUKS) di NexusSec.
+#
+# La persistenza cifrata (creata da `nxs-persist` con LUKS) NON puo' essere
+# sbloccata al boot (serve la passphrase): la si sblocca al login su tty1,
+# richiamato da ~/.profile PRIMA di startx. Se non c'e' nessuna partizione
+# cifrata, esce subito senza disturbare.
+#
+# Uso:  nxs-unlock-data [login|status]
+set -eu
+
+priv() { if [ "$(id -u)" = 0 ]; then "$@"; \
+         elif command -v doas >/dev/null 2>&1; then doas "$@"; \
+         else sudo "$@"; fi; }
+
+. /usr/local/lib/nxs-persist-setup.sh 2>/dev/null || true
+MAP=nxsdata
+
+already_mounted() { mountpoint -q /var/nxs-data 2>/dev/null; }
+
+do_login() {
+	already_mounted && exit 0
+	# se esiste una NXSDATA in chiaro, la gestisce gia' il boot: niente da fare
+	if blkid -L NXSDATA >/dev/null 2>&1; then exit 0; fi
+	dev="$(command -v nxs_find_luks >/dev/null 2>&1 && nxs_find_luks || true)"
+	[ -n "$dev" ] || exit 0        # nessuna persistenza cifrata: esci
+	echo
+	echo "==============================================================="
+	echo "  Persistenza cifrata NexusSec rilevata su $dev"
+	echo "  Inserisci la passphrase per sbloccarla (Invio vuoto = salta)."
+	echo "==============================================================="
+	# fino a 3 tentativi
+	i=0
+	while [ "$i" -lt 3 ]; do
+		if [ -e "/dev/mapper/$MAP" ] || priv cryptsetup open "$dev" "$MAP"; then
+			break
+		fi
+		i=$((i + 1))
+		[ "$i" -ge 3 ] && { echo "  Troppe passphrase errate: avvio senza persistenza."; exit 0; }
+	done
+	[ -e "/dev/mapper/$MAP" ] || exit 0
+	priv mkdir -p /var/nxs-data
+	priv mount "/dev/mapper/$MAP" /var/nxs-data 2>/dev/null || {
+		echo "  Errore nel montare la persistenza."; exit 0; }
+	# setup (cartelle, storage podman, link) come al boot
+	priv sh -c '. /usr/local/lib/nxs-persist-setup.sh; nxs_persist_setup' 2>/dev/null || true
+	echo "  Persistenza cifrata ATTIVA su /var/nxs-data."
+}
+
+case "${1:-login}" in
+	login) do_login ;;
+	status)
+		if already_mounted; then echo "persistenza cifrata: montata e attiva."
+		elif [ -n "$(command -v nxs_find_luks >/dev/null 2>&1 && nxs_find_luks || true)" ]; then
+			echo "persistenza cifrata: presente, non sbloccata."
+		else echo "persistenza cifrata: assente."; fi ;;
+	*) echo "uso: nxs-unlock-data [login|status]"; exit 2 ;;
+esac
+exit 0

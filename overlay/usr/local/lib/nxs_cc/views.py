@@ -2189,3 +2189,345 @@ def open_window_style(_btn=None):
     body.pack_end(btns, False, False, 0)
 
     win.show_all()
+
+
+# ---------------------------------------------------------------------------
+# SICUREZZA: firewall, utenti, hardening (backend: nxs-firewall/users/harden)
+# ---------------------------------------------------------------------------
+def _run_priv_term(inner: str, title: str = "NexusSec"):
+    """Esegue un comando privilegiato in un terminale (cosi' doas puo' chiedere
+    la password quando il sistema e' hardenizzato) e lascia la finestra aperta."""
+    cmd = ("%s; echo; printf 'Premi Invio per chiudere...'; read x" % inner)
+    run_bg(["lxterminal", "--title=%s" % title, "-e", "sh -c \"%s\"" % cmd])
+
+
+def _eye_entry(placeholder="Password"):
+    e = Gtk.Entry(); e.set_visibility(False); e.set_hexpand(True)
+    e.set_placeholder_text(placeholder)
+    e.set_icon_from_icon_name(Gtk.EntryIconPosition.SECONDARY, "view-reveal-symbolic")
+
+    def _eye(entry, _p, _ev):
+        v = not entry.get_visibility(); entry.set_visibility(v)
+        entry.set_icon_from_icon_name(Gtk.EntryIconPosition.SECONDARY,
+                                      "view-conceal-symbolic" if v else "view-reveal-symbolic")
+    e.connect("icon-press", _eye)
+    return e
+
+
+# ----- Firewall ------------------------------------------------------------
+def open_firewall(_btn=None):
+    win, body = panel_window("Firewall", 560, 560)
+
+    intro = Gtk.Label(label="Firewall nftables. Politica: traffico in USCITA "
+                            "libero (i tool devono poter uscire), traffico in "
+                            "INGRESSO bloccato salvo le porte che apri qui. "
+                            "Per mettere in ascolto un handler/reverse shell, "
+                            "apri la porta o disattiva temporaneamente.")
+    intro.set_xalign(0); intro.set_line_wrap(True)
+    intro.get_style_context().add_class("nxs-val")
+    body.pack_start(intro, False, False, 0)
+
+    row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+    row.get_style_context().add_class("nxs-card")
+    lab = Gtk.Label(label="Firewall attivo"); lab.set_xalign(0)
+    lab.get_style_context().add_class("nxs-key")
+    row.pack_start(lab, True, True, 0)
+    sw = Gtk.Switch(); sw.set_valign(Gtk.Align.CENTER)
+    row.pack_end(sw, False, False, 0)
+    body.pack_start(row, False, False, 0)
+
+    status = Gtk.Label(); status.set_xalign(0)
+    status.get_style_context().add_class("nxs-val")
+    body.pack_start(status, False, False, 0)
+
+    ports_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
+    body.pack_start(ports_box, False, False, 0)
+
+    add_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+    port_ent = Gtk.Entry(); port_ent.set_placeholder_text("es. 4444/tcp o 80")
+    port_ent.set_hexpand(True)
+    b_open = icon_button("Apri porta", "list-add-symbolic", primary=True)
+    add_row.pack_start(port_ent, True, True, 0)
+    add_row.pack_start(b_open, False, False, 0)
+    body.pack_start(add_row, False, False, 0)
+
+    disabled_flag = Path("/etc/nxs/firewall.disabled")
+    allow_file = Path("/etc/nxs/firewall.allow")
+
+    def is_on():
+        return not disabled_flag.exists()
+
+    def read_ports():
+        try:
+            return [l.strip() for l in allow_file.read_text().splitlines()
+                    if l.strip() and not l.strip().startswith("#")]
+        except OSError:
+            return []
+
+    def refresh():
+        on = is_on()
+        sw.handler_block(sw._h); sw.set_active(on); sw.handler_unblock(sw._h)
+        status.set_text("Stato: attivo (inbound bloccato)." if on
+                        else "Stato: DISATTIVATO (tutto il traffico passa).")
+        for c in ports_box.get_children():
+            ports_box.remove(c)
+        ports = read_ports()
+        if ports:
+            t = Gtk.Label(label="Porte aperte in ingresso:"); t.set_xalign(0)
+            t.get_style_context().add_class("nxs-key")
+            ports_box.pack_start(t, False, False, 0)
+        for p in ports:
+            r = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+            r.get_style_context().add_class("nxs-tile")
+            l = Gtk.Label(label=p); l.set_xalign(0)
+            l.get_style_context().add_class("nxs-val")
+            r.pack_start(l, True, True, 0)
+            bd = icon_button("Chiudi", "list-remove-symbolic")
+            bd.connect("clicked", lambda _w, pp=p: (run_bg(["nxs-firewall", "deny", pp]),
+                                                    GLib.timeout_add(500, lambda: (refresh(), False)[1])))
+            r.pack_end(bd, False, False, 0)
+            ports_box.pack_start(r, False, False, 0)
+        ports_box.show_all()
+
+    def on_switch(s, state):
+        run_bg(["nxs-firewall", "on" if state else "off"])
+        GLib.timeout_add(600, lambda: (refresh(), False)[1])
+        return False
+    sw._h = sw.connect("state-set", on_switch)
+
+    def do_open(_b=None):
+        p = port_ent.get_text().strip()
+        if p:
+            run_bg(["nxs-firewall", "allow", p]); port_ent.set_text("")
+            GLib.timeout_add(500, lambda: (refresh(), False)[1])
+    b_open.connect("clicked", do_open)
+
+    btns = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+    b_close = icon_button("Chiudi", "window-close")
+    b_close.connect("clicked", lambda _b: win.destroy())
+    btns.pack_end(b_close, False, False, 0)
+    body.pack_end(btns, False, False, 0)
+
+    refresh()
+    win.show_all()
+
+
+# ----- Gestione utenti -----------------------------------------------------
+def _users_list():
+    out = run_capture(["nxs-users", "list"], timeout=8)
+    users = []
+    for line in out.splitlines():
+        p = line.split("\t")
+        if p and p[0].strip():
+            users.append((p[0], p[1] if len(p) > 1 else "",
+                          p[2] if len(p) > 2 else ""))
+    return users
+
+
+def open_users(_btn=None):
+    win, body = panel_window("Gestione utenti", 560, 560)
+
+    intro = Gtk.Label(label="Utenti del sistema. Sulla live l'utente predefinito "
+                            "e' «nexus» con password «nexus» (stile Kali): "
+                            "cambiala qui. Le modifiche sono permanenti solo se "
+                            "il sistema e' installato o con persistenza.")
+    intro.set_xalign(0); intro.set_line_wrap(True)
+    intro.get_style_context().add_class("nxs-val")
+    body.pack_start(intro, False, False, 0)
+
+    listbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
+    body.pack_start(listbox, False, False, 0)
+
+    def set_pw(user):
+        dlg = Gtk.Dialog(title="Password di %s" % user, transient_for=win, modal=True)
+        dlg.add_button("Annulla", Gtk.ResponseType.CANCEL)
+        dlg.add_button("Imposta", Gtk.ResponseType.OK)
+        dlg.set_default_response(Gtk.ResponseType.OK)
+        ar = dlg.get_content_area(); ar.set_spacing(8); ar.set_border_width(12)
+        ar.add(Gtk.Label(label="Nuova password per «%s»:" % user))
+        e1 = _eye_entry("Nuova password"); e1.set_activates_default(True); ar.add(e1)
+        ar.add(Gtk.Label(label="Ripeti la password:"))
+        e2 = _eye_entry("Ripeti"); ar.add(e2)
+        msg = Gtk.Label(); msg.get_style_context().add_class("nxs-val"); ar.add(msg)
+        dlg.show_all()
+        while True:
+            if dlg.run() != Gtk.ResponseType.OK:
+                break
+            pw = e1.get_text()
+            if len(pw) < 4:
+                msg.set_text("Almeno 4 caratteri."); continue
+            if pw != e2.get_text():
+                msg.set_text("Le due password non coincidono."); continue
+            try:
+                r = subprocess.run(["doas", "nxs-users", "passwd", user],
+                                   input=pw, capture_output=True, text=True, timeout=20)
+                if r.returncode == 0:
+                    info_dialog("Fatto", "Password aggiornata per %s." % user, parent=win)
+                else:
+                    info_dialog("Serve la password",
+                                "Non applicata dalla GUI (doas protetto). Da terminale:\n"
+                                "  doas nxs-users passwd %s" % user,
+                                level="error", parent=win)
+            except (OSError, subprocess.SubprocessError):
+                info_dialog("Errore", "Impossibile eseguire nxs-users.",
+                            level="error", parent=win)
+            break
+        dlg.destroy()
+
+    def del_user(user):
+        _run_priv_term("doas nxs-users del %s" % user, "Elimina utente")
+
+    def refresh():
+        for c in listbox.get_children():
+            listbox.remove(c)
+        for name, uid, grps in _users_list():
+            card = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+            card.get_style_context().add_class("nxs-tile")
+            txt = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+            n = Gtk.Label(label="%s  (uid %s)" % (name, uid)); n.set_xalign(0)
+            n.get_style_context().add_class("nxs-key")
+            g = Gtk.Label(label=grps); g.set_xalign(0); g.set_line_wrap(True)
+            g.get_style_context().add_class("nxs-val")
+            txt.pack_start(n, False, False, 0); txt.pack_start(g, False, False, 0)
+            card.pack_start(txt, True, True, 0)
+            bp = icon_button("Password", "dialog-password-symbolic")
+            bp.connect("clicked", lambda _w, u=name: set_pw(u))
+            card.pack_end(bp, False, False, 0)
+            if uid != "0" and name != os.getenv("USER", "nexus"):
+                bd = icon_button("Elimina", "user-trash-symbolic")
+                bd.connect("clicked", lambda _w, u=name: del_user(u))
+                card.pack_end(bd, False, False, 0)
+            listbox.pack_start(card, False, False, 0)
+        listbox.show_all()
+
+    def add_user(_b=None):
+        dlg = Gtk.Dialog(title="Nuovo utente", transient_for=win, modal=True)
+        dlg.add_button("Annulla", Gtk.ResponseType.CANCEL)
+        dlg.add_button("Crea", Gtk.ResponseType.OK)
+        dlg.set_default_response(Gtk.ResponseType.OK)
+        ar = dlg.get_content_area(); ar.set_spacing(8); ar.set_border_width(12)
+        ar.add(Gtk.Label(label="Nome utente (minuscolo, senza spazi):"))
+        ne = Gtk.Entry(); ne.set_activates_default(True); ar.add(ne)
+        ar.add(Gtk.Label(label="Password:"))
+        pe = _eye_entry("Password"); ar.add(pe)
+        dlg.show_all()
+        if dlg.run() == Gtk.ResponseType.OK:
+            u = ne.get_text().strip()
+            if u:
+                try:
+                    subprocess.run(["doas", "nxs-users", "add", u],
+                                   input=pe.get_text(), capture_output=True,
+                                   text=True, timeout=20)
+                except (OSError, subprocess.SubprocessError):
+                    pass
+                GLib.timeout_add(400, lambda: (refresh(), False)[1])
+        dlg.destroy()
+
+    btns = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+    b_add = icon_button("Aggiungi utente", "list-add-symbolic", primary=True)
+    b_add.connect("clicked", add_user)
+    b_close = icon_button("Chiudi", "window-close")
+    b_close.connect("clicked", lambda _b: win.destroy())
+    btns.pack_start(b_add, False, False, 0)
+    btns.pack_end(b_close, False, False, 0)
+    body.pack_end(btns, False, False, 0)
+
+    refresh()
+    win.show_all()
+
+
+# ----- Hardening / sicurezza -----------------------------------------------
+def open_security(_btn=None):
+    win, body = panel_window("Sicurezza e hardening", 580, 600)
+
+    intro = Gtk.Label(label="Stato delle difese del sistema. La live e' comoda "
+                            "ed effimera; una volta INSTALLATA su disco puoi "
+                            "irrobustirla (password, niente autologin, doas con "
+                            "password, blocco schermo, persistenza cifrata).")
+    intro.set_xalign(0); intro.set_line_wrap(True)
+    intro.get_style_context().add_class("nxs-val")
+    body.pack_start(intro, False, False, 0)
+
+    grid = Gtk.Grid(column_spacing=16, row_spacing=6)
+    body.pack_start(grid, False, False, 0)
+    rows = {}
+    labels = [("env", "Ambiente"), ("pass", "Password nexus"),
+              ("autologin", "Autologin tty1"), ("doas", "doas"),
+              ("lockvt", "Blocco VT (X)"), ("firewall", "Firewall"),
+              ("crypt", "Persistenza cifrata")]
+    for i, (k, name) in enumerate(labels):
+        kl = Gtk.Label(label=name); kl.set_xalign(0)
+        kl.get_style_context().add_class("nxs-key")
+        vl = Gtk.Label(label="..."); vl.set_xalign(0)
+        vl.get_style_context().add_class("nxs-val")
+        grid.attach(kl, 0, i, 1, 1); grid.attach(vl, 1, i, 1, 1)
+        rows[k] = vl
+
+    def refresh():
+        info = {}
+        for line in run_capture(["nxs-harden", "status"], timeout=8).splitlines():
+            if ":" in line:
+                k, v = line.split(":", 1)
+                info[k.strip().lower()] = v.strip()
+        rows["env"].set_text(info.get("ambiente", "?"))
+        rows["pass"].set_text(info.get("password nexus", "?"))
+        rows["autologin"].set_text(info.get("autologin tty1", "?"))
+        rows["doas"].set_text(info.get("doas", "?"))
+        rows["lockvt"].set_text(info.get("blocco vt (x)", "?"))
+        rows["firewall"].set_text(info.get("firewall", "?"))
+        rows["crypt"].set_text(run_capture(["nxs-unlock-data", "status"],
+                                           timeout=6).strip() or "?")
+
+    # azioni
+    act = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
+    body.pack_start(act, False, False, 6)
+
+    def term_action(inner, title):
+        _run_priv_term(inner, title)
+        GLib.timeout_add(1500, lambda: (refresh(), False)[1])
+
+    b_all = icon_button("Applica hardening completo (in un terminale)",
+                        "security-high-symbolic", primary=True)
+    b_all.connect("clicked", lambda _b: term_action("doas nxs-harden apply",
+                                                    "Hardening"))
+    act.pack_start(b_all, False, False, 0)
+
+    grid2 = Gtk.Grid(column_spacing=8, row_spacing=6)
+    act.pack_start(grid2, False, False, 0)
+    quick = [
+        ("Disattiva autologin", "doas nxs-harden autologin off"),
+        ("Riattiva autologin", "doas nxs-harden autologin on"),
+        ("doas con password", "doas nxs-harden doas pass"),
+        ("doas senza password", "doas nxs-harden doas nopass"),
+        ("Blocco VT attivo", "doas nxs-harden lockvt on"),
+        ("Blocco VT off", "doas nxs-harden lockvt off"),
+    ]
+    for i, (lbl, cmd) in enumerate(quick):
+        b = Gtk.Button(label=lbl)
+        b.connect("clicked", lambda _w, c=cmd: term_action(c, "Hardening"))
+        grid2.attach(b, i % 2, i // 2, 1, 1)
+
+    # scorciatoie ad altre viste
+    links = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+    b_fw = icon_button("Firewall", "security-medium-symbolic")
+    b_fw.connect("clicked", lambda _b: open_firewall())
+    b_us = icon_button("Gestione utenti", "system-users-symbolic")
+    b_us.connect("clicked", lambda _b: open_users())
+    b_pe = icon_button("Persistenza cifrata", "drive-harddisk-symbolic")
+    b_pe.connect("clicked", lambda _b: _run_priv_term("nxs-persist", "Persistenza"))
+    links.pack_start(b_fw, False, False, 0)
+    links.pack_start(b_us, False, False, 0)
+    links.pack_start(b_pe, False, False, 0)
+    act.pack_start(links, False, False, 4)
+
+    btns = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+    b_refresh = icon_button("Aggiorna", "view-refresh-symbolic")
+    b_refresh.connect("clicked", lambda _b: refresh())
+    b_close = icon_button("Chiudi", "window-close")
+    b_close.connect("clicked", lambda _b: win.destroy())
+    btns.pack_start(b_refresh, False, False, 0)
+    btns.pack_end(b_close, False, False, 0)
+    body.pack_end(btns, False, False, 0)
+
+    refresh()
+    win.show_all()

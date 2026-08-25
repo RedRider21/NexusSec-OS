@@ -47,6 +47,19 @@ if [ -f "$REPOF" ]; then
 	add_repo "https://redrider21.github.io/NexusSec-OS"
 fi
 
+# --- Credenziali predefinite (stile Kali) -----------------------------------
+# La live parte con utente 'nexus' e password predefinita 'nexus' (come kali/kali).
+# Serve per doas/blocco schermo/login se disattivi l'autologin. Modificabile da
+# Impostazioni > Gestione utenti (persistente solo se il sistema e' installato o
+# con persistenza; sulla live si riazzera al riavvio, come in Kali live).
+if command -v chpasswd >/dev/null 2>&1; then
+	cur="$(getent shadow nexus 2>/dev/null | cut -d: -f2)"
+	case "$cur" in
+		""|"!"|"*"|"!*") echo "nexus:nexus" | chpasswd 2>/dev/null && \
+			echo "credenziali live: nexus/nexus (cambiala in Impostazioni)" ;;
+	esac
+fi
+
 # --- Persistenza dati (opzionale): partizione con label NXSDATA --------------
 # La live gira in RAM (tmpfs): lo storage di Podman starebbe in RAM e i pull
 # grossi (container/kali) esaurirebbero la memoria. Se l'utente ha creato una
@@ -55,34 +68,20 @@ fi
 #     che sopravvive al riavvio e NON riempie la RAM;
 #   - lo stato dei tool (~/.config/nxs: profilo, ambiente Kali) e il loot.
 # Podman gira ROOTLESS come 'nexus', quindi tutto dev'essere di sua proprieta.
+[ -f /usr/local/lib/nxs-persist-setup.sh ] && . /usr/local/lib/nxs-persist-setup.sh
 NXSDATA="$(findfs LABEL=NXSDATA 2>/dev/null || blkid -L NXSDATA 2>/dev/null || true)"
+NXSLUKS="$(command -v nxs_find_luks >/dev/null 2>&1 && nxs_find_luks || true)"
 if [ -n "$NXSDATA" ]; then
+	# Persistenza IN CHIARO: montabile al boot senza interazione.
 	echo "persistenza: NXSDATA su $NXSDATA -> monto /var/nxs-data"
 	mkdir -p /var/nxs-data
 	mountpoint -q /var/nxs-data || mount "$NXSDATA" /var/nxs-data
-	for d in containers nxs-state loot apk-cache; do
-		install -d -o nexus -g nexus "/var/nxs-data/$d"
-	done
-	# 1) Podman rootless: graphroot su disco -> immagini persistenti (overlay via
-	#    fuse-overlayfs, l'unico driver rootless efficiente su ext4).
-	install -d -o nexus -g nexus /home/nexus/.config/containers
-	cat > /home/nexus/.config/containers/storage.conf <<STOR
-[storage]
-driver = "overlay"
-graphroot = "/var/nxs-data/containers"
-[storage.options.overlay]
-mount_program = "/usr/bin/fuse-overlayfs"
-STOR
-	# 2) Stato tool (~/.config/nxs) e loot: link dalla home effimera al disco.
-	install -d -o nexus -g nexus /home/nexus/.config /home/nexus/.local/share
-	rm -rf /home/nexus/.config/nxs /home/nexus/NexusSec-loot
-	ln -sfn /var/nxs-data/nxs-state /home/nexus/.config/nxs
-	ln -sfn /var/nxs-data/loot      /home/nexus/NexusSec-loot
-	# 3) Cache apk su disco (meno ri-download tra le sessioni).
-	ln -sfn /var/nxs-data/apk-cache /etc/apk/cache 2>/dev/null || true
-	chown -h nexus:nexus /home/nexus/.config/nxs /home/nexus/NexusSec-loot \
-		/home/nexus/.config/containers/storage.conf 2>/dev/null || true
+	command -v nxs_persist_setup >/dev/null 2>&1 && nxs_persist_setup
 	echo "persistenza ATTIVA: podman graphroot + stato tool + loot su disco"
+elif [ -n "$NXSLUKS" ]; then
+	# Persistenza CIFRATA (LUKS): NON si sblocca al boot (serve la passphrase).
+	# Lo sblocco avviene al login su tty1 (nxs-unlock-data, prima di startx).
+	echo "persistenza: NXSDATA cifrata (LUKS) su $NXSLUKS -> sblocco al login"
 else
 	# Nessuna NXSDATA: se il sistema e INSTALLATO su disco, lo storage Podman
 	# di default (~/.local/share/containers) e gia su disco => persistente. Se
@@ -92,6 +91,14 @@ else
 	else
 		echo "persistenza: sistema su disco -> storage Podman gia persistente"
 	fi
+fi
+
+# --- Firewall di sicurezza: inbound default-deny, outbound consentito --------
+# Attivo salvo esplicito opt-out (/etc/nxs/firewall.disabled). Non ostacola i
+# tool offensivi (outbound libero); per METTERSI IN ASCOLTO: nxs-firewall allow.
+if command -v nxs-firewall >/dev/null 2>&1; then
+	nxs-firewall boot 2>/dev/null || true
+	echo "firewall: $( [ -f /etc/nxs/firewall.disabled ] && echo disattivato || echo attivo )"
 fi
 
 echo "stato: openbox=$(command -v openbox) feh=$(command -v feh) podman=$(command -v podman)"
