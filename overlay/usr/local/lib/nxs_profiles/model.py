@@ -530,32 +530,14 @@ def _darken(hex_color: str, factor: float = 0.32) -> str:
 
 
 def set_window_theme(key: str | None = None, reconfigure: bool = True) -> None:
-    """Tinge le decorazioni finestra Openbox (bordi/titolo attivo/menu) con
-    l'accent del profilo, riscrivendo le chiavi 'accent' del themerc e ricaricando
-    Openbox. Senza questo i bordi di QUALSIASI finestra restavano sempre base."""
-    if not OB_THEMERC.exists():
-        return
-    ac = accent(key)
-    try:
-        lines = OB_THEMERC.read_text().splitlines()
-    except OSError:
-        return
-    out = []
-    for ln in lines:
-        k = ln.split(":", 1)[0].strip() if ":" in ln else ""
-        if k in _OB_ACCENT_KEYS:
-            out.append(f"{k}: {ac}")
-        elif k == "menu.items.active.bg.color":
-            out.append(f"{k}: {_darken(ac)}")
-        else:
-            out.append(ln)
-    try:
-        OB_THEMERC.write_text("\n".join(out) + "\n")
-    except OSError:
-        return
-    if reconfigure and shutil.which("openbox"):
-        subprocess.run(["openbox", "--reconfigure"],
-                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    """Decorazioni finestra Openbox. ORA DELEGA a write_openbox_theme, che
+    genera il themerc COMPLETO rispettando lo stile finestre scelto
+    (vetro/flat/telaio) oltre all'accent. NON tinge piu' a mano il border con
+    l'accent: lo faceva la vecchia implementazione (_OB_ACCENT_KEYS includeva
+    window.active.border.color) e SOVRASCRIVEVA il bordo generato da
+    write_openbox_theme -> il bordo restava sempre ciano ignorando lo stile.
+    Alias mantenuto per compatibilita' con i chiamanti esistenti."""
+    write_openbox_theme(key=key)
 
 
 # ---------------------------------------------------------------- tema icone
