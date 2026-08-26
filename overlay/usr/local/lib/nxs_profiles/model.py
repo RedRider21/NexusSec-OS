@@ -420,8 +420,16 @@ def _mix(fg: str, bg: str, frac: float) -> str:
 def write_openbox_theme(style: str | None = None, key: str | None = None) -> None:
     """Rigenera il themerc di Openbox (DECORAZIONE finestre: cornice, barra
     titolo, pulsanti) intonandolo all'accent del profilo e allo stile scelto.
-    Vetro: titlebar con gradiente velato + bordo d'accento sottile. Telaio:
-    titlebar piatta scurissima + bordo d'accento fine. Flat: sobrio classico."""
+    DISABILITATA (2026-08-26): la decorazione finestre e' ora un TEMA OPENBOX
+    STATICO e curato (~/.themes/NexusSec-Core/openbox-3/themerc), NON piu'
+    generato a runtime. La generazione dinamica si e' rivelata fragile (bytecode
+    stale, doppie scritture con set_window_theme, timing di openbox
+    --reconfigure) e di fatto non applicava lo stile. Ora e' un no-op: la
+    decorazione (barra del titolo, bordo, pulsanti) la definisce il themerc
+    statico; la parte INTERNA delle finestre resta gestita da GTK
+    (window-style.css / accent.css). Cosi' la decorazione e' deterministica."""
+    return
+    # --- codice storico (non eseguito) -------------------------------------
     if style is None:
         style = get_window_style()
     ac = accent(key)
