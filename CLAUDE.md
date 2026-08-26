@@ -240,6 +240,25 @@ ricorrenti su **musl + gcc 15**:
   emulata). NON rimuoverli. Lo sblocco mixer (`nxs-audio-unmute`, ALSA+wpctl con
   ritentativi, in autostart) copre l'auto-mute ma NON basta senza il firmware.
 
+### Gotcha stile finestre / bytecode (2026-08-26, DURAMENTE imparati)
+
+- **`.pyc` stale nell'apkovl = codice VECCHIO eseguito.** Non committare/impac-
+  chettare MAI `__pycache__/*.pyc`. La build e' deterministica (SOURCE_DATE_EPOCH
+  azzera i mtime): un `.pyc` obsoleto finisce con lo STESSO mtime del `.py`, e
+  Python (3.10) si fida della cache ed esegue il bytecode vecchio -> le modifiche
+  ai sorgenti "non si vedono" a runtime. Sintomo reale: lo stile finestre non
+  cambiava mai. `genapkovl-nexussec.sh` ora ELIMINA ogni `.pyc/__pycache__`
+  prima di impacchettare; `.gitignore` li esclude. Python li rigenera a runtime.
+- **Decorazione finestre = TEMA OPENBOX STATICO, non generato.** La barra del
+  titolo / bordo / pulsanti li disegna Openbox dal themerc
+  `~/.themes/NexusSec-Core/openbox-3/themerc` (file FISSO e curato). NON
+  rigenerarlo a runtime: la vecchia generazione dinamica (`write_openbox_theme`)
+  era fragile e per giunta `set_window_theme` la sovrascriveva ritingendo il
+  bordo con l'accent (`_OB_ACCENT_KEYS` includeva `window.active.border.color`).
+  Entrambe sono ora **no-op**. Il font titolo (Chakra Petch) sta in `rc.xml`.
+  La parte INTERNA delle finestre resta GTK (`window-style.css`): i 3 stili
+  vetro/telaio/flat agiscono SOLO sul contenuto, non sulla decorazione.
+
 ## Vincoli (Alpine)
 
 - **musl libc** (Alpine), **non** glibc. Attenzione ai binari pensati per glibc
