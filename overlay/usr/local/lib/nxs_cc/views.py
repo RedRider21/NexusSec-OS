@@ -1855,6 +1855,16 @@ def open_bluetooth(_btn=None):
     ctl.pack_end(disc_sw, False, False, 0)
     body.pack_start(ctl, False, False, 0)
 
+    # riga "ricezione file in arrivo" (OBEX): accende un server che salva i file
+    # inviati da altri device nella cartella ~/NexusSec-loot.
+    rcv = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+    rcv_lbl = Gtk.Label(label="Ricevi file in arrivo  (salva in ~/NexusSec-loot)")
+    rcv_lbl.set_xalign(0); rcv_lbl.get_style_context().add_class("nxs-val")
+    rcv.pack_start(rcv_lbl, True, True, 0)
+    rcv_sw = Gtk.Switch(); rcv_sw.set_valign(Gtk.Align.CENTER)
+    rcv.pack_end(rcv_sw, False, False, 0)
+    body.pack_start(rcv, False, False, 0)
+
     # riga scansione + stato
     scan_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
     scan_btn = icon_button("Scansiona dispositivi", "view-refresh", primary=True)
@@ -1984,6 +1994,12 @@ def open_bluetooth(_btn=None):
         bi.connect("clicked", lambda _w, m=d["mac"], n=d["name"]:
                    show_info(m, n))
         act.pack_start(bi, False, False, 0)
+        # Invia file (OBEX) verso i device accoppiati/connessi.
+        if d["state"] in ("conn", "paired"):
+            bsend = icon_button("Invia file", "document-send-symbolic")
+            bsend.connect("clicked", lambda _w, m=d["mac"], n=d["name"]:
+                          send_file(m, n))
+            act.pack_start(bsend, False, False, 0)
         brm = icon_button("Rimuovi", "user-trash-symbolic")
         brm.connect("clicked", lambda _w, m=d["mac"], n=d["name"]:
                     do_action("remove", m, "Rimozione di %s..." % n))
@@ -2012,6 +2028,39 @@ def open_bluetooth(_btn=None):
                 else:
                     set_status("Fatto.")
                 reload_devices(); refresh_adapter()
+                return False
+            GLib.idle_add(done)
+        threading.Thread(target=worker, daemon=True).start()
+
+    def send_file(mac, name):
+        if st["busy"]:
+            return
+        dlg = Gtk.FileChooserDialog(
+            title="Invia un file a %s" % name, transient_for=win,
+            action=Gtk.FileChooserAction.OPEN)
+        dlg.add_button("Annulla", Gtk.ResponseType.CANCEL)
+        dlg.add_button("Invia", Gtk.ResponseType.OK)
+        dlg.set_default_response(Gtk.ResponseType.OK)
+        resp = dlg.run()
+        path = dlg.get_filename() if resp == Gtk.ResponseType.OK else None
+        dlg.destroy()
+        if not path:
+            return
+        st["busy"] = True
+        set_status("Invio di «%s» a %s..." % (os.path.basename(path), name))
+        def worker():
+            out = bt("send", mac, path, timeout=180).strip()
+            def done():
+                st["busy"] = False
+                if out == "ok":
+                    set_status("File inviato a %s." % name)
+                elif out == "err-noobex":
+                    set_status("Invio non disponibile (manca bluez-tools).")
+                elif out == "err-nofile":
+                    set_status("File non trovato.")
+                else:
+                    set_status("Invio non riuscito: il device ha rifiutato o "
+                               "non supporta la ricezione file. (%s)" % out)
                 return False
             GLib.idle_add(done)
         threading.Thread(target=worker, daemon=True).start()
@@ -2093,6 +2142,19 @@ def open_bluetooth(_btn=None):
         run_bg(["nxs-bluetooth", "discoverable", "on" if state else "off"])
         return False
     disc_sw._handler = disc_sw.connect("state-set", on_disc)
+
+    def on_recv(sw, state):
+        run_bg(["nxs-bluetooth", "receive", "on" if state else "off"])
+        set_status("Ricezione file attivata: invia dal tuo telefono verso "
+                   "questo PC." if state else "Ricezione file disattivata.")
+        return False
+    rcv_sw._handler = rcv_sw.connect("state-set", on_recv)
+    # stato iniziale del server di ricezione
+    def _init_recv():
+        on = bt("receive", "status", timeout=6).strip() == "on"
+        _block(rcv_sw, on)
+        return False
+    GLib.idle_add(_init_recv)
 
     btns = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
     b_close = icon_button("Chiudi", "window-close")

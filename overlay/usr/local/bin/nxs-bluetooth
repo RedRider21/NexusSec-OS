@@ -3,6 +3,7 @@
 # del pannello e dalla finestra "Gestione Bluetooth" del Centro di Controllo.
 # Best-effort: senza adattatore stampa "noadapter" senza errori.
 _have() { command -v bluetoothctl >/dev/null 2>&1; }
+OBEXLOG=/tmp/nxs-bt-obex.log   # diagnostica invio/ricezione file (OBEX)
 
 # Deduce un nome-icona simbolica dal campo "Icon" di bluetoothctl info.
 _devicon() {
@@ -133,6 +134,47 @@ case "${1:-status}" in
   trust)      [ -n "${2:-}" ] && _have && bluetoothctl trust "$2" 2>&1 ;;
   untrust)    [ -n "${2:-}" ] && _have && bluetoothctl untrust "$2" 2>&1 ;;
   remove)     [ -n "${2:-}" ] && _have && bluetoothctl remove "$2" 2>&1 ;;
-  *) echo "uso: nxs-bluetooth {status|adapter|on|off|discoverable on|off|scan [sec]|devices|info MAC|connect MAC|disconnect MAC|pair MAC|trust MAC|untrust MAC|remove MAC}" >&2; exit 2 ;;
+
+  send)
+    # Invia un file a un device via OBEX Object Push (bt-obex, bluez-tools).
+    # Il device dev'essere accoppiato/raggiungibile. Uso: send MAC FILE
+    mac="$2"; file="$3"
+    [ -n "$mac" ] && [ -n "$file" ] || { echo "err-args"; exit 1; }
+    [ -f "$file" ] || { echo "err-nofile"; exit 1; }
+    echo "=== send \"$file\" -> $mac $(date) ===" >> "$OBEXLOG"
+    if command -v bt-obex >/dev/null 2>&1; then
+      # bt-obex -p invia e attende il completamento (usa il D-Bus di sessione +
+      # obexd). L'esito e' nel codice di uscita.
+      if bt-obex -p "$mac" "$file" >> "$OBEXLOG" 2>&1; then echo "ok"; else echo "err-transfer"; exit 1; fi
+    else
+      echo "err-noobex"   # manca bluez-tools; vedi $OBEXLOG
+      echo "bt-obex assente (bluez-tools non installato)" >> "$OBEXLOG"; exit 1
+    fi
+    ;;
+
+  receive)
+    # Server di RICEZIONE file OBEX: bt-obex -s salva i file in arrivo nella
+    # cartella indicata (default ~/NexusSec-loot). Gira in background finche'
+    # non lo si ferma. Uso: receive on [DIR] | off | status
+    dir="${3:-${HOME:-/home/nexus}/NexusSec-loot}"
+    case "${2:-status}" in
+      on)
+        command -v bt-obex >/dev/null 2>&1 || { echo "err-noobex"; exit 1; }
+        mkdir -p "$dir" 2>/dev/null
+        pkill -f 'bt-obex[ ].*-s' 2>/dev/null      # ferma un eventuale server precedente
+        # accendi e rendi l'adattatore accettante/visibile
+        bluetoothctl power on >/dev/null 2>&1
+        bluetoothctl agent NoInputNoOutput >/dev/null 2>&1
+        bluetoothctl pairable on >/dev/null 2>&1
+        setsid sh -c "exec bt-obex -s '$dir'" >> "$OBEXLOG" 2>&1 < /dev/null &
+        echo "on $dir"
+        ;;
+      off)    pkill -f 'bt-obex[ ].*-s' 2>/dev/null; echo "off" ;;
+      status) pgrep -f 'bt-obex[ ].*-s' >/dev/null 2>&1 && echo "on" || echo "off" ;;
+      *)      echo "uso: receive {on [DIR]|off|status}" >&2; exit 2 ;;
+    esac
+    ;;
+
+  *) echo "uso: nxs-bluetooth {status|adapter|on|off|discoverable on|off|scan [sec]|devices|info MAC|connect MAC|disconnect MAC|pair MAC|trust MAC|untrust MAC|remove MAC|send MAC FILE|receive on [DIR]|off|status}" >&2; exit 2 ;;
 esac
 exit 0
