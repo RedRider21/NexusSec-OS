@@ -187,8 +187,14 @@ class Browser(Gtk.Window):
         root.get_style_context().add_class("nxs-browser")
         self.add(root)
 
-        root.pack_start(self._build_menubar(), False, False, 0)
-        root.pack_start(self._build_toolbar(), False, False, 0)
+        # Salviamo i riferimenti alle barre proprie del browser (menu + indirizzo)
+        # per poterle NASCONDERE in schermo intero (F11): senza questo, anche
+        # togliendo la decorazione del WM restavano visibili -> sembrava che non
+        # andasse "davvero" a schermo intero.
+        self._menubar = self._build_menubar()
+        self._toolbar = self._build_toolbar()
+        root.pack_start(self._menubar, False, False, 0)
+        root.pack_start(self._toolbar, False, False, 0)
 
         self.paned = Gtk.Paned(orientation=Gtk.Orientation.HORIZONTAL)
         self.paned.set_position(SIDEBAR_W)
@@ -661,6 +667,12 @@ class Browser(Gtk.Window):
     def _on_window_state(self, _w, event):
         self._is_fullscreen = bool(
             event.new_window_state & Gdk.WindowState.FULLSCREEN)
+        # In schermo intero nascondiamo anche le barre PROPRIE del browser
+        # (menu + indirizzo): cosi' F11 da' un vero fullscreen "kiosk", senza
+        # cornici. Le rimostriamo uscendo. (Basato sullo stato REALE del WM.)
+        for bar in (getattr(self, "_menubar", None), getattr(self, "_toolbar", None)):
+            if bar is not None:
+                bar.set_visible(not self._is_fullscreen)
         return False
 
     # ----------------------------------------------------------- preferiti

@@ -19,6 +19,9 @@ _devicon() {
 }
 
 # elenca i device: "mac<TAB>nome<TAB>stato(conn|paired|"")<TAB>trusted(1|0)<TAB>icona"
+# Il NOME va preso da `info` (Alias/Name), non dalla riga `devices`: quest'ultima
+# resta il MAC (es. "XX-XX-XX-XX-XX-XX") finche' il device non ha comunicato il
+# suo nome. Alias e' il nome mostrato all'utente (Name se non rinominato).
 _list_devices() {
   bluetoothctl devices 2>/dev/null | while read -r _dev mac name; do
     [ -n "$mac" ] || continue
@@ -28,7 +31,17 @@ _list_devices() {
     [ -z "$st" ] && echo "$info" | grep -q "Paired: yes" && st="paired"
     tr=0; echo "$info" | grep -q "Trusted: yes" && tr=1
     ic=$(_devicon "$(echo "$info" | sed -n 's/^[[:space:]]*Icon:[[:space:]]*//p')")
-    printf '%s\t%s\t%s\t%s\t%s\n' "$mac" "$name" "$st" "$tr" "$ic"
+    alias=$(echo "$info" | sed -n 's/^[[:space:]]*Alias:[[:space:]]*//p' | head -1)
+    rname=$(echo "$info" | sed -n 's/^[[:space:]]*Name:[[:space:]]*//p' | head -1)
+    # nome mostrato: Alias -> Name -> nome della riga devices -> MAC.
+    disp="$alias"; [ -n "$disp" ] || disp="$rname"
+    [ -n "$disp" ] || disp="$name"
+    # se e' ancora un MAC "travestito" (XX-XX-... o == mac), usa il MAC pulito
+    case "$disp" in
+      "" | "$mac") disp="$mac" ;;
+      [0-9A-Fa-f][0-9A-Fa-f]-[0-9A-Fa-f][0-9A-Fa-f]-*) disp="$mac" ;;
+    esac
+    printf '%s\t%s\t%s\t%s\t%s\n' "$mac" "$disp" "$st" "$tr" "$ic"
   done
 }
 
@@ -89,9 +102,34 @@ case "${1:-status}" in
     # dettaglio di un device: righe key=value grezze da bluetoothctl info
     [ -n "${2:-}" ] && _have && bluetoothctl info "$2" 2>/dev/null
     ;;
-  connect)    [ -n "${2:-}" ] && _have && bluetoothctl connect "$2" 2>&1 ;;
+  connect)
+    # Connessione robusta: se il device NON e' ancora accoppiato, lo accoppiamo
+    # al volo (serve un AGENT attivo durante il pairing, altrimenti i device
+    # audio "Just Works" non completano e la connessione non avviene). Poi
+    # trust (riconnessione automatica) e infine connect.
+    [ -n "${2:-}" ] && _have || exit 0
+    mac="$2"
+    bluetoothctl power on >/dev/null 2>&1
+    if ! bluetoothctl info "$mac" 2>/dev/null | grep -q "Paired: yes"; then
+      # sessione unica: l'agent auto-accept resta vivo mentre avviene il pairing
+      printf 'agent NoInputNoOutput\ndefault-agent\npair %s\n' "$mac" \
+        | bluetoothctl --timeout 15 >/dev/null 2>&1
+      bluetoothctl trust "$mac" >/dev/null 2>&1
+    fi
+    bluetoothctl connect "$mac" 2>&1
+    ;;
   disconnect) [ -n "${2:-}" ] && _have && bluetoothctl disconnect "$2" 2>&1 ;;
-  pair)       [ -n "${2:-}" ] && _have && { bluetoothctl pair "$2" 2>&1; bluetoothctl trust "$2" >/dev/null 2>&1; } ;;
+  pair)
+    # Pairing con agent auto-accept mantenuto vivo dalla sessione (--timeout):
+    # senza agent i device audio non completano il pairing. Poi trust + connect.
+    [ -n "${2:-}" ] && _have || exit 0
+    mac="$2"
+    bluetoothctl power on >/dev/null 2>&1
+    printf 'agent NoInputNoOutput\ndefault-agent\npair %s\n' "$mac" \
+      | bluetoothctl --timeout 15 2>&1
+    bluetoothctl trust "$mac" >/dev/null 2>&1
+    bluetoothctl connect "$mac" >/dev/null 2>&1
+    ;;
   trust)      [ -n "${2:-}" ] && _have && bluetoothctl trust "$2" 2>&1 ;;
   untrust)    [ -n "${2:-}" ] && _have && bluetoothctl untrust "$2" 2>&1 ;;
   remove)     [ -n "${2:-}" ] && _have && bluetoothctl remove "$2" 2>&1 ;;

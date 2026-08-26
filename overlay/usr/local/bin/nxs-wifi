@@ -16,6 +16,7 @@ priv() { if command -v doas >/dev/null 2>&1; then doas "$@"; \
          elif command -v sudo >/dev/null 2>&1; then sudo "$@"; else "$@"; fi; }
 
 WPACONF=/etc/wpa_supplicant/wpa_supplicant.conf
+LOG=/tmp/nxs-wifi.log        # diagnostica connect (vedi: nxs-wifi debug)
 
 detect_iface() {
   i=$(iw dev 2>/dev/null | awk '/Interface/{print $2; exit}')
@@ -94,16 +95,28 @@ case "${1:-}" in
     else
       psk=""
     fi
-    ensure_up || { echo "err"; exit 1; }
-    [ -n "$ssid" ] || { echo "err"; exit 1; }
+    ensure_up || { echo "err-noiface"; exit 1; }
+    [ -n "$ssid" ] || { echo "err-nossid"; exit 1; }
+    echo "=== connect \"$ssid\" $(date) [iface=$IFACE] ===" >> "$LOG"
+    # Portatile = tante reti (casa, ospiti, aziendali...). NON cancelliamo tutte
+    # le reti conosciute (servono al roaming e a non richiedere la password ogni
+    # volta): rimuoviamo SOLO gli eventuali duplicati di QUESTO stesso SSID, cosi'
+    # non resta agganciata una vecchia voce con password errata (sintomo classico:
+    # "non si connette" pur con password giusta). FS=TAB perche' l'SSID puo' avere
+    # spazi (list_networks: id \t ssid \t bssid \t flags).
+    for nid in $(priv wpa_cli -i "$IFACE" list_networks 2>/dev/null \
+                 | awk -F'\t' -v s="$ssid" 'NR>1 && $2==s {print $1}'); do
+      priv wpa_cli -i "$IFACE" remove_network "$nid" >/dev/null 2>&1
+    done
     id=$(priv wpa_cli -i "$IFACE" add_network 2>/dev/null | tail -1)
     priv wpa_cli -i "$IFACE" set_network "$id" ssid "\"$ssid\"" >/dev/null 2>&1
+    # scan_ssid=1: interroga attivamente l'SSID (serve alle reti che non
+    # rispondono ai probe broadcast e a volte alle guest). Innocuo altrove.
+    priv wpa_cli -i "$IFACE" set_network "$id" scan_ssid 1 >/dev/null 2>&1
     if [ -n "$psk" ]; then
-      # Passphrase in CHIARO (quotata): e' il metodo originale, compatibile con
-      # WPA2-PSK **e** WPA3-SAE (l'hash a 64 hex valeva solo per PSK e rompeva le
-      # reti SAE/miste). key_mgmt lo autonegozia wpa_supplicant in base allo scan
-      # (non lo forziamo: su driver senza SAE forzarlo romperebbe). La ricezione
-      # via STDIN evita comunque di esporre la password negli argomenti del pannello.
+      # Passphrase in CHIARO (quotata): compatibile con WPA2-PSK **e** WPA3-SAE.
+      # key_mgmt NON forzato: wpa_supplicant lo autonegozia dallo scan (forzarlo
+      # romperebbe su driver senza SAE). STDIN evita la password in `ps`.
       priv wpa_cli -i "$IFACE" set_network "$id" psk "\"$psk\"" >/dev/null 2>&1
       psk=""
     else
@@ -111,9 +124,58 @@ case "${1:-}" in
     fi
     priv wpa_cli -i "$IFACE" enable_network "$id" >/dev/null 2>&1
     priv wpa_cli -i "$IFACE" select_network "$id" >/dev/null 2>&1
+    # ATTENDI l'associazione: prima si lanciava il DHCP dopo 3s fissi, spesso
+    # PRIMA che il 4-way handshake fosse finito -> nessun IP. Ora aspettiamo
+    # wpa_state=COMPLETED (fino a ~20s) e SOLO dopo facciamo il DHCP.
+    st=""; i=0
+    while [ "$i" -lt 20 ]; do
+      st=$(priv wpa_cli -i "$IFACE" status 2>/dev/null | sed -n 's/^wpa_state=//p')
+      echo "  [$i] wpa_state=$st" >> "$LOG"
+      [ "$st" = "COMPLETED" ] && break
+      sleep 1; i=$((i + 1))
+    done
+    if [ "$st" != "COMPLETED" ]; then
+      # 4WAY_HANDSHAKE che non completa = quasi sempre password errata; altri
+      # stati = fuori portata / rete assente.
+      echo "  ESITO: associazione FALLITA (ultimo stato: $st)" >> "$LOG"
+      case "$st" in
+        4WAY_HANDSHAKE|WPA_HANDSHAKE) echo "err-auth" ;;   # password probabilmente errata
+        *) echo "err-assoc" ;;
+      esac
+      exit 1
+    fi
+    # Riabilita TUTTE le reti conosciute (non solo questa): cosi' spostandosi il
+    # portatile puo' riconnettersi da solo a una rete gia' salvata senza reinserire
+    # la password (select_network aveva disabilitato le altre).
+    priv wpa_cli -i "$IFACE" enable_network all >/dev/null 2>&1
     priv wpa_cli -i "$IFACE" save_config >/dev/null 2>&1
-    ( sleep 3; priv udhcpc -i "$IFACE" -n -q >/dev/null 2>&1 ) &
-    echo "ok"
+    # DHCP robusto: udhcpc con lo script standard (applica IP/gateway/DNS) e
+    # qualche ritentativo. Senza lo script l'IP verrebbe ottenuto ma NON
+    # applicato all'interfaccia.
+    SCRIPT=/usr/share/udhcpc/default.script
+    [ -x "$SCRIPT" ] || SCRIPT=/etc/udhcpc/default.script
+    j=0
+    while [ "$j" -lt 4 ]; do
+      if [ -x "$SCRIPT" ]; then
+        priv udhcpc -i "$IFACE" -n -q -t 5 -s "$SCRIPT" >> "$LOG" 2>&1 && break
+      else
+        priv udhcpc -i "$IFACE" -n -q -t 5 >> "$LOG" 2>&1 && break
+      fi
+      sleep 2; j=$((j + 1))
+    done
+    ip=$(ip -4 addr show "$IFACE" 2>/dev/null | sed -n 's/.*inet \([0-9.]*\).*/\1/p' | head -1)
+    echo "  ESITO: associato, IP=$ip" >> "$LOG"
+    if [ -n "$ip" ]; then echo "ok"; else echo "err-dhcp"; exit 1; fi
+    ;;
+
+  debug)
+    # Diagnostica per l'utente: stato wpa, IP, reti viste, coda di log.
+    echo "IFACE=${IFACE:-<nessuna>}"
+    [ -n "$IFACE" ] || { echo "(nessuna interfaccia WiFi rilevata)"; exit 0; }
+    echo "--- wpa_cli status ---"; priv wpa_cli -i "$IFACE" status 2>/dev/null
+    echo "--- indirizzo IP ---"; ip -4 addr show "$IFACE" 2>/dev/null | sed -n 's/^.*inet /  inet /p'
+    echo "--- reti configurate ---"; priv wpa_cli -i "$IFACE" list_networks 2>/dev/null
+    echo "--- ultimo log connect ---"; tail -25 "$LOG" 2>/dev/null
     ;;
 
   disconnect)
@@ -122,6 +184,6 @@ case "${1:-}" in
     ;;
 
   *)
-    echo "uso: nxs-wifi {iface|status|scan|connect SSID [PSK]|disconnect}" >&2
+    echo "uso: nxs-wifi {iface|status|scan|connect SSID [PSK]|disconnect|debug}" >&2
     exit 2 ;;
 esac

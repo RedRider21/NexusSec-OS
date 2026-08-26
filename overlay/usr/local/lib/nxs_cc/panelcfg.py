@@ -154,13 +154,18 @@ def openbox_reconfigure() -> None:
 
 
 def restart_panel() -> None:
-    # Riavvio ROBUSTO anche quando la chiamata parte DAL pannello stesso.
-    # Delego kill+riavvio a un processo DETACHED che uccide il vecchio pannello
-    # PER PID (non per pattern), cosi' il killer non si auto-uccide.
-    old_pid = os.getpid()
+    # Riavvio ROBUSTO del pannello, valido SIA se chiamato dal pannello stesso
+    # SIA da un processo separato (Impostazioni/Centro di Controllo).
+    # PRIMA si uccideva os.getpid() = il PID di CHI chiama: se era la finestra
+    # Impostazioni, il pannello VECCHIO restava vivo e se ne vedevano DUE (uno
+    # in alto e uno in basso) finche' non si premeva "Riavvia". Ora uccidiamo il
+    # PROCESSO DEL PANNELLO per pattern ('python -m nxs_cc.panel'). Il trucco
+    # 'nxs_cc[.]panel' fa si' che il killer detached NON uccida se stesso: la sua
+    # cmdline contiene le parentesi quadre, che il regex '.' non matcha.
     subprocess.Popen(
         ["sh", "-c",
-         "sleep 0.3; kill %d 2>/dev/null; sleep 0.3; exec nxs-panel" % old_pid],
+         "sleep 0.3; pkill -f 'nxs_cc[.]panel' 2>/dev/null; "
+         "sleep 0.4; exec nxs-panel"],
         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
         start_new_session=True)
 

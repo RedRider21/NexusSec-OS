@@ -1228,13 +1228,38 @@ class Panel(Gtk.Window):
                 wifi = self._run_out(["nxs-wifi", "status"]).strip()
             except Exception:                       # noqa: BLE001
                 wifi = "no-wifi"
+            eth = self._read_ethernet()             # rete cablata attiva?
             try:
                 batt = self._run_out(["nxs-battery", "status"]).strip()
             except Exception:                       # noqa: BLE001
                 batt = "nobattery"
-            GLib.idle_add(self._apply_media_icons, pct, muted, bt, wifi, batt)
+            GLib.idle_add(self._apply_media_icons, pct, muted, bt, wifi, batt, eth)
         threading.Thread(target=worker, daemon=True).start()
         return True
+
+    @staticmethod
+    def _read_ethernet():
+        """Ritorna il nome dell'interfaccia CABLATA connessa (cavo inserito e
+        link su), oppure "" se nessuna. Legge /sys/class/net senza privilegi:
+        esclude loopback e wireless (quelle con sottodir 'wireless'/'phy80211'),
+        e richiede operstate=up con carrier=1."""
+        import glob
+        for path in sorted(glob.glob("/sys/class/net/*")):
+            name = os.path.basename(path)
+            if name == "lo":
+                continue
+            # escludi wireless (hanno 'wireless' o 'phy80211')
+            if os.path.exists(path + "/wireless") or \
+               os.path.exists(path + "/phy80211"):
+                continue
+            try:
+                oper = open(path + "/operstate").read().strip()
+                carrier = open(path + "/carrier").read().strip()
+            except OSError:
+                continue
+            if oper == "up" and carrier == "1":
+                return name
+        return ""
 
     def _batt_icon(self, pct, state):
         """Nome-icona simbolica batteria dal livello e dallo stato di carica."""
@@ -1254,7 +1279,8 @@ class Panel(Gtk.Window):
             return "battery-%s-charging-symbolic" % lvl
         return "battery-%s-symbolic" % lvl
 
-    def _apply_media_icons(self, pct, muted, bt, wifi="no-wifi", batt="nobattery"):
+    def _apply_media_icons(self, pct, muted, bt, wifi="no-wifi", batt="nobattery",
+                           eth=""):
         if pct is None or muted or pct <= 0:
             ai = "audio-volume-muted-symbolic"
         elif pct < 34:
@@ -1276,8 +1302,14 @@ class Panel(Gtk.Window):
             {"conn": "Bluetooth: dispositivo connesso", "on": "Bluetooth acceso",
              "off": "Bluetooth spento",
              "noadapter": "Bluetooth non disponibile"}.get(bt, "Bluetooth"))
-        # WiFi: connesso (mostra SSID nel tooltip) / disconnesso / assente.
-        if wifi.startswith("connected"):
+        # Stato collegamento: la rete CABLATA ha priorita' visiva (se il cavo e'
+        # inserito e attivo mostriamo l'icona ethernet, non piu' il WiFi
+        # sganciato). Altrimenti lo stato WiFi (connesso/disconnesso/assente).
+        # Il click sul pulsante apre comunque la gestione WiFi.
+        if eth:
+            wi = "network-wired-symbolic"
+            self.wifi_btn.set_tooltip_text("Rete cablata connessa (%s)" % eth)
+        elif wifi.startswith("connected"):
             wi = "network-wireless-signal-excellent-symbolic"
             ssid = wifi[len("connected"):].strip()
             self.wifi_btn.set_tooltip_text("WiFi: connesso a %s" % ssid if ssid
