@@ -120,7 +120,7 @@ depends="
 	unzip
 	p7zip
 	zstd
-	unrar
+	unrar-free
 	xarchiver
 	"
 
