@@ -426,7 +426,7 @@ def write_openbox_theme(style: str | None = None, key: str | None = None) -> Non
         style = get_window_style()
     ac = accent(key)
     g2 = "#0a1220"          # fondo finestra "vetro" del mockup
-    title_top = _mix(ac, g2, 0.28)     # velatura d'accento in cima alla barra
+    title_top = _mix(ac, g2, 0.42)     # velatura d'accento in cima alla barra
     title_bot = g2
     dim = _mix(ac, "#050a14", 0.45)    # accent tenue (bordo inattivo/telaio)
     if style == "telaio":

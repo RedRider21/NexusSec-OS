@@ -21,7 +21,7 @@ window.inactive.border.color: #1a3a52
 
 # Barra del titolo
 window.active.title.bg: gradient vertical
-window.active.title.bg.color: #074d5e
+window.active.title.bg.color: #066b7e
 window.active.title.bg.colorTo: #0a1220
 window.inactive.title.bg: flat solid
 window.inactive.title.bg.color: #050a14
