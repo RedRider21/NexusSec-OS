@@ -1948,7 +1948,10 @@ def open_bluetooth(_btn=None):
             tags.append("abbinato")
         if d["trusted"]:
             tags.append("fidato")
-        sub.set_text("  •  ".join(tags) if tags else d["mac"])
+        # Mostra SEMPRE il MAC (hex) come sottotitolo, insieme al nome in chiaro
+        # (label 'name' sopra) e agli eventuali stati: cosi' ogni dispositivo ha
+        # sia il nome leggibile sia l'indirizzo esadecimale, sempre visibili.
+        sub.set_text("  •  ".join([d["mac"]] + tags))
         txt.pack_start(name, False, False, 0)
         txt.pack_start(sub, False, False, 0)
         row.pack_start(txt, True, True, 0)
