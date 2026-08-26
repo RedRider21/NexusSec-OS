@@ -1182,10 +1182,6 @@ def open_openbox_theme(_btn=None):
     body.pack_start(lab, False, False, 0)
 
     store = Gtk.ListStore(str)
-    cur = _ob_current_theme()
-    themes = _ob_list_themes()
-    for t in themes:
-        store.append([t + ("   (attuale)" if t == cur else "")])
     tree = Gtk.TreeView(model=store)
     tree.set_headers_visible(False)
     col = Gtk.TreeViewColumn("Tema", Gtk.CellRendererText(), text=0)
@@ -1194,6 +1190,13 @@ def open_openbox_theme(_btn=None):
     sw.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
     sw.add(tree)
     body.pack_start(sw, True, True, 0)
+
+    def reload_store():
+        cur = _ob_current_theme()
+        store.clear()
+        for t in _ob_list_themes():
+            store.append([t + ("   (attuale)" if t == cur else "")])
+    reload_store()
 
     def selected_theme():
         model, it = tree.get_selection().get_selected()
@@ -1206,21 +1209,126 @@ def open_openbox_theme(_btn=None):
         if not name:
             return
         _ob_set_theme(name)
-        # aggiorna l'etichetta (attuale)
-        store.clear()
-        for t in themes:
-            store.append([t + ("   (attuale)" if t == name else "")])
+        reload_store()
         info_dialog("Tema applicato", "Tema finestre: %s" % name, parent=win)
 
     tree.connect("row-activated", apply)
+
+    # --- installazione tema da archivio (tar.gz/xz/bz2, .obt, .zip) -----------
+    def _safe_extract(arch, dest):
+        import tarfile
+        import zipfile
+        if arch.lower().endswith(".zip"):
+            with zipfile.ZipFile(arch) as z:
+                for m in z.namelist():
+                    if m.startswith("/") or ".." in m.split("/"):
+                        raise ValueError("percorso non sicuro")
+                z.extractall(dest)
+        else:
+            with tarfile.open(arch) as t:
+                try:
+                    t.extractall(dest, filter="data")   # Python >= 3.12
+                except TypeError:
+                    for m in t.getmembers():
+                        if m.name.startswith("/") or ".." in m.name.split("/"):
+                            raise ValueError("percorso non sicuro")
+                    t.extractall(dest)
+
+    def install_theme(_b=None):
+        dlg = Gtk.FileChooserDialog(
+            title="Installa un tema Openbox (archivio)", transient_for=win,
+            action=Gtk.FileChooserAction.OPEN)
+        dlg.add_button("Annulla", Gtk.ResponseType.CANCEL)
+        dlg.add_button("Installa", Gtk.ResponseType.OK)
+        flt = Gtk.FileFilter(); flt.set_name("Archivi tema (tar.gz/xz/bz2, .obt, .zip)")
+        for pat in ("*.tar.gz", "*.tgz", "*.tar.xz", "*.tar.bz2", "*.obt", "*.zip"):
+            flt.add_pattern(pat)
+        dlg.add_filter(flt)
+        arch = dlg.get_filename() if dlg.run() == Gtk.ResponseType.OK else None
+        dlg.destroy()
+        if not arch:
+            return
+        import tempfile
+        tmp = tempfile.mkdtemp(prefix="nxs-theme-")
+        try:
+            _safe_extract(arch, tmp)
+            # trova la cartella del tema (quella che contiene openbox-3/themerc)
+            root = None
+            for dp, _dn, fn in os.walk(tmp):
+                if os.path.basename(dp) == "openbox-3" and "themerc" in fn:
+                    root = os.path.dirname(dp)
+                    break
+            if not root:
+                info_dialog("Non è un tema Openbox",
+                            "L'archivio non contiene «openbox-3/themerc».",
+                            parent=win)
+                return
+            name = os.path.basename(root)
+            themes_dir = os.path.expanduser("~/.themes")
+            os.makedirs(themes_dir, exist_ok=True)
+            dest = os.path.join(themes_dir, name)
+            if os.path.exists(dest):
+                shutil.rmtree(dest, ignore_errors=True)
+            shutil.move(root, dest)
+            reload_store()
+            info_dialog("Tema installato",
+                        "«%s» installato. Selezionalo e premi Applica." % name,
+                        parent=win)
+        except Exception as e:                       # noqa: BLE001
+            info_dialog("Installazione non riuscita", str(e), parent=win)
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+    def delete_theme(_b=None):
+        name = selected_theme()
+        if not name:
+            return
+        if name == "NexusSec-Core":
+            info_dialog("Non eliminabile",
+                        "«NexusSec-Core» è il tema di sistema predefinito.",
+                        parent=win)
+            return
+        # eliminabile solo dalle cartelle utente (non i temi di sistema)
+        target = None
+        for d in (HOME / ".themes", HOME / ".local/share/themes"):
+            p = d / name
+            if (p / "openbox-3" / "themerc").is_file():
+                target = p
+                break
+        if target is None:
+            info_dialog("Tema di sistema",
+                        "«%s» è installato a livello di sistema e non si può "
+                        "eliminare da qui." % name, parent=win)
+            return
+        conf = Gtk.MessageDialog(
+            transient_for=win, modal=True, message_type=Gtk.MessageType.QUESTION,
+            buttons=Gtk.ButtonsType.OK_CANCEL,
+            text="Eliminare il tema «%s»?" % name)
+        do = conf.run() == Gtk.ResponseType.OK
+        conf.destroy()
+        if not do:
+            return
+        try:
+            if _ob_current_theme() == name:
+                _ob_set_theme("NexusSec-Core")   # torna al default se era attivo
+            shutil.rmtree(target, ignore_errors=True)
+            reload_store()
+        except Exception as e:                       # noqa: BLE001
+            info_dialog("Eliminazione non riuscita", str(e), parent=win)
 
     bar = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
     b_apply = Gtk.Button(label="Applica")
     b_apply.get_style_context().add_class("nxs-primary")
     b_apply.connect("clicked", apply)
     bar.pack_start(b_apply, False, False, 0)
+    b_inst = Gtk.Button(label="Installa tema…")
+    b_inst.connect("clicked", install_theme)
+    bar.pack_start(b_inst, False, False, 0)
+    b_del = Gtk.Button(label="Elimina")
+    b_del.connect("clicked", delete_theme)
+    bar.pack_start(b_del, False, False, 0)
     if have("obconf"):
-        b_adv = Gtk.Button(label="Configurazione avanzata (obconf)")
+        b_adv = Gtk.Button(label="Avanzate (obconf)")
         b_adv.connect("clicked", lambda _b: run_bg(["obconf"]))
         bar.pack_start(b_adv, False, False, 0)
     b_close = Gtk.Button(label="Chiudi")

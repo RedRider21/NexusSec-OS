@@ -112,6 +112,16 @@ depends="
 	gst-plugins-bad
 	gst-libav
 	webkit2gtk-4.1
+	tar
+	xz
+	gzip
+	bzip2
+	zip
+	unzip
+	p7zip
+	zstd
+	unar
+	xarchiver
 	"
 
 # Driver video/guest specifici per architettura (risolti al build dal $CARCH del
