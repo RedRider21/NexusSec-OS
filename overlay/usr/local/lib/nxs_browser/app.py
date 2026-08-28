@@ -289,15 +289,16 @@ class Browser(Gtk.Window):
         return strip
 
     def _build_navbar(self):
-        """Barra navigazione (Firefox): indietro/avanti/ricarica/home + URL pill
-        + azioni essenziali a destra (preferito, tema, stealth, menu). Nuova tab
-        sta nella striscia schede; inspector resta SOLO nel menu."""
+        """Barra navigazione (Firefox): indietro/avanti/ricarica/home/nuova tab
+        + URL pill + azioni essenziali a destra (preferito, tema, stealth, menu).
+        Inspector resta SOLO nel menu."""
         nav = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=4)
         nav.get_style_context().add_class("nxs-navbar")
         nav.pack_start(self._navbtn("go-previous-symbolic", "Indietro", self.navigate_back), False, False, 0)
         nav.pack_start(self._navbtn("go-next-symbolic", "Avanti", self.navigate_forward), False, False, 0)
         nav.pack_start(self._navbtn("view-refresh-symbolic", "Ricarica", self.refresh), False, False, 0)
         nav.pack_start(self._navbtn("go-home-symbolic", "Home", self.navigate_home), False, False, 0)
+        nav.pack_start(self._navbtn("tab-new-symbolic", "Nuova tab", self.new_tab), False, False, 0)
 
         self.url_bar = Gtk.Entry()
         self.url_bar.get_style_context().add_class("nxs-urlbar")

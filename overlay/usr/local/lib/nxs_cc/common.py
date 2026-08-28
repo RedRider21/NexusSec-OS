@@ -8,7 +8,8 @@ from pathlib import Path
 
 import gi
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk, Gdk, GLib  # noqa: E402
+gi.require_version("Gio", "2.0")
+from gi.repository import Gtk, Gdk, GLib, Gio  # noqa: E402
 
 HOME = Path(os.path.expanduser("~"))
 
@@ -289,6 +290,11 @@ ACCENT_CSS_FILE = HOME / ".config" / "nxs" / "accent.css"
 # Stile finestre (flat/vetro/telaio): CSS generato da nxs_profiles, sopra l'accent.
 WINDOW_STYLE_CSS_FILE = HOME / ".config" / "nxs" / "window-style.css"
 
+# Provider accent tracciato per il reload a caldo (vedi apply_accent_live).
+_accent_prov = None
+_accent_mon = None
+_accent_reloading = False
+
 
 def apply_css() -> None:
     global _css_done
@@ -308,20 +314,85 @@ def apply_css() -> None:
         print("[nxs] CSS non applicato (parse error):", sys.exc_info()[1],
               file=sys.stderr)
     # Override accent del profilo attivo (priorita' piu' alta del tema base).
-    if ACCENT_CSS_FILE.exists():
-        try:
-            ap = Gtk.CssProvider()
-            ap.load_from_path(str(ACCENT_CSS_FILE))
-            Gtk.StyleContext.add_provider_for_screen(
-                Gdk.Screen.get_default(), ap,
-                Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION + 1)
-        except Exception:                # noqa: BLE001
-            pass
+    # Ricaricato A CALDO se il file cambia: cosi' le finestre gia' aperte
+    # (es. il Centro di Controllo) cambiano colore al cambio profilo senza
+    # chiudere/riaprire.
+    apply_accent_live()
+    _install_accent_monitor()
     # Stile finestre (flat/vetro/telaio): caricato come UNICO provider tracciato
     # (sopra l'accent), cosi' un cambio stile lo rimuove e rimpiazza in modo
     # pulito (prima il provider d'avvio restava e i cambi non si vedevano).
     apply_window_style_live()
     _css_done = True
+
+
+def apply_accent_live() -> None:
+    """Ricarica accent.css a caldo (dopo un cambio di profilo), sostituendo il
+    provider accent precedente. Senza questo la finestra del Centro di Controllo
+    gia' aperta resterebbe col colore vecchio finche' non si chiude e riapre."""
+    global _accent_prov, _accent_reloading
+    if _accent_reloading:
+        return
+    _accent_reloading = True
+    try:
+        scr = Gdk.Screen.get_default()
+        if scr is None:
+            return
+        if _accent_prov is not None:
+            try:
+                Gtk.StyleContext.remove_provider_for_screen(scr, _accent_prov)
+            except Exception:            # noqa: BLE001
+                pass
+            _accent_prov = None
+        if ACCENT_CSS_FILE.exists():
+            try:
+                ap = Gtk.CssProvider()
+                ap.load_from_path(str(ACCENT_CSS_FILE))
+                Gtk.StyleContext.add_provider_for_screen(
+                    scr, ap, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION + 1)
+                _accent_prov = ap
+            except Exception:            # noqa: BLE001
+                pass
+        # Ristila SUBITO i widget gia' realizzati (vedi _reset_widgets_kick):
+        # una volta a giro corrente e una a idle.
+        _reset_widgets_kick()
+        try:
+            GLib.idle_add(_reset_widgets_kick)
+        except Exception:                # noqa: BLE001
+            pass
+    finally:
+        _accent_reloading = False
+
+
+def _on_accent_file_changed(mon, _file, _other, etype) -> None:
+    """Il file accent.css e' cambiato (profilo appena applicato): riaggiorna i
+    colori delle finestre gia' aperte. Il guard in apply_accent_live evita
+    doppioni quando arrivano piu' eventi insieme."""
+    if etype in (Gio.FileMonitorEvent.CHANGED,
+                 Gio.FileMonitorEvent.CHANGES_DONE_HINT,
+                 Gio.FileMonitorEvent.CREATED,
+                 Gio.FileMonitorEvent.MOVED):
+        try:
+            GLib.idle_add(apply_accent_live)
+        except Exception:                # noqa: BLE001
+            pass
+
+
+def _install_accent_monitor() -> None:
+    """Sorveglia accent.css: se il profilo cambia mentre le app sono aperte,
+    ogni processo GTK NexusSec che ha chiamato apply_css si ricolora da solo."""
+    global _accent_mon
+    if _accent_mon is not None:
+        return
+    try:
+        f = Gio.File.new_for_path(str(ACCENT_CSS_FILE))
+        mon = f.monitor_file(Gio.FileMonitorFlags.NONE, None)
+        if mon is None:
+            return
+        mon.connect("changed", _on_accent_file_changed)
+        _accent_mon = mon
+    except Exception:                    # noqa: BLE001
+        _accent_mon = None
 
 
 _live_style_prov = None
