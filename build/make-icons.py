@@ -263,6 +263,56 @@ def g_network(d, accent):
         d.ellipse([nx - 12, ny - 12, nx + 12, ny + 12], fill=accent)
 
 
+def g_security(d, accent):
+    """Sicurezza/hardening: scudo bianco con spunta accent. Distinto dal
+    firewall (muro di mattoni) perche' vivono nella stessa sezione."""
+    tile(d, accent)
+    cx = R // 2
+    d.polygon([(cx, 58), (R - 70, 88), (R - 70, 142), (cx, R - 76),
+               (70, 142), (70, 88)], fill=WHITE)
+    # spunta interna in accent (unico colore del tema, ricolorata per profilo)
+    d.line([(98, 134), (118, 154)], fill=accent, width=16, joint="curve")
+    d.line([(118, 154), (160, 106)], fill=accent, width=16, joint="curve")
+
+
+def g_users(d, accent):
+    """Utenti: gruppo di due persone (testa + spalle), una dietro l'altra."""
+    tile(d, accent)
+    # persona posteriore
+    d.ellipse([98, 66, 142, 110], fill=WHITE)
+    d.pieslice([84, 122, 156, 194], 180, 360, fill=WHITE)
+    # persona anteriore (piu' grande, davanti)
+    d.ellipse([140, 104, 190, 154], fill=WHITE)
+    d.pieslice([128, 160, 202, 222], 180, 360, fill=WHITE)
+
+
+def g_bluetooth(d, accent):
+    """Bluetooth: glifo runico riconoscibile (asta verticale + doppio
+    triangolo/diamante al centro)."""
+    tile(d, accent)
+    cx = R // 2
+    d.line([(cx, 56), (cx, R - 56)], fill=WHITE, width=13)
+    for xa, ya in ((86, 100), (R - 86, 100), (R - 86, R - 100), (86, R - 100)):
+        d.line([(cx, cx), (xa, ya)], fill=WHITE, width=13)
+
+
+def g_firewall(d, accent):
+    """Firewall: muro di mattoni bianco con malta accent (leggibile anche
+    piccolo, giunti verticali sfalsati riga per riga)."""
+    tile(d, accent)
+    x0, x1 = 58, R - 58
+    y0, y1 = 60, R - 60
+    d.rounded_rectangle([x0, y0, x1, y1], radius=14, fill=WHITE)
+    my = (104, 148)                    # righe di malta orizzontali
+    for y in my:
+        d.line([x0 + 8, y, x1 - 8, y], fill=accent, width=7)
+    rows = [(110, 160), (78, 128, 180), (110, 160)]   # giunti verticali sfalsati
+    yb = (y0, my[0], my[1], y1)
+    for ri, xs in enumerate(rows):
+        for x in xs:
+            d.line([x, yb[ri] + 8, x, yb[ri + 1] - 8], fill=accent, width=7)
+
+
 def g_run(d, accent):
     """Avvia/autostart: triangolo play."""
     tile(d, accent)
@@ -393,6 +443,10 @@ ICONS = {
     "preferences-desktop-keyboard-shortcuts": (g_keyboard, "apps"),
     "network-wired":                 (g_network, "apps"),
     "network-transmit-receive":      (g_network, "apps"),
+    "security-high":                 (g_security, "apps"),
+    "system-users":                  (g_users, "apps"),
+    "bluetooth":                     (g_bluetooth, "apps"),
+    "network-firewall":              (g_firewall, "apps"),
     "system-run":                    (g_run, "apps"),
     "media-playback-start":          (g_run, "apps"),
     "preferences-desktop-screensaver": (g_screensaver, "apps"),

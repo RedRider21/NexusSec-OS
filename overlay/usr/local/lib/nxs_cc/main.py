@@ -105,6 +105,8 @@ VIEW_MAP = {
     "firewall": views.open_firewall,
     "utenti": views.open_users,
     "users": views.open_users,
+    "schermi": views.open_screens,
+    "screens": views.open_screens,
 }
 
 
@@ -227,6 +229,9 @@ def build_window() -> Gtk.Window:
         Tile("bluetooth", "Bluetooth",
              "Accensione, scansione, abbinamento e connessione dispositivi",
              launch("bluetooth")),
+        Tile("preferences-desktop-display", "Schermi",
+             "Estendi, duplica o usa un solo monitor; risoluzioni (xrandr)",
+             launch("schermi")),
     ]), False, False, 0)
 
     body.pack_start(section("Sicurezza", [

@@ -3,7 +3,7 @@
 # Sostituisce i pacchetti TinyCore (.tcz) con gli equivalenti Alpine.
 pkgname=nexussec-base
 pkgver=1.0.0
-pkgrel=7
+pkgrel=8
 pkgdesc="NexusSec OS - desktop base (Openbox + Python + isolamento tool)"
 url="https://github.com/thecloners21"
 arch="noarch"
@@ -32,6 +32,11 @@ license="MIT"
 # Persistenza/installazione su disco: e2fsprogs (mkfs.ext4 partizione dati
 #   NXSDATA) + parted (partizionamento in nxs-persist/nxs-install).
 # Rete: wpa_supplicant+iw (WiFi e test wireless: scan/monitor mode),
+#   dhcpcd (client DHCP robusto: applica IP/gateway/DNS e rinnova il lease,
+#   piu' affidabile di udhcpc di BusyBox; usato da nxs-wifi con udhcpc come
+#   ripiego). Il comando 'rfkill' (sblocco radio WiFi soft-blocked, usato da
+#   nxs-wifi) NON e' un pacchetto a se' in Alpine: e' gia' fornito da
+#   util-linux-misc (sotto) e da busybox, quindi non va aggiunto qui.
 #   iproute2 (VLAN/bridge/macvlan via 'ip link add type ...': sostituisce il
 #   pacchetto legacy 'vlan' che confligge con ifupdown-ng), bridge (MITM
 #   transparent bridging). Evitiamo il meta 'network-extras' (tira vlan/ppp/
@@ -85,6 +90,7 @@ depends="
 	doas
 	imagemagick
 	wpa_supplicant
+	dhcpcd
 	iw
 	util-linux-misc
 	xrandr

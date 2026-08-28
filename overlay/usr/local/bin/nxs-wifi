@@ -149,31 +149,50 @@ case "${1:-}" in
     # la password (select_network aveva disabilitato le altre).
     priv wpa_cli -i "$IFACE" enable_network all >/dev/null 2>&1
     priv wpa_cli -i "$IFACE" save_config >/dev/null 2>&1
-    # DHCP robusto: udhcpc con lo script standard (applica IP/gateway/DNS) e
-    # qualche ritentativo. Senza lo script l'IP verrebbe ottenuto ma NON
-    # applicato all'interfaccia.
-    SCRIPT=/usr/share/udhcpc/default.script
-    [ -x "$SCRIPT" ] || SCRIPT=/etc/udhcpc/default.script
-    j=0
-    while [ "$j" -lt 4 ]; do
-      if [ -x "$SCRIPT" ]; then
-        priv udhcpc -i "$IFACE" -n -q -t 5 -s "$SCRIPT" >> "$LOG" 2>&1 && break
-      else
-        priv udhcpc -i "$IFACE" -n -q -t 5 >> "$LOG" 2>&1 && break
-      fi
-      sleep 2; j=$((j + 1))
-    done
+    # DHCP: dhcpcd (client robusto: applica IP/gateway/DNS e rinnova il lease).
+    # Se assente o fallisce, ripiego su udhcpc di BusyBox con lo script standard
+    # (senza lo script l'IP verrebbe ottenuto ma NON applicato all'interfaccia).
+    got_ip() { ip -4 addr show "$IFACE" 2>/dev/null | grep -q 'inet '; }
+    if command -v dhcpcd >/dev/null 2>&1; then
+      # -n: rinnova/riparte se gia' attivo. dhcpcd va in background: attendiamo
+      # che l'IP venga applicato (fino ~10s) prima di dichiarare fallimento.
+      priv dhcpcd -n "$IFACE" >> "$LOG" 2>&1 || true
+      k=0; while [ "$k" -lt 10 ] && ! got_ip; do sleep 1; k=$((k + 1)); done
+    fi
+    if ! got_ip; then
+      SCRIPT=/usr/share/udhcpc/default.script
+      [ -x "$SCRIPT" ] || SCRIPT=/etc/udhcpc/default.script
+      j=0
+      while [ "$j" -lt 4 ]; do
+        if [ -x "$SCRIPT" ]; then
+          priv udhcpc -i "$IFACE" -n -q -t 5 -s "$SCRIPT" >> "$LOG" 2>&1 && break
+        else
+          priv udhcpc -i "$IFACE" -n -q -t 5 >> "$LOG" 2>&1 && break
+        fi
+        sleep 2; j=$((j + 1))
+      done
+    fi
     ip=$(ip -4 addr show "$IFACE" 2>/dev/null | sed -n 's/.*inet \([0-9.]*\).*/\1/p' | head -1)
     echo "  ESITO: associato, IP=$ip" >> "$LOG"
     if [ -n "$ip" ]; then echo "ok"; else echo "err-dhcp"; exit 1; fi
     ;;
 
   debug)
-    # Diagnostica per l'utente: stato wpa, IP, reti viste, coda di log.
+    # Diagnostica per l'utente: interfaccia, radio (rfkill), firmware caricato,
+    # stato wpa, IP, reti viste, coda di log. Utile quando "il WiFi non va":
+    # spesso e' radio bloccata (rfkill) o firmware della scheda mancante.
     echo "IFACE=${IFACE:-<nessuna>}"
-    [ -n "$IFACE" ] || { echo "(nessuna interfaccia WiFi rilevata)"; exit 0; }
+    echo "--- stato radio (rfkill) ---"
+    if command -v rfkill >/dev/null 2>&1; then priv rfkill list 2>/dev/null
+    else echo "  (rfkill non installato)"; fi
+    echo "--- firmware / driver (dmesg) ---"
+    dmesg 2>/dev/null | grep -iE 'firmware|iwlwifi|ath[0-9]|rtl[0-9]|rtw|mt76|brcm|cfg80211|ucode' \
+      | tail -12 || echo "  (dmesg non leggibile: prova con doas dmesg)"
+    [ -n "$IFACE" ] || { echo "(nessuna interfaccia WiFi rilevata: scheda assente o firmware non caricato)"; exit 0; }
     echo "--- wpa_cli status ---"; priv wpa_cli -i "$IFACE" status 2>/dev/null
     echo "--- indirizzo IP ---"; ip -4 addr show "$IFACE" 2>/dev/null | sed -n 's/^.*inet /  inet /p'
+    echo "--- client DHCP disponibili ---"
+    echo "  dhcpcd: $(command -v dhcpcd || echo assente)   udhcpc: $(command -v udhcpc || echo assente)"
     echo "--- reti configurate ---"; priv wpa_cli -i "$IFACE" list_networks 2>/dev/null
     echo "--- ultimo log connect ---"; tail -25 "$LOG" 2>/dev/null
     ;;

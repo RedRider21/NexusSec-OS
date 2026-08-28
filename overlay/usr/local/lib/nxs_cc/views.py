@@ -2704,3 +2704,83 @@ def open_security(_btn=None):
 
     refresh()
     win.show_all()
+
+
+def open_screens(_btn=None):
+    """Gestione schermi: estendi/duplica o usa un solo monitor, risoluzione
+    per output. Wrapper su nxs-screens (xrandr), come l'applet del pannello.
+    Dopo ogni applicazione rilegge lo stato e riposiziona i pannelli (già
+    gestito da nxs-screens -> _reposition_panels)."""
+    win, body = panel_window("Schermi", 620, 640)
+    intro = Gtk.Label(label="Monitor: estendi, duplica o usa un solo schermo; "
+                            "la risoluzione si applica all'output selezionato.")
+    intro.set_xalign(0)
+    intro.get_style_context().add_class("nxs-val")
+    body.pack_start(intro, False, False, 0)
+
+    outbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
+    body.pack_start(outbox, False, False, 0)
+
+    def _rebuild():
+        for c in outbox.get_children():
+            outbox.remove(c)
+        outs = []
+        for line in run_capture(["nxs-screens", "outputs"]).splitlines():
+            p = line.split("\t")
+            if len(p) >= 4 and p[1] == "connected":
+                outs.append((p[0], p[2], p[3]))       # nome, primary?, WxH
+        if not outs:
+            lbl = Gtk.Label(label="Nessuno schermo rilevato.")
+            lbl.set_xalign(0)
+            outbox.pack_start(lbl, False, False, 0)
+        else:
+            if len(outs) >= 2:
+                row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+                for lbl, act in (("Estendi", ["extend"]), ("Duplica", ["mirror"])):
+                    b = Gtk.Button(label=lbl)
+                    b.get_style_context().add_class("nxs-menu-item")
+                    b.connect("clicked", lambda _w, a=act: _apply(a))
+                    row.pack_start(b, True, True, 0)
+                outbox.pack_start(row, False, False, 0)
+            for name, prim, res in outs:
+                oc = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
+                oc.get_style_context().add_class("nxs-card")
+                oc.set_margin_top(4)
+                hdr = Gtk.Label()
+                hdr.set_xalign(0)
+                hdr.set_markup("<b>%s</b>%s  <small>%s</small>" % (
+                    name, "  (principale)" if prim == "primary" else "", res))
+                oc.pack_start(hdr, False, False, 0)
+                r = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+                combo = Gtk.ComboBoxText()
+                modes = run_capture(["nxs-screens", "modes", name]).split()
+                for m in modes:
+                    combo.append_text(m)
+                if modes:
+                    cur = res.split("@")[0]
+                    combo.set_active(modes.index(cur) if cur in modes else 0)
+                r.pack_start(combo, True, True, 0)
+                ba = Gtk.Button(label="Applica")
+                ba.get_style_context().add_class("nxs-menu-item")
+                ba.connect("clicked", lambda _w, n=name, c=combo:
+                           _apply(["mode", n, c.get_active_text() or ""]))
+                r.pack_start(ba, False, False, 0)
+                oc.pack_start(r, False, False, 0)
+                if len(outs) >= 2:
+                    bo = Gtk.Button(label="Usa solo questo")
+                    bo.get_style_context().add_class("nxs-menu-item")
+                    bo.connect("clicked",
+                               lambda _w, n=name: _apply(["only", n]))
+                    oc.pack_start(bo, False, False, 0)
+                outbox.pack_start(oc, False, False, 0)
+        outbox.show_all()
+
+    def _apply(args):
+        if len(args) >= 4 and args[2] == "mode" and not args[3]:
+            return
+        run_bg(["nxs-screens"] + args)
+        GLib.timeout_add(900, lambda: (_rebuild(), False)[1])
+
+    _rebuild()
+    win.show_all()
+    return win

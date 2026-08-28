@@ -481,6 +481,16 @@ class Panel(Gtk.Window):
         # ritornano self._alive per auto-cancellarsi sulla barra distrutta.
         self._alive = True
         self.connect("destroy", lambda *_: setattr(self, "_alive", False))
+        # Riconsidera la propria geometria quando cambiano i monitor o la
+        # risoluzione: con un monitor esterno che spegne quello interno (xrandr
+        # --off) le barre devono ripiazzarsi sul monitor attivo, NON rimanere
+        # su quello spento.
+        scr = self.get_screen()
+        if scr is not None:
+            scr.connect("monitors-changed",
+                        lambda *_: GLib.idle_add(self._safe_place))
+            scr.connect("size-changed",
+                        lambda *_: GLib.idle_add(self._safe_place))
 
         root = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=0)
         self.add(root)
@@ -606,7 +616,11 @@ class Panel(Gtk.Window):
 
     # --- geometria ---
     def _place(self):
+        if not getattr(self, "_alive", False):
+            return
         scr = self.get_screen()
+        if scr is None:
+            return
         n = scr.get_n_monitors() if hasattr(scr, "get_n_monitors") else 1
         mon = self._monitor_index
         # Indice non valido (monitor scollegato) -> ripiega sul primario.
@@ -620,6 +634,17 @@ class Panel(Gtk.Window):
             self.move(geo.x, geo.y)
         else:
             self.move(geo.x, geo.y + geo.height - PANEL_HEIGHT)
+
+    def _safe_place(self):
+        """Riposiziona questa barra in modo sicuro: no-op se la barra e' stata
+        distrutta (hotplug) o lo schermo non e' piu' disponibile."""
+        if not getattr(self, "_alive", False):
+            return False
+        try:
+            self._place()
+        except Exception:
+            pass
+        return False
 
     def _on_realize(self, _w):
         # Lo spazio e' riservato dal margine di Openbox (rc.xml), aggiornato
@@ -745,7 +770,7 @@ class Panel(Gtk.Window):
                 return
             if confirm:
                 d = Gtk.MessageDialog(
-                    transient_for=None, modal=True,
+                    transient_for=self, modal=True,
                     message_type=Gtk.MessageType.QUESTION,
                     buttons=Gtk.ButtonsType.YES_NO, text=confirm)
                 d.set_keep_above(True)
@@ -1829,6 +1854,12 @@ class Panel(Gtk.Window):
 
     def _ask_password(self, prompt):
         d = Gtk.Dialog(title="Connessione WiFi", modal=True)
+        # Ancorato al pannello: il dialogo compare sul MONITOR del pannello da
+        # cui si e' cliccato (quello attivo), mai su un eventuale schermo spento.
+        try:
+            d.set_transient_for(self)
+        except Exception:
+            pass
         d.set_keep_above(True)
         d.add_button("Annulla", Gtk.ResponseType.CANCEL)
         d.add_button("Connetti", Gtk.ResponseType.OK)
@@ -1919,6 +1950,10 @@ class Panel(Gtk.Window):
         if len(args) >= 3 and args[0] == "mode" and not args[2]:
             return                                    # nessuna risoluzione scelta
         run_bg(["nxs-screens"] + list(args))
+        # Dopo un cambio schermi (es. "solo esterno") xrandr puo' NON far
+        # scattare monitors-changed: le barre vanno ripiazzate sul monitor
+        # attivo appena lo schermo si assesta, senno' restano su quello spento.
+        GLib.timeout_add(700, _reposition_panels)
 
     def _on_today(self, _w):
         t = time.localtime()
@@ -2122,22 +2157,35 @@ class Panel(Gtk.Window):
         return self._alive
 
 
+# Registro globale delle barre vive (una per monitor): serve a ripiazzarle
+# tutte dopo un cambio schermi via nxs-screens, quando xrandr non emette
+# monitors-changed.
+_ALL_PANELS = []
+
+
+def _reposition_panels():
+    """Riposiziona le barre sul loro monitor corrente (fallback ai segnali GTK
+    quando xrandr --off / --primary non li scatena)."""
+    for p in list(_ALL_PANELS):
+        p._safe_place()
+    return False
+
+
 def run():
     # UNA barra per monitor: cosi' bar + menu compaiono su OGNI schermo (interno
     # e esterno). Le barre si ricostruiscono quando si collega/scollega un
     # monitor o cambia la risoluzione (monitors-changed / size-changed).
     screen = Gdk.Screen.get_default()
-    panels = []
 
     def build(*_a):
-        for p in panels:
+        for p in _ALL_PANELS:
             p.destroy()
-        panels.clear()
+        _ALL_PANELS.clear()
         n = screen.get_n_monitors() if hasattr(screen, "get_n_monitors") else 1
         for i in range(max(1, n)):
             p = Panel(i)
             p.show_all()
-            panels.append(p)
+            _ALL_PANELS.append(p)
 
     build()
     screen.connect("monitors-changed", build)

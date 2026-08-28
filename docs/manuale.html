@@ -219,9 +219,21 @@ footer{border-top:1px solid var(--line);padding:24px 0 60px;color:var(--muted);f
   <p><code>nxs-browser</code> è il browser integrato: di default naviga in modo
   <strong>anonimo</strong> (traffico via Tor, IP nascosto) e <strong>senza lasciare
   tracce</strong> locali (cookie, cronologia e cache solo in RAM). Un interruttore
-  in barra passa al volo alla navigazione normale. Interfaccia a schede con
-  preferiti che mostrano la favicon reale dei siti, tema scuro coerente col resto
-  del sistema.</p>
+  in barra passa al volo alla navigazione normale. L'interfaccia replica il
+  layout di Firefox: striscia delle schede a pillola in cima, barra di
+  navigazione con URL sotto, e a sinistra la <strong>sidebar dei preferiti</strong>:
+  parte <strong>collassata</strong> mostrando i preferiti come <strong>icone
+  verticali</strong> (con la favicon reale del sito) e le azioni (aggiungi,
+  modifica, elimina, aggiorna); la <strong>freccia in alto</strong> la espande
+  all'elenco completo (icona, titolo e URL), e dall'elenco la stessa zona in alto
+  la richiude (apri e chiudi dalla stessa posizione). Pulsanti e menu (tasto
+  destro su un'icona) funzionano in entrambi gli stati; i preferiti si
+  memorizzano in <code>~/.nxs-browser/bookmarks.json</code>. Nella barra ci sono
+  solo i comandi essenziali (indietro, avanti, ricarica, home, aggiungi
+  preferito, tema, stealth, menu): nuova tab sta nella striscia delle schede e
+  l'inspector (F12) resta nel menu. I colori si adattano all'accent del profilo attivo;
+  tema scuro coerente col resto del sistema. <code>F11</code> mette a tutto
+  schermo nascondendo l'intera interfaccia.</p>
 </section>
 
 <section id="persistenza">
@@ -258,7 +270,95 @@ apk add foremost medusa bulk-extractor</code></pre>
 
 <section id="cli">
   <h2><span class="n">10</span> Comandi da terminale</h2>
-  <p>Tutto il sistema profili/tool è pilotabile anche da CLI con <code>nxs-tool</code>:</p>
+  <p>Tutti i comandi propri di NexusSec hanno il prefisso <code>nxs-</code>. Molti
+  sono richiamati dal pannello o dai menu (icone della barra, applet, voci del menu
+  start), ma sono anche <strong>eseguibili a mano dal terminale</strong>. Di seguito
+  l'elenco completo, raggruppato per funzione. Quasi tutti stampano l'uso se lanciati
+  con <code>--help</code> o con un argomento non valido.</p>
+
+  <h3>Sistema e sessione</h3>
+  <table>
+    <thead><tr><th>Comando</th><th>Cosa fa</th></tr></thead>
+    <tbody>
+      <tr><td class="k">nxs-control-center</td><td>Apre il <strong>Centro di Controllo</strong> (impostazioni di sistema).</td></tr>
+      <tr><td class="k">nxs-panel</td><td>Avvia il pannello inferiore (menu start + tray + applet).</td></tr>
+      <tr><td class="k">nxs-terminal</td><td>Apre il terminale (lxterminal, ripiego xterm a tema).</td></tr>
+      <tr><td class="k">nxs-term <span class="tag">cmd</span></td><td>Esegue un comando dentro un terminale in modo affidabile (usato dai menu).</td></tr>
+      <tr><td class="k">nxs-python</td><td>Apre una shell Python 3.</td></tr>
+      <tr><td class="k">nxs-sysinfo</td><td>Riepilogo sistema (CPU, RAM, versioni) per menu/pannello.</td></tr>
+      <tr><td class="k">nxs-monitor</td><td>Monitor risorse (htop, ripiego top).</td></tr>
+      <tr><td class="k">nxs-diag</td><td>Diagnostica rapida del desktop: binari, profilo, pannello, GTK, log.</td></tr>
+      <tr><td class="k">nxs-app <span class="tag">app</span></td><td>Lancia un'app GUI; se manca, mostra come installarla con <code>apk</code>.</td></tr>
+      <tr><td class="k">nxs-users</td><td>Gestione utenti (backend di <em>Impostazioni &gt; Gestione utenti</em>).</td></tr>
+      <tr><td class="k">nxs-datetime</td><td>Imposta ora, data e fuso orario di sistema.</td></tr>
+      <tr><td class="k">nxs-shutdown</td><td>Spegni / Riavvia / Esci dalla sessione.</td></tr>
+      <tr><td class="k">nxs-boot-splash</td><td>Splash di avvio a schermo intero (interno, primo autostart).</td></tr>
+      <tr><td class="k">nxs-welcome</td><td>Messaggio di benvenuto nel terminale iniziale (interno).</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Rete</h3>
+  <table>
+    <thead><tr><th>Comando</th><th>Cosa fa</th></tr></thead>
+    <tbody>
+      <tr><td class="k">nxs-wifi <span class="tag">scan|connect|status|debug</span></td><td>Gestione WiFi (scan reti, connessione, stato). <code>nxs-wifi debug</code> è la diagnostica: interfaccia, stato radio (rfkill), firmware, IP, client DHCP.</td></tr>
+      <tr><td class="k">nxs-netinfo</td><td>Stato rete sintetico (interfacce, IP, gateway) per menu/pannello.</td></tr>
+      <tr><td class="k">nxs-firewall</td><td>Firewall di sicurezza basato su <strong>nftables</strong> (regole on/off).</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Audio, video e cattura</h3>
+  <table>
+    <thead><tr><th>Comando</th><th>Cosa fa</th></tr></thead>
+    <tbody>
+      <tr><td class="k">nxs-audio</td><td>Volume e uscite audio via <strong>PipeWire</strong> (<code>wpctl</code>).</td></tr>
+      <tr><td class="k">nxs-audio-unmute</td><td>Sblocca e alza l'audio su tutti i livelli, con ritentativi.</td></tr>
+      <tr><td class="k">nxs-bluetooth</td><td>Controllo Bluetooth via <strong>BlueZ</strong> (<code>bluetoothctl</code>).</td></tr>
+      <tr><td class="k">nxs-player</td><td>Lettore audio (GTK3 + GStreamer).</td></tr>
+      <tr><td class="k">nxs-video</td><td>Visualizzatore video (GTK3 + GStreamer).</td></tr>
+      <tr><td class="k">nxs-screenshot</td><td>Screenshot a schermo intero in <code>/tmp</code> (scrot).</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Schermo e aspetto</h3>
+  <table>
+    <thead><tr><th>Comando</th><th>Cosa fa</th></tr></thead>
+    <tbody>
+      <tr><td class="k">nxs-brightness</td><td>Regola la luminosità dello schermo.</td></tr>
+      <tr><td class="k">nxs-screens</td><td>Gestione schermi e risoluzioni (<code>xrandr</code>).</td></tr>
+      <tr><td class="k">nxs-battery</td><td>Stato batteria/alimentazione da <code>/sys/class/power_supply</code>.</td></tr>
+      <tr><td class="k">nxs-screensaver</td><td>Salvaschermo animato (GTK3 + Cairo).</td></tr>
+      <tr><td class="k">nxs-screensaver-idle</td><td>Avvia il salvaschermo dopo inattività (xautolock).</td></tr>
+      <tr><td class="k">nxs-lxappearance</td><td>Configuratore del tema GTK (wrapper di lxappearance).</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Profili, strumenti e navigazione</h3>
+  <table>
+    <thead><tr><th>Comando</th><th>Cosa fa</th></tr></thead>
+    <tbody>
+      <tr><td class="k">nxs-tool <span class="tag">…</span></td><td>Gestore profili e tool isolati (bubblewrap). La CLI principale — vedi esempi sotto.</td></tr>
+      <tr><td class="k">nxs-profile</td><td>Selettore grafico del profilo operativo.</td></tr>
+      <tr><td class="k">nxs-run-tool <span class="tag">tool</span></td><td>Esegue un tool del profilo dal menu tenendo aperto il terminale.</td></tr>
+      <tr><td class="k">nxs-wizard</td><td>Procedure guidate (apre la GUI o esegue da CLI).</td></tr>
+      <tr><td class="k">nxs-browser</td><td>Browser stealth integrato (Tor di default, senza tracce locali).</td></tr>
+      <tr><td class="k">nxs-ai-sandbox</td><td>Sandbox bubblewrap per il (futuro) agente AI di NexusSec.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Persistenza, disco e forense</h3>
+  <table>
+    <thead><tr><th>Comando</th><th>Cosa fa</th></tr></thead>
+    <tbody>
+      <tr><td class="k">nxs-install</td><td>Installazione su disco / attivazione persistenza.</td></tr>
+      <tr><td class="k">nxs-persist <span class="tag">status</span></td><td>Crea/gestisce la persistenza dati (partizione <code>NXSDATA</code>).</td></tr>
+      <tr><td class="k">nxs-unlock-data</td><td>Sblocca e monta la persistenza <strong>cifrata</strong> (LUKS).</td></tr>
+      <tr><td class="k">nxs-writeblock</td><td>Write-blocker forense a livello di blocco (protezione da scrittura).</td></tr>
+      <tr><td class="k">nxs-harden</td><td>Irrobustimento di sicurezza del sistema.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Esempi: pilotare profili e tool con <code>nxs-tool</code></h3>
   <pre><code>nxs-tool profiles           # elenca i profili
 nxs-tool profile pentest    # attiva un profilo
 nxs-tool list               # elenca gli strumenti del profilo
@@ -271,6 +371,13 @@ nxs-tool kali-list          # tool installati nell'ambiente Kali condiviso
 
 nxs-profile                 # selettore grafico dei profili
 nxs-persist status          # stato della persistenza su disco</code></pre>
+
+  <div class="note">Se il <strong>WiFi non si connette</strong>, il primo comando da
+  lanciare è <code>nxs-wifi debug</code>: dice se l'interfaccia è rilevata, se la
+  radio è bloccata (<em>rfkill</em>), se il <strong>firmware</strong> della scheda è
+  stato caricato e quale client DHCP è disponibile. Con questi dati la causa è quasi
+  sempre immediata (radio bloccata, firmware mancante o password errata).</div>
+
   <div class="note">NexusSec è Alpine: libc <strong>musl</strong> (non glibc),
   init <strong>OpenRC</strong> (non systemd), privilegi con <code>doas</code>. I
   binari pensati per glibc arrivano via container (metodo <code>kali</code>/<code>ctr</code>).</div>

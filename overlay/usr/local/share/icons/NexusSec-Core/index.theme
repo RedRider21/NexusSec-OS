@@ -2,7 +2,7 @@
 Name=NexusSec-Core
 Comment=Icone NexusSec - eredita nuoveXT2 (lxde) e Adwaita per copertura completa
 Inherits=nuoveXT2,Adwaita,gnome,hicolor
-Directories=apps/16,apps/22,apps/24,apps/32,apps/48,apps/64,apps/128,apps/256
+Directories=apps/16,apps/22,apps/24,apps/32,apps/48,apps/64,apps/128,apps/256,symbolic/status
 
 # Meta-tema: eredita nuoveXT2/Adwaita per la copertura generale e ospita le
 # poche icone proprie di NexusSec (es. nxs-browser) in apps/<size>, in PNG.
@@ -50,3 +50,13 @@ Type=Fixed
 Size=256
 Context=Applications
 Type=Fixed
+
+# Icone SIMBOLICHE proprie di NexusSec (scalabili, ricolorate da GTK all'accent).
+# Qui vive network-wired-symbolic (presa RJ45 femmina), che SOVRASCRIVE quella
+# di Adwaita (un PC col cavo) perche' NexusSec-Core e' ereditato PRIMA.
+[symbolic/status]
+Context=Status
+Size=16
+MinSize=8
+MaxSize=512
+Type=Scalable
