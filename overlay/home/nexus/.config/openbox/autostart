@@ -4,6 +4,12 @@
 exec >>/tmp/nxs-autostart.log 2>&1
 echo "=== autostart $(date) ==="
 
+# 0) MONITOR: normalizza subito gli schermi. Con 2+ monitor connessi estende il
+#    desktop (portatile principale + esterno a destra), cosi' l'output esterno
+#    viene preso in carico da X e la console/splash di boot NON resta
+#    appiccicata li'. Va fatto PRIMA di splash/pcmanfm/pannello.
+command -v nxs-screens >/dev/null 2>&1 && nxs-screens autostart
+
 # SEQUENZA splash -> desktop, SENZA "sbirciata" del desktop prima della splash.
 # Ordine che risolve entrambe le cose (glimpse + sovrapposizione):
 #   1) la SPLASH parte per PRIMA (background) e ha un attimo di vantaggio per

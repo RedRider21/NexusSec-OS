@@ -395,6 +395,80 @@ def _install_accent_monitor() -> None:
         _accent_mon = None
 
 
+# ---- Reload schermi al volo (cambio monitor/risoluzione) ----
+# nxs-screens tocca questo file dopo ogni modifica (mirror/extend/only/mode/
+# primary). Pannello e Centro di Controllo lo ascoltano per riposizionare
+# barre e finestre sul monitor attivo: xrandr --off/--primary spesso NON
+# scatena "monitors-changed" di GTK, quindi senza questo le barre restano
+# sul monitor spento e le finestre non si ricentrano.
+SCREENS_REFRESH_FILE = HOME / ".cache" / "nxs" / "screens-refresh"
+
+_refresh_mon = None
+
+
+def install_screens_refresh_monitor(cb) -> None:
+    """Installa UNA volta per processo un monitor sul file di refresh scritto da
+    nxs-screens. Quando scatta chiama cb (via idle, dopo che il file e'
+    completamente scritto)."""
+    global _refresh_mon
+    if _refresh_mon is not None:
+        return
+    try:
+        f = Gio.File.new_for_path(str(SCREENS_REFRESH_FILE))
+        mon = f.monitor_file(Gio.FileMonitorFlags.NONE, None)
+        if mon is None:
+            return
+        def _on_refresh(mon, _file, _other, etype):
+            if etype in (Gio.FileMonitorEvent.CHANGED,
+                         Gio.FileMonitorEvent.CHANGES_DONE_HINT,
+                         Gio.FileMonitorEvent.CREATED,
+                         Gio.FileMonitorEvent.MOVED):
+                try:
+                    GLib.idle_add(cb)
+                except Exception:            # noqa: BLE001
+                    pass
+        mon.connect("changed", _on_refresh)
+        _refresh_mon = mon
+    except Exception:                        # noqa: BLE001
+        _refresh_mon = None
+
+
+def center_win_on_screen(win) -> None:
+    """Centra una finestra sul monitor dove sta (o su quello primario se e'
+    rimasta su un monitor appena spento). Serve dopo un cambio schermi, quando
+    la finestra del Centro di Controllo era su un output ora spento."""
+    scr = Gdk.Screen.get_default()
+    if scr is None:
+        return
+    try:
+        gw = win.get_window()
+        if gw is not None:
+            mon = scr.get_monitor_at_window(gw)
+        else:
+            mon = scr.get_primary_monitor()
+        if mon < 0 or mon >= scr.get_n_monitors():
+            mon = scr.get_primary_monitor()
+        g = scr.get_monitor_geometry(mon)
+        w, h = win.get_size()
+        win.move(g.x + max(0, (g.width - w) // 2), g.y + max(0, (g.height - h) // 2))
+    except Exception:                        # noqa: BLE001
+        pass
+
+
+def center_toplevel_windows() -> bool:
+    """Centra tutte le finestre visibili di QUESTO processo (le viste del
+    Centro di Controllo). Ritorna False per GLib.idle_add."""
+    try:
+        for w in Gtk.Window.list_toplevels():
+            if w.get_visible() and not w.get_decorated():
+                continue                     # popup del pannello: niente da centrare
+            if w.get_visible():
+                center_win_on_screen(w)
+    except Exception:                        # noqa: BLE001
+        pass
+    return False
+
+
 _live_style_prov = None
 
 
@@ -522,6 +596,9 @@ def panel_window(title: str, width: int = 640, height: int = 460):
     body.set_margin_start(14)
     body.set_margin_end(14)
     outer.pack_start(body, True, True, 0)
+
+    # Dopo un cambio schermi la vista si ricentra sul monitor attivo da sola.
+    install_screens_refresh_monitor(center_toplevel_windows)
 
     return win, body
 

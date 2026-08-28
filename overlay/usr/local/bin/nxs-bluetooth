@@ -5,6 +5,31 @@
 _have() { command -v bluetoothctl >/dev/null 2>&1; }
 OBEXLOG=/tmp/nxs-bt-obex.log   # diagnostica invio/ricezione file (OBEX)
 
+# obexd e' il daemon OBEX di BlueZ che gestisce invio/ricezione file. Su OpenRC
+# la D-Bus activation NON funziona (org.bluez.obex.service punta a systemd, che
+# non c'e') -> bt-obex non troverebbe mai org.bluez.obex. Lo avviamo noi, sul
+# session bus della sessione corrente (DBUS_SESSION_BUS_ADDRESS di dbus-run-
+# session), cosi' il nome e' gia' occupato e bt-obex lo usa direttamente.
+OBEXD="${NXS_OBEXD:-}"
+if [ -z "$OBEXD" ]; then
+  for _c in /usr/libexec/bluetooth/obexd /usr/lib/bluetooth/obexd; do
+    [ -x "$_c" ] && { OBEXD="$_c"; break; }
+  done
+  if [ -z "$OBEXD" ] && command -v obexd >/dev/null 2>&1; then
+    OBEXD="$(command -v obexd)"
+  fi
+fi
+
+# Avvia obexd (no-op se gira gia'). $1 = root dove salvare i file in arrivo.
+_ensure_obexd() {
+  [ -n "$OBEXD" ] || return 1
+  [ -n "${DBUS_SESSION_BUS_ADDRESS:-}" ] || return 1
+  pgrep -x obexd >/dev/null 2>&1 && return 0
+  setsid "$OBEXD" -n -r "$1" >> "$OBEXLOG" 2>&1 < /dev/null &
+  sleep 0.6
+  pgrep -x obexd >/dev/null 2>&1
+}
+
 # Deduce un nome-icona simbolica dal campo "Icon" di bluetoothctl info.
 _devicon() {
   case "$1" in
@@ -136,42 +161,56 @@ case "${1:-status}" in
   remove)     [ -n "${2:-}" ] && _have && bluetoothctl remove "$2" 2>&1 ;;
 
   send)
-    # Invia un file a un device via OBEX Object Push (bt-obex, bluez-tools).
-    # Il device dev'essere accoppiato/raggiungibile. Uso: send MAC FILE
+    # Invia un file a un device via OBEX Object Push (bt-obex -> obexd).
+    # Il device dev'essere abbinato/raggiungibile. Uso: send MAC FILE
     mac="$2"; file="$3"
     [ -n "$mac" ] && [ -n "$file" ] || { echo "err-args"; exit 1; }
     [ -f "$file" ] || { echo "err-nofile"; exit 1; }
     echo "=== send \"$file\" -> $mac $(date) ===" >> "$OBEXLOG"
-    if command -v bt-obex >/dev/null 2>&1; then
-      # bt-obex -p invia e attende il completamento (usa il D-Bus di sessione +
-      # obexd). L'esito e' nel codice di uscita.
-      if bt-obex -p "$mac" "$file" >> "$OBEXLOG" 2>&1; then echo "ok"; else echo "err-transfer"; exit 1; fi
-    else
-      echo "err-noobex"   # manca bluez-tools; vedi $OBEXLOG
-      echo "bt-obex assente (bluez-tools non installato)" >> "$OBEXLOG"; exit 1
-    fi
+    command -v bt-obex >/dev/null 2>&1 || { echo "err-noobex"; exit 1; }
+    [ -n "$OBEXD" ] || { echo "err-noobex"; echo "obexd assente" >> "$OBEXLOG"; exit 1; }
+    # stato del device nel log, per la diagnosi (abbinato/connesso/fidato).
+    echo "$(bluetoothctl info "$mac" 2>/dev/null \
+              | sed -n -e 's/^[[:space:]]*Name:/  Name:/p' \
+                       -e 's/^[[:space:]]*Alias:/  Alias:/p' \
+                       -e 's/^[[:space:]]*Paired:/  Paired:/p' \
+                       -e 's/^[[:space:]]*Connected:/  Connected:/p' \
+                       -e 's/^[[:space:]]*Trusted:/  Trusted:/p')" >> "$OBEXLOG"
+    # obexd attivo = prerequisito (activation D-Bus rotta su OpenRC).
+    _ensure_obexd "${HOME:-/home/nexus}/NexusSec-loot" \
+      || { echo "err-obexd"; echo "avvio obexd fallito" >> "$OBEXLOG"; exit 1; }
+    # bt-obex -p invia e attende il completamento. L'esito e' nel codice di uscita.
+    if bt-obex -p "$mac" "$file" >> "$OBEXLOG" 2>&1; then echo "ok"; else
+      echo "err-transfer"; exit 1; fi
     ;;
 
   receive)
-    # Server di RICEZIONE file OBEX: bt-obex -s salva i file in arrivo nella
-    # cartella indicata (default ~/NexusSec-loot). Gira in background finche'
-    # non lo si ferma. Uso: receive on [DIR] | off | status
+    # Server di RICEZIONE file: obexd (nativo) salva nella cartella indicata
+    # (default ~/NexusSec-loot). Niente bt-obex -s (fragile e ridondante).
+    # Uso: receive on [DIR] | off | status
     dir="${3:-${HOME:-/home/nexus}/NexusSec-loot}"
     case "${2:-status}" in
       on)
-        command -v bt-obex >/dev/null 2>&1 || { echo "err-noobex"; exit 1; }
+        command -v bt-obex >/dev/null 2>&1 && [ -n "$OBEXD" ] || { echo "err-noobex"; exit 1; }
         mkdir -p "$dir" 2>/dev/null
-        pkill -f 'bt-obex[ ].*-s' 2>/dev/null      # ferma un eventuale server precedente
-        # accendi e rendi l'adattatore accettante/visibile
+        # root certa: riavvia obexd con la dir scelta (se gira gia' con un'altra).
+        pkill -x obexd 2>/dev/null; sleep 0.3
+        # accendi e rendi l'adattatore accettante E visibile (per ricevere il
+        # telefono deve vederti; discoverable serve anche ai device non abbinati).
         bluetoothctl power on >/dev/null 2>&1
         bluetoothctl agent NoInputNoOutput >/dev/null 2>&1
+        bluetoothctl default-agent >/dev/null 2>&1
         bluetoothctl pairable on >/dev/null 2>&1
-        setsid sh -c "exec bt-obex -s '$dir'" >> "$OBEXLOG" 2>&1 < /dev/null &
-        echo "on $dir"
+        bluetoothctl discoverable on >/dev/null 2>&1
+        _ensure_obexd "$dir" && { echo "on $dir"; exit 0; }
+        echo "err-obexd"; echo "avvio obexd fallito (dir=$dir)" >> "$OBEXLOG"; exit 1
         ;;
-      off)    pkill -f 'bt-obex[ ].*-s' 2>/dev/null; echo "off" ;;
-      status) pgrep -f 'bt-obex[ ].*-s' >/dev/null 2>&1 && echo "on" || echo "off" ;;
-      *)      echo "uso: receive {on [DIR]|off|status}" >&2; exit 2 ;;
+      off) bluetoothctl discoverable off >/dev/null 2>&1; pkill -x obexd 2>/dev/null; echo "off" ;;
+      status)
+        disc=$(bluetoothctl show 2>/dev/null | sed -n 's/^[[:space:]]*Discoverable:[[:space:]]*//p' | head -1)
+        if pgrep -x obexd >/dev/null 2>&1 && [ "$disc" = "yes" ]; then echo "on"; else echo "off"; fi
+        ;;
+      *) echo "uso: receive {on [DIR]|off|status}" >&2; exit 2 ;;
     esac
     ;;
 

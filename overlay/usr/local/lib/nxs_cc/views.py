@@ -2163,12 +2163,15 @@ def open_bluetooth(_btn=None):
                 if out == "ok":
                     set_status("File inviato a %s." % name)
                 elif out == "err-noobex":
-                    set_status("Invio non disponibile (manca bluez-tools).")
+                    set_status("Invio non disponibile (manca bluez-tools/obexd).")
                 elif out == "err-nofile":
                     set_status("File non trovato.")
+                elif out == "err-obexd":
+                    set_status("Invio non riuscito: obexd non si avvia "
+                               "(vedi /tmp/nxs-bt-obex.log).")
                 else:
-                    set_status("Invio non riuscito: il device ha rifiutato o "
-                               "non supporta la ricezione file. (%s)" % out)
+                    set_status("Invio non riuscito: verifica che il device sia "
+                               "abbinato e raggiungibile, poi riprova. (%s)" % out)
                 return False
             GLib.idle_add(done)
         threading.Thread(target=worker, daemon=True).start()
@@ -2252,9 +2255,22 @@ def open_bluetooth(_btn=None):
     disc_sw._handler = disc_sw.connect("state-set", on_disc)
 
     def on_recv(sw, state):
-        run_bg(["nxs-bluetooth", "receive", "on" if state else "off"])
-        set_status("Ricezione file attivata: invia dal tuo telefono verso "
-                   "questo PC." if state else "Ricezione file disattivata.")
+        def worker():
+            out = bt("receive", "on" if state else "off", timeout=15).strip()
+            def done():
+                if not state:
+                    set_status("Ricezione file disattivata.")
+                elif out.startswith("on"):
+                    set_status("Ricezione attiva: invia dal tuo telefono verso "
+                               "questo PC.")
+                elif out == "err-noobex":
+                    set_status("Ricezione non disponibile (obexd assente).")
+                else:
+                    set_status("Ricezione NON attivata (%s). Vedi "
+                               "/tmp/nxs-bt-obex.log." % out)
+                return False
+            GLib.idle_add(done)
+        threading.Thread(target=worker, daemon=True).start()
         return False
     rcv_sw._handler = rcv_sw.connect("state-set", on_recv)
     # stato iniziale del server di ricezione

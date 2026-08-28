@@ -24,7 +24,7 @@ gi.require_version("Gtk", "3.0")
 gi.require_version("Gdk", "3.0")
 from gi.repository import Gtk, Gdk, GLib, GdkPixbuf  # noqa: E402
 
-from .common import apply_css, have, run_bg  # noqa: E402
+from .common import apply_css, have, run_bg, install_screens_refresh_monitor  # noqa: E402
 from . import panelcfg  # noqa: E402
 
 # Sistema profili (pacchetto separato, nessuna dipendenza GTK). Se assente, il
@@ -1824,9 +1824,11 @@ class Panel(Gtk.Window):
         def worker():
             # La passphrase va su STDIN, non tra gli argomenti (niente password
             # in chiaro in `ps`). Rete aperta = stdin vuoto.
+            out = ""
             try:
-                subprocess.run(["nxs-wifi", "connect", ssid], input=psk or "",
-                               capture_output=True, text=True, timeout=30)
+                r = subprocess.run(["nxs-wifi", "connect", ssid], input=psk or "",
+                                   capture_output=True, text=True, timeout=45)
+                out = (r.stdout or "").strip()
             except (OSError, subprocess.SubprocessError):
                 pass
             # verifica reale: attende che wpa_state=COMPLETED sull'SSID scelto
@@ -1837,19 +1839,29 @@ class Panel(Gtk.Window):
                 if st.startswith("connected") and st[len("connected"):].strip() == ssid:
                     ok = True
                     break
-            GLib.idle_add(self._wifi_after_connect, ssid, ok)
+            GLib.idle_add(self._wifi_after_connect, ssid, ok, out)
         threading.Thread(target=worker, daemon=True).start()
 
-    def _wifi_after_connect(self, ssid, ok):
+    def _wifi_after_connect(self, ssid, ok, out=""):
         self._refresh_media_once()   # aggiorna subito l'icona WiFi in barra
         ui = getattr(self, "_wifi_ui", None)
         if ui and "wifi" in self._popups:
             if ok:
-                ui[0].set_text("Connesso a «%s»." % ssid)
+                # Associato (COMPLETED): distingue il caso "senza IP" (dhcp)
+                # da una connessione pienamente riuscita.
+                if out == "err-dhcp":
+                    ui[0].set_text("Associato a «%s» ma senza IP (DHCP)." % ssid)
+                else:
+                    ui[0].set_text("Connesso a «%s»." % ssid)
                 self._wifi_scan()    # ridisegna con il badge "✓ connesso"
             else:
-                ui[0].set_text("Connessione a «%s» non riuscita (password errata "
-                               "o rete non raggiungibile)." % ssid)
+                ui[0].set_text({
+                    "err-auth":  "Password errata per «%s»." % ssid,
+                    "err-assoc": ("Associazione a «%s» non riuscita (rete lontana "
+                                  "o crittografia non supportata)." % ssid),
+                    "err-dhcp":  "Associato a «%s» ma senza IP (DHCP)." % ssid,
+                }.get(out, "Connessione a «%s» non riuscita (password errata "
+                           "o rete non raggiungibile)." % ssid))
         return False
 
     def _ask_password(self, prompt):
@@ -2190,6 +2202,10 @@ def run():
     build()
     screen.connect("monitors-changed", build)
     screen.connect("size-changed", build)
+    # Fallback affidabile ai segnali GTK: xrandr --off/--primary (usati da
+    # nxs-screens) spesso NON scatena monitors-changed. Il file di refresh
+    # viene toccato da nxs-screens dopo OGNI cambio schermo.
+    install_screens_refresh_monitor(build)
     Gtk.main()
 
 

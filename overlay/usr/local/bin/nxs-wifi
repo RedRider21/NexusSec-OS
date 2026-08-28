@@ -190,6 +190,8 @@ case "${1:-}" in
       | tail -12 || echo "  (dmesg non leggibile: prova con doas dmesg)"
     [ -n "$IFACE" ] || { echo "(nessuna interfaccia WiFi rilevata: scheda assente o firmware non caricato)"; exit 0; }
     echo "--- wpa_cli status ---"; priv wpa_cli -i "$IFACE" status 2>/dev/null
+    echo "--- key_mgmt supportati (SAE = WPA3) ---"
+    priv wpa_cli -i "$IFACE" get_capability key_mgmt 2>/dev/null
     echo "--- indirizzo IP ---"; ip -4 addr show "$IFACE" 2>/dev/null | sed -n 's/^.*inet /  inet /p'
     echo "--- client DHCP disponibili ---"
     echo "  dhcpcd: $(command -v dhcpcd || echo assente)   udhcpc: $(command -v udhcpc || echo assente)"

@@ -9,11 +9,51 @@
 #   nxs-screens only NOME         solo quell'output (gli altri spenti)
 #   nxs-screens mode NOME WxH     imposta risoluzione
 #   nxs-screens primary NOME      imposta output primario
+#   nxs-screens autostart         all'avvio: estende se sono connessi 2+ monitor
 #
 # xrandr agisce sulla sessione X dell'utente: nessun privilegio necessario.
+#
+# Dopo ogni cambio di disposizione il desktop si riassesta AL VOLO, senza
+# riavviare nulla:
+#   1) viene toccato il file di refresh (pannello e Centro di Controllo lo
+#      ascoltano e riposizionano barre e finestre sul monitor attivo);
+#   2) si riapplicano sfondo+accent (nxs-tool apply), come un cambio profilo.
+# Prima il cambio schermo lasciava barre e finestre sul monitor spento (xrandr
+# --off/--primary spesso NON scatena "monitors-changed" di GTK).
+
+LOG=/tmp/nxs-screens.log
+REFRESH="${HOME:-/home/nexus}/.cache/nxs/screens-refresh"
 
 connected() { xrandr --query 2>/dev/null | awk '/ connected/{print $1}'; }
 primary_out() { xrandr --query 2>/dev/null | awk '/ connected primary/{print $1; exit}'; }
+# Risoluzione corrente di un output (es. 1920x1080) oppure vuota.
+cur_res() {
+  xrandr --query 2>/dev/null | awk -v o="$1" '
+    $1==o { for(i=1;i<=NF;i++) if($i ~ /^[0-9]+x[0-9]+\+/) { split($i,a,"+"); print a[1]; exit } }'
+}
+
+reload_desktop() {
+  mkdir -p "$(dirname "$REFRESH")" 2>/dev/null || true
+  : > "$REFRESH" 2>/dev/null || true
+  # Riapplica sfondo+accent: il desktop si riassesta sulla nuova disposizione.
+  command -v nxs-tool >/dev/null 2>&1 && nxs-tool apply >/dev/null 2>&1 &
+}
+
+# Estende il desktop: l'output attualmente primario resta primario, gli altri
+# si dispongono a destra. Un solo comando xrandr (atomico).
+extend_all() {
+  base=$(primary_out); [ -z "$base" ] && base=$(connected | head -1)
+  [ -n "$base" ] || return 1
+  prev="$base"
+  set -- --output "$base" --auto --primary
+  for o in $(connected); do
+    [ "$o" = "$prev" ] && continue
+    set -- "$@" --output "$o" --auto --right-of "$prev"
+    prev="$o"
+  done
+  xrandr "$@" 2>>"$LOG"
+  return 0
+}
 
 case "${1:-}" in
   outputs)
@@ -35,47 +75,67 @@ case "${1:-}" in
     ;;
 
   mirror)
-    outs=$(connected); first=$(echo "$outs" | head -1)
-    [ -n "$first" ] || exit 1
-    set -- --output "$first" --auto --primary
-    for o in $outs; do
-      [ "$o" = "$first" ] && continue
-      set -- "$@" --output "$o" --auto --same-as "$first"
+    base=$(primary_out); [ -z "$base" ] && base=$(connected | head -1)
+    [ -n "$base" ] || exit 1
+    # Clone vero: stessa risoluzione del primario su tutti gli output (cosi' su
+    # monitor con risoluzioni diverse il contenuto viene riprodotto uguale).
+    res=$(cur_res "$base")
+    set -- --output "$base" --mode "$res" --primary
+    for o in $(connected); do
+      [ "$o" = "$base" ] && continue
+      set -- "$@" --output "$o" --mode "$res" --same-as "$base"
     done
-    xrandr "$@"
+    if ! xrandr "$@" 2>>"$LOG"; then
+      echo "mirror: risoluzione $res non supportata, ripiego su --auto" >> "$LOG"
+      set -- --output "$base" --auto --primary
+      for o in $(connected); do
+        [ "$o" = "$base" ] && continue
+        set -- "$@" --output "$o" --auto --same-as "$base"
+      done
+      xrandr "$@" 2>>"$LOG"
+    fi
+    reload_desktop
     ;;
 
   extend)
-    outs=$(connected); prev=""
-    for o in $outs; do
-      if [ -z "$prev" ]; then
-        xrandr --output "$o" --auto --primary
-      else
-        xrandr --output "$o" --auto --right-of "$prev"
-      fi
-      prev="$o"
-    done
+    extend_all
+    reload_desktop
     ;;
 
   only)
     keep="$2"; [ -n "$keep" ] || exit 1
+    set -- --output "$keep" --auto --primary
     for o in $(connected); do
-      if [ "$o" = "$keep" ]; then xrandr --output "$o" --auto --primary
-      else xrandr --output "$o" --off; fi
+      [ "$o" = "$keep" ] && continue
+      set -- "$@" --output "$o" --off
     done
+    xrandr "$@" 2>>"$LOG"
+    reload_desktop
     ;;
 
   mode)
     [ -n "$2" ] && [ -n "$3" ] || exit 1
-    xrandr --output "$2" --mode "$3"
+    xrandr --output "$2" --mode "$3" 2>>"$LOG"
+    reload_desktop
     ;;
 
   primary)
     [ -n "$2" ] || exit 1
-    xrandr --output "$2" --primary
+    xrandr --output "$2" --primary 2>>"$LOG"
+    reload_desktop
+    ;;
+
+  autostart)
+    # All'avvio: se sono connessi 2+ monitor, estende il desktop subito, cosi'
+    # l'output esterno viene preso in carico da X e la console/splash di boot
+    # non resta appiccicata li'. Nessun refresh qui: pcmanfm/pannello/apply
+    # partono dopo e si posizionano gia' sulla configurazione finale.
+    if [ "$(connected | wc -l)" -ge 2 ]; then
+      extend_all
+    fi
     ;;
 
   *)
-    echo "uso: nxs-screens {outputs|modes NOME|mirror|extend|only NOME|mode NOME WxH|primary NOME}" >&2
+    echo "uso: nxs-screens {outputs|modes NOME|mirror|extend|only NOME|mode NOME WxH|primary NOME|autostart}" >&2
     exit 2 ;;
 esac

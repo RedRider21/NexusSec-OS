@@ -14,7 +14,8 @@ import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk  # noqa: E402
 
-from nxs_cc.common import apply_css, info_dialog
+from nxs_cc.common import (apply_css, info_dialog, install_screens_refresh_monitor,
+                           center_toplevel_windows)
 from nxs_cc import views
 
 
@@ -277,5 +278,8 @@ def run() -> int:
         info_dialog("Errore di avvio",
                     "Vedi /tmp/nxs-cc.log per i dettagli.", level="error")
         return 1
+    # Dopo un cambio schermi (nxs-screens) la finestra si ricentra sul monitor
+    # attivo da sola, senza chiudere e riaprire.
+    install_screens_refresh_monitor(center_toplevel_windows)
     Gtk.main()
     return 0
