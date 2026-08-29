@@ -283,11 +283,109 @@ nxs-tool install nmap       # installa un tool
 nxs-tool launch sqlmap      # installa-se-serve ed esegue
 nxs-tool uninstall wpscan   # rimuove un tool
 
-nxs-tool kali <pkg>         # esegue un pacchetto Kali qualsiasi (container)
+nxs-tool kali &lt;pkg&gt;         # esegue un pacchetto Kali qualsiasi (container)
 nxs-tool kali-list          # tool installati nell'ambiente Kali condiviso
 
 nxs-profile                 # selettore grafico dei profili
 nxs-persist status          # stato della persistenza su disco</code></pre>
+
+  <h3>Riferimento completo dei comandi <code>nxs-</code></h3>
+  <p>Tutti i comandi propri di NexusSec hanno il prefisso <code>nxs-</code>. Molti sono
+  richiamati dal pannello o dai menu, ma sono anche <strong>eseguibili a mano dal
+  terminale</strong>. Di seguito l'elenco <strong>completo</strong>, con i rispettivi
+  <strong>sottocomandi</strong>. Quasi tutti stampano l'uso se lanciati con un
+  argomento non valido.</p>
+
+  <h3>Sistema e sessione</h3>
+  <table>
+    <thead><tr><th>Comando</th><th>Cosa fa</th></tr></thead>
+    <tbody>
+      <tr><td class="k">nxs-control-center</td><td>Apre il <strong>Centro di Controllo</strong> (impostazioni di sistema).</td></tr>
+      <tr><td class="k">nxs-panel</td><td>Avvia il pannello inferiore (menu start + tray + applet). Ne parte <strong>uno per monitor</strong>.</td></tr>
+      <tr><td class="k">nxs-terminal</td><td>Apre il terminale (lxterminal, ripiego xterm a tema Nebula).</td></tr>
+      <tr><td class="k">nxs-term <span class="tag">cmd</span></td><td>Esegue un comando dentro un terminale in modo affidabile (usato dai menu).</td></tr>
+      <tr><td class="k">nxs-python</td><td>Apre una shell Python 3.</td></tr>
+      <tr><td class="k">nxs-sysinfo</td><td>Riepilogo sistema (CPU, RAM, versioni) per menu e pannello.</td></tr>
+      <tr><td class="k">nxs-monitor</td><td>Monitor risorse (<code>htop</code>, ripiego <code>top</code>).</td></tr>
+      <tr><td class="k">nxs-diag</td><td>Diagnostica del desktop: binari presenti, profilo attivo, pannello, GTK, log di autostart. Primo comando da lanciare quando il desktop fa qualcosa di strano.</td></tr>
+      <tr><td class="k">nxs-app <span class="tag">app</span></td><td>Lancia un'app GUI; se manca, spiega come installarla con <code>apk</code>.</td></tr>
+      <tr><td class="k">nxs-users</td><td>Gestione utenti. Le password si passano da <strong>stdin</strong>, mai come argomento (in <code>ps</code> sarebbero visibili a tutti).<br><code>list</code> · <code>passwd UTENTE</code> · <code>add UTENTE</code> · <code>del UTENTE</code></td></tr>
+      <tr><td class="k">nxs-datetime</td><td>Ora, data e fuso orario di sistema.<br><code>set-datetime "AAAA-MM-GG hh:mm"</code> · <code>set-tz ZONA</code> · <code>get-tz</code></td></tr>
+      <tr><td class="k">nxs-shutdown</td><td>Spegni / riavvia / esci. Se il supporto è scrivibile fa prima <code>lbu commit</code>, salvando la configurazione.<br><code>poweroff</code> · <code>reboot</code> · <code>logout</code></td></tr>
+      <tr><td class="k">nxs-boot-splash</td><td>Splash di avvio a schermo intero (interno: primo processo dell'autostart).</td></tr>
+      <tr><td class="k">nxs-welcome</td><td>Messaggio di benvenuto nel terminale iniziale (interno).</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Rete</h3>
+  <table>
+    <thead><tr><th>Comando</th><th>Cosa fa</th></tr></thead>
+    <tbody>
+      <tr><td class="k">nxs-wifi</td><td>WiFi via <code>wpa_supplicant</code>. La passphrase si legge da <strong>stdin</strong>, non dagli argomenti.<br><code>iface</code> interfaccia rilevata · <code>status</code> · <code>scan</code> elenco reti · <code>connect SSID</code> (passphrase da stdin) · <code>disconnect</code> · <code>debug</code> diagnostica completa</td></tr>
+      <tr><td class="k">nxs-bluetooth</td><td>Bluetooth via BlueZ: accensione, scansione, abbinamento, trasferimento file OBEX.<br><code>status</code> · <code>adapter</code> · <code>on</code>/<code>off</code> · <code>discoverable on|off</code> · <code>scan [secondi]</code> · <code>devices</code> · <code>info MAC</code> · <code>pair MAC</code> · <code>connect MAC</code> · <code>disconnect MAC</code> · <code>trust MAC</code>/<code>untrust MAC</code> · <code>remove MAC</code> · <code>alias NOME</code><br><code>send MAC FILE</code> invia un file · <code>receive on [CARTELLA]</code>/<code>off</code>/<code>status</code> ricezione (default <code>~/NexusSec-loot</code>)</td></tr>
+      <tr><td class="k">nxs-netinfo</td><td>Stato della rete (interfacce, IP, gateway, DNS) per menu e Centro di Controllo.</td></tr>
+      <tr><td class="k">nxs-firewall</td><td>Firewall <code>nftables</code>: in ingresso tutto chiuso, in uscita libero.<br><code>on</code> · <code>off</code> · <code>status</code> · <code>allow PORTA[/tcp|/udp]</code> · <code>deny PORTA</code> · <code>boot</code><br><em>Per pentest:</em> per mettersi in <strong>ascolto</strong> serve un <code>allow</code> della porta, oppure <code>off</code>.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Audio, video e cattura</h3>
+  <table>
+    <thead><tr><th>Comando</th><th>Cosa fa</th></tr></thead>
+    <tbody>
+      <tr><td class="k">nxs-audio</td><td>Volume e uscite audio (PipeWire / <code>wpctl</code>).<br><code>get</code> · <code>set PERCENTUALE</code> · <code>up</code>/<code>down</code> · <code>mute</code> · <code>sinks</code> elenca le uscite · <code>default ID</code></td></tr>
+      <tr><td class="k">nxs-audio-unmute</td><td>Sblocca e alza l'audio su <strong>tutti</strong> i livelli (ALSA + PipeWire) con ritentativi. Parte da solo all'avvio: su macchina reale il codec spesso nasce muto.</td></tr>
+      <tr><td class="k">nxs-player</td><td>Lettore audio (GTK3 + GStreamer).</td></tr>
+      <tr><td class="k">nxs-video</td><td>Visualizzatore video (GTK3 + GStreamer).</td></tr>
+      <tr><td class="k">nxs-screenshot</td><td>Screenshot a schermo intero salvato in <code>/tmp</code> (<code>scrot</code>), con notifica.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Schermo e aspetto</h3>
+  <table>
+    <thead><tr><th>Comando</th><th>Cosa fa</th></tr></thead>
+    <tbody>
+      <tr><td class="k">nxs-screens</td><td>Monitor e risoluzioni via <code>xrandr</code>.<br><code>outputs</code> · <code>modes NOME</code> · <code>mirror</code> duplica · <code>extend</code> estende · <code>only NOME</code> · <code>mode NOME LxA</code> · <code>primary NOME</code><br><code>autostart</code> · <code>policy</code> · <code>get-policy</code>/<code>set-policy mirror|extend</code> comportamento automatico · <code>lid</code> stato del coperchio</td></tr>
+      <tr><td class="k">nxs-screens-watch</td><td>Demone che <strong>riallinea gli schermi da solo</strong> quando colleghi o scolleghi un monitor, o chiudi il coperchio. Parte dall'autostart.<br>Senza di lui un monitor collegato dopo l'avvio resta spento (ci si vede solo la splash del kernel), perché un output <em>connesso ma senza CRTC</em> non viene mai disegnato da X.</td></tr>
+      <tr><td class="k">nxs-brightness</td><td>Luminosità dello schermo.<br><code>get</code> · <code>set VALORE</code> · <code>up</code>/<code>down</code> <span class="tag">passo%</span></td></tr>
+      <tr><td class="k">nxs-battery</td><td>Batteria e alimentazione da <code>/sys/class/power_supply</code>.<br><code>status</code> · <code>info</code></td></tr>
+      <tr><td class="k">nxs-screensaver</td><td>Salvaschermo animato (GTK3 + Cairo). Accetta il nome dell'animazione, es. <code>nxs-screensaver nebula</code>.</td></tr>
+      <tr><td class="k">nxs-screensaver-idle</td><td>Avvia il salvaschermo dopo N minuti di inattività (<code>xautolock</code>).<br><code>start</code> · <code>stop</code> · <code>restart</code> — configurazione in <code>~/.config/nxs/screensaver.conf</code></td></tr>
+      <tr><td class="k">nxs-lxappearance</td><td>Configuratore del tema GTK (wrapper di <code>lxappearance</code>).</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Profili, strumenti e navigazione</h3>
+  <table>
+    <thead><tr><th>Comando</th><th>Cosa fa</th></tr></thead>
+    <tbody>
+      <tr><td class="k">nxs-tool</td><td>La CLI principale: profili operativi e arsenale on-demand (vedi gli esempi qui sopra).<br><code>profiles</code> · <code>profile NOME</code> · <code>apply</code> · <code>list</code> · <code>install TOOL</code> · <code>run TOOL</code> · <code>launch TOOL</code> · <code>uninstall TOOL</code> · <code>kali PACCHETTO</code> · <code>kali-list</code></td></tr>
+      <tr><td class="k">nxs-profile</td><td>Selettore <strong>grafico</strong> del profilo operativo (Pentest, Forensics, OSINT, Web).</td></tr>
+      <tr><td class="k">nxs-run-tool <span class="tag">tool</span></td><td>Esegue un tool dal menu tenendo aperto il terminale a fine esecuzione.</td></tr>
+      <tr><td class="k">nxs-wizard</td><td>Procedure guidate. Senza argomenti apre la GUI.<br><code>list</code> · <code>run NOME</code></td></tr>
+      <tr><td class="k">nxs-browser</td><td>Browser stealth integrato (Tor di default, nessuna traccia locale).</td></tr>
+      <tr><td class="k">nxs-ai-sandbox</td><td>Sandbox <code>bubblewrap</code> per il (futuro) agente AI: root in sola lettura, home isolata, rete esclusa di default.<br><code>nxs-ai-sandbox [--net] [--workspace CARTELLA] -- COMANDO</code></td></tr>
+    </tbody>
+  </table>
+
+  <h3>Persistenza, disco e forense</h3>
+  <table>
+    <thead><tr><th>Comando</th><th>Cosa fa</th></tr></thead>
+    <tbody>
+      <tr><td class="k">nxs-disks</td><td>Dischi e partizioni. Senza argomenti apre la <strong>finestra grafica</strong>; con un argomento stampa in testo.<br><code>--lista</code> · <code>--lista-completa</code> include lo spazio non allocato · <code>--partizioni</code> · <code>--liberi DISCO</code><br>I dischi si <strong>vedono sempre</strong> ma non vengono <strong>mai</strong> montati da soli, e il montaggio è in <strong>sola lettura</strong> salvo richiesta esplicita: la distro è anche forense. Non usa <code>udisks2</code> né <code>gvfs</code> (che serve proprio ad automontare), ma <code>lsblk</code>, <code>findmnt</code>, <code>parted</code> e <code>cryptsetup</code>.</td></tr>
+      <tr><td class="k">nxs-install</td><td>Installazione su disco e persistenza. Mostra il contenuto dei dischi (tramite <code>nxs-disks</code>) <em>prima</em> di scriverci, e chiede di riscrivere il percorso per confermare.<br><strong>1</strong> guidata (<code>setup-alpine</code>) · <strong>2</strong> disco intero (cancella tutto) · <strong>3</strong> <strong>a fianco</strong>: installa in una partizione esistente o nello spazio libero, lasciando intatto il resto (Windows compreso) · <strong>4-5</strong> persistenza live · <strong>d</strong> mostra i dischi</td></tr>
+      <tr><td class="k">nxs-persist</td><td>Partizione dati persistente <code>NXSDATA</code>: ci finiscono arsenale, stato dei tool, bottino e <strong>reti WiFi salvate e abbinamenti Bluetooth</strong>, così al riavvio non si reinserisce la password né si rifà il pairing.<br><code>status</code> · <code>nxs-persist /dev/sdX1</code> prepara la partizione</td></tr>
+      <tr><td class="k">nxs-unlock-data</td><td>Sblocca e monta la persistenza <strong>cifrata</strong> (LUKS2, etichetta <code>NXSCRYPT</code>). Chiamato dal login prima di <code>startx</code>.<br><code>login</code> · <code>status</code></td></tr>
+      <tr><td class="k">nxs-writeblock</td><td>Write-blocker forense a livello di <strong>blocco</strong> (<code>blockdev --setro</code>): più forte del solo <code>mount -o ro</code>, perché nessuno strumento può scrivere — nemmeno il replay del journal al montaggio. Agganciato al profilo <em>Forensics</em>, inerte negli altri.<br><code>on</code> · <code>off</code> · <code>status</code> · <code>lock DEVICE</code> · <code>unlock DEVICE</code><br>Il supporto di avvio e <code>NXSDATA</code> non vengono mai toccati.</td></tr>
+      <tr><td class="k">nxs-harden</td><td>Irrobustimento del sistema <strong>installato</strong> (sulla live resta comoda: autologin e <code>doas</code> senza password).<br><code>status</code> · <code>apply</code> · <code>password</code> · <code>autologin on|off</code> · <code>doas pass|nopass</code> · <code>lockvt on|off</code> blocca il cambio VT</td></tr>
+    </tbody>
+  </table>
+
+  <div class="note">Se il <strong>WiFi non si connette</strong>, il primo comando da
+  lanciare è <code>nxs-wifi debug</code>: dice se l'interfaccia è rilevata, se la
+  radio è bloccata (<em>rfkill</em>), se il <strong>firmware</strong> della scheda è
+  stato caricato e quale client DHCP è disponibile. Con questi dati la causa è quasi
+  sempre immediata (radio bloccata, firmware mancante o password errata).</div>
+
   <div class="note">NexusSec è Alpine: libc <strong>musl</strong> (non glibc),
   init <strong>OpenRC</strong> (non systemd), privilegi con <code>doas</code>. I
   binari pensati per glibc arrivano via container (metodo <code>kali</code>/<code>ctr</code>).</div>
