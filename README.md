@@ -117,7 +117,7 @@ Legenda metodo: `apk` nativo Alpine · `pip` (pipx) · `ctr` container Podman ·
 > Catalogo completo in `overlay/usr/local/share/nexussec/{profiles,repo}.json`
 > (**443 tool**). I tool non presenti nei repo Alpine sono forniti on-demand via
 > container Kali condiviso, container Podman, pip, o compilati come piccoli
-> pacchetti apk nel repo `nexussec`. Nessuno e' preinstallato: la ISO resta ~0.5 GB.
+> pacchetti apk nel repo `nexussec`. Nessuno e' preinstallato: la ISO resta ~0.7 GB.
 
 <details>
 <summary><b>Mostra tutti i 443 strumenti del catalogo</b> (per categoria, con metodo e presenza in Kali/Parrot)</summary>
@@ -591,7 +591,7 @@ Legenda metodo: `apk` nativo Alpine · `pip` (pipx) · `ctr` container Podman ·
 
 | Risorsa | Kali (default) | Parrot Security | **NexusSec** |
 |---|---|---|---|
-| Dimensione ISO | ~3.8–4 GB | ~2.0–2.2 GB | **~0.5 GB** (Bilanciata) |
+| Dimensione ISO | ~3.8–4 GB | ~2.0–2.2 GB | **~0.7 GB** (Bilanciata) |
 | Tool preinstallati | 600+ | 600+ | **0** (on-demand) |
 | RAM minima | 2 GB (8 consigliati) | 2 GB | **2 GB** |
 | RAM a riposo (live) | ~1 GB | ~0.5 GB | **~0.3–0.4 GB** |
@@ -616,6 +616,101 @@ Legenda metodo: `apk` nativo Alpine · `pip` (pipx) · `ctr` container Podman ·
   on-demand via apk.
 - Lanciatori sul desktop (pcmanfm) + menu tasto destro Openbox.
 
+## HORUS — Occhio OSINT globale
+
+**HORUS** (`nxs-horus`) è la plancia OSINT/GEOINT di NexusSec: una **mappa
+mondiale** con i feed pubblici in tempo reale e un **pannello di ricognizione**
+che pilota gli strumenti già installati nel profilo.
+
+### Da dove nasce il nome
+
+Il progetto prende spunto da **OSIRIS**, la nota dashboard OSINT commerciale. Nel
+mito egizio **Horus è il figlio di Osiris** (e di Iside): colui che raccoglie
+l'eredità del padre, lo veglia e lo protegge. HORUS è, allo stesso modo, il
+**discendente di quell'idea** — ma ripensato per NexusSec: **locale, privato,
+senza SaaS né token**. Il simbolo è l'**Occhio di Horus** (il *Wedjat*),
+nell'antico Egitto l'occhio che *tutto vede*, emblema di protezione e visione:
+esattamente il ruolo di una plancia che osserva il mondo intero. Da qui il logo
+— l'occhio di Horus stilizzato in cyan neon con, al posto della pupilla, un
+**piccolo globo** con i meridiani: *l'occhio che vede il globo*.
+
+### Perché è meglio di una dashboard in cloud
+
+- Gira **in locale**: gli scan partono dal **tuo** IP (o da **Tor**, se attivo),
+  non dai server di terzi che vedrebbero cosa cerchi.
+- Le sorgenti sono **pubbliche e per lo più keyless**; le poche chiavi
+  facoltative (AIS globale, AIS premium) restano **solo sul tuo computer**
+  (`~/.config/nxs`), non entrano nella distro e non si condividono.
+- **Nessun limite regionale**: i feed coprono **tutto il globo**.
+
+### Feed globali (mondiali, tutti attivabili)
+
+| Feed | Sorgente | Cosa mostra |
+|---|---|---|
+| Terremoti (24h) | USGS | sismi mondiali delle ultime 24 ore |
+| Voli in tempo reale | OpenSky | aerei ADS-B (campione mondiale) |
+| Vulcani attivi | Smithsonian GVP | vulcani con eruzione recente (incl. Etna) |
+| Incendi mondiali | NASA EONET | incendi attivi (eventi aperti) |
+| Cavi sottomarini | TeleGeography | dorsali dati oceaniche |
+| Stazione ISS | wheretheiss.at | posizione attuale della ISS |
+| **Satelliti** | CelesTrak (TLE) | orbite calcolate **live nel browser** (stazioni, GPS, Galileo, GLONASS, BeiDou, meteo, NOAA, GOES, geostazionari) |
+| **Telecamere del traffico** | reti pubbliche ufficiali | webcam stradali **keyless**: TfL Londra (con clip video), Caltrans California, Ontario 511, Digitraffic Finlandia, NZTA Nuova Zelanda |
+| **Navi (AIS)** | aisstream.io | traffico marittimo mondiale **in streaming continuo** (con chiave gratuita); senza chiave, Digitraffic (Nord Europa) |
+
+La **mappa nera** (Esri Dark) è quella di default; un selettore in alto a destra
+cambia vista in **satellite** (Esri), **strade** (OSM) o **chiara** (Esri).
+
+### Aggiornamento in tempo reale e persistenza
+
+- Ogni layer è tenuto in **aggiornamento continuo**: un interruttore *master*
+  accende/spegne il flusso, uno slider fissa la cadenza (5–60 s) dei layer in
+  movimento (navi, voli, ISS, satelliti); gli altri si ri-verificano al loro
+  ritmo.
+- L'ultima risposta di ogni feed è **memorizzata in IndexedDB** e la mappa viene
+  disegnata da lì: all'apertura rivedi **subito** l'ultimo stato (anche offline).
+- Le **navi** usano un **flusso WebSocket permanente** lato backend, con
+  sottoscrizione mondiale, che **accumula** di continuo (lo store si popola nel
+  tempo su tutti i continenti). NB: la rete *gratuita* di aisstream vive di
+  ricevitori volontari, quindi alcune aree (es. Golfo Persico) restano scoperte:
+  per coprirle serve una **chiave AIS satellitare a pagamento**, che ognuno può
+  inserire nelle Impostazioni (mai distribuita).
+- I **satelliti** sono propagati dai TLE **nel browser** con `satellite.js`
+  (nessun WebGL): niente carico sul backend e movimento fluido.
+
+### Altri strumenti
+
+- **GEOINT**: dato un IP o un dominio, HORUS lo geolocalizza sulla mappa
+  (ipwho.is) e ne raccoglie porte aperte, CVE e hostname da Shodan InternetDB
+  (keyless). La query parte dal tuo IP o da Tor.
+- **Ricerca per area**: disegni un riquadro e ottieni voli (OpenSky) e terremoti
+  (USGS) di quell'area.
+- **Report d'indagine**: ricognizioni e GEOINT confluiscono in un dossier
+  salvabile come **report HTML autonomo** in `~/NexusSec-loot/horus/`.
+- **Ticker news** in basso, con un **catalogo di fonti mondiali raggruppate per
+  zona** (Italia, Europa, Nord America, America Latina, Russia, Cina, Medio
+  Oriente, Asia/Pacifico, Oceania, Africa) selezionabili dal pannello
+  Impostazioni, più feed RSS personalizzati. Le testate vengono aggregate **in
+  parallelo** e ordinate per data. Include una **modalità lettura**: l'articolo
+  viene estratto e mostrato pulito in una finestrella, anche quando il sito
+  vieta l'incorporamento.
+- **Ricognizione** (dal tuo IP / Tor): esegue **solo strumenti in whitelist** già
+  presenti, con l'obiettivo **validato per tipo** e passato come lista di
+  argomenti (mai a una shell): `whois`, `dig`, `nmap`, `maigret`, `h8mail`,
+  `holehe`, `subfinder`, `theHarvester`. I mancanti si installano on-demand.
+- **Telefono**: PhoneInfoga avviato on-demand e mostrato in iframe.
+
+### Come è fatto
+
+- **Python GTK3 + WebKit2** (stesso stack di `nxs-browser`, già nella base:
+  nessuna dipendenza nuova). Frontend **Leaflet** vendorizzato nell'overlay —
+  2D e non WebGL, perché lo stack grafico della live gira in software rendering.
+- Un **backend locale** legato a **`127.0.0.1`** fa da proxy ai feed (aggira la
+  CORS e, se Tor è su, instrada le richieste sul suo circuito) e tiene aperto il
+  flusso AIS. Il traffico browser↔backend resta su loopback (non serve HTTPS lì);
+  i feed esterni sono **sempre HTTPS**.
+- Librerie vendorizzate nell'overlay (offline-ready): Leaflet, `satellite.js`,
+  PySocks (Tor). Nessuna CDN a runtime.
+
 ## Build (richiede Alpine)
 
 La build dell'ISO va fatta **su Alpine** (`abuild` + `mkimage.sh`). Passi
@@ -627,6 +722,18 @@ completi in [`build-alpine/README.md`](build-alpine/README.md):
 4. `mkimage.sh --profile nexussec` — costruisce `out/nexussec-*.iso` (~150-200 MB),
    iniettando l'apkovl generato da `build-alpine/genapkovl-nexussec.sh`.
 5. Test: `qemu-system-x86_64 -m 2048 -cdrom out/nexussec-*.iso -boot d`.
+
+### Immagini, architetture e release
+
+- L'immagine ufficiale corrente è **x86_64** (PC/laptop, BIOS+EFI).
+- **ARM64 (aarch64)** prosegue in **sviluppo parallelo**: le build funzionano su
+  hardware reale (è l'emulatore di build a piantarsi sul C++ pesante) e tornano
+  come asset una volta stabilizzate. Sono allo studio anche **altri formati di
+  distribuzione** per hardware diverso — immagini dedicate a **Raspberry Pi** e
+  altre single-board.
+- **Policy release**: sulle GitHub Releases si tiene allegata **solo l'ISO più
+  recente** (per contenere lo spazio); le **note di ogni versione** restano
+  consultabili nello storico delle release anche senza l'ISO.
 
 ## Layout repository
 
