@@ -1191,8 +1191,11 @@ function plotCaseEntries() {
   caseLayer.clearLayers();
   dossier.forEach(e => {
     if (typeof e.lat !== "number" || typeof e.lon !== "number") return;
-    L.circleMarker([e.lat, e.lon], { radius: 6, color: "#ffb000", weight: 2,
-      fillColor: "#ffb000", fillOpacity: .5 })
+    // Con una finestra temporale attiva, fuori-finestra = marcatore attenuato.
+    const on = (typeof inCaseWindow === "function") ? inCaseWindow(e) : true;
+    L.circleMarker([e.lat, e.lon], { radius: on ? 6 : 4, color: "#ffb000",
+      weight: on ? 2 : 1, fillColor: "#ffb000", fillOpacity: on ? .5 : .12,
+      opacity: on ? 1 : .3 })
       .bindPopup(popup(dossierLabel(e.type) + ": " + e.title,
         [["Quando", esc(e.time)], ["Fonte", esc(e.via || "")]]))
       .addTo(caseLayer);
@@ -1294,7 +1297,7 @@ function addDossier(kind, title, detail, extra) {
 const DOSSIER_LABEL = {
   geoint: "GEOINT", recon: "Ricognizione", socmint: "SOCMINT",
   email: "Email", correlazione: "Correlazione", area: "Area",
-  exif: "Metadati foto", nota: "Nota",
+  exif: "Metadati foto", nota: "Nota", news: "Notizia",
 };
 function dossierLabel(t) { return DOSSIER_LABEL[t] || t; }
 function renderDossier() {
@@ -1320,6 +1323,8 @@ function renderDossier() {
   }
   dossier.forEach((e, i) => {
     const li = document.createElement("li");
+    li.dataset.i = i;
+    if (!inCaseWindow(e)) li.classList.add("tl-out");
     let meta = e.time + " · " + esc(e.via);
     if (e.lat != null) meta += " · &#128205; " + e.lat.toFixed(4) + ", " + e.lon.toFixed(4);
     li.innerHTML = '<div class="rk">' + esc(dossierLabel(e.type)) + "</div><div class='rt'>" +
@@ -1327,11 +1332,121 @@ function renderDossier() {
       '<button class="rep-del" data-i="' + i + '" title="Rimuovi questa voce">&times;</button>';
     ul.appendChild(li);
   });
-  ul.querySelectorAll(".rep-del").forEach(b => b.addEventListener("click", () => {
-    dossier.splice(parseInt(b.dataset.i, 10), 1); renderDossier(); plotCaseEntries();
+  ul.querySelectorAll(".rep-del").forEach(b => b.addEventListener("click", (ev) => {
+    ev.stopPropagation();
+    dossier.splice(parseInt(b.dataset.i, 10), 1); renderDossier();
   }));
+  renderTimeline();
+  plotCaseEntries();
   updateCaseIndicator();
 }
+
+// --- Timeline temporale del fascicolo --------------------------------------
+// Una striscia con un punto per ogni voce datata; trascinando si seleziona una
+// finestra che evidenzia le voci (elenco + marcatori sulla mappa) in quel
+// periodo. Un clic su un punto porta la mappa sulla voce (se georiferita).
+let caseWindow = null;                     // {from, to} in ms, oppure null = tutto
+function entryMs(e) {
+  const t = Date.parse(e.iso || "");
+  if (!isNaN(t)) return t;
+  const t2 = Date.parse(e.time || "");
+  return isNaN(t2) ? null : t2;
+}
+function inCaseWindow(e) {
+  if (!caseWindow) return true;
+  const t = entryMs(e);
+  if (t == null) return true;              // voci senza data: sempre visibili
+  return t >= caseWindow.from && t <= caseWindow.to;
+}
+const TL_TYPE_COLOR = {
+  geoint: "#00e5ff", recon: "#7dffa8", socmint: "#b78cff", email: "#ffd166",
+  area: "#ff9a5a", correlazione: "#7ee0ff", exif: "#ff5a8a", news: "#c8f5ff", nota: "#5a8a9a",
+};
+function renderTimeline() {
+  const box = document.getElementById("report-timeline");
+  const svg = document.getElementById("tl-svg");
+  if (!box || !svg) return;
+  const dated = dossier.map((e, i) => ({ i: i, t: entryMs(e), e: e })).filter(x => x.t != null);
+  if (dated.length < 2) { box.hidden = true; caseWindow = null; return; }
+  box.hidden = false;
+  let tmin = Math.min.apply(null, dated.map(x => x.t));
+  let tmax = Math.max.apply(null, dated.map(x => x.t));
+  if (tmax === tmin) tmax = tmin + 1;
+  const W = 100, H = 30, pad = 3;
+  const X = t => pad + (t - tmin) / (tmax - tmin) * (W - 2 * pad);
+  svg.setAttribute("viewBox", "0 0 " + W + " " + H);
+  svg.setAttribute("preserveAspectRatio", "none");
+  let inner = '<line x1="' + pad + '" y1="' + (H / 2) + '" x2="' + (W - pad) +
+    '" y2="' + (H / 2) + '" class="tl-axis"/>';
+  if (caseWindow) {
+    const x1 = X(Math.max(tmin, caseWindow.from)), x2 = X(Math.min(tmax, caseWindow.to));
+    inner += '<rect x="' + x1 + '" y="2" width="' + Math.max(0.5, x2 - x1) +
+      '" height="' + (H - 4) + '" class="tl-brush"/>';
+  }
+  dated.forEach(x => {
+    const col = TL_TYPE_COLOR[x.e.type] || "#00e5ff";
+    const on = inCaseWindow(x.e);
+    inner += '<circle cx="' + X(x.t).toFixed(2) + '" cy="' + (H / 2) +
+      '" r="' + (on ? 2.4 : 1.6) + '" fill="' + col + '" fill-opacity="' +
+      (on ? 1 : 0.3) + '" class="tl-dot" data-i="' + x.i + '"><title>' +
+      esc(dossierLabel(x.e.type) + " · " + (x.e.time || "")) + "</title></circle>";
+  });
+  svg.innerHTML = inner;
+  const fmt = ms => new Date(ms).toLocaleDateString();
+  const rng = document.getElementById("tl-range");
+  if (rng) rng.textContent = caseWindow
+    ? (fmt(caseWindow.from) + " – " + fmt(caseWindow.to))
+    : (fmt(tmin) + " – " + fmt(tmax));
+  const reset = document.getElementById("tl-reset");
+  if (reset) reset.hidden = !caseWindow;
+  // interazione: drag = finestra; clic su un punto = vai alla voce
+  svg._tl = { tmin: tmax === tmin ? tmin : tmin, tmax: tmax, W: W, pad: pad };
+}
+(function initTimeline() {
+  const svg = document.getElementById("tl-svg");
+  const reset = document.getElementById("tl-reset");
+  if (!svg) return;
+  const tAt = (clientX) => {
+    const r = svg.getBoundingClientRect();
+    const st = svg._tl; if (!st) return null;
+    const frac = Math.max(0, Math.min(1, (clientX - r.left) / r.width));
+    // riconverti da coord X (con pad) a tempo
+    const xLogic = frac * st.W;
+    const inner = Math.max(0, Math.min(1, (xLogic - st.pad) / (st.W - 2 * st.pad)));
+    return st.tmin + inner * (st.tmax - st.tmin);
+  };
+  let down = null, moved = false;
+  svg.addEventListener("pointerdown", ev => {
+    down = tAt(ev.clientX); moved = false;
+    try { svg.setPointerCapture(ev.pointerId); } catch (e) {}
+  });
+  svg.addEventListener("pointermove", ev => {
+    if (down == null) return;
+    const t = tAt(ev.clientX);
+    if (t == null) return;
+    if (Math.abs(ev.movementX) > 0) moved = true;
+    caseWindow = { from: Math.min(down, t), to: Math.max(down, t) };
+    renderDossier();
+  });
+  svg.addEventListener("pointerup", ev => {
+    try { svg.releasePointerCapture(ev.pointerId); } catch (e) {}
+    if (!moved) {
+      // clic secco: se su un punto vai alla voce; altrimenti azzera finestra
+      const dot = ev.target.closest && ev.target.closest(".tl-dot");
+      if (dot) {
+        const e = dossier[parseInt(dot.dataset.i, 10)];
+        if (e && e.lat != null && e.lon != null) { map.setView([e.lat, e.lon], Math.max(map.getZoom(), 6)); }
+        const li = document.querySelector('#report-list li[data-i="' + dot.dataset.i + '"]');
+        if (li) { li.classList.add("rep-flash"); setTimeout(() => li.classList.remove("rep-flash"), 1200);
+          li.scrollIntoView({ block: "nearest" }); }
+      } else { caseWindow = null; renderDossier(); }
+    } else if (caseWindow && (caseWindow.to - caseWindow.from) < 1000) {
+      caseWindow = null; renderDossier();     // finestra troppo stretta -> annulla
+    }
+    down = null;
+  });
+  if (reset) reset.addEventListener("click", () => { caseWindow = null; renderDossier(); });
+})();
 renderDossier();
 // Ricorda titolo/analista tra le sessioni.
 try {
@@ -1372,6 +1487,115 @@ document.getElementById("report-save").addEventListener("click", async () => {
   } catch (e) { note.textContent = "Errore: " + (e.message || e); }
 });
 document.getElementById("report-clear").addEventListener("click", newCase);
+
+// --- Esportazioni fascicolo: indicatori (CSV / STIX) + stampa PDF -----------
+function _dl(name, text, mime) {                 // download via Blob (come SVG/GeoJSON)
+  const blob = new Blob([text], { type: mime || "text/plain;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+}
+// Estrae gli indicatori (IP, dominio, email) da tutte le voci del dossier.
+function extractIndicators() {
+  const RE_EMAIL = /\b[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}\b/g;
+  const RE_IP = /\b(?:\d{1,3}\.){3}\d{1,3}\b/g;
+  const RE_DOMAIN = /\b(?:[a-z0-9](?:[a-z0-9\-]{0,61}[a-z0-9])?\.)+[a-z]{2,24}\b/gi;
+  const BAD_TLD = /\.(html?|php|json|xml|css|js|png|jpe?g|gif|svg|txt|pdf|aspx?)$/i;
+  const okIp = s => s.split(".").every(o => { const n = +o; return o.length && n >= 0 && n <= 255; });
+  const map = new Map();                          // "type|value" -> {type,value,sources:Set}
+  const add = (type, value, src) => {
+    value = value.trim().toLowerCase(); if (!value) return;
+    const k = type + "|" + value;
+    if (!map.has(k)) map.set(k, { type: type, value: value, sources: new Set() });
+    if (src) map.get(k).sources.add(src);
+  };
+  dossier.forEach(e => {
+    const src = e.title || dossierLabel(e.type);
+    const text = [e.detail || "", e.target || "", (e.tags || []).join(" ")].join(" ");
+    (text.match(RE_EMAIL) || []).forEach(x => add("email", x, src));
+    const emails = new Set((text.match(RE_EMAIL) || []).map(x => x.toLowerCase()));
+    (text.match(RE_IP) || []).forEach(x => { if (okIp(x)) add("ipv4-addr", x, src); });
+    (text.match(RE_DOMAIN) || []).forEach(x => {
+      const d = x.toLowerCase();
+      if (BAD_TLD.test(d) || /^\d+\.\d+\.\d+\.\d+$/.test(d)) return;
+      let inMail = false; emails.forEach(m => { if (m.endsWith("@" + d)) inMail = true; });
+      if (!inMail) add("domain-name", d, src);
+    });
+  });
+  return Array.from(map.values()).map(x => ({ type: x.type, value: x.value,
+    sources: Array.from(x.sources) }));
+}
+function exportIndicatorsCSV() {
+  const ind = extractIndicators();
+  if (!ind.length) { document.getElementById("report-note").textContent = "Nessun indicatore nel dossier."; return; }
+  const q = s => '"' + String(s).replace(/"/g, '""') + '"';
+  let csv = "tipo,valore,fonti\n";
+  ind.forEach(i => { csv += [q(i.type), q(i.value), q(i.sources.join("; "))].join(",") + "\n"; });
+  _dl("horus-indicatori-" + Date.now() + ".csv", csv, "text/csv;charset=utf-8");
+}
+function exportIndicatorsSTIX() {
+  const ind = extractIndicators();
+  if (!ind.length) { document.getElementById("report-note").textContent = "Nessun indicatore nel dossier."; return; }
+  const now = new Date().toISOString();
+  const pat = i => {
+    if (i.type === "ipv4-addr") return "[ipv4-addr:value = '" + i.value + "']";
+    if (i.type === "domain-name") return "[domain-name:value = '" + i.value + "']";
+    if (i.type === "email") return "[email-addr:value = '" + i.value + "']";
+    return "[x-misc:value = '" + i.value + "']";
+  };
+  const uuid = () => (crypto && crypto.randomUUID) ? crypto.randomUUID()
+    : "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, c => {
+        const r = Math.random() * 16 | 0; return (c === "x" ? r : (r & 0x3 | 0x8)).toString(16); });
+  const title = (document.getElementById("report-title").value || "HORUS dossier").trim();
+  const objects = ind.map(i => ({
+    type: "indicator", spec_version: "2.1", id: "indicator--" + uuid(),
+    created: now, modified: now, name: i.value,
+    description: "Fonti: " + (i.sources.join("; ") || "—"),
+    indicator_types: ["anomalous-activity"], pattern: pat(i),
+    pattern_type: "stix", valid_from: now,
+  }));
+  const bundle = { type: "bundle", id: "bundle--" + uuid(), _horus: title, objects: objects };
+  _dl("horus-stix-" + Date.now() + ".json", JSON.stringify(bundle, null, 2), "application/json");
+}
+// Stampa/PDF: rende una versione pulita del dossier in un iframe e la stampa
+// (l'utente sceglie "Salva come PDF"). Niente popup: l'iframe e' affidabile.
+function printDossierPDF() {
+  if (!dossier.length) { document.getElementById("report-note").textContent = "Il dossier è vuoto."; return; }
+  const title = esc(document.getElementById("report-title").value.trim() || "Fascicolo HORUS");
+  const op = esc(document.getElementById("report-operator").value.trim());
+  const obj = esc(document.getElementById("report-objective").value.trim());
+  let rows = dossier.map(e => {
+    let meta = e.time + " · " + esc(e.via || "");
+    if (e.lat != null) meta += " · " + e.lat.toFixed(4) + ", " + e.lon.toFixed(4);
+    return '<div class="pe"><div class="pk">' + esc(dossierLabel(e.type)) + '</div>' +
+      '<div class="pt">' + esc(e.title || "") + '</div>' +
+      '<div class="pd">' + esc(e.detail || "").replace(/\n/g, "<br>") + '</div>' +
+      '<div class="pm">' + meta + '</div></div>';
+  }).join("");
+  const gsvg = (typeof window.HORUS_graphSVG === "string") ? window.HORUS_graphSVG : "";
+  const html = '<!doctype html><meta charset="utf-8"><title>' + title + '</title><style>' +
+    'body{font:13px/1.5 system-ui,sans-serif;color:#111;margin:24px}' +
+    'h1{font-size:20px;margin:0 0 4px}.sub{color:#555;margin:0 0 16px}' +
+    '.pe{border:1px solid #ccc;border-radius:6px;padding:8px 10px;margin:0 0 8px;break-inside:avoid}' +
+    '.pk{font-size:11px;color:#06c;font-weight:700;text-transform:uppercase}' +
+    '.pt{font-weight:600;margin:2px 0}.pd{white-space:normal;color:#222}.pm{color:#777;font-size:11px;margin-top:4px}' +
+    'svg{max-width:100%;height:auto;border:1px solid #ccc;border-radius:6px;margin-top:10px}' +
+    '@media print{body{margin:0}}</style>' +
+    '<h1>' + title + '</h1><p class="sub">' +
+    (op ? "Operatore: " + op + " · " : "") + dossier.length + " voci" +
+    (obj ? '<br>Obiettivo: ' + obj : "") + '</p>' + rows +
+    (gsvg ? '<h2 style="font-size:15px">Grafo relazioni</h2>' + gsvg : "");
+  let ifr = document.getElementById("print-frame");
+  if (!ifr) { ifr = document.createElement("iframe"); ifr.id = "print-frame";
+    ifr.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0"; document.body.appendChild(ifr); }
+  const doc = ifr.contentWindow.document;
+  doc.open(); doc.write(html); doc.close();
+  setTimeout(() => { ifr.contentWindow.focus(); ifr.contentWindow.print(); }, 300);
+}
+document.getElementById("report-csv").addEventListener("click", exportIndicatorsCSV);
+document.getElementById("report-stix").addEventListener("click", exportIndicatorsSTIX);
+document.getElementById("report-pdf").addEventListener("click", printDossierPDF);
 
 // ---------------------------------------------------------------------------
 // GEOINT: geolocalizza IP/dominio + Shodan, e lo mette sulla mappa.
@@ -1521,12 +1745,22 @@ function stopTickerScroll() {              // per i messaggi fissi (loading, esi
   tickerHalf = 0; tickerX = 0;
   tickerTrack.style.transform = "translateX(0)";
 }
+function newsFilters() {                    // finestra temporale + lingua (ricerca 360°)
+  const df = document.getElementById("ticker-df");
+  const lang = document.getElementById("ticker-lang");
+  return { df: df ? df.value : "", lang: lang ? lang.value : "it" };
+}
 async function loadNews(query) {
   if (typeof query === "string") newsQuery = query.trim();
   const seq = ++newsSeq;
   const clearBtn = document.getElementById("ticker-q-clear");
   if (clearBtn) clearBtn.hidden = !newsQuery;
-  const url = newsQuery ? ("api/news?q=" + encodeURIComponent(newsQuery)) : "api/news";
+  let url = "api/news";
+  if (newsQuery) {
+    const f = newsFilters();
+    url += "?q=" + encodeURIComponent(newsQuery) +
+      (f.df ? "&df=" + f.df : "") + "&lang=" + encodeURIComponent(f.lang);
+  }
   try {
     tickerTrack.textContent = newsQuery
       ? ("  Ricerca 360° in corso: " + newsQuery + " … (fino a ~30s)")
@@ -1553,11 +1787,15 @@ async function loadNews(query) {
     // Contenuto DUPLICATO: lo scorrimento JS ricicla a meta' larghezza -> loop senza stacco.
     const pre = newsQuery
       ? '<span class="news-scope">360°: ' + esc(clip(newsQuery)) + '</span><span class="sep">•</span>' : "";
-    const build = () => arts.map(a =>
-      '<a class="news-item" href="' + esc(a.url) + '" data-title="' + esc(a.title) +
-      '" data-src="' + esc(a.domain) + '">' + esc(clip(a.title)) +
-      ' <span class="dom">(' + esc(a.domain) + ')</span></a>' +
-      '<span class="sep">•</span>').join("");
+    const build = () => arts.map(a => {
+      const more = (a.sources_count > 1)
+        ? ' <span class="news-more" title="' + esc((a.sources || []).join(", ")) +
+          '">+' + (a.sources_count - 1) + ' fonti</span>' : "";
+      return '<a class="news-item" href="' + esc(a.url) + '" data-title="' + esc(a.title) +
+        '" data-src="' + esc(a.domain) + '">' + esc(clip(a.title)) +
+        ' <span class="dom">(' + esc(a.domain) + ')</span>' + more + '</a>' +
+        '<span class="sep">•</span>';
+    }).join("");
     tickerTrack.innerHTML = pre + build() + pre + build();
     // Avvia lo scorrimento JS: parte subito e ri-vernicia col nuovo contenuto.
     startTickerScroll();
@@ -1583,6 +1821,44 @@ document.getElementById("ticker-label").addEventListener("click", () => {
     if (ev.key === "Enter") { ev.preventDefault(); loadNews(q.value); }
   });
   if (clr) clr.addEventListener("click", () => { if (q) q.value = ""; loadNews(""); });
+  // Cambiando finestra temporale o lingua rilancia la ricerca in corso.
+  ["ticker-df", "ticker-lang"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener("change", () => { if (newsQuery) loadNews(newsQuery); });
+  });
+})();
+
+// Traduzione del titolo al passaggio del mouse (le news mondiali sono spesso in
+// lingua straniera). Best-effort, con cache per non ri-tradurre lo stesso testo.
+const _titleTrCache = {};
+let _titleTrTimer = 0;
+(function () {
+  tickerTrack.addEventListener("mouseover", (ev) => {
+    const a = ev.target.closest && ev.target.closest("a.news-item");
+    if (!a) return;
+    const orig = a.dataset.title || "";
+    if (!orig || a.dataset.tr === "1") return;
+    clearTimeout(_titleTrTimer);
+    _titleTrTimer = setTimeout(async () => {
+      let tr = _titleTrCache[orig];
+      if (!tr) {
+        try {
+          const d = await (await fetch("api/translate", {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ q: [orig], tl: "it" }),
+          })).json();
+          tr = (d.t && d.t[0]) || "";
+          _titleTrCache[orig] = tr;
+        } catch (e) { return; }
+      }
+      // Mostra la traduzione come tooltip su tutte le copie (striscia duplicata).
+      if (tr && tr !== orig) {
+        tickerTrack.querySelectorAll("a.news-item").forEach(el => {
+          if (el.dataset.title === orig) { el.title = "🇮🇹 " + tr; el.dataset.tr = "1"; }
+        });
+      }
+    }, 350);
+  });
 })();
 
 // Lettore news IN-WINDOW: clic su un titolo -> apre l'articolo nella stessa
@@ -1686,6 +1962,21 @@ document.getElementById("reader-expand").addEventListener("click", () => {
   reader.classList.toggle("expanded");
 });
 document.getElementById("reader-translate").addEventListener("click", () => translateReader(false));
+// "Nel fascicolo": aggiunge l'articolo aperto come voce del dossier corrente.
+document.getElementById("reader-save").addEventListener("click", () => {
+  const st = readerState;
+  const url = (st && st.url) || document.getElementById("reader-ext").href || "";
+  const title = (st && st.origTitle) || document.getElementById("reader-title").textContent || "";
+  const src = (st && st.src) || document.getElementById("reader-src").textContent || "";
+  if (!url && !title) return;
+  const excerpt = (st && st.origParas) ? st.origParas.slice(0, 2).join(" ") : "";
+  const detail = (src ? ("Fonte: " + src + "\n") : "") + url +
+    (excerpt ? ("\n\n" + excerpt) : "");
+  addDossier("news", title || url, detail, { target: url, tags: ["news"] });
+  const b = document.getElementById("reader-save");
+  const old = b.innerHTML; b.innerHTML = "&#10003; Aggiunta"; b.disabled = true;
+  setTimeout(() => { b.innerHTML = old; b.disabled = false; }, 1600);
+});
 (function () {
   const auto = document.getElementById("reader-tr-auto");
   if (!auto) return;

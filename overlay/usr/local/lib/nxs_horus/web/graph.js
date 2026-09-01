@@ -52,7 +52,8 @@
   function build() {
     const map = new Map();     // id -> node
     const emap = new Map();    // "a\tb" -> edge
-    nodes = []; edges = [];
+    nodes = []; edges = []; selected = null;
+    const ge = document.getElementById("graph-enrich"); if (ge) ge.hidden = true;
     function addNode(id, label, kind, extra) {
       let n = map.get(id);
       if (!n) { n = { id: id, label: label, kind: kind, deg: 0, extra: extra || {} }; map.set(id, n); nodes.push(n); }
@@ -279,7 +280,11 @@
     g.addEventListener("pointerup", ev => {
       drag = false;
       try { g.releasePointerCapture(ev.pointerId); } catch (e) {}
-      if (!moved) selectNode(nd.id === selected ? null : nd.id);
+      if (!moved) {
+        const willSelect = nd.id !== selected;
+        selectNode(willSelect ? nd.id : null);
+        if (willSelect) enrichNode(nd); else hideEnrich();
+      }
       exposeSVG();
     });
   }
@@ -312,6 +317,64 @@
       ln.classList.toggle("dim", !on); ln.classList.toggle("hot", on);
     });
     exposeSVG();
+  }
+
+  // --- Arricchimento indicatori (IP / dominio) -------------------------------
+  const _enrichCache = {};
+  function hideEnrich() { const b = document.getElementById("graph-enrich"); if (b) b.hidden = true; }
+  async function enrichNode(nd) {
+    const box = document.getElementById("graph-enrich");
+    if (!box) return;
+    if (nd.kind !== "ip" && nd.kind !== "domain") { box.hidden = true; return; }
+    const value = nd.id.slice(nd.id.indexOf("|") + 1);
+    box.hidden = false;
+    box.innerHTML = '<div class="ge-head">' + (nd.kind === "ip" ? "IP " : "Dominio ") +
+      esc(value) + '<button class="ge-x" title="Chiudi">&times;</button></div>' +
+      '<div class="ge-body">Arricchimento in corso&hellip;</div>';
+    box.querySelector(".ge-x").addEventListener("click", () => { box.hidden = true; });
+    let d = _enrichCache[nd.kind + "|" + value];
+    if (!d) {
+      try {
+        d = await (await fetch("api/enrich?type=" + nd.kind + "&value=" +
+          encodeURIComponent(value))).json();
+        _enrichCache[nd.kind + "|" + value] = d;
+      } catch (e) { box.querySelector(".ge-body").textContent = "Arricchimento non riuscito."; return; }
+    }
+    box.querySelector(".ge-body").innerHTML = enrichHTML(d);
+  }
+  function row(k, v) {
+    if (v == null || v === "" || (Array.isArray(v) && !v.length)) return "";
+    if (Array.isArray(v)) v = v.join(", ");
+    return '<tr><td>' + esc(k) + '</td><td>' + esc(String(v)) + '</td></tr>';
+  }
+  function enrichHTML(d) {
+    if (!d || d.error) return "Nessun dato" + (d && d.error ? " (" + esc(d.error) + ")" : "") + ".";
+    let r = "";
+    if (d.kind === "ip") {
+      const g = d.geo || {}, rd = d.rdap || {};
+      r += row("Organizzazione", d.org);
+      r += row("ASN", d.asn);
+      r += row("Reverse DNS", d.reverse_dns);
+      r += row("Luogo", [g.city, g.region, g.country].filter(Boolean).join(", "));
+      r += row("Rete", rd.range || rd.net_name);
+      if (g.lat != null && g.lon != null) {
+        const osm = "https://www.openstreetmap.org/?mlat=" + g.lat + "&mlon=" + g.lon +
+          "#map=8/" + g.lat + "/" + g.lon;
+        r += '<tr><td>Coordinate</td><td>' + g.lat + ", " + g.lon +
+          ' · <a href="' + esc(osm) + '" target="_blank" rel="noopener">mappa &#8599;</a></td></tr>';
+      }
+    } else {
+      const rd = d.rdap || {}, pi = d.primary_ip || {}, g = pi.geo || {};
+      r += row("Indirizzi IP", d.ips);
+      r += row("Registrar", rd.registrar);
+      r += row("Creato", rd.registration);
+      r += row("Scadenza", rd.expiration);
+      r += row("Nameserver", rd.nameservers);
+      r += row("IP primario", d.ips && d.ips[0]);
+      r += row("Org IP / ASN", [pi.org, pi.asn].filter(Boolean).join(" · "));
+      r += row("Luogo IP", [g.city, g.country].filter(Boolean).join(", "));
+    }
+    return r ? '<table class="ge-tbl">' + r + "</table>" : "Nessun dato disponibile.";
   }
 
   // --- SVG per l'export e per il report --------------------------------------

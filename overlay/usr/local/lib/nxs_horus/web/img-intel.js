@@ -54,10 +54,40 @@
       });
       const d = await r.json();
       if (d.error) { body.innerHTML = '<p class="corr-empty">EXIF: ' + esc(d.error) + "</p>"; return; }
-      render(d, d.url || url);
+      render(d, d.url || url, d.url || url);
     } catch (e) {
       body.innerHTML = '<p class="corr-empty">Errore analisi EXIF: ' + esc(e.message || e) + "</p>";
     }
+  }
+
+  // Ricerca inversa dell'immagine sui principali motori. Con un URL pubblico i
+  // link partono gia' con la query; con un file locale aprono il motore (basta
+  // trascinarvi la foto).
+  function reverseSearchBlock(srcUrl) {
+    const has = /^https?:\/\//i.test(srcUrl || "");
+    const e = encodeURIComponent(srcUrl || "");
+    const eng = has ? [
+      ["Google Lens", "https://lens.google.com/uploadbyurl?url=" + e],
+      ["Yandex", "https://yandex.com/images/search?rpt=imageview&url=" + e],
+      ["Bing", "https://www.bing.com/images/search?view=detailv2&iss=sbi&q=imgurl:" + e],
+      ["TinEye", "https://tineye.com/search?url=" + e],
+    ] : [
+      ["Google Immagini", "https://images.google.com/"],
+      ["Yandex", "https://yandex.com/images/"],
+      ["Bing Visual", "https://www.bing.com/visualsearch"],
+      ["TinEye", "https://tineye.com/"],
+    ];
+    let h = '<div class="corr-grp"><div class="cg-head">Ricerca inversa immagine</div>' +
+      '<div class="exif-rev">';
+    eng.forEach(x => {
+      h += '<a class="exif-rev-a" href="' + esc(x[1]) + '" target="_blank" rel="noopener">' +
+        esc(x[0]) + " &#8599;</a>";
+    });
+    h += "</div>";
+    if (!has) h += '<p class="exif-urlhint">File locale: apri il motore e trascina la foto ' +
+      "nella barra di ricerca (o usa «cerca per immagine»).</p>";
+    h += "</div>";
+    return h;
   }
 
   // "YYYY:MM:DD HH:MM:SS" (formato EXIF) -> millisecondi
@@ -93,13 +123,13 @@
       const d = await r.json();
       if (d.error) { body.innerHTML = '<p class="corr-empty">EXIF: ' + esc(d.error) + "</p>"; return; }
       if (!d.name) d.name = file.name;
-      render(d, dataUrl);
+      render(d, dataUrl, "");
     } catch (e) {
       body.innerHTML = '<p class="corr-empty">Errore analisi EXIF: ' + esc(e.message || e) + "</p>";
     }
   }
 
-  function render(d, thumb) {
+  function render(d, thumb, srcUrl) {
     const tags = d.tags || {};
     const order = ["Make", "Model", "LensModel", "DateTimeOriginal", "CreateDate",
       "ModifyDate", "Software", "FNumber", "ExposureTime", "ISO", "FocalLength",
@@ -116,11 +146,13 @@
     if (thumb) h += '<img class="exif-thumb" src="' + esc(thumb) + '" alt="" ' +
       'onerror="this.style.display=\'none\'">';
     if (d.gps) {
-      const t = exifTimeMs(tags.DateTimeOriginal || tags.CreateDate);
+      const osm = "https://www.openstreetmap.org/?mlat=" + d.gps.lat +
+        "&mlon=" + d.gps.lon + "#map=15/" + d.gps.lat + "/" + d.gps.lon;
       h += '<div class="exif-gps"><b>&#128205; Posizione GPS</b>' +
         "<div>" + d.gps.lat.toFixed(6) + ", " + d.gps.lon.toFixed(6) +
         (d.gps.alt != null ? " · " + Math.round(d.gps.alt) + " m" : "") + "</div>" +
-        '<div class="exif-gps-act">Marcata sulla mappa e correlata automaticamente.</div></div>';
+        '<div class="exif-gps-act">Marcata sulla mappa e correlata automaticamente. ' +
+        '<a href="' + esc(osm) + '" target="_blank" rel="noopener">apri su OSM &#8599;</a></div></div>';
     } else {
       h += '<p class="exif-nogps">Nessuna coordinata GPS in questa foto ' +
         "(molte piattaforme social rimuovono il GPS in upload).</p>";
@@ -128,6 +160,7 @@
     h += rows ? '<div class="corr-grp"><div class="cg-head">Metadati</div>' +
       '<table class="exif-tbl">' + rows + "</table></div>"
       : '<p class="corr-empty">Nessun metadato EXIF leggibile (foto ripulita o formato non JPEG).</p>';
+    h += reverseSearchBlock(srcUrl);
     body.innerHTML = h;
 
     // Resa grafica immediata: se c'e' il GPS, plotta e correla.

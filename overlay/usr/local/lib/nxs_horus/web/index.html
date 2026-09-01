@@ -143,9 +143,22 @@
         </div>
         <p id="case-indicator" class="case-indicator" hidden></p>
         <div class="rep-stats" id="report-stats"></div>
+        <div id="report-timeline" class="rep-timeline" hidden>
+          <div class="tl-head"><span>Timeline</span>
+            <span id="tl-range" class="tl-range"></span>
+            <button id="tl-reset" class="mini-btn" title="Mostra tutto il periodo" hidden>tutto</button>
+          </div>
+          <svg id="tl-svg" class="tl-svg"></svg>
+        </div>
         <ul id="report-list"></ul>
         <button id="report-save" class="btn">Salva / aggiorna fascicolo</button>
         <button id="report-clear" class="btn btn-alt">Nuovo fascicolo</button>
+        <div class="rep-exports">
+          <span>Esporta:</span>
+          <button id="report-pdf" class="mini-btn" title="Stampa / salva come PDF">PDF</button>
+          <button id="report-csv" class="mini-btn" title="Indicatori (IP/dominio/email) in CSV">CSV indicatori</button>
+          <button id="report-stix" class="mini-btn" title="Bundle STIX 2.1 degli indicatori">STIX</button>
+        </div>
         <p class="hint" id="report-note"></p>
 
         <div class="saved-head">
@@ -179,6 +192,7 @@
           <button id="reader-translate" class="reader-tr" title="Traduci in italiano">&#127760; Traduci</button>
           <label id="reader-tr-always" class="reader-tr-always" title="Traduci sempre all'apertura">
             <input type="checkbox" id="reader-tr-auto"> sempre</label>
+          <button id="reader-save" class="reader-tr" title="Aggiungi questa notizia al fascicolo aperto">&#128193; Nel fascicolo</button>
           <a id="reader-ext" href="#" target="_blank" rel="noopener" class="linklike">apri &#8599;</a>
           <button id="reader-expand" title="Espandi/riduci" aria-label="Espandi">&#9974;</button>
           <button id="reader-close" aria-label="Chiudi">&times;</button>
@@ -270,7 +284,9 @@
           <button id="graph-close" aria-label="Chiudi">&times;</button>
         </div>
         <div id="graph-legend"></div>
-        <div id="graph-body"><svg id="graph-svg" xmlns="http://www.w3.org/2000/svg"></svg></div>
+        <div id="graph-body"><svg id="graph-svg" xmlns="http://www.w3.org/2000/svg"></svg>
+          <div id="graph-enrich" hidden></div>
+        </div>
         <p id="graph-note" class="corr-note"></p>
       </div>
 
@@ -278,7 +294,21 @@
       <div id="ticker">
         <span id="ticker-label" title="Mostra/nascondi">NEWS</span>
         <input id="ticker-q" class="ticker-q" type="text" autocomplete="off"
-               placeholder="cerca nel mondo (GDELT + Google News)… Invio" title="Cerca notizie a 360° nei database mondiali">
+               placeholder="cerca nel mondo (DuckDuckGo + Google News)… Invio" title="Cerca notizie a 360°">
+        <select id="ticker-df" class="ticker-sel" title="Finestra temporale">
+          <option value="">Sempre</option>
+          <option value="d">24 ore</option>
+          <option value="w">Settimana</option>
+          <option value="m">Mese</option>
+        </select>
+        <select id="ticker-lang" class="ticker-sel" title="Lingua delle news">
+          <option value="it">IT</option>
+          <option value="en">EN</option>
+          <option value="fr">FR</option>
+          <option value="de">DE</option>
+          <option value="es">ES</option>
+          <option value="world">🌐</option>
+        </select>
         <button id="ticker-q-clear" class="ticker-q-clear" title="Torna alle notizie mondiali" hidden>&times;</button>
         <div id="ticker-viewport"><div id="ticker-track"></div></div>
       </div>

@@ -240,6 +240,19 @@ body {
 }
 .rep-meta input:focus, .rep-meta textarea:focus { outline: none; border-color: var(--accent); }
 .rep-stats { margin-bottom: 10px; }
+.rep-exports { display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+  margin: 8px 0 2px; font-size: 11px; color: var(--muted); }
+.rep-timeline { margin: 2px 0 10px; }
+.tl-head { display: flex; align-items: center; gap: 8px; font-size: 11px;
+  color: var(--muted); margin-bottom: 2px; }
+.tl-range { margin-left: auto; color: var(--tenue, var(--muted)); }
+.tl-svg { width: 100%; height: 34px; display: block; touch-action: none; cursor: crosshair;
+  background: var(--panel-2); border: 1px solid var(--border); border-radius: 6px; }
+.tl-axis { stroke: var(--border); stroke-width: .6; }
+.tl-brush { fill: rgba(0,229,255,.18); stroke: var(--accent); stroke-width: .4; }
+.tl-dot { cursor: pointer; }
+#report-list li.tl-out { opacity: .4; }
+#report-list li.rep-flash { outline: 1px solid var(--accent); background: rgba(0,229,255,.10); }
 .rep-chip { display: inline-block; background: var(--panel-2); border: 1px solid var(--border);
   border-radius: 20px; padding: 2px 9px; margin: 0 4px 4px 0; font-size: 10px; color: var(--text); }
 .rep-chip-tot { border-color: var(--accent); color: var(--accent); }
@@ -331,7 +344,13 @@ body {
 .ticker-q-clear { background: none; border: none; color: var(--muted); cursor: pointer;
   font-size: 15px; line-height: 1; padding: 0 6px 0 0; flex: 0 0 auto; }
 .ticker-q-clear:hover { color: var(--alarm); }
-#ticker.min .ticker-q, #ticker.min .ticker-q-clear { display: none; }
+.ticker-sel { background: var(--panel-2); color: var(--text); border: 1px solid var(--border);
+  border-radius: 5px; font-size: 10px; padding: 2px 4px; margin: 0 2px; flex: 0 0 auto; }
+.ticker-sel:focus { outline: none; border-color: var(--accent); }
+#ticker-track .news-more { color: var(--accent); font-size: 10px; opacity: .85;
+  border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; margin-left: 3px; }
+#ticker.min .ticker-q, #ticker.min .ticker-q-clear,
+#ticker.min .ticker-sel { display: none; }
 #ticker-track .sep { color: var(--accent); opacity: .45; padding: 0 8px; }
 
 /* I controlli in basso di Leaflet salgono sopra il ticker sottile */
@@ -657,6 +676,11 @@ body {
 .exif-gps { background: var(--panel-2); border: 1px solid var(--accent); border-radius: 8px; padding: 8px 10px; margin-bottom: 10px; color: var(--text); font-size: 13px; }
 .exif-gps b { color: var(--accent); display: block; margin-bottom: 3px; font-size: 12px; }
 .exif-gps-act { color: var(--muted); font-size: 11px; margin-top: 3px; }
+.exif-gps-act a { color: var(--accent); text-decoration: none; }
+.exif-rev { display: flex; flex-wrap: wrap; gap: 6px; }
+.exif-rev-a { font-size: 11px; color: var(--accent); text-decoration: none;
+  border: 1px solid var(--border); border-radius: 6px; padding: 3px 8px; background: var(--panel-2); }
+.exif-rev-a:hover { border-color: var(--accent); }
 .exif-nogps { color: var(--muted); font-size: 12px; margin: 0 0 10px; }
 .exif-tbl { width: 100%; border-collapse: collapse; font-size: 12px; }
 .exif-tbl td { padding: 3px 6px; border-bottom: 1px solid var(--border); vertical-align: top; color: var(--text); word-break: break-word; }
@@ -797,6 +821,20 @@ body {
 .glg i.ln.time { border-top-color: #7dffa8; }
 #graph-body { flex: 1; position: relative; background: var(--bg); overflow: hidden; }
 #graph-svg { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; }
+#graph-enrich { position: absolute; top: 8px; right: 8px; width: 260px; max-width: 60%;
+  max-height: calc(100% - 16px); overflow-y: auto; z-index: 3;
+  background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
+  box-shadow: 0 6px 20px rgba(0,0,0,.5); font-size: 11px; }
+.ge-head { display: flex; align-items: center; justify-content: space-between;
+  gap: 6px; padding: 7px 10px; color: var(--accent); font-weight: 600;
+  border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--panel); }
+.ge-x { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 15px; line-height: 1; }
+.ge-x:hover { color: var(--alarm); }
+.ge-body { padding: 8px 10px; color: var(--text); }
+.ge-tbl { width: 100%; border-collapse: collapse; }
+.ge-tbl td { padding: 3px 4px; vertical-align: top; border-bottom: 1px solid var(--border); word-break: break-word; }
+.ge-tbl td:first-child { color: var(--muted); white-space: nowrap; width: 34%; }
+.ge-tbl a { color: var(--accent); text-decoration: none; }
 .gnode { cursor: grab; }
 .gnode text { font: 11px sans-serif; fill: var(--text); pointer-events: none; user-select: none; }
 .gnode circle { stroke: var(--bg); stroke-width: 1.5px; }

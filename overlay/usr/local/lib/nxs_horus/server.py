@@ -561,13 +561,23 @@ def _http_text(url, data=None, headers=None, timeout=None):
     return raw.decode("utf-8", "replace")
 
 
-def _ddg_news(query, maxrecords=40):
+def _ddg_locale(lang):
+    """Mappa una lingua (it/en/fr/de/es/world) al codice locale DuckDuckGo."""
+    return {"it": "it-it", "en": "us-en", "fr": "fr-fr", "de": "de-de",
+            "es": "es-es", "world": "wt-wt"}.get((lang or "it"), "it-it")
+
+
+def _ddg_news(query, maxrecords=40, df="", lang="it"):
     """Ricerca notizie su DuckDuckGo (verticale news, keyless). Restituisce URL
-    DIRETTI (niente wrapper: apribili nel lettore) e fonti varie. Best-effort."""
+    DIRETTI (niente wrapper: apribili nel lettore) e fonti varie. `df` filtra la
+    finestra temporale: '' (qualsiasi), 'd' (giorno), 'w' (settimana), 'm'
+    (mese). Best-effort."""
     from email.utils import formatdate
     q = (query or "").strip()
     if not q:
         return []
+    loc = _ddg_locale(lang)
+    dfp = ("&df=" + df) if df in ("d", "w", "m") else ""
     try:
         # 1) token vqd (obbligatorio per l'endpoint news.js)
         seed = _http_text("https://duckduckgo.com/?q=%s&iar=news&ia=news" % quote(q),
@@ -577,8 +587,8 @@ def _ddg_news(query, maxrecords=40):
             return []
         vqd = m.group(1)
         # 2) risultati news in JSON
-        url = ("https://duckduckgo.com/news.js?l=it-it&o=json&noamp=1"
-               "&q=%s&vqd=%s&p=1" % (quote(q), vqd))
+        url = ("https://duckduckgo.com/news.js?l=%s&o=json&noamp=1%s"
+               "&q=%s&vqd=%s&p=1" % (loc, dfp, quote(q), vqd))
         data = json.loads(_http_text(url, timeout=12))
     except Exception:
         return []
@@ -644,16 +654,59 @@ def _news_engine():
     return v if v in ("google", "duckduckgo", "both") else "both"
 
 
-def _news(query="world"):
+def _norm_title_tokens(t):
+    """Token significativi di un titolo (per raggruppare la stessa notizia)."""
+    t = (t or "").lower()
+    t = re.sub(r"[^\w\s]", " ", t, flags=re.U)
+    return set(w for w in t.split() if len(w) > 3)
+
+
+def _cluster_news(uniq):
+    """Raggruppa titoli molto simili (stessa storia ripresa da piu' testate).
+    Tiene il primo di ogni gruppo (il piu' recente, la lista arriva ordinata) e
+    vi allega l'elenco delle fonti -> nel ticker compare '+N fonti'."""
+    clusters = []
+    for a in uniq:
+        toks = _norm_title_tokens(a.get("title", ""))
+        placed = False
+        if toks:
+            for c in clusters:
+                inter = len(toks & c["toks"])
+                base = min(len(toks), len(c["toks"])) or 1
+                if inter / base >= 0.6:                # >=60% token in comune
+                    c["sources"].append(a.get("domain", ""))
+                    placed = True
+                    break
+        if not placed:
+            clusters.append({"toks": toks, "rep": a,
+                             "sources": [a.get("domain", "")]})
+    out = []
+    for c in clusters:
+        rep = c["rep"]
+        srcs = [s for s in dict.fromkeys(c["sources"]) if s]   # unici, in ordine
+        rep["sources"] = srcs
+        rep["sources_count"] = len(srcs)
+        out.append(rep)
+    return out
+
+
+def _news(query="world", df="", lang="it"):
     """Notizie per il ticker. Aggrega piu' feed RSS (standard), le deduplica e
     le ordina dalla piu' recente. Con una query cerca su Google News e/o
-    DuckDuckGo (verticale news) secondo il motore scelto nei Settings."""
+    DuckDuckGo (verticale news) secondo il motore scelto nei Settings; `df`
+    filtra la finestra temporale ('' /d /w /m) e `lang` la lingua."""
     from email.utils import parsedate_to_datetime
     if query and query != "world":
         from concurrent.futures import ThreadPoolExecutor
         engine = _news_engine()
-        gnews_url = ("https://news.google.com/rss/search?q=%s&hl=it&gl=IT&ceid=IT:it"
-                     % quote(query))
+        # Google News: hl/gl/ceid dalla lingua; finestra temporale via 'when:'.
+        gl = {"it": ("it", "IT"), "en": ("en-US", "US"), "fr": ("fr", "FR"),
+              "de": ("de", "DE"), "es": ("es", "ES"),
+              "world": ("en-US", "US")}.get(lang, ("it", "IT"))
+        gq = query + {"d": " when:1d", "w": " when:7d",
+                      "m": " when:30d"}.get(df, "")
+        gnews_url = ("https://news.google.com/rss/search?q=%s&hl=%s&gl=%s&ceid=%s:%s"
+                     % (quote(gq), gl[0], gl[1], gl[1], gl[0].split("-")[0]))
 
         def _gn():
             try:
@@ -668,7 +721,7 @@ def _news(query="world"):
             if engine in ("google", "both"):
                 tasks.append(ex.submit(_gn))
             if engine in ("duckduckgo", "both"):
-                tasks.append(ex.submit(_ddg_news, query))
+                tasks.append(ex.submit(_ddg_news, query, 40, df, lang))
             arts = []
             for t in tasks:
                 try:
@@ -694,7 +747,8 @@ def _news(query="world"):
         uniq.sort(key=_key, reverse=True)
         if not uniq:
             return {"articles": [], "error": "nessun risultato"}
-        return {"articles": uniq[:80]}
+        # Raggruppa la stessa storia (piu' fonti) e poi taglia.
+        return {"articles": _cluster_news(uniq)[:80]}
     def _one(feed):
         try:
             with _opener().open(urllib.request.Request(feed, headers={"User-Agent": UA}),
@@ -726,6 +780,143 @@ def _news(query="world"):
             return 0
     uniq.sort(key=_key, reverse=True)
     return {"articles": uniq[:60]}
+
+
+# ---------------------------------------------------------------------------
+# Arricchimento indicatori (keyless): per un IP o un dominio raccoglie RDAP
+# (rete/ASN/registrar), DNS (A/reverse) e geolocalizzazione. Tutto da servizi
+# liberi, best-effort: ogni pezzo che fallisce viene semplicemente omesso.
+# ---------------------------------------------------------------------------
+def _rdap(path):
+    try:
+        return json.loads(_http_text("https://rdap.org/" + path, timeout=10,
+                                     headers={"Accept": "application/rdap+json"}))
+    except Exception:
+        return {}
+
+
+def _geoip(ip):
+    """Geolocalizzazione IP keyless (ipwho.is). Ritorna dict ridotto."""
+    try:
+        d = json.loads(_http_text("https://ipwho.is/%s" % quote(ip), timeout=10))
+        if not d.get("success", True):
+            return {}
+        return {"lat": d.get("latitude"), "lon": d.get("longitude"),
+                "city": d.get("city"), "region": d.get("region"),
+                "country": d.get("country"), "country_code": d.get("country_code"),
+                "asn": (d.get("connection") or {}).get("asn"),
+                "org": (d.get("connection") or {}).get("org")
+                       or (d.get("connection") or {}).get("isp")}
+    except Exception:
+        return {}
+
+
+def _rdap_ip_summary(net):
+    """Estrae rete/ASN/paese da un oggetto RDAP di tipo 'ip network'."""
+    if not net:
+        return {}
+    out = {}
+    if net.get("handle"):
+        out["net_handle"] = net["handle"]
+    if net.get("name"):
+        out["net_name"] = net["name"]
+    if net.get("country"):
+        out["country"] = net["country"]
+    start, end = net.get("startAddress"), net.get("endAddress")
+    if start and end:
+        out["range"] = "%s - %s" % (start, end)
+    # nome dell'organizzazione dalle entita'
+    for e in (net.get("entities") or []):
+        for v in ((e.get("vcardArray") or [None, []])[1] or []):
+            if v and v[0] == "fn" and len(v) > 3:
+                out.setdefault("org", v[3])
+    return out
+
+
+def _enrich_ip(ip):
+    from concurrent.futures import ThreadPoolExecutor
+    out = {"kind": "ip", "value": ip}
+    with ThreadPoolExecutor(max_workers=3) as ex:
+        f_geo = ex.submit(_geoip, ip)
+        f_rdap = ex.submit(_rdap, "ip/" + quote(ip))
+        f_rev = ex.submit(lambda: _safe_reverse(ip))
+        geo = f_geo.result()
+        rdap = _rdap_ip_summary(f_rdap.result())
+        rev = f_rev.result()
+    if geo:
+        out["geo"] = geo
+        if geo.get("asn"):
+            out["asn"] = "AS%s" % geo["asn"]
+        if geo.get("org"):
+            out["org"] = geo["org"]
+    if rdap:
+        out["rdap"] = rdap
+        out.setdefault("org", rdap.get("org"))
+    if rev:
+        out["reverse_dns"] = rev
+    return out
+
+
+def _safe_reverse(ip):
+    import socket
+    try:
+        return socket.gethostbyaddr(ip)[0]
+    except Exception:
+        return ""
+
+
+def _enrich_domain(domain):
+    import socket
+    from concurrent.futures import ThreadPoolExecutor
+    domain = domain.strip().lower().rstrip(".")
+    out = {"kind": "domain", "value": domain}
+    # A record(s)
+    ips = []
+    try:
+        for fam, _, _, _, sa in socket.getaddrinfo(domain, None):
+            ip = sa[0]
+            if ip not in ips:
+                ips.append(ip)
+    except Exception:
+        pass
+    out["ips"] = ips
+    with ThreadPoolExecutor(max_workers=2) as ex:
+        f_rdap = ex.submit(_rdap, "domain/" + quote(domain))
+        f_ip = ex.submit(_enrich_ip, ips[0]) if ips else None
+        rdap = f_rdap.result()
+        if f_ip:
+            out["primary_ip"] = f_ip.result()
+    if rdap:
+        info = {}
+        for ev in (rdap.get("events") or []):
+            act = ev.get("eventAction", "")
+            if act in ("registration", "expiration", "last changed"):
+                info[act] = (ev.get("eventDate") or "")[:10]
+        for e in (rdap.get("entities") or []):
+            roles = e.get("roles") or []
+            if "registrar" in roles:
+                for v in ((e.get("vcardArray") or [None, []])[1] or []):
+                    if v and v[0] == "fn" and len(v) > 3:
+                        info["registrar"] = v[3]
+        ns = [n.get("ldhName", "") for n in (rdap.get("nameservers") or []) if n.get("ldhName")]
+        if ns:
+            info["nameservers"] = ns
+        if rdap.get("status"):
+            info["status"] = rdap["status"]
+        if info:
+            out["rdap"] = info
+    return out
+
+
+def _enrich(kind, value):
+    value = (value or "").strip()
+    if not value:
+        return {"error": "valore mancante"}
+    if kind == "ip":
+        return _enrich_ip(value)
+    if kind == "domain":
+        return _enrich_domain(value)
+    return {"error": "tipo non supportato (usa ip|domain)"}
 
 
 def _resolve_article(url):
@@ -2209,12 +2400,26 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/news":
             q = parse_qs(urlparse(self.path).query)
             query = (q.get("q", ["world"])[0] or "world")
+            df = (q.get("df", [""])[0] or "")
+            if df not in ("d", "w", "m"):
+                df = ""
+            lang = (q.get("lang", ["it"])[0] or "it")
+            if lang not in ("it", "en", "fr", "de", "es", "world"):
+                lang = "it"
             try:
-                return self._json(_news(query))
+                return self._json(_news(query, df, lang))
             except Exception as e:
                 return self._json({"error": "news non raggiungibili: %s" % e}, 502)
         if path == "/api/news-sources":
             return self._json({"sources": _news_sources_status()})
+        if path == "/api/enrich":
+            q = parse_qs(urlparse(self.path).query)
+            kind = (q.get("type", [""])[0] or "").strip().lower()
+            value = (q.get("value", [""])[0] or "").strip()
+            try:
+                return self._json(_enrich(kind, value))
+            except Exception as e:
+                return self._json({"error": "arricchimento fallito: %s" % e}, 502)
         if path == "/api/reports":
             return self._json({"reports": _list_reports()})
         if path == "/api/report/file":
