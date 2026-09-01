@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HORUS</title>
+  <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Barra laterale: identita', feed globali, recon -->
+    <aside id="side">
+      <header id="brand">
+        <img src="horus-logo.svg" alt="" id="brand-logo">
+        <div class="brand-txt">
+          <h1>HORUS</h1>
+          <p>Occhio OSINT globale</p>
+        </div>
+        <button id="settings-open" title="Impostazioni" aria-label="Impostazioni">&#9881;</button>
+      </header>
+
+      <nav id="tabs">
+        <button class="tab is-active" data-panel="feeds">Feed</button>
+        <button class="tab" data-panel="recon">Recon</button>
+        <button class="tab" data-panel="geoint">GEOINT</button>
+        <button class="tab" data-panel="socmint">Social</button>
+        <button class="tab" data-panel="phone">Telefono</button>
+        <button class="tab" data-panel="report">Report</button>
+      </nav>
+
+      <!-- Pannello FEED -->
+      <section class="panel is-active" id="panel-feeds">
+        <p class="hint">Sorgenti pubbliche mondiali. Nessun limite regionale.
+          I dati escono in HTTPS (via Tor se attivo). Il proxy gira in locale.</p>
+
+        <div id="auto-ctl">
+          <label class="switch">
+            <input type="checkbox" id="auto-on" checked>
+            <span class="track"></span>
+            <span class="lbl">Auto-aggiornamento posizioni</span>
+          </label>
+          <div class="auto-row">
+            <label for="auto-int">Ogni</label>
+            <select id="auto-int">
+              <option>5</option><option>10</option><option selected>15</option>
+              <option>20</option><option>30</option><option>45</option><option>60</option>
+            </select>
+            <span>s</span>
+            <span id="auto-count" class="count"></span>
+          </div>
+          <p class="hint" id="auto-note">Riaggiorna tutti i feed attivi.
+            Intervalli molto brevi possono superare i limiti delle sorgenti.</p>
+        </div>
+
+        <ul id="feed-list"></ul>
+        <p class="msg" id="feed-msg" hidden></p>
+        <button id="feed-refresh" class="btn">Aggiorna tutti i feed attivi</button>
+        <button id="area-draw" class="btn btn-alt">Cerca in un'area (disegna)</button>
+        <button id="corr-open" class="btn">&#9673; Centro Correlazioni</button>
+        <p class="hint" id="area-note"></p>
+        <p class="hint" id="net-note"></p>
+      </section>
+
+      <!-- Pannello RECON -->
+      <section class="panel" id="panel-recon">
+        <p class="hint">Gli scan partono dal <b>tuo</b> IP (o da Tor), non dai
+          server di terzi. Solo strumenti gia' installati nel profilo.</p>
+        <label class="fld">
+          <span>Strumento</span>
+          <select id="recon-tool"></select>
+        </label>
+        <label class="fld">
+          <span id="recon-hint">Obiettivo</span>
+          <input id="recon-target" type="text" placeholder="dominio, username, email...">
+        </label>
+        <button id="recon-run" class="btn">Esegui</button>
+        <button id="recon-install" class="btn btn-alt" hidden>Installa lo strumento</button>
+        <pre id="recon-out" aria-live="polite"></pre>
+      </section>
+
+      <!-- Pannello GEOINT (geolocalizza + Shodan) -->
+      <section class="panel" id="panel-geoint">
+        <p class="hint">Inserisci un <b>IP</b> o un <b>dominio</b>: HORUS lo
+          geolocalizza sulla mappa e ne raccoglie porte aperte, CVE e hostname
+          da Shodan InternetDB (keyless). La query parte dal tuo IP o da Tor.</p>
+        <label class="fld">
+          <span>IP o dominio</span>
+          <input id="geoint-target" type="text" placeholder="es. 1.1.1.1 o esempio.com">
+        </label>
+        <button id="geoint-run" class="btn">Localizza e analizza</button>
+        <pre id="geoint-out" aria-live="polite"></pre>
+      </section>
+
+      <!-- Pannello SOCMINT (username sui social) -->
+      <section class="panel" id="panel-socmint">
+        <p class="hint">Cerca uno <b>username</b> sulle principali piattaforme
+          (stile sherlock/maigret, senza chiavi). Le richieste partono dal
+          <b>tuo</b> IP o da Tor. Attenzione: username uguali <b>non</b> provano
+          che sia la stessa persona.</p>
+        <label class="fld">
+          <span>Username</span>
+          <input id="soc-user" type="text" placeholder="es. johndoe" autocomplete="off">
+        </label>
+        <button id="soc-run" class="btn">Cerca sui social</button>
+        <p class="hint" id="soc-note"></p>
+        <div id="soc-results"></div>
+
+        <hr class="soc-sep">
+        <p class="hint">Controlla un'<b>email</b>: violazioni note (XposedOrNot,
+          keyless) e presenza su <b>Gravatar</b> (profilo e account collegati).</p>
+        <label class="fld">
+          <span>Email</span>
+          <input id="soc-email" type="text" placeholder="es. nome@dominio.com" autocomplete="off">
+        </label>
+        <button id="soc-email-run" class="btn">Controlla email</button>
+        <p class="hint" id="soc-email-note"></p>
+        <div id="soc-email-results"></div>
+      </section>
+
+      <!-- Pannello TELEFONO (PhoneInfoga) -->
+      <section class="panel" id="panel-phone">
+        <p class="hint">OSINT sui numeri di telefono con <b>PhoneInfoga</b>
+          (REST API + client web). Gira in locale su questa macchina.</p>
+        <button id="phone-start" class="btn">Avvia PhoneInfoga</button>
+        <p class="hint" id="phone-state"></p>
+        <a id="phone-open" class="linklike" href="http://127.0.0.1:5000" target="_blank" hidden>
+          Apri in una scheda separata</a>
+      </section>
+
+      <!-- Pannello REPORT (dossier d'indagine) -->
+      <section class="panel" id="panel-report">
+        <p class="hint">Ogni ricognizione e ogni GEOINT finisce qui. Salva il
+          dossier come report HTML autonomo in <code>~/NexusSec-loot/horus/</code>.</p>
+        <ul id="report-list"></ul>
+        <button id="report-save" class="btn">Salva report HTML</button>
+        <button id="report-clear" class="btn btn-alt">Svuota dossier</button>
+        <p class="hint" id="report-note"></p>
+      </section>
+
+      <footer id="foot">
+        <span id="status-dot" class="dot"></span>
+        <span id="status-txt">avvio...</span>
+      </footer>
+    </aside>
+
+    <!-- Area principale: mappa + (all'occorrenza) l'iframe di PhoneInfoga -->
+    <div id="stage">
+      <button id="side-toggle" title="Nascondi il pannello"
+              aria-label="Mostra o nascondi il pannello">&lsaquo;</button>
+      <main id="map"></main>
+      <iframe id="phone-frame" title="PhoneInfoga" hidden></iframe>
+
+      <!-- Lettore news: finestrella flottante in basso a sinistra, espandibile -->
+      <div id="reader" hidden>
+        <div id="reader-head">
+          <div class="reader-meta">
+            <span id="reader-title"></span>
+            <span id="reader-src"></span>
+          </div>
+          <button id="reader-translate" class="reader-tr" title="Traduci in italiano">&#127760; Traduci</button>
+          <label id="reader-tr-always" class="reader-tr-always" title="Traduci sempre all'apertura">
+            <input type="checkbox" id="reader-tr-auto"> sempre</label>
+          <a id="reader-ext" href="#" target="_blank" rel="noopener" class="linklike">apri &#8599;</a>
+          <button id="reader-expand" title="Espandi/riduci" aria-label="Espandi">&#9974;</button>
+          <button id="reader-close" aria-label="Chiudi">&times;</button>
+        </div>
+        <div id="reader-body">
+          <article id="reader-content"></article>
+          <div id="reader-block" hidden>
+            <p>Non riesco a estrarre il testo di questo articolo.</p>
+            <a id="reader-block-link" href="#" target="_blank" rel="noopener" class="btn">Apri l'articolo nel browser</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Diretta ISS: finestra video (stream YouTube ufficiali, senza chiavi),
+           agganciata dal fumetto della ISS, espandibile a tutto schermo -->
+      <div id="live" hidden>
+        <div id="live-head">
+          <div class="live-meta">
+            <span id="live-title">Diretta ISS</span>
+            <select id="live-src" aria-label="Sorgente diretta"></select>
+          </div>
+          <a id="live-ext" href="#" target="_blank" rel="noopener" class="linklike">YouTube &#8599;</a>
+          <button id="live-expand" title="Espandi/riduci" aria-label="Espandi">&#9974;</button>
+          <button id="live-close" aria-label="Chiudi">&times;</button>
+        </div>
+        <div id="live-body">
+          <iframe id="live-frame" title="Diretta ISS"
+            allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
+          <div id="live-msg" hidden></div>
+        </div>
+      </div>
+
+      <!-- Centro Correlazioni: pannello agganciato alla mappa. Selezioni
+           area/punto/entita' e ottieni tutti gli incroci fra i layer. -->
+      <div id="correlate" hidden>
+        <div id="corr-head">
+          <span id="corr-title">Centro Correlazioni</span>
+          <button id="corr-expand" title="Espandi/riduci" aria-label="Espandi">&#9974;</button>
+          <button id="corr-close" aria-label="Chiudi">&times;</button>
+        </div>
+        <div id="corr-tools">
+          <div class="corr-modes">
+            <button id="corr-area" class="corr-btn">&#9645; Area</button>
+            <button id="corr-point" class="corr-btn">&#10010; Punto</button>
+            <button id="corr-photo" class="corr-btn">&#128247; Foto</button>
+            <button id="corr-photo-url" class="corr-btn" title="Analizza una foto da un link (anche social)">&#128279; Foto da URL</button>
+            <button id="corr-hist-btn" class="corr-btn" title="Storico scie: riavvolgi, salva, ripristina">&#128337; Storico</button>
+          </div>
+          <div class="corr-searchrow">
+            <input id="corr-q" type="text" placeholder="nave MMSI/nome, volo, satellite&hellip;">
+            <button id="corr-search" class="corr-btn">Cerca</button>
+          </div>
+          <div class="corr-params">
+            <label>Raggio
+              <select id="corr-radius">
+                <option>25</option><option>50</option><option selected>100</option>
+                <option>250</option><option>500</option>
+              </select> km</label>
+            <label>Finestra
+              <select id="corr-window">
+                <option value="0">tutto</option><option value="1">1h</option>
+                <option value="6" selected>6h</option><option value="24">24h</option>
+              </select></label>
+          </div>
+        </div>
+        <div id="corr-body"></div>
+        <p id="corr-tracenote" hidden></p>
+        <div id="corr-foot">
+          <button id="corr-dossier" class="corr-btn">Al dossier</button>
+          <button id="corr-export" class="corr-btn">Esporta GeoJSON</button>
+          <button id="corr-tracestop" class="corr-btn">Ferma scia</button>
+        </div>
+        <p id="corr-note" class="corr-note"></p>
+        <input id="corr-photo-file" type="file" accept="image/*" hidden>
+      </div>
+
+      <!-- Ticker news mondiali (stile OSIRIS): banda che scorre in basso -->
+      <div id="ticker">
+        <span id="ticker-label" title="Mostra/nascondi">NEWS</span>
+        <div id="ticker-viewport"><div id="ticker-track"></div></div>
+      </div>
+    </div>
+
+    <!-- Impostazioni: chiavi personali (restano su questo computer) -->
+    <div id="settings" hidden>
+      <div class="settings-card">
+        <h2>Impostazioni</h2>
+        <p class="hint">Le chiavi restano <b>solo su questo computer</b>
+          (<code>~/.config/nxs</code>): non entrano nella distro né vengono
+          condivise. Ognuno mette le proprie.</p>
+
+        <label class="fld">
+          <span>Chiave aisstream (navi globali) —
+            <a href="https://aisstream.io/" target="_blank" rel="noopener">registrati</a></span>
+          <input id="set-ais" type="password" autocomplete="off" placeholder="incolla la chiave">
+        </label>
+        <label class="fld">
+          <span>Chiave AIS premium (satellitare) —
+            <i>riservato: copre le zone senza ricevitori volontari (es. Golfo
+            Persico). Ognuno usa la propria chiave a pagamento.</i></span>
+          <input id="set-aisprem" type="password" autocomplete="off" placeholder="incolla la chiave (facoltativa)">
+        </label>
+        <p class="hint">Le telecamere sono già attive senza chiave: usano reti
+          ufficiali del traffico (TfL Londra, Caltrans California, Ontario 511,
+          Digitraffic Finlandia, NZTA Nuova Zelanda).</p>
+        <label class="fld">
+          <span>Fonti delle news (spunta quelle attive)</span>
+          <div id="news-src-list" class="src-list"></div>
+        </label>
+        <label class="fld">
+          <span>Feed RSS aggiuntivi (una URL per riga)</span>
+          <textarea id="set-feeds" rows="3" placeholder="https://esempio.it/rss.xml"></textarea>
+        </label>
+
+        <label class="fld">
+          <span>Registrazione storico scie</span>
+          <select id="set-track-mode">
+            <option value="local">Solo mentre HORUS è aperto (nel browser)</option>
+            <option value="server">In background su file (anche a finestra chiusa)</option>
+          </select>
+        </label>
+        <div id="set-track-bg" hidden>
+          <label class="fld">
+            <span>Ore da conservare (background)</span>
+            <select id="set-track-hours">
+              <option value="6">6 ore</option><option value="12">12 ore</option>
+              <option value="24">24 ore</option><option value="72" selected>3 giorni</option>
+              <option value="168">7 giorni</option><option value="0">illimitato</option>
+            </select>
+          </label>
+          <p class="hint" id="set-track-status">&mdash;</p>
+          <p class="hint">Il recorder gira come processo separato e continua a
+            registrare anche a finestra chiusa; si ferma quando torni a «Solo
+            mentre aperto». Salva su file <code>SQLite</code> (regge la crescita
+            meglio di un JSON) in <code>~/.local/share/nxs_horus</code>. Non
+            riparte da solo dopo un riavvio del sistema.</p>
+        </div>
+
+        <div class="settings-actions">
+          <button id="settings-save" class="btn">Salva</button>
+          <button id="settings-close" class="btn btn-alt">Chiudi</button>
+        </div>
+        <p class="hint" id="settings-note"></p>
+      </div>
+    </div>
+
+    <!-- Lightbox: ingrandisce l'immagine di una webcam o la foto di un vulcano -->
+    <div id="lightbox" hidden>
+      <button id="lightbox-close" aria-label="Chiudi">&times;</button>
+      <img id="lightbox-img" alt="">
+    </div>
+
+  </div>
+
+  <script src="vendor/leaflet/leaflet.js"></script>
+  <script src="vendor/satellite/satellite.min.js"></script>
+  <script src="app.js"></script>
+  <script src="correlate.js"></script>
+  <script src="img-intel.js"></script>
+  <script src="socmint.js"></script>
+</body>
+</html>

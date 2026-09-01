@@ -1,0 +1,30 @@
+#!/bin/sh
+# HORUS - dashboard OSINT/GEOINT globale (launcher).
+#
+# Il nome: Horus e' il figlio di Osiris nella mitologia egizia. HORUS e' il
+# discendente LOCALE e PRIVATO dello strumento OSIRIS che ci ha ispirato -
+# l'Occhio di Horus (Wedjat) e' l'occhio che tutto vede. Gli scan partono dal
+# TUO IP (o da Tor), non dai server di terzi.
+#
+# E' Python GTK3 + WebKit2 (stesso stack di nxs-browser, gia' nella base) con un
+# backend locale legato a 127.0.0.1 che fa da proxy ai feed pubblici mondiali.
+#
+# Stesse variabili d'ambiente del browser: WebKit2 su stack SENZA GPU (live/VM)
+# va forzato in software rendering, altrimenti il renderer DMABUF/GL si pianta.
+LOG=/tmp/nxs-horus.log
+IMENV="GTK_IM_MODULE=gtk-im-context-simple \
+WEBKIT_DISABLE_DMABUF_RENDERER=1 \
+WEBKIT_DISABLE_COMPOSITING_MODE=1 \
+LIBGL_ALWAYS_SOFTWARE=1 \
+GALLIUM_DRIVER=llvmpipe \
+GST_GL_DISABLED=1 \
+WEBKIT_FORCE_SANDBOX=0"
+
+for c in python3 python3.12 python3.11 python3.10; do
+  if command -v "$c" >/dev/null 2>&1; then
+    exec env $IMENV PYTHONPATH="/usr/local/lib${PYTHONPATH:+:$PYTHONPATH}" \
+         "$c" -m nxs_horus "$@" >>"$LOG" 2>&1
+  fi
+done
+echo "nxs-horus: python3 non disponibile" >&2
+exit 1
