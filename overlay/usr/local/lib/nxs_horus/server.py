@@ -1699,10 +1699,17 @@ def _list_reports():
         except Exception:
             pass
         st = p.stat()
+        jp = d / (p.stem + ".json")
+        n_entries = None
+        if jp.is_file():
+            try:
+                n_entries = len(json.loads(jp.read_text(encoding="utf-8")).get("entries") or [])
+            except Exception:
+                n_entries = None
         out.append({
             "name": p.name, "id": p.stem, "title": title, "size": st.st_size,
-            "mtime": int(st.st_mtime),
-            "json": (d / (p.stem + ".json")).is_file(),
+            "mtime": int(st.st_mtime), "entries": n_entries,
+            "json": jp.is_file(),
             "demo": p.name.startswith("DEMO"),
         })
     return out
@@ -1727,6 +1734,24 @@ def _serve_report_file(handler, name, download=False):
     handler.send_header("Cache-Control", "no-cache, must-revalidate")
     handler.end_headers()
     handler.wfile.write(data)
+
+
+def _delete_report(name):
+    """Elimina un fascicolo (html + json) dalla loot in sicurezza. Ritorna il
+    numero di file rimossi."""
+    base = _reports_dir().resolve()
+    stem = Path(Path(name).name).stem            # solo basename, senza estensione
+    if not stem:
+        return 0
+    removed = 0
+    for ext in (".html", ".json"):
+        p = (base / (stem + ext)).resolve()
+        if str(p).startswith(str(base)) and p.is_file():
+            try:
+                p.unlink(); removed += 1
+            except OSError:
+                pass
+    return removed
 
 
 def _save_report(meta):
@@ -2202,7 +2227,7 @@ class Handler(BaseHTTPRequestHandler):
                         "/api/geoint", "/api/report", "/api/settings", "/api/exif",
                         "/api/socmint", "/api/email", "/api/recorder",
                         "/api/recorder/follow", "/api/track/import",
-                        "/api/translate"):
+                        "/api/translate", "/api/report/delete"):
             return self.send_error(404)
         try:
             n = int(self.headers.get("Content-Length", 0))
@@ -2301,6 +2326,12 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json({"path": html_p, "json": json_p, "case_id": case_id})
             except OSError as e:
                 return self._json({"error": "salvataggio: %s" % e}, 500)
+        if path == "/api/report/delete":
+            name = (body.get("name") or "").strip()
+            if not name:
+                return self._json({"error": "nome mancante"}, 400)
+            removed = _delete_report(name)
+            return self._json({"ok": removed > 0, "removed": removed})
         if path == "/api/recon/install":
             return self._install(body.get("tool", ""))
         return self._recon(body.get("tool", ""), (body.get("target", "") or "").strip())

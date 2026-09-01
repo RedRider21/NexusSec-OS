@@ -780,22 +780,28 @@ async function loadSavedReports() {
       const label = rep.title || rep.name;
       const openUrl = "api/report/file?name=" + encodeURIComponent(rep.name);
       const jsonUrl = "api/report/file?dl=1&name=" + encodeURIComponent(rep.name.replace(/\.html$/, ".json"));
+      const nv = (rep.entries != null) ? (" · " + rep.entries + " voci") : "";
       li.innerHTML =
         '<div class="sv-main">' +
         (rep.demo ? '<span class="sv-badge">DEMO</span> ' : "") +
         '<span class="sv-title">' + esc(label) + "</span>" +
-        '<span class="sv-meta">' + esc(when) + " · " + fmtBytes(rep.size) + "</span></div>" +
+        '<span class="sv-meta">' + esc(when) + nv + " · " + fmtBytes(rep.size) + "</span></div>" +
         '<div class="sv-act">' +
         (rep.json ? '<button class="mini-btn mini-btn-go" data-name="' + esc(rep.name) +
           '" data-id="' + esc(rep.id) + '" data-demo="' + (rep.demo ? "1" : "") +
           '">Nel dossier</button>' : "") +
         '<a class="mini-btn" href="' + openUrl + '" target="_blank" rel="noopener">Apri</a>' +
         (rep.json ? '<a class="mini-btn" href="' + jsonUrl + '">JSON</a>' : "") +
+        '<button class="mini-btn mini-btn-del" data-name="' + esc(rep.name) +
+          '" data-label="' + esc(label) + '" title="Elimina il fascicolo">&#128465;</button>' +
         "</div>";
       ul.appendChild(li);
     });
     ul.querySelectorAll(".mini-btn-go").forEach(b => b.addEventListener("click", () => {
       loadCase(b.dataset.name, b.dataset.id, b.dataset.demo === "1");
+    }));
+    ul.querySelectorAll(".mini-btn-del").forEach(b => b.addEventListener("click", () => {
+      deleteCase(b.dataset.name, b.dataset.label);
     }));
   } catch (e) {
     ul.innerHTML = '<li class="empty">Errore nel caricare l\'elenco.</li>';
@@ -804,6 +810,71 @@ async function loadSavedReports() {
 (function () {
   const b = document.getElementById("saved-refresh");
   if (b) b.addEventListener("click", loadSavedReports);
+})();
+
+// Elimina un fascicolo (html + json) dopo conferma.
+async function deleteCase(name, label) {
+  if (!confirm('Eliminare definitivamente il fascicolo "' + (label || name) + '"?\n' +
+               "Rimuove sia l'HTML sia il JSON dalla loot. L'operazione non è annullabile.")) return;
+  try {
+    const r = await fetch("api/report/delete", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: name }),
+    });
+    const b = await r.json();
+    if (b.ok) {
+      // se stavo lavorando proprio su questo fascicolo, scollego l'identità
+      const stem = name.replace(/\.html$/, "");
+      if (currentCase && currentCase.id === stem) { currentCase = null; updateCaseIndicator(); }
+    }
+    loadSavedReports();
+    if (typeof HORUS_refreshCasesPanel === "function") HORUS_refreshCasesPanel();
+  } catch (e) { /* silenzioso */ }
+}
+
+// Pannello "Fascicoli" dentro il Centro Correlazioni: elenca i fascicoli e
+// permette di riprenderli (carica nel dossier + apre il grafo) o eliminarli.
+let casesPanelOpen = false;
+async function openCasesPanel() {
+  if (window.HORUS_openCorrelate) window.HORUS_openCorrelate();
+  const body = document.getElementById("corr-body");
+  if (!body) return;
+  casesPanelOpen = true;
+  body.innerHTML = '<p class="corr-empty">Carico i fascicoli…</p>';
+  try {
+    const d = await (await fetch("api/reports")).json();
+    const list = d.reports || [];
+    if (!list.length) { body.innerHTML = '<p class="corr-empty">Nessun fascicolo salvato. Costruiscine uno e premi “Salva”.</p>'; return; }
+    let h = '<div class="case-list">';
+    list.forEach(r => {
+      const when = new Date(r.mtime * 1000).toLocaleString();
+      const nv = (r.entries != null) ? (r.entries + " voci · ") : "";
+      h += '<div class="case-row">' +
+        '<div class="case-info">' + (r.demo ? '<span class="sv-badge">DEMO</span> ' : "") +
+        '<span class="case-t">' + esc(r.title || r.name) + '</span>' +
+        '<span class="case-m">' + nv + esc(when) + '</span></div>' +
+        '<div class="case-act">' +
+        (r.json ? '<button class="corr-btn cr-go" data-name="' + esc(r.name) + '" data-id="' + esc(r.id) +
+          '" data-demo="' + (r.demo ? "1" : "") + '">Riprendi</button>' : "") +
+        '<button class="corr-btn cr-del" data-name="' + esc(r.name) + '" data-label="' + esc(r.title || r.name) +
+          '" title="Elimina">&#128465;</button></div></div>';
+    });
+    h += "</div>";
+    body.innerHTML = h;
+    body.querySelectorAll(".cr-go").forEach(b => b.addEventListener("click", () => {
+      loadCase(b.dataset.name, b.dataset.id, b.dataset.demo === "1");
+    }));
+    body.querySelectorAll(".cr-del").forEach(b => b.addEventListener("click", () => {
+      deleteCase(b.dataset.name, b.dataset.label);
+    }));
+  } catch (e) {
+    body.innerHTML = '<p class="corr-empty">Errore nel caricare i fascicoli.</p>';
+  }
+}
+function HORUS_refreshCasesPanel() { if (casesPanelOpen) openCasesPanel(); }
+(function () {
+  const b = document.getElementById("corr-cases-btn");
+  if (b) b.addEventListener("click", openCasesPanel);
 })();
 
 // ---------------------------------------------------------------------------
@@ -1149,8 +1220,10 @@ async function loadCase(name, id, isDemo) {
     renderDossier();
     plotCaseEntries();
     updateCaseIndicator();
-    if (window.HORUS_openGraph && document.getElementById("graphwin") &&
-        !document.getElementById("graphwin").hidden) window.HORUS_openGraph();
+    // Integrazione diretta nel Centro Correlazioni: apre la plancia e disegna
+    // subito il grafo del fascicolo, come se lo stessi ancora costruendo.
+    if (window.HORUS_openCorrelate) window.HORUS_openCorrelate();
+    if (window.HORUS_openGraph) window.HORUS_openGraph();
     if (note) note.textContent = isDemo
       ? "Demo caricata nel dossier: modificala e salvala come nuovo fascicolo."
       : ("Fascicolo aperto (" + dossier.length + " voci). Aggiungi dati e salva per aggiornarlo.");

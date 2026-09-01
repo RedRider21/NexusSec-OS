@@ -825,3 +825,17 @@ body {
 .case-indicator .ci-new { color: var(--muted); }
 .mini-btn-go { color: #032430; background: var(--warn); border-color: var(--warn); font-weight: 700; }
 .mini-btn-go:hover { filter: brightness(1.1); border-color: var(--warn); }
+
+/* --- Elimina fascicolo + pannello Fascicoli nel Centro Correlazioni ------ */
+.mini-btn-del { color: var(--alarm); border-color: var(--border); }
+.mini-btn-del:hover { border-color: var(--alarm); background: rgba(255,90,138,.12); }
+.case-list { display: flex; flex-direction: column; gap: 8px; }
+.case-row { display: flex; align-items: center; gap: 8px; justify-content: space-between;
+  border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; background: var(--panel-2); }
+.case-info { min-width: 0; flex: 1; }
+.case-t { display: block; color: var(--text); font-weight: 600; font-size: 12px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.case-m { display: block; color: var(--muted); font-size: 10px; }
+.case-act { flex: 0 0 auto; display: flex; gap: 5px; }
+.cr-del { color: var(--alarm); }
+.cr-del:hover { border-color: var(--alarm); }
