@@ -262,6 +262,19 @@ body {
 .btn-alt { background: transparent; color: var(--accent);
   border: 1px solid var(--accent); margin-top: 8px; }
 .btn-alt:hover { background: rgba(0,229,255,.12); filter: none; }
+.btn-danger { background: var(--alarm); color: #2a0713; border: 1px solid var(--alarm); }
+.btn-danger:hover { filter: brightness(1.08); }
+
+/* Modale di conferma integrato */
+#confirm-modal { position: fixed; inset: 0; z-index: 3200;
+  background: rgba(2,5,12,.82); display: flex; align-items: center; justify-content: center; padding: 20px; }
+.confirm-card { width: 420px; max-width: 94vw; background: var(--panel);
+  border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px;
+  box-shadow: 0 12px 40px rgba(0,0,0,.6); }
+.confirm-card h3 { margin: 0 0 8px; color: var(--accent); font-size: 16px; }
+.confirm-card p { margin: 0 0 16px; color: var(--text); line-height: 1.5; }
+.confirm-actions { display: flex; gap: 10px; }
+.confirm-actions .btn { width: auto; flex: 1; margin-top: 0; }
 .linklike { display: inline-block; margin-top: 10px; color: var(--accent);
   text-decoration: none; font-size: 12px; }
 .linklike:hover { text-decoration: underline; }

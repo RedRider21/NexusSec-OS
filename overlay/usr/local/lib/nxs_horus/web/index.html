@@ -153,6 +153,7 @@
         <ul id="report-list"></ul>
         <button id="report-save" class="btn">Salva / aggiorna fascicolo</button>
         <button id="report-clear" class="btn btn-alt">Nuovo fascicolo</button>
+        <button id="report-close" class="btn btn-alt" hidden>Chiudi fascicolo</button>
         <div class="rep-exports">
           <span>Esporta:</span>
           <button id="report-pdf" class="mini-btn" title="Stampa / salva come PDF">PDF</button>
@@ -386,6 +387,18 @@
           <button id="settings-close" class="btn btn-alt">Chiudi</button>
         </div>
         <p class="hint" id="settings-note"></p>
+      </div>
+    </div>
+
+    <!-- Modale di conferma (sostituisce confirm() nativo, integrato nel tema) -->
+    <div id="confirm-modal" hidden>
+      <div class="confirm-card">
+        <h3 id="confirm-title">Conferma</h3>
+        <p id="confirm-msg"></p>
+        <div class="confirm-actions">
+          <button id="confirm-ok" class="btn">Conferma</button>
+          <button id="confirm-cancel" class="btn btn-alt">Annulla</button>
+        </div>
       </div>
     </div>
 

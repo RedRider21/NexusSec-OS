@@ -812,10 +812,53 @@ async function loadSavedReports() {
   if (b) b.addEventListener("click", loadSavedReports);
 })();
 
+// Conferma grafica integrata nel tema (sostituisce confirm() nativo). Ritorna
+// una Promise<boolean>. Enter = conferma, Esc / clic fuori = annulla.
+function hConfirm(message, opts) {
+  opts = opts || {};
+  return new Promise(resolve => {
+    const modal = document.getElementById("confirm-modal");
+    if (!modal) { resolve(window.confirm(message)); return; }
+    const msg = document.getElementById("confirm-msg");
+    const title = document.getElementById("confirm-title");
+    const ok = document.getElementById("confirm-ok");
+    const cancel = document.getElementById("confirm-cancel");
+    title.textContent = opts.title || "Conferma";
+    msg.innerHTML = esc(String(message)).replace(/\n/g, "<br>");
+    ok.textContent = opts.ok || "Conferma";
+    cancel.textContent = opts.cancel || "Annulla";
+    ok.className = "btn" + (opts.danger ? " btn-danger" : "");
+    modal.hidden = false;
+    const done = (val) => {
+      modal.hidden = true;
+      ok.removeEventListener("click", onOk);
+      cancel.removeEventListener("click", onCancel);
+      document.removeEventListener("keydown", onKey, true);
+      modal.removeEventListener("click", onBackdrop);
+      resolve(val);
+    };
+    const onOk = () => done(true);
+    const onCancel = () => done(false);
+    const onKey = (e) => {
+      if (e.key === "Escape") { e.stopPropagation(); done(false); }
+      else if (e.key === "Enter") { e.preventDefault(); done(true); }
+    };
+    const onBackdrop = (e) => { if (e.target === modal) done(false); };
+    ok.addEventListener("click", onOk);
+    cancel.addEventListener("click", onCancel);
+    document.addEventListener("keydown", onKey, true);
+    modal.addEventListener("click", onBackdrop);
+    ok.focus();
+  });
+}
+
 // Elimina un fascicolo (html + json) dopo conferma.
 async function deleteCase(name, label) {
-  if (!confirm('Eliminare definitivamente il fascicolo "' + (label || name) + '"?\n' +
-               "Rimuove sia l'HTML sia il JSON dalla loot. L'operazione non è annullabile.")) return;
+  const ok = await hConfirm(
+    'Eliminare definitivamente il fascicolo "' + (label || name) + '"?\n' +
+    "Rimuove sia l'HTML sia il JSON dalla loot. L'operazione non è annullabile.",
+    { title: "Elimina fascicolo", ok: "Elimina", danger: true });
+  if (!ok) return;
   try {
     const r = await fetch("api/report/delete", {
       method: "POST", headers: { "Content-Type": "application/json" },
@@ -1205,24 +1248,30 @@ function updateCaseIndicator() {
   const box = document.getElementById("case-indicator");
   if (!box) return;
   const t = (document.getElementById("report-title").value || "").trim();
-  const closeBtn = ' <button id="case-close" class="mini-btn" title="Chiudi la vista del fascicolo senza salvare">Chiudi fascicolo</button>';
+  let openish = false;
   if (currentCase && currentCase.id) {
     box.innerHTML = '<span class="ci-on">&#128194; Fascicolo aperto: <b>' +
-      esc(t || currentCase.id) + '</b> — "Salva" aggiorna questo fascicolo.</span>' + closeBtn;
-    box.hidden = false;
+      esc(t || currentCase.id) + '</b> — "Salva" aggiorna questo fascicolo.</span>';
+    box.hidden = false; openish = true;
   } else if (dossier.length) {
-    box.innerHTML = '<span class="ci-new">&#128196; Nuovo fascicolo (non ancora salvato).</span>' + closeBtn;
-    box.hidden = false;
+    box.innerHTML = '<span class="ci-new">&#128196; Nuovo fascicolo (non ancora salvato).</span>';
+    box.hidden = false; openish = true;
   } else { box.hidden = true; }
-  const cb = document.getElementById("case-close");
-  if (cb) cb.addEventListener("click", closeCase);
+  // Il pulsante "Chiudi fascicolo" compare tra i pulsanti del tab Report solo
+  // quando c'e' qualcosa da chiudere (comodo averlo qui oltre che nel Centro
+  // Correlazioni).
+  const rc = document.getElementById("report-close");
+  if (rc) rc.hidden = !openish;
 }
 // Chiude la vista del fascicolo (NON lo salva né lo elimina): svuota la working
 // set, toglie i suoi punti dalla mappa, chiude grafo e pannello fascicoli e
 // torna alla visualizzazione normale del mappamondo.
-function closeCase() {
+async function closeCase() {
   if (dossier.length && !(currentCase && currentCase.id)) {
-    if (!confirm("Chiudere il fascicolo senza salvarlo? Le voci non salvate andranno perse.")) return;
+    const ok = await hConfirm(
+      "Chiudere il fascicolo senza salvarlo?\nLe voci non salvate andranno perse.",
+      { title: "Chiudi fascicolo", ok: "Chiudi senza salvare", danger: true });
+    if (!ok) return;
   }
   dossier.length = 0;
   currentCase = null;
@@ -1490,6 +1539,7 @@ document.getElementById("report-save").addEventListener("click", async () => {
   } catch (e) { note.textContent = "Errore: " + (e.message || e); }
 });
 document.getElementById("report-clear").addEventListener("click", newCase);
+document.getElementById("report-close").addEventListener("click", closeCase);
 
 // --- Esportazioni fascicolo: indicatori (CSV / STIX) + stampa PDF -----------
 function _dl(name, text, mime) {                 // download via Blob (come SVG/GeoJSON)
