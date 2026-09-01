@@ -228,6 +228,22 @@ body {
   letter-spacing: 1px; }
 #report-list .rd { color: var(--muted); font-size: 10px; }
 #report-list .empty { color: var(--muted); font-size: 11px; }
+#report-list li { position: relative; }
+.rep-del { position: absolute; top: 6px; right: 6px; background: none; border: none;
+  color: var(--muted); font-size: 15px; line-height: 1; cursor: pointer; padding: 2px 5px; }
+.rep-del:hover { color: var(--alarm); }
+.rep-meta { display: flex; flex-direction: column; gap: 3px; margin-bottom: 10px; }
+.rep-lbl { color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: 1px; }
+.rep-meta input, .rep-meta textarea {
+  background: var(--panel-2); border: 1px solid var(--border); border-radius: 6px;
+  color: var(--text); font-size: 12px; padding: 5px 8px; font-family: inherit; resize: vertical;
+}
+.rep-meta input:focus, .rep-meta textarea:focus { outline: none; border-color: var(--accent); }
+.rep-stats { margin-bottom: 10px; }
+.rep-chip { display: inline-block; background: var(--panel-2); border: 1px solid var(--border);
+  border-radius: 20px; padding: 2px 9px; margin: 0 4px 4px 0; font-size: 10px; color: var(--text); }
+.rep-chip-tot { border-color: var(--accent); color: var(--accent); }
+.rep-chip-geo { border-color: var(--alarm); color: var(--alarm); }
 
 /* ---- Bottone secondario / link ---- */
 .btn-alt { background: transparent; color: var(--accent);
@@ -303,6 +319,17 @@ body {
 #ticker-track a { color: var(--text); text-decoration: none; padding: 0 6px; }
 #ticker-track a:hover { color: var(--accent); }
 #ticker-track .dom { color: var(--muted); }
+#ticker-track .news-scope { color: var(--accent); font-weight: 600;
+  text-transform: uppercase; letter-spacing: 1px; font-size: 10px; padding: 0 6px; }
+.ticker-q { background: var(--panel-2); border: 1px solid var(--border); border-radius: 5px;
+  color: var(--text); font-size: 11px; padding: 3px 8px; width: 190px; margin: 0 4px;
+  flex: 0 0 auto; }
+.ticker-q:focus { outline: none; border-color: var(--accent); width: 240px; }
+.ticker-q::placeholder { color: var(--muted); }
+.ticker-q-clear { background: none; border: none; color: var(--muted); cursor: pointer;
+  font-size: 15px; line-height: 1; padding: 0 6px 0 0; flex: 0 0 auto; }
+.ticker-q-clear:hover { color: var(--alarm); }
+#ticker.min .ticker-q, #ticker.min .ticker-q-clear { display: none; }
 #ticker-track .sep { color: var(--accent); opacity: .45; padding: 0 8px; }
 #ticker:hover #ticker-track { animation-play-state: paused; }
 @keyframes ticker-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
@@ -724,3 +751,47 @@ body {
   .feed { padding: 12px 10px; }
   .btn { padding: 13px; }
 }
+
+/* --- Grafo relazioni (finestra flottante trascinabile) ------------------- */
+#graphwin {
+  position: absolute; left: 60px; top: 60px; z-index: 2550;
+  width: 560px; max-width: calc(100% - 24px);
+  height: 460px; max-height: calc(100% - 60px);
+  display: flex; flex-direction: column; background: var(--panel);
+  border: 1px solid var(--border); border-radius: 10px; overflow: hidden;
+  box-shadow: 0 12px 40px rgba(0,0,0,.6);
+}
+#graphwin.expanded { width: calc(100% - 24px); height: calc(100% - 60px); left: 12px; top: 12px; }
+#graph-head {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 10px; background: var(--panel-2); border-bottom: 1px solid var(--border);
+}
+#graph-title { color: var(--accent); font-weight: 700; font-size: 13px; flex: 0 0 auto; }
+.graph-count { color: var(--muted); font-size: 11px; flex: 1; }
+#graph-head .corr-btn { flex: 0 0 auto; }
+#graph-expand, #graph-close {
+  flex: 0 0 auto; background: var(--panel); color: var(--accent);
+  border: 1px solid var(--border); border-radius: 8px; cursor: pointer; line-height: 1;
+  width: 30px; height: 30px;
+}
+#graph-expand:hover, #graph-close:hover { border-color: var(--accent); }
+#graph-close { font-size: 18px; }
+#graph-legend { display: flex; flex-wrap: wrap; gap: 6px 12px; padding: 6px 10px;
+  background: var(--panel); border-bottom: 1px solid var(--border); }
+.glg { color: var(--muted); font-size: 10px; display: inline-flex; align-items: center; gap: 4px; }
+.glg i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.glg i.ln { width: 14px; height: 0; border-radius: 0; border-top: 2px dashed #ff9a5a; }
+.glg i.ln.time { border-top-color: #7dffa8; }
+#graph-body { flex: 1; position: relative; background: var(--bg); overflow: hidden; }
+#graph-svg { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; }
+.gnode { cursor: grab; }
+.gnode text { font: 11px sans-serif; fill: var(--text); pointer-events: none; user-select: none; }
+.gnode circle { stroke: var(--bg); stroke-width: 1.5px; }
+.gnode.hot circle { stroke: #fff; stroke-width: 2px; }
+.gnode.dim { opacity: .18; }
+.gedge { stroke: #2b4b60; stroke-width: 1px; }
+.gedge-geo { stroke: #ff9a5a; stroke-dasharray: 4 3; }
+.gedge-time { stroke: #7dffa8; stroke-dasharray: 2 4; }
+.gedge.hot { stroke: var(--accent); stroke-width: 2px; }
+.gedge.dim { opacity: .12; }
+#graph-note { padding: 4px 10px; }

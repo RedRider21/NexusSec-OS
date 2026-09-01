@@ -496,18 +496,99 @@ def _parse_rss(raw, source_hint=""):
     return out
 
 
+def _gdelt(query, maxrecords=75):
+    """Ricerca su GDELT DOC 2.0: database MONDIALE di notizie (migliaia di
+    testate in 65+ lingue), keyless. Da' copertura a 360 gradi che i soli feed
+    RSS non raggiungono. Ritorna articoli nello stesso formato di _parse_rss,
+    arricchiti con paese e lingua della fonte. Best-effort."""
+    from email.utils import formatdate
+    from calendar import timegm
+    q = (query or "").strip()
+    if not q:
+        return []
+    # GDELT vuole le frasi tra virgolette; se ci sono spazi le racchiudiamo.
+    if " " in q and '"' not in q:
+        q = '"%s"' % q
+    url = ("https://api.gdeltproject.org/api/v2/doc/doc?query=%s"
+           "&mode=ArtList&format=json&sort=DateDesc&maxrecords=%d"
+           % (quote(q), int(maxrecords)))
+    try:
+        # GDELT puo' essere lento (aggrega migliaia di fonti): timeout piu' largo.
+        data = _fetch(url, timeout=35)
+    except Exception:
+        return []
+    out = []
+    for a in (data.get("articles") or []):
+        title = (a.get("title") or "").strip()
+        link = (a.get("url") or "").strip()
+        if not title or not link:
+            continue
+        dom = (a.get("domain") or "").replace("www.", "")
+        country = (a.get("sourcecountry") or "").strip()
+        # seendate: "YYYYMMDDTHHMMSSZ" -> RFC 2822 (ordinabile come gli RSS)
+        date = ""
+        sd = (a.get("seendate") or "").strip()
+        try:
+            if sd:
+                ts = timegm(time.strptime(sd, "%Y%m%dT%H%M%SZ"))
+                date = formatdate(ts, usegmt=True)
+        except Exception:
+            pass
+        item = {"title": title, "url": link,
+                "domain": dom + ((" · " + country) if country else ""),
+                "date": date, "via": "GDELT"}
+        img = (a.get("socialimage") or "").strip()
+        if img:
+            item["image"] = img
+        if a.get("language"):
+            item["language"] = a["language"]
+        out.append(item)
+    return out
+
+
 def _news(query="world"):
     """Notizie per il ticker. Aggrega piu' feed RSS (standard), le deduplica e
-    le ordina dalla piu' recente. Con una query passa alla ricerca Google News."""
+    le ordina dalla piu' recente. Con una query aggrega Google News + GDELT
+    (database mondiale) per una copertura a 360 gradi."""
     from email.utils import parsedate_to_datetime
     if query and query != "world":
-        url = "https://news.google.com/rss/search?q=%s&hl=it&gl=IT&ceid=IT:it" % quote(query)
-        try:
-            with _opener().open(urllib.request.Request(url, headers={"User-Agent": UA}),
-                                timeout=TIMEOUT) as r:
-                return {"articles": _parse_rss(r.read())[:50]}
-        except Exception as e:
-            return {"articles": [], "error": str(e)}
+        from concurrent.futures import ThreadPoolExecutor
+        gnews_url = ("https://news.google.com/rss/search?q=%s&hl=it&gl=IT&ceid=IT:it"
+                     % quote(query))
+
+        def _gn():
+            try:
+                with _opener().open(urllib.request.Request(gnews_url, headers={"User-Agent": UA}),
+                                    timeout=TIMEOUT) as r:
+                    return _parse_rss(r.read())
+            except Exception:
+                return []
+        # Le due fonti in parallelo: Google News (ottimo per l'italiano) +
+        # GDELT (copertura mondiale multi-lingua).
+        with ThreadPoolExecutor(max_workers=2) as ex:
+            fg = ex.submit(_gn)
+            fd = ex.submit(_gdelt, query)
+            arts = fg.result() + fd.result()
+        # dedup per titolo, poi per URL
+        seen_t, seen_u, uniq = set(), set(), []
+        for a in arts:
+            t, u = a.get("title", ""), a.get("url", "")
+            if t in seen_t or (u and u in seen_u):
+                continue
+            seen_t.add(t)
+            if u:
+                seen_u.add(u)
+            uniq.append(a)
+
+        def _key(a):
+            try:
+                return parsedate_to_datetime(a["date"]).timestamp()
+            except (TypeError, ValueError):
+                return 0
+        uniq.sort(key=_key, reverse=True)
+        if not uniq:
+            return {"articles": [], "error": "nessun risultato"}
+        return {"articles": uniq[:80]}
     def _one(feed):
         try:
             with _opener().open(urllib.request.Request(feed, headers={"User-Agent": UA}),
@@ -1120,7 +1201,7 @@ def _opener():
     return urllib.request.build_opener()
 
 
-def _fetch(url, headers=None):
+def _fetch(url, headers=None, timeout=None):
     # Accept largo: alcune sorgenti (Digitraffic) servono application/geo+json e
     # rifiutano (406) un Accept troppo stretto.
     h = {"User-Agent": UA,
@@ -1128,7 +1209,7 @@ def _fetch(url, headers=None):
     if headers:
         h.update(headers)
     req = urllib.request.Request(url, headers=h)
-    with _opener().open(req, timeout=TIMEOUT) as r:
+    with _opener().open(req, timeout=(timeout or TIMEOUT)) as r:
         raw = r.read()
         # Alcune sorgenti (Digitraffic) rispondono gzip; urllib non lo scompatta.
         if (r.headers.get("Content-Encoding", "") or "").lower() == "gzip":
@@ -1574,42 +1655,222 @@ def _area(lamin, lomin, lamax, lomax):
     return res
 
 
-def _save_report(entries):
-    """Scrive un report d'indagine HTML autonomo in ~/NexusSec-loot/horus/."""
+_TYPE_LABEL = {
+    "geoint": "GEOINT", "recon": "Ricognizione", "socmint": "SOCMINT",
+    "email": "Email", "correlazione": "Correlazione", "area": "Area",
+    "exif": "Metadati foto", "nota": "Nota",
+}
+
+
+def _leaflet_inline():
+    """Legge Leaflet vendored per incorporarlo nel report (mappa offline-first:
+    online mostra le tile OSM, offline i marcatori restano posizionati corretti).
+    Ritorna (css, js) o (None, None) se non disponibile."""
+    base = WEB / "vendor" / "leaflet"
+    try:
+        css = (base / "leaflet.css").read_text(encoding="utf-8")
+        js = (base / "leaflet.js").read_text(encoding="utf-8")
+        return css, js
+    except Exception:
+        return None, None
+
+
+def _save_report(meta):
+    """Scrive un dossier d'indagine come report HTML autonomo + copia JSON in
+    ~/NexusSec-loot/horus/. `meta` = {title, operator, objective, via, entries}.
+
+    Il report contiene: intestazione con metadati del caso, barra statistiche
+    (conteggi per tipo), obiettivo, mini-mappa Leaflet coi punti geolocalizzati,
+    tabella coordinate, timeline ordinata e sezioni raggruppate per tipo, con
+    per ogni voce provenienza (Tor/IP), obiettivo dello scan, coordinate e tag."""
+    if isinstance(meta, list):            # retrocompat: vecchio payload = lista
+        meta = {"entries": meta}
+    entries = meta.get("entries") or []
+    case_title = (meta.get("title") or "").strip() or "Indagine senza titolo"
+    operator = (meta.get("operator") or "").strip() or "n/d"
+    objective = (meta.get("objective") or "").strip()
+    via = (meta.get("via") or "").strip() or "n/d"
+
     d = Path.home() / "NexusSec-loot" / "horus"
     d.mkdir(parents=True, exist_ok=True)
     ts = time.strftime("%Y%m%d-%H%M%S", time.gmtime())
+    # Suffisso breve: due salvataggi nello stesso secondo non si sovrascrivono.
+    sfx = ts
+    n = 1
+    while (d / ("indagine-%s.html" % sfx)).exists():
+        n += 1
+        sfx = "%s-%d" % (ts, n)
+    ts = sfx
     path = d / ("indagine-%s.html" % ts)
+    jpath = d / ("indagine-%s.json" % ts)
+
+    # Copia JSON grezza (interoperabile, re-importabile, per pipeline esterne).
+    jpath.write_text(json.dumps({
+        "tool": "HORUS", "format": "horus-dossier", "version": 1,
+        "generated_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "title": case_title, "operator": operator,
+        "objective": objective, "scan_via": via, "entries": entries,
+    }, ensure_ascii=False, indent=2), encoding="utf-8")
 
     def esc(s):
         return (str(s).replace("&", "&amp;").replace("<", "&lt;")
                 .replace(">", "&gt;"))
 
-    rows = []
+    # --- Statistiche per tipo ---
+    counts = {}
+    geo_pts = []
     for e in entries:
-        rows.append(
-            "<section class='e'><h2>%s <small>%s</small></h2>"
-            "<div class='t'>%s</div><pre>%s</pre></section>" % (
-                esc(e.get("title", "")), esc(e.get("type", "")),
-                esc(e.get("time", "")), esc(e.get("detail", ""))))
-    html = ("<!DOCTYPE html><html lang='it'><head><meta charset='utf-8'>"
-            "<title>HORUS - indagine %s</title><style>"
-            "body{background:#050a14;color:#c8f5ff;font-family:sans-serif;"
-            "max-width:900px;margin:0 auto;padding:24px}"
-            "h1{color:#00e5ff;letter-spacing:3px}"
-            ".e{border:1px solid #1a3a52;border-radius:8px;padding:12px 16px;margin:14px 0;background:#0a1a26}"
-            "h2{margin:0 0 4px;font-size:15px}small{color:#5a8a9a;font-weight:normal}"
-            ".t{color:#5a8a9a;font-size:12px;margin-bottom:8px}"
-            "pre{white-space:pre-wrap;word-break:break-word;background:#030710;"
-            "border:1px solid #1a3a52;border-radius:6px;padding:10px;font-size:12px;color:#c8f5ff}"
-            "footer{color:#5a8a9a;font-size:11px;margin-top:20px}"
-            "</style></head><body><h1>HORUS</h1>"
-            "<p>Report d'indagine OSINT - %s UTC</p>%s"
-            "<footer>Generato da HORUS (NexusSec OS). Gli scan sono partiti dal "
-            "tuo IP o da Tor.</footer></body></html>" % (
-                ts, time.strftime("%Y-%m-%d %H:%M", time.gmtime()), "".join(rows)))
+        t = e.get("type", "?")
+        counts[t] = counts.get(t, 0) + 1
+        lat, lon = e.get("lat"), e.get("lon")
+        if isinstance(lat, (int, float)) and isinstance(lon, (int, float)):
+            geo_pts.append({"lat": lat, "lon": lon,
+                            "title": e.get("title", ""),
+                            "type": _TYPE_LABEL.get(t, t)})
+    chips = ["<span class='chip tot'>%d voci</span>" % len(entries)]
+    for t, n in counts.items():
+        chips.append("<span class='chip'>%s: %d</span>" % (esc(_TYPE_LABEL.get(t, t)), n))
+    if geo_pts:
+        chips.append("<span class='chip geo'>&#128205; %d su mappa</span>" % len(geo_pts))
+
+    # --- Mini-mappa Leaflet incorporata (solo se ci sono coordinate) ---
+    map_html = ""
+    css, js = _leaflet_inline()
+    if geo_pts and css and js:
+        pts_json = json.dumps(geo_pts, ensure_ascii=False)
+        map_html = (
+            "<h2>Mappa situazionale</h2>"
+            "<div id='map' style='height:420px;border:1px solid #1a3a52;border-radius:8px'></div>"
+            "<style>%s</style><script>%s</script>"
+            "<script>(function(){var P=%s;"
+            "var m=L.map('map',{attributionControl:false});"
+            "try{L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',{maxZoom:16}).addTo(m);}catch(e){}"
+            "var g=[];P.forEach(function(p){var mk=L.circleMarker([p.lat,p.lon],"
+            "{radius:6,color:'#00e5ff',weight:2,fillColor:'#00e5ff',fillOpacity:.6})"
+            ".bindPopup('<b>'+p.type+'</b><br>'+p.title+'<br>'+p.lat.toFixed(4)+', '+p.lon.toFixed(4));"
+            "mk.addTo(m);g.push([p.lat,p.lon]);});"
+            "if(g.length===1){m.setView(g[0],6);}else{m.fitBounds(g,{padding:[30,30]});}"
+            "})();</script>" % (css, js, pts_json))
+
+    # --- Tabella coordinate (offline-safe, con link OSM) ---
+    coord_html = ""
+    if geo_pts:
+        crows = []
+        for p in geo_pts:
+            osm = "https://www.openstreetmap.org/?mlat=%s&mlon=%s#map=8/%s/%s" % (
+                p["lat"], p["lon"], p["lat"], p["lon"])
+            crows.append("<tr><td>%s</td><td>%s</td><td class='mono'>%.5f, %.5f</td>"
+                         "<td><a href='%s'>OSM</a></td></tr>" % (
+                             esc(p["type"]), esc(p["title"]), p["lat"], p["lon"], esc(osm)))
+        coord_html = ("<h2>Coordinate</h2><table class='tbl'><thead><tr>"
+                      "<th>Tipo</th><th>Voce</th><th>Lat, Lon</th><th></th></tr></thead>"
+                      "<tbody>%s</tbody></table>" % "".join(crows))
+
+    # --- Timeline (ordinata per istante) ---
+    def _key(e):
+        return e.get("iso") or e.get("time") or ""
+    tl = sorted(entries, key=_key)
+    tl_rows = []
+    for e in tl:
+        tl_rows.append("<li><span class='tl-t'>%s</span> "
+                       "<span class='tl-k'>%s</span> %s</li>" % (
+                           esc(e.get("time", "")),
+                           esc(_TYPE_LABEL.get(e.get("type"), e.get("type", ""))),
+                           esc(e.get("title", ""))))
+    timeline_html = ("<h2>Timeline</h2><ol class='tl'>%s</ol>" % "".join(tl_rows)) if tl_rows else ""
+
+    # --- Grafo relazioni (SVG gia' renderizzato dal client) ---
+    graph_html = ""
+    gsvg = (meta.get("graph_svg") or "").strip()
+    # Sanita' minima: accettiamo solo un <svg>...</svg> (niente script/foreign).
+    if gsvg.startswith("<svg") and "</svg>" in gsvg and "<script" not in gsvg.lower():
+        graph_html = ("<h2>Grafo relazioni</h2>"
+                      "<p class='ghint'>Nodi = entità del dossier; archi = legami "
+                      "dedotti (identificatore condiviso, vicinanza geografica, "
+                      "finestra temporale).</p>"
+                      "<div class='gwrap'>%s</div>" % gsvg)
+
+    # --- Sezioni raggruppate per tipo ---
+    sect = []
+    for t in counts:
+        items = [e for e in entries if e.get("type") == t]
+        sect.append("<h2>%s <small>(%d)</small></h2>" % (esc(_TYPE_LABEL.get(t, t)), len(items)))
+        for e in items:
+            badges = ["<span class='b'>%s</span>" % esc(e.get("via", ""))]
+            if e.get("target"):
+                badges.append("<span class='b'>obiettivo: %s</span>" % esc(e["target"]))
+            if e.get("lat") is not None:
+                badges.append("<span class='b geo'>&#128205; %.4f, %.4f</span>" % (e["lat"], e["lon"]))
+            for tag in (e.get("tags") or [])[:6]:
+                badges.append("<span class='tag'>%s</span>" % esc(tag))
+            sect.append(
+                "<section class='e'><h3>%s</h3>"
+                "<div class='badges'>%s</div>"
+                "<div class='t'>%s</div><pre>%s</pre></section>" % (
+                    esc(e.get("title", "")), " ".join(badges),
+                    esc(e.get("time", "")), esc(e.get("detail", ""))))
+
+    gen = time.strftime("%Y-%m-%d %H:%M", time.gmtime())
+    html = (
+        "<!DOCTYPE html><html lang='it'><head><meta charset='utf-8'>"
+        "<meta name='viewport' content='width=device-width,initial-scale=1'>"
+        "<title>HORUS - %s</title><style>"
+        "body{background:#050a14;color:#c8f5ff;font-family:system-ui,sans-serif;"
+        "max-width:960px;margin:0 auto;padding:24px;line-height:1.5}"
+        "h1{color:#00e5ff;letter-spacing:3px;margin:0}"
+        "h2{color:#00e5ff;border-bottom:1px solid #1a3a52;padding-bottom:4px;margin-top:28px;font-size:16px}"
+        "h3{margin:0 0 6px;font-size:14px}small{color:#5a8a9a;font-weight:normal}"
+        ".head{border:1px solid #1a3a52;border-radius:10px;padding:16px 18px;margin:12px 0;background:#0a1a26}"
+        ".kv{color:#5a8a9a;font-size:13px;margin:2px 0}.kv b{color:#c8f5ff;font-weight:600}"
+        ".chips{margin:12px 0}.chip{display:inline-block;background:#0a1a26;border:1px solid #1a3a52;"
+        "border-radius:20px;padding:3px 11px;margin:3px;font-size:12px;color:#c8f5ff}"
+        ".chip.tot{border-color:#00e5ff;color:#00e5ff}.chip.geo{border-color:#ff5a8a;color:#ff5a8a}"
+        ".obj{background:#030710;border-left:3px solid #00e5ff;padding:8px 12px;border-radius:4px;margin:10px 0}"
+        ".e{border:1px solid #1a3a52;border-radius:8px;padding:12px 16px;margin:12px 0;background:#0a1a26}"
+        ".t{color:#5a8a9a;font-size:12px;margin:6px 0}"
+        ".badges{margin:2px 0 6px}.b{display:inline-block;background:#030710;border:1px solid #1a3a52;"
+        "border-radius:5px;padding:1px 7px;margin:2px 3px 2px 0;font-size:11px;color:#5a8a9a}"
+        ".b.geo{color:#ff5a8a;border-color:#3a2030}.tag{display:inline-block;background:#08202c;"
+        "border-radius:5px;padding:1px 7px;margin:2px 3px 2px 0;font-size:11px;color:#00e5ff}"
+        "pre{white-space:pre-wrap;word-break:break-word;background:#030710;border:1px solid #1a3a52;"
+        "border-radius:6px;padding:10px;font-size:12px;color:#c8f5ff;overflow-x:auto}"
+        ".tbl{width:100%%;border-collapse:collapse;font-size:12px}"
+        ".tbl th,.tbl td{border:1px solid #1a3a52;padding:5px 8px;text-align:left}"
+        ".tbl th{color:#5a8a9a;background:#0a1a26}.mono{font-family:monospace}"
+        ".tbl a{color:#00e5ff}.tl{font-size:13px;padding-left:18px}"
+        ".tl-t{color:#5a8a9a;font-size:11px}.tl-k{color:#00e5ff}"
+        ".ghint{color:#5a8a9a;font-size:12px;margin:2px 0 8px}"
+        ".gwrap{border:1px solid #1a3a52;border-radius:8px;background:#030710;padding:6px;overflow:auto}"
+        ".gwrap svg{max-width:100%%;height:auto;display:block;margin:0 auto}"
+        "footer{color:#5a8a9a;font-size:11px;margin-top:26px;border-top:1px solid #1a3a52;padding-top:10px}"
+        "a{color:#00e5ff}"
+        "</style></head><body>"
+        "<h1>HORUS</h1><p style='color:#5a8a9a;margin:2px 0 0'>Dossier d'indagine OSINT / GEOINT</p>"
+        "<div class='head'>"
+        "<div class='kv'><b>Indagine:</b> %s</div>"
+        "<div class='kv'><b>Analista:</b> %s</div>"
+        "<div class='kv'><b>Generato:</b> %s UTC</div>"
+        "<div class='kv'><b>Provenienza scan:</b> %s</div>"
+        "</div>"
+        "<div class='chips'>%s</div>"
+        "%s"        # objective
+        "%s"        # map
+        "%s"        # graph
+        "%s"        # coords
+        "%s"        # timeline
+        "<h2>Dettaglio voci</h2>%s"
+        "<footer>Generato da HORUS &middot; NexusSec OS &middot; gli scan sono "
+        "partiti da %s. Report autonomo: apribile offline (le tile mappa "
+        "richiedono rete; i marcatori restano posizionati anche offline). "
+        "Copia dati: %s</footer>"
+        "</body></html>" % (
+            esc(case_title), esc(case_title), esc(operator), gen, esc(via),
+            "".join(chips),
+            ("<h2>Obiettivo</h2><div class='obj'>%s</div>" % esc(objective)) if objective else "",
+            map_html, graph_html, coord_html, timeline_html, "".join(sect),
+            esc(via), esc(jpath.name)))
     path.write_text(html, encoding="utf-8")
-    return str(path)
+    return str(path), str(jpath)
 
 
 def _online():
@@ -1970,7 +2231,8 @@ class Handler(BaseHTTPRequestHandler):
             if not entries:
                 return self._json({"error": "niente da salvare"}, 400)
             try:
-                return self._json({"path": _save_report(entries)})
+                html_p, json_p = _save_report(body)
+                return self._json({"path": html_p, "json": json_p})
             except OSError as e:
                 return self._json({"error": "salvataggio: %s" % e}, 500)
         if path == "/api/recon/install":

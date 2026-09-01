@@ -742,7 +742,10 @@
     r.hits.slice(0, 40).forEach(h => lines.push("  - [" + (LAYER_NAME[h.layer] || h.layer) + "] " +
       h.name + (h.dist != null ? " (" + h.dist.toFixed(1) + " km)" : "") +
       (h.time ? " " + fmtTime(h.time) : "")));
-    addDossier("correlazione", r.title || (r.mode === "area" ? "Area" : "Punto"), lines.join("\n"));
+    const cx = {};
+    if (r.focus && typeof r.focus.lat === "number") { cx.lat = r.focus.lat; cx.lon = r.focus.lon; }
+    else if (r.bounds && r.bounds.getCenter) { const c = r.bounds.getCenter(); cx.lat = c.lat; cx.lon = c.lng; }
+    addDossier("correlazione", r.title || (r.mode === "area" ? "Area" : "Punto"), lines.join("\n"), cx);
     const note = document.getElementById("corr-note");
     if (note) note.textContent = "Aggiunto al dossier (tab Report).";
   }

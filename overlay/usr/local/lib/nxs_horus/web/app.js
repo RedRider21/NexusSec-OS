@@ -845,7 +845,7 @@ document.getElementById("recon-run").addEventListener("click", async () => {
     });
     const body = await r.json();
     reconOut.textContent = body.output || body.error || "(nessun output)";
-    if (body.output) addDossier("recon", tool + " " + target, body.output);
+    if (body.output) addDossier("recon", tool + " " + target, body.output, { target: target });
   } catch (e) {
     reconOut.textContent = "Errore: " + (e.message || e);
   } finally {
@@ -863,6 +863,7 @@ async function refreshStatus() {
     const r = await fetch("api/status");
     const s = await r.json();
     dot.className = "dot ok";
+    scanVia = s.tor ? "Tor" : "IP diretto";
     txt.textContent = (s.online ? "in rete" : "offline") +
       (s.tor ? " - via Tor" : "");
     document.getElementById("net-note").textContent = s.tor
@@ -1045,29 +1046,89 @@ map.on("moveend", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Dossier d'indagine -> report HTML nel loot.
+// Dossier d'indagine -> report HTML + JSON nel loot.
+// Ogni voce e' arricchita: tipo, titolo, dettaglio, ora (ISO + locale),
+// provenienza dello scan (Tor/IP), obiettivo, coordinate e tag quando note.
+// I moduli chiamano addDossier(kind, title, detail, extra?) dove extra puo'
+// contenere {lat, lon, target, tags}. Retrocompatibile: extra e' opzionale.
 // ---------------------------------------------------------------------------
 const dossier = [];
-function addDossier(kind, title, detail) {
-  dossier.push({ type: kind, title: title, detail: detail,
-                 time: new Date().toLocaleString() });
+function addDossier(kind, title, detail, extra) {
+  extra = extra || {};
+  const now = new Date();
+  const e = {
+    type: kind, title: title, detail: detail,
+    time: now.toLocaleString(), iso: now.toISOString(),
+    via: (typeof scanVia === "string" ? scanVia : "IP diretto"),
+  };
+  if (extra.target) e.target = extra.target;
+  if (typeof extra.lat === "number" && typeof extra.lon === "number" &&
+      !isNaN(extra.lat) && !isNaN(extra.lon)) { e.lat = extra.lat; e.lon = extra.lon; }
+  if (extra.tags && extra.tags.length) e.tags = extra.tags;
+  dossier.push(e);
   renderDossier();
 }
+const DOSSIER_LABEL = {
+  geoint: "GEOINT", recon: "Ricognizione", socmint: "SOCMINT",
+  email: "Email", correlazione: "Correlazione", area: "Area",
+  exif: "Metadati foto", nota: "Nota",
+};
+function dossierLabel(t) { return DOSSIER_LABEL[t] || t; }
 function renderDossier() {
   const ul = document.getElementById("report-list");
+  const stats = document.getElementById("report-stats");
   ul.innerHTML = "";
   if (!dossier.length) {
     ul.innerHTML = '<li class="empty">Ancora nessuna voce. Esegui una recon o un GEOINT.</li>';
+    if (stats) stats.innerHTML = "";
     return;
   }
-  dossier.forEach(e => {
+  // Barra statistiche: conteggi per tipo + quante voci hanno coordinate.
+  const cnt = {};
+  let geo = 0;
+  dossier.forEach(e => { cnt[e.type] = (cnt[e.type] || 0) + 1; if (e.lat != null) geo++; });
+  if (stats) {
+    let s = '<span class="rep-chip rep-chip-tot">' + dossier.length + " voci</span>";
+    Object.keys(cnt).forEach(k => {
+      s += '<span class="rep-chip">' + esc(dossierLabel(k)) + " " + cnt[k] + "</span>";
+    });
+    if (geo) s += '<span class="rep-chip rep-chip-geo">&#128205; ' + geo + " su mappa</span>";
+    stats.innerHTML = s;
+  }
+  dossier.forEach((e, i) => {
     const li = document.createElement("li");
-    li.innerHTML = '<div class="rk">' + esc(e.type) + "</div><div class='rt'>" +
-      esc(e.title) + "</div><div class='rd'>" + esc(e.time) + "</div>";
+    let meta = e.time + " · " + esc(e.via);
+    if (e.lat != null) meta += " · &#128205; " + e.lat.toFixed(4) + ", " + e.lon.toFixed(4);
+    li.innerHTML = '<div class="rk">' + esc(dossierLabel(e.type)) + "</div><div class='rt'>" +
+      esc(e.title) + "</div><div class='rd'>" + meta + "</div>" +
+      '<button class="rep-del" data-i="' + i + '" title="Rimuovi questa voce">&times;</button>';
     ul.appendChild(li);
   });
+  ul.querySelectorAll(".rep-del").forEach(b => b.addEventListener("click", () => {
+    dossier.splice(parseInt(b.dataset.i, 10), 1); renderDossier();
+  }));
 }
 renderDossier();
+// Ricorda titolo/analista tra le sessioni.
+try {
+  const t = localStorage.getItem("horus.report.title");
+  const o = localStorage.getItem("horus.report.operator");
+  if (t) document.getElementById("report-title").value = t;
+  if (o) document.getElementById("report-operator").value = o;
+} catch (e) {}
+function reportMeta() {
+  const title = document.getElementById("report-title").value.trim();
+  const operator = document.getElementById("report-operator").value.trim();
+  const objective = document.getElementById("report-objective").value.trim();
+  try {
+    localStorage.setItem("horus.report.title", title);
+    localStorage.setItem("horus.report.operator", operator);
+  } catch (e) {}
+  return { title: title, operator: operator, objective: objective,
+           via: (typeof scanVia === "string" ? scanVia : "IP diretto"),
+           graph_svg: (typeof window.HORUS_graphSVG === "string" ? window.HORUS_graphSVG : ""),
+           entries: dossier };
+}
 document.getElementById("report-save").addEventListener("click", async () => {
   const note = document.getElementById("report-note");
   if (!dossier.length) { note.textContent = "Il dossier è vuoto."; return; }
@@ -1075,10 +1136,12 @@ document.getElementById("report-save").addEventListener("click", async () => {
   try {
     const r = await fetch("api/report", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ entries: dossier }),
+      body: JSON.stringify(reportMeta()),
     });
     const b = await r.json();
-    note.textContent = b.path ? ("Salvato in " + b.path) : (b.error || "errore");
+    note.textContent = b.path
+      ? ("Salvato: " + b.path + (b.json ? "  +  " + b.json : ""))
+      : (b.error || "errore");
   } catch (e) { note.textContent = "Errore: " + (e.message || e); }
 });
 document.getElementById("report-clear").addEventListener("click", () => {
@@ -1131,7 +1194,10 @@ document.getElementById("geoint-run").addEventListener("click", async () => {
     } else {
       out.textContent += "\n(nessuna geolocalizzazione: " + (d.geo_error || "?") + ")";
     }
-    addDossier("geoint", target + " -> " + d.ip, out.textContent);
+    const gx = { target: target };
+  if (typeof d.lat === "number" && typeof d.lon === "number") { gx.lat = d.lat; gx.lon = d.lon; }
+  if (d.country) gx.tags = [d.country].concat((d.tags || []).slice(0, 4));
+  addDossier("geoint", target + " -> " + d.ip, out.textContent, gx);
   } catch (e) { out.textContent = "Errore: " + (e.message || e); }
 });
 
@@ -1190,7 +1256,9 @@ async function areaSearch(b) {
         .addTo(areaLayer); nq++;
     });
     areaNote.textContent = "Area: " + nf + " voli, " + nq + " terremoti (24h).";
-    addDossier("area", "Ricerca area", areaNote.textContent + "\nbbox " + q);
+    const bc = b.getCenter();
+    addDossier("area", "Ricerca area", areaNote.textContent + "\nbbox " + q,
+               { lat: bc.lat, lon: bc.lng });
   } catch (e) { areaNote.textContent = "Errore area: " + (e.message || e); }
 }
 
@@ -1198,28 +1266,49 @@ async function areaSearch(b) {
 // Ticker news: banda che scorre in basso con gli ultimi titoli mondiali (GDELT).
 // ---------------------------------------------------------------------------
 const tickerTrack = document.getElementById("ticker-track");
-async function loadNews() {
+let newsQuery = "";                       // "" = notizie mondiali aggregate
+async function loadNews(query) {
+  if (typeof query === "string") newsQuery = query.trim();
+  const clearBtn = document.getElementById("ticker-q-clear");
+  if (clearBtn) clearBtn.hidden = !newsQuery;
+  const url = newsQuery ? ("api/news?q=" + encodeURIComponent(newsQuery)) : "api/news";
   try {
-    const r = await fetch("api/news");
+    tickerTrack.textContent = newsQuery ? ("  Ricerca 360°: " + newsQuery + " …") : "  …";
+    const r = await fetch(url);
     const d = await r.json();
     const arts = (d.articles || []).filter(a => a.title);
-    if (!arts.length) { tickerTrack.textContent = "  Nessuna notizia al momento."; return; }
+    if (!arts.length) {
+      tickerTrack.textContent = newsQuery
+        ? ("  Nessun risultato per “" + newsQuery + "”.")
+        : "  Nessuna notizia al momento.";
+      return;
+    }
     // Contenuto DUPLICATO: con l'animazione a -50% il loop e' senza stacco.
+    const pre = newsQuery
+      ? '<span class="news-scope">360°: ' + esc(newsQuery) + '</span><span class="sep">•</span>' : "";
     const build = () => arts.map(a =>
       '<a class="news-item" href="' + esc(a.url) + '" data-title="' + esc(a.title) +
       '" data-src="' + esc(a.domain) + '">' + esc(a.title) +
       ' <span class="dom">(' + esc(a.domain) + ')</span></a>' +
       '<span class="sep">•</span>').join("");
-    tickerTrack.innerHTML = build() + build();
+    tickerTrack.innerHTML = pre + build() + pre + build();
     // velocita' proporzionale alla lunghezza (piu' titoli = piu' lento)
     tickerTrack.style.animationDuration = Math.max(40, arts.length * 4) + "s";
   } catch (e) {
-    tickerTrack.textContent = "  News non disponibili (GDELT non raggiungibile).";
+    tickerTrack.textContent = "  News non disponibili (rete/GDELT non raggiungibili).";
   }
 }
 document.getElementById("ticker-label").addEventListener("click", () => {
   document.getElementById("ticker").classList.toggle("min");
 });
+(function () {
+  const q = document.getElementById("ticker-q");
+  const clr = document.getElementById("ticker-q-clear");
+  if (q) q.addEventListener("keydown", (ev) => {
+    if (ev.key === "Enter") { ev.preventDefault(); loadNews(q.value); }
+  });
+  if (clr) clr.addEventListener("click", () => { if (q) q.value = ""; loadNews(""); });
+})();
 
 // Lettore news IN-WINDOW: clic su un titolo -> apre l'articolo nella stessa
 // finestra (iframe). Se il sito vieta l'incorporamento, ripiego elegante.
@@ -1554,6 +1643,64 @@ document.getElementById("settings-save").addEventListener("click", async () => {
   } catch (e) { note.textContent = "Errore: " + (e.message || e); }
 });
 document.addEventListener("keydown", e => { if (e.key === "Escape") closeSettings(); });
+
+// ---------------------------------------------------------------------------
+// Finestre flottanti trascinabili (lettore news, video, Centro Correlazioni).
+// Si trascinano dall'header; la posizione e' ricordata per finestra. Quando la
+// finestra e' espansa (quasi a schermo intero) il drag e' disattivato e le
+// regole CSS .expanded riprendono il controllo.
+// ---------------------------------------------------------------------------
+function makeDraggable(winId, handleId) {
+  const win = document.getElementById(winId);
+  const handle = document.getElementById(handleId);
+  if (!win || !handle) return;
+  const KEY = "horus.win." + winId;
+  let lastPos = null, dragging = false, sx, sy, ox, oy;
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+  function applyPos(left, top) {
+    const w = win.offsetWidth || 200;
+    left = clamp(left, 4, Math.max(4, window.innerWidth - Math.min(w, 140) - 4));
+    top = clamp(top, 4, Math.max(4, window.innerHeight - 34));
+    win.style.left = left + "px"; win.style.top = top + "px";
+    win.style.right = "auto"; win.style.bottom = "auto";
+    lastPos = { left: left, top: top };
+  }
+  try {
+    const s = JSON.parse(localStorage.getItem(KEY) || "null");
+    if (s && typeof s.left === "number") { lastPos = s; if (!win.classList.contains("expanded")) applyPos(s.left, s.top); }
+  } catch (e) {}
+  handle.style.cursor = "move";
+  handle.style.touchAction = "none";
+  handle.addEventListener("pointerdown", (ev) => {
+    if (win.classList.contains("expanded")) return;
+    if (ev.target.closest("button, input, select, textarea, a, label")) return;
+    const r = win.getBoundingClientRect();
+    ox = r.left; oy = r.top; sx = ev.clientX; sy = ev.clientY; dragging = true;
+    try { handle.setPointerCapture(ev.pointerId); } catch (e) {}
+    handle.style.cursor = "grabbing"; ev.preventDefault();
+  });
+  handle.addEventListener("pointermove", (ev) => {
+    if (dragging) applyPos(ox + (ev.clientX - sx), oy + (ev.clientY - sy));
+  });
+  function end(ev) {
+    if (!dragging) return;
+    dragging = false; handle.style.cursor = "move";
+    try { handle.releasePointerCapture(ev.pointerId); } catch (e) {}
+    if (lastPos) { try { localStorage.setItem(KEY, JSON.stringify(lastPos)); } catch (e) {} }
+  }
+  handle.addEventListener("pointerup", end);
+  handle.addEventListener("pointercancel", end);
+  // Quando si espande, lascia il layout al CSS; quando si ricomprime, torna
+  // alla posizione trascinata.
+  new MutationObserver(() => {
+    if (win.classList.contains("expanded")) {
+      win.style.left = win.style.top = win.style.right = win.style.bottom = "";
+    } else if (lastPos) { applyPos(lastPos.left, lastPos.top); }
+  }).observe(win, { attributes: true, attributeFilter: ["class"] });
+}
+makeDraggable("reader", "reader-head");
+makeDraggable("live", "live-head");
+makeDraggable("correlate", "corr-head");
 
 // Avvio
 loadTools();

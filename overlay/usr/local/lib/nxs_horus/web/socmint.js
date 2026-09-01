@@ -68,7 +68,7 @@
     if (db) db.addEventListener("click", () => {
       const lines = found.map(r => r.site + ": " + r.url);
       addDossier("socmint", "Username " + d.username + " (" + found.length + " profili)",
-        lines.join("\n"));
+        lines.join("\n"), { target: d.username });
       note.textContent = "Profili aggiunti al dossier (tab Report).";
     });
   }
@@ -202,7 +202,7 @@
         lines.push("Gravatar: " + (d.gravatar.name || "") + " " + (d.gravatar.profile || ""));
         (d.gravatar.accounts || []).forEach(a => lines.push("  " + (a.name || "") + ": " + a.url));
       }
-      addDossier("email", "Email " + d.email, lines.join("\n"));
+      addDossier("email", "Email " + d.email, lines.join("\n"), { target: d.email });
       emNote.textContent = "Aggiunto al dossier (tab Report).";
     });
   }
