@@ -546,29 +546,135 @@ def _gdelt(query, maxrecords=75):
     return out
 
 
+def _http_text(url, data=None, headers=None, timeout=None):
+    """GET/POST che ritorna testo decodificato (segue l'opener Tor/diretto).
+    Scompatta gzip. Usato dai resolver news (DuckDuckGo, Google News)."""
+    h = {"User-Agent": UA, "Accept": "*/*"}
+    if headers:
+        h.update(headers)
+    req = urllib.request.Request(url, data=data, headers=h)
+    with _opener().open(req, timeout=(timeout or TIMEOUT)) as r:
+        raw = r.read()
+        if (r.headers.get("Content-Encoding", "") or "").lower() == "gzip":
+            import gzip
+            raw = gzip.decompress(raw)
+    return raw.decode("utf-8", "replace")
+
+
+def _ddg_news(query, maxrecords=40):
+    """Ricerca notizie su DuckDuckGo (verticale news, keyless). Restituisce URL
+    DIRETTI (niente wrapper: apribili nel lettore) e fonti varie. Best-effort."""
+    from email.utils import formatdate
+    q = (query or "").strip()
+    if not q:
+        return []
+    try:
+        # 1) token vqd (obbligatorio per l'endpoint news.js)
+        seed = _http_text("https://duckduckgo.com/?q=%s&iar=news&ia=news" % quote(q),
+                          timeout=12)
+        m = re.search(r'vqd=["\']?([\d-]+)', seed) or re.search(r'vqd=([\w-]+)', seed)
+        if not m:
+            return []
+        vqd = m.group(1)
+        # 2) risultati news in JSON
+        url = ("https://duckduckgo.com/news.js?l=it-it&o=json&noamp=1"
+               "&q=%s&vqd=%s&p=1" % (quote(q), vqd))
+        data = json.loads(_http_text(url, timeout=12))
+    except Exception:
+        return []
+    out = []
+    for a in (data.get("results") or [])[:maxrecords]:
+        title = (a.get("title") or "").strip()
+        link = (a.get("url") or "").strip()
+        if not title or not link:
+            continue
+        dom = urlparse(link).netloc.replace("www.", "")
+        date = ""
+        try:
+            if a.get("date"):
+                date = formatdate(int(a["date"]), usegmt=True)
+        except Exception:
+            pass
+        item = {"title": title, "url": link,
+                "domain": (a.get("source") or dom), "date": date, "via": "DuckDuckGo"}
+        if a.get("image"):
+            item["image"] = a["image"]
+        out.append(item)
+    return out
+
+
+def _gnews_resolve(url):
+    """Google News RSS incapsula gli articoli in URL wrapper opachi
+    (news.google.com/rss/articles/CBMi...): non sono ne' apribili ne' estraibili.
+    Li risolve nell'URL reale via l'endpoint batchexecute. Best-effort: se
+    fallisce ritorna None (si tiene il wrapper)."""
+    m = re.search(r"/(?:rss/)?articles/([^?/]+)", url or "")
+    if not m:
+        return None
+    b64 = m.group(1)
+    try:
+        html = _http_text("https://news.google.com/rss/articles/%s" % b64, timeout=12)
+        sg = re.search(r'data-n-a-sg="([^"]+)"', html)
+        ts = re.search(r'data-n-a-ts="([^"]+)"', html)
+        if not (sg and ts):
+            return None
+        inner = json.dumps(["garturlreq",
+                            [["X", "X", ["X", "X"], None, None, 1, 1, "US:en", None,
+                              1, None, None, None, None, None, 0, 1],
+                             "X", "X", 1, [1, 1, 1], 1, 1, None, 0, 0, None, 0],
+                            b64, int(ts.group(1)), sg.group(1)])
+        freq = json.dumps([[["Fbv4je", inner, None, "1"]]])
+        body = ("f.req=" + quote(freq)).encode()
+        resp = _http_text("https://news.google.com/_/DotsSplashUi/data/batchexecute",
+                          data=body, timeout=12,
+                          headers={"Content-Type":
+                                   "application/x-www-form-urlencoded;charset=UTF-8"})
+        r = re.search(r'garturlres\\",\\"(https?:[^\\"]+)', resp)
+        if r:
+            return r.group(1).replace("\\/", "/").replace("\\u003d", "=")
+    except Exception:
+        return None
+    return None
+
+
+def _news_engine():
+    """Motore di ricerca news scelto: 'google' | 'duckduckgo' | 'both'
+    (default: both). Impostabile da Settings."""
+    v = _read_conf_text("news-engine.txt").strip().lower()
+    return v if v in ("google", "duckduckgo", "both") else "both"
+
+
 def _news(query="world"):
     """Notizie per il ticker. Aggrega piu' feed RSS (standard), le deduplica e
-    le ordina dalla piu' recente. Con una query aggrega Google News + GDELT
-    (database mondiale) per una copertura a 360 gradi."""
+    le ordina dalla piu' recente. Con una query cerca su Google News e/o
+    DuckDuckGo (verticale news) secondo il motore scelto nei Settings."""
     from email.utils import parsedate_to_datetime
     if query and query != "world":
         from concurrent.futures import ThreadPoolExecutor
+        engine = _news_engine()
         gnews_url = ("https://news.google.com/rss/search?q=%s&hl=it&gl=IT&ceid=IT:it"
                      % quote(query))
 
         def _gn():
             try:
-                with _opener().open(urllib.request.Request(gnews_url, headers={"User-Agent": UA}),
-                                    timeout=TIMEOUT) as r:
-                    return _parse_rss(r.read())
+                return _parse_rss(_http_text(gnews_url, timeout=12).encode("utf-8",
+                                                                            "replace"))
             except Exception:
                 return []
-        # Le due fonti in parallelo: Google News (ottimo per l'italiano) +
-        # GDELT (copertura mondiale multi-lingua).
+        # Fonti in parallelo secondo il motore selezionato. DuckDuckGo da' URL
+        # diretti (apribili); Google News e' ottimo per l'italiano.
+        tasks = []
         with ThreadPoolExecutor(max_workers=2) as ex:
-            fg = ex.submit(_gn)
-            fd = ex.submit(_gdelt, query)
-            arts = fg.result() + fd.result()
+            if engine in ("google", "both"):
+                tasks.append(ex.submit(_gn))
+            if engine in ("duckduckgo", "both"):
+                tasks.append(ex.submit(_ddg_news, query))
+            arts = []
+            for t in tasks:
+                try:
+                    arts += t.result(timeout=20)
+                except Exception:
+                    pass
         # dedup per titolo, poi per URL
         seen_t, seen_u, uniq = set(), set(), []
         for a in arts:
@@ -1041,6 +1147,12 @@ def _live_video_id(url):
 def _extract_article(url):
     """Scarica l'articolo e ne estrae titolo, immagine e paragrafi. Cosi' la
     finestrella lettura funziona ANCHE con i siti che vietano l'iframe."""
+    # Se e' un wrapper Google News lo risolviamo nell'URL reale: il wrapper non
+    # e' estraibile (ritornerebbe 0 paragrafi = "non visualizzabile").
+    if "news.google.com" in (url or "") and "/articles/" in url:
+        real = _gnews_resolve(url)
+        if real:
+            url = real
     req = urllib.request.Request(url, headers={
         "User-Agent": UA,
         "Accept": "text/html,application/xhtml+xml,*/*",
@@ -1465,6 +1577,7 @@ def _settings_status():
         "aisstream": bool(_aisstream_key()),
         "ais_premium": bool(_read_conf_text("ais-premium.key").strip()),
         "news_feeds": _read_conf_text("news-feeds.txt"),
+        "news_engine": _news_engine(),
     }
 
 
@@ -1495,6 +1608,12 @@ def _save_settings(body):
     if "news_feeds" in body:
         (_CONF_DIR / "news-feeds.txt").write_text(body.get("news_feeds") or "")
         written.append("news-feeds.txt")
+    if "news_engine" in body:
+        v = (body.get("news_engine") or "").strip().lower()
+        if v not in ("google", "duckduckgo", "both"):
+            v = "both"
+        (_CONF_DIR / "news-engine.txt").write_text(v + "\n")
+        written.append("news-engine.txt")
     if "news_sources" in body:
         ids = body.get("news_sources") or []
         valid = [c["id"] for c in NEWS_CATALOG]

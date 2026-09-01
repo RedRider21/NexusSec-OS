@@ -287,6 +287,7 @@
     <!-- Impostazioni: chiavi personali (restano su questo computer) -->
     <div id="settings" hidden>
       <div class="settings-card">
+        <button id="settings-expand" class="card-expand" title="Ingrandisci / riduci" aria-label="Ingrandisci">&#9974;</button>
         <h2>Impostazioni</h2>
         <p class="hint">Le chiavi restano <b>solo su questo computer</b>
           (<code>~/.config/nxs</code>): non entrano nella distro né vengono
@@ -307,7 +308,18 @@
           ufficiali del traffico (TfL Londra, Caltrans California, Ontario 511,
           Digitraffic Finlandia, NZTA Nuova Zelanda).</p>
         <label class="fld">
-          <span>Fonti delle news (spunta quelle attive)</span>
+          <span>Motore ricerca news 360° (barra in basso)</span>
+          <select id="set-news-engine">
+            <option value="both">Google News + DuckDuckGo (consigliato)</option>
+            <option value="duckduckgo">Solo DuckDuckGo (link diretti)</option>
+            <option value="google">Solo Google News (ottimo per l'italiano)</option>
+          </select>
+          <p class="hint">DuckDuckGo restituisce link diretti alle testate;
+            Google News passa da un reindirizzamento che HORUS risolve al volo
+            per aprire l'articolo nel lettore.</p>
+        </label>
+        <label class="fld">
+          <span>Fonti delle news (ticker, spunta quelle attive)</span>
           <div id="news-src-list" class="src-list"></div>
         </label>
         <label class="fld">

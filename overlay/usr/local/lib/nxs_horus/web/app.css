@@ -312,9 +312,11 @@ body {
   mask-image: linear-gradient(90deg, transparent, #000 24px,
     #000 calc(100% - 24px), transparent); }
 #ticker-track {
-  position: absolute; top: 0; height: 100%;
-  display: flex; align-items: center; white-space: nowrap; will-change: transform;
-  animation: ticker-scroll 90s linear infinite;
+  position: absolute; top: 0; left: 0; height: 100%;
+  display: flex; align-items: center; white-space: nowrap;
+  /* Lo scorrimento e' guidato da JS (requestAnimationFrame) via transform:
+     affidabile anche in software rendering, dove l'animazione CSS non sempre
+     parte. Vedi app.js: tickerFrame / startTickerScroll. */
 }
 #ticker-track a { color: var(--text); text-decoration: none; padding: 0 6px; }
 #ticker-track a:hover { color: var(--accent); }
@@ -331,8 +333,6 @@ body {
 .ticker-q-clear:hover { color: var(--alarm); }
 #ticker.min .ticker-q, #ticker.min .ticker-q-clear { display: none; }
 #ticker-track .sep { color: var(--accent); opacity: .45; padding: 0 8px; }
-#ticker:hover #ticker-track { animation-play-state: paused; }
-@keyframes ticker-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 
 /* I controlli in basso di Leaflet salgono sopra il ticker sottile */
 .leaflet-bottom { bottom: 26px; }
@@ -400,14 +400,24 @@ body {
 #settings {
   position: fixed; inset: 0; z-index: 2600;
   background: rgba(2,5,12,.9);
-  display: flex; align-items: center; justify-content: center; padding: 20px;
+  display: flex; align-items: center; justify-content: center; padding: 8px;
 }
 .settings-card {
-  width: 760px; max-width: 96vw; max-height: 90vh; overflow-y: auto;
+  position: relative;
+  width: 760px; max-width: 96vw; max-height: 96vh; overflow-y: auto;
   background: var(--panel); border: 1px solid var(--border);
   border-radius: 12px; padding: 20px 22px;
   scrollbar-width: none;
 }
+/* Modalita' a tutto schermo, come le altre finestre. */
+.settings-card.full { width: 96vw; max-width: 96vw; height: 96vh; max-height: 96vh; }
+.card-expand {
+  position: absolute; top: 12px; right: 14px; z-index: 2;
+  background: var(--panel-2); border: 1px solid var(--border); color: var(--muted);
+  border-radius: 6px; width: 30px; height: 28px; font-size: 15px; cursor: pointer;
+  line-height: 1;
+}
+.card-expand:hover { border-color: var(--accent); color: var(--accent); }
 .settings-card::-webkit-scrollbar { width: 0; }
 .settings-card h2 { margin: 0 0 10px; color: var(--accent); font-size: 18px; }
 .settings-card textarea {
@@ -454,7 +464,10 @@ body {
 }
 .src-item:hover { color: var(--accent); }
 @media (max-width: 480px) { .src-list { grid-template-columns: 1fr; } }
-.settings-actions { display: flex; gap: 10px; margin-top: 4px; }
+/* Pulsanti sempre visibili: restano ancorati in fondo mentre il resto scorre. */
+.settings-actions { display: flex; gap: 10px; margin-top: 12px;
+  position: sticky; bottom: -20px; background: var(--panel);
+  padding: 12px 0 0; margin-bottom: -4px; border-top: 1px solid var(--border); }
 .settings-actions .btn { width: auto; flex: 1; }
 
 /* ---- Lettore news: finestrella flottante in basso a sinistra, espandibile ---- */

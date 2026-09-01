@@ -1491,15 +1491,50 @@ async function areaSearch(b) {
 // ---------------------------------------------------------------------------
 const tickerTrack = document.getElementById("ticker-track");
 let newsQuery = "";                       // "" = notizie mondiali aggregate
+let newsSeq = 0;                          // annulla risposte di ricerche superate
+// Scorrimento del ticker guidato da JS (requestAnimationFrame). Motivo: in
+// software rendering (WebKitGTK della live / Chromium) l'animazione CSS su un
+// layer con mask a volte NON parte finche' non si interagisce con la pagina, e
+// un cambio di contenuto via DOM non fa ri-verniciare la striscia (restava
+// "congelata" fino al refresh). Muovendo noi il transform a ogni frame lo
+// scorrimento parte SEMPRE subito e il nuovo contenuto compare all'istante.
+let tickerX = 0, tickerHalf = 0, tickerPaused = false, tickerLast = 0, tickerRAF = 0;
+const TICKER_SPEED = 55;                   // px/s
+function tickerFrame(ts) {
+  if (!tickerLast) tickerLast = ts;
+  const dt = Math.min(0.05, (ts - tickerLast) / 1000);
+  tickerLast = ts;
+  if (!tickerPaused && tickerHalf > 0) {
+    tickerX -= TICKER_SPEED * dt;
+    if (-tickerX >= tickerHalf) tickerX += tickerHalf;   // loop senza stacco
+    tickerTrack.style.transform = "translateX(" + tickerX + "px)";
+  }
+  tickerRAF = requestAnimationFrame(tickerFrame);
+}
+function startTickerScroll() {
+  tickerHalf = tickerTrack.scrollWidth / 2;  // contenuto duplicato una volta
+  tickerX = 0; tickerLast = 0;
+  tickerTrack.style.transform = "translateX(0)";
+  if (!tickerRAF) tickerRAF = requestAnimationFrame(tickerFrame);
+}
+function stopTickerScroll() {              // per i messaggi fissi (loading, esito)
+  tickerHalf = 0; tickerX = 0;
+  tickerTrack.style.transform = "translateX(0)";
+}
 async function loadNews(query) {
   if (typeof query === "string") newsQuery = query.trim();
+  const seq = ++newsSeq;
   const clearBtn = document.getElementById("ticker-q-clear");
   if (clearBtn) clearBtn.hidden = !newsQuery;
   const url = newsQuery ? ("api/news?q=" + encodeURIComponent(newsQuery)) : "api/news";
   try {
-    tickerTrack.textContent = newsQuery ? ("  Ricerca 360°: " + newsQuery + " …") : "  …";
+    tickerTrack.textContent = newsQuery
+      ? ("  Ricerca 360° in corso: " + newsQuery + " … (fino a ~30s)")
+      : "  …";
+    stopTickerScroll();
     const r = await fetch(url);
     const d = await r.json();
+    if (seq !== newsSeq) return;          // arrivata una ricerca piu' recente
     // IMPORTANTE: il ticker è una striscia UNICA animata. In software rendering
     // (WebKit della live / Chromium) un layer animato troppo largo (oltre la
     // dimensione massima di superficie, ~16k px) fa CRASHARE il renderer. Quindi
@@ -1512,9 +1547,10 @@ async function loadNews(query) {
       tickerTrack.textContent = newsQuery
         ? ("  Nessun risultato per “" + newsQuery + "”.")
         : "  Nessuna notizia al momento.";
+      stopTickerScroll();
       return;
     }
-    // Contenuto DUPLICATO: con l'animazione a -50% il loop e' senza stacco.
+    // Contenuto DUPLICATO: lo scorrimento JS ricicla a meta' larghezza -> loop senza stacco.
     const pre = newsQuery
       ? '<span class="news-scope">360°: ' + esc(clip(newsQuery)) + '</span><span class="sep">•</span>' : "";
     const build = () => arts.map(a =>
@@ -1523,15 +1559,23 @@ async function loadNews(query) {
       ' <span class="dom">(' + esc(a.domain) + ')</span></a>' +
       '<span class="sep">•</span>').join("");
     tickerTrack.innerHTML = pre + build() + pre + build();
-    // velocita' proporzionale alla lunghezza (piu' titoli = piu' lento)
-    tickerTrack.style.animationDuration = Math.max(40, arts.length * 4) + "s";
+    // Avvia lo scorrimento JS: parte subito e ri-vernicia col nuovo contenuto.
+    startTickerScroll();
   } catch (e) {
-    tickerTrack.textContent = "  News non disponibili (rete/GDELT non raggiungibili).";
+    if (seq !== newsSeq) return;
+    tickerTrack.textContent = "  News non disponibili (rete non raggiungibile).";
+    stopTickerScroll();
   }
 }
 document.getElementById("ticker-label").addEventListener("click", () => {
   document.getElementById("ticker").classList.toggle("min");
 });
+(function () {                             // pausa lo scorrimento sotto il mouse
+  const t = document.getElementById("ticker");
+  if (!t) return;
+  t.addEventListener("mouseenter", () => { tickerPaused = true; });
+  t.addEventListener("mouseleave", () => { tickerPaused = false; });
+})();
 (function () {
   const q = document.getElementById("ticker-q");
   const clr = document.getElementById("ticker-q-clear");
@@ -1774,6 +1818,8 @@ async function openSettings() {
     document.getElementById("set-aisprem").placeholder =
       s.ais_premium ? "già impostata (lascia vuoto per tenerla)" : "incolla la chiave (facoltativa)";
     document.getElementById("set-feeds").value = s.news_feeds || "";
+    const eng = document.getElementById("set-news-engine");
+    if (eng) eng.value = s.news_engine || "both";
   } catch (e) { /* offline: campi vuoti */ }
   // Catalogo fonti news: checkbox RAGGRUPPATE per zona mondiale
   try {
@@ -1851,6 +1897,10 @@ document.getElementById("set-track-hours").addEventListener("change", () => {
 function closeSettings() { settingsEl.hidden = true; }
 document.getElementById("settings-open").addEventListener("click", openSettings);
 document.getElementById("settings-close").addEventListener("click", closeSettings);
+document.getElementById("settings-expand").addEventListener("click", () => {
+  const c = document.querySelector("#settings .settings-card");
+  if (c) c.classList.toggle("full");
+});
 document.getElementById("settings-save").addEventListener("click", async () => {
   const note = document.getElementById("settings-note");
   note.textContent = "Salvataggio...";
@@ -1862,6 +1912,8 @@ document.getElementById("settings-save").addEventListener("click", async () => {
   // Fonti news selezionate (id spuntati)
   body.news_sources = Array.from(
     document.querySelectorAll("#news-src-list input:checked")).map(c => c.value);
+  const eng = document.getElementById("set-news-engine");
+  if (eng) body.news_engine = eng.value;
   try {
     const d = await (await fetch("api/settings", {
       method: "POST", headers: { "Content-Type": "application/json" },
