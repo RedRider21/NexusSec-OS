@@ -752,8 +752,53 @@ document.querySelectorAll(".tab").forEach(t => {
     document.getElementById("ticker").hidden = (panel === "phone");
     // Leaflet va ridimensionato quando torna visibile.
     if (panel !== "phone") setTimeout(() => map.invalidateSize(), 60);
+    if (panel === "report") loadSavedReports();
   });
 });
+
+// ---------------------------------------------------------------------------
+// Elenco dei dossier salvati nella loot (apri HTML / scarica JSON).
+// ---------------------------------------------------------------------------
+function fmtBytes(n) {
+  if (n < 1024) return n + " B";
+  if (n < 1048576) return (n / 1024).toFixed(0) + " KB";
+  return (n / 1048576).toFixed(1) + " MB";
+}
+async function loadSavedReports() {
+  const ul = document.getElementById("saved-list");
+  if (!ul) return;
+  ul.innerHTML = '<li class="empty">Carico…</li>';
+  try {
+    const r = await fetch("api/reports");
+    const d = await r.json();
+    const list = d.reports || [];
+    if (!list.length) { ul.innerHTML = '<li class="empty">Nessun dossier salvato finora.</li>'; return; }
+    ul.innerHTML = "";
+    list.forEach(rep => {
+      const li = document.createElement("li");
+      const when = new Date(rep.mtime * 1000).toLocaleString();
+      const label = rep.title || rep.name;
+      const openUrl = "api/report/file?name=" + encodeURIComponent(rep.name);
+      const jsonUrl = "api/report/file?dl=1&name=" + encodeURIComponent(rep.name.replace(/\.html$/, ".json"));
+      li.innerHTML =
+        '<div class="sv-main">' +
+        (rep.demo ? '<span class="sv-badge">DEMO</span> ' : "") +
+        '<span class="sv-title">' + esc(label) + "</span>" +
+        '<span class="sv-meta">' + esc(when) + " · " + fmtBytes(rep.size) + "</span></div>" +
+        '<div class="sv-act">' +
+        '<a class="mini-btn" href="' + openUrl + '" target="_blank" rel="noopener">Apri</a>' +
+        (rep.json ? '<a class="mini-btn" href="' + jsonUrl + '">JSON</a>' : "") +
+        "</div>";
+      ul.appendChild(li);
+    });
+  } catch (e) {
+    ul.innerHTML = '<li class="empty">Errore nel caricare l\'elenco.</li>';
+  }
+}
+(function () {
+  const b = document.getElementById("saved-refresh");
+  if (b) b.addEventListener("click", loadSavedReports);
+})();
 
 // ---------------------------------------------------------------------------
 // Recon: elenco tool installati + esecuzione (backend fa la validazione vera).
@@ -1142,6 +1187,7 @@ document.getElementById("report-save").addEventListener("click", async () => {
     note.textContent = b.path
       ? ("Salvato: " + b.path + (b.json ? "  +  " + b.json : ""))
       : (b.error || "errore");
+    if (b.path) loadSavedReports();
   } catch (e) { note.textContent = "Errore: " + (e.message || e); }
 });
 document.getElementById("report-clear").addEventListener("click", () => {

@@ -1675,6 +1675,60 @@ def _leaflet_inline():
         return None, None
 
 
+def _reports_dir():
+    return Path.home() / "NexusSec-loot" / "horus"
+
+
+def _list_reports():
+    """Elenca i dossier salvati (.html) nella loot, dal piu' recente, con la
+    presenza della copia JSON accanto e il titolo estratto dall'HTML."""
+    d = _reports_dir()
+    out = []
+    if not d.is_dir():
+        return out
+    for p in sorted(d.glob("*.html"), key=lambda x: x.stat().st_mtime, reverse=True):
+        title = ""
+        try:
+            head = p.read_text(encoding="utf-8", errors="ignore")[:4000]
+            m = re.search(r"<b>Indagine:</b>\s*([^<]+)", head)
+            if m:
+                # il titolo nell'HTML e' escaped: lo riporto in testo grezzo,
+                # cosi' il client lo ri-escape una sola volta.
+                title = (m.group(1).strip()
+                         .replace("&amp;", "&").replace("&lt;", "<").replace("&gt;", ">"))
+        except Exception:
+            pass
+        st = p.stat()
+        out.append({
+            "name": p.name, "title": title, "size": st.st_size,
+            "mtime": int(st.st_mtime),
+            "json": (d / (p.stem + ".json")).is_file(),
+            "demo": p.name.startswith("DEMO"),
+        })
+    return out
+
+
+def _serve_report_file(handler, name, download=False):
+    """Serve un file dossier dalla loot in modo sicuro (solo basename, solo
+    .html/.json, risolto DENTRO la cartella loot)."""
+    base = _reports_dir().resolve()
+    safe = Path(name).name                      # scarta ogni componente di path
+    p = (base / safe).resolve()
+    if not str(p).startswith(str(base)) or p.suffix not in (".html", ".json") or not p.is_file():
+        handler.send_error(404)
+        return
+    data = p.read_bytes()
+    ctype = "text/html; charset=utf-8" if p.suffix == ".html" else "application/json"
+    handler.send_response(200)
+    handler.send_header("Content-Type", ctype)
+    handler.send_header("Content-Length", str(len(data)))
+    if download:
+        handler.send_header("Content-Disposition", 'attachment; filename="%s"' % safe)
+    handler.send_header("Cache-Control", "no-cache, must-revalidate")
+    handler.end_headers()
+    handler.wfile.write(data)
+
+
 def _save_report(meta):
     """Scrive un dossier d'indagine come report HTML autonomo + copia JSON in
     ~/NexusSec-loot/horus/. `meta` = {title, operator, objective, via, entries}.
@@ -2012,6 +2066,13 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json({"error": "news non raggiungibili: %s" % e}, 502)
         if path == "/api/news-sources":
             return self._json({"sources": _news_sources_status()})
+        if path == "/api/reports":
+            return self._json({"reports": _list_reports()})
+        if path == "/api/report/file":
+            q = parse_qs(urlparse(self.path).query)
+            name = q.get("name", [""])[0]
+            dl = q.get("dl", ["0"])[0] == "1"
+            return _serve_report_file(self, name, download=dl)
         if path == "/api/resolve":
             q = parse_qs(urlparse(self.path).query)
             u = q.get("url", [""])[0]
