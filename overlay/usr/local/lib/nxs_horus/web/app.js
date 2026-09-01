@@ -1307,6 +1307,9 @@ function renderDossier() {
   if (!dossier.length) {
     ul.innerHTML = '<li class="empty">Ancora nessuna voce. Esegui una recon o un GEOINT.</li>';
     if (stats) stats.innerHTML = "";
+    caseWindow = null;
+    renderTimeline();          // dossier vuoto -> nasconde la timeline
+    plotCaseEntries();
     return;
   }
   // Barra statistiche: conteggi per tipo + quante voci hanno coordinate.
