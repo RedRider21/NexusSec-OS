@@ -684,15 +684,33 @@ cambia vista in **satellite** (Esri), **strade** (OSM) o **chiara** (Esri).
   (keyless). La query parte dal tuo IP o da Tor.
 - **Ricerca per area**: disegni un riquadro e ottieni voli (OpenSky) e terremoti
   (USGS) di quell'area.
-- **Report d'indagine**: ricognizioni e GEOINT confluiscono in un dossier
-  salvabile come **report HTML autonomo** in `~/NexusSec-loot/horus/`.
+- **Dossier e fascicoli d'indagine**: ogni ricognizione, GEOINT, SOCMINT,
+  correlazione o ricerca per area confluisce in un **fascicolo** con metadati
+  (titolo, analista, obiettivo), **statistiche** per tipo e provenienza dello
+  scan (Tor/IP) per ogni voce. Si salva come **report HTML autonomo** — con
+  intestazione, **mini-mappa** dei punti, **tabella coordinate**, **timeline**
+  ordinata, sezioni per tipo e il **grafo relazioni** incorporato — più una copia
+  **JSON** re-importabile, in `~/NexusSec-loot/horus/`. Il fascicolo è un oggetto
+  **persistente e ri-editabile**: dall'elenco "Dossier salvati" (o dal pannello
+  **Fascicoli** del Centro Correlazioni) lo **riapri dentro HORUS**, ne rivedi i
+  punti sulla mappa, **aggiungi altre informazioni** e **aggiorni lo stesso
+  fascicolo**; puoi anche **chiuderlo** (torni alla vista normale) o **eliminarlo**.
+- **Grafo relazioni** (Centro Correlazioni → *Grafo*): trasforma le voci del
+  fascicolo in un **grafo** — nodi = entità (IP, domini, email, username, ASN,
+  luoghi) e archi = **legami dedotti** (identificatore condiviso fra voci diverse,
+  vicinanza geografica, finestra temporale). Layout *force-directed* e rendering
+  SVG **senza dipendenze**; nodi trascinabili, esportabile in SVG.
 - **Ticker news** in basso, con un **catalogo di fonti mondiali raggruppate per
   zona** (Italia, Europa, Nord America, America Latina, Russia, Cina, Medio
   Oriente, Asia/Pacifico, Oceania, Africa) selezionabili dal pannello
-  Impostazioni, più feed RSS personalizzati. Le testate vengono aggregate **in
-  parallelo** e ordinate per data. Include una **modalità lettura**: l'articolo
-  viene estratto e mostrato pulito in una finestrella, anche quando il sito
-  vieta l'incorporamento.
+  Impostazioni, più feed RSS personalizzati, aggregati **in parallelo** e ordinati
+  per data. La **ricerca a 360°** interroga anche **GDELT** (database mondiale di
+  notizie, keyless) oltre a Google News, per una copertura multi-lingua che i soli
+  RSS non raggiungono. Include una **modalità lettura** (estrae e mostra pulito
+  l'articolo, anche se il sito vieta l'incorporamento) con **traduzione al volo in
+  italiano** (Google keyless, instradata dal proxy/Tor), opzionale e ricordata.
+- **Finestre trascinabili**: lettore news, video, Centro Correlazioni e Grafo si
+  spostano dall'header e ricordano la posizione.
 - **Ricognizione** (dal tuo IP / Tor): esegue **solo strumenti in whitelist** già
   presenti, con l'obiettivo **validato per tipo** e passato come lista di
   argomenti (mai a una shell): `whois`, `dig`, `nmap`, `maigret`, `h8mail`,
