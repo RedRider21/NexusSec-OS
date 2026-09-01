@@ -1500,7 +1500,14 @@ async function loadNews(query) {
     tickerTrack.textContent = newsQuery ? ("  Ricerca 360°: " + newsQuery + " …") : "  …";
     const r = await fetch(url);
     const d = await r.json();
-    const arts = (d.articles || []).filter(a => a.title);
+    // IMPORTANTE: il ticker è una striscia UNICA animata. In software rendering
+    // (WebKit della live / Chromium) un layer animato troppo largo (oltre la
+    // dimensione massima di superficie, ~16k px) fa CRASHARE il renderer. Quindi
+    // limitiamo il numero di titoli e accorciamo i più lunghi: la striscia resta
+    // ampiamente sotto la soglia anche con la ricerca (fino a ~80 risultati).
+    const TICKER_MAX = 22, TITLE_MAX = 84;
+    const clip = (s) => (s && s.length > TITLE_MAX) ? (s.slice(0, TITLE_MAX - 1) + "…") : (s || "");
+    const arts = (d.articles || []).filter(a => a.title).slice(0, TICKER_MAX);
     if (!arts.length) {
       tickerTrack.textContent = newsQuery
         ? ("  Nessun risultato per “" + newsQuery + "”.")
@@ -1509,10 +1516,10 @@ async function loadNews(query) {
     }
     // Contenuto DUPLICATO: con l'animazione a -50% il loop e' senza stacco.
     const pre = newsQuery
-      ? '<span class="news-scope">360°: ' + esc(newsQuery) + '</span><span class="sep">•</span>' : "";
+      ? '<span class="news-scope">360°: ' + esc(clip(newsQuery)) + '</span><span class="sep">•</span>' : "";
     const build = () => arts.map(a =>
       '<a class="news-item" href="' + esc(a.url) + '" data-title="' + esc(a.title) +
-      '" data-src="' + esc(a.domain) + '">' + esc(a.title) +
+      '" data-src="' + esc(a.domain) + '">' + esc(clip(a.title)) +
       ' <span class="dom">(' + esc(a.domain) + ')</span></a>' +
       '<span class="sep">•</span>').join("");
     tickerTrack.innerHTML = pre + build() + pre + build();
