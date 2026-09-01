@@ -307,6 +307,9 @@ apk add foremost medusa bulk-extractor</code></pre>
     <div class="card"><span class="tag">Correlazioni</span><p>Incrocia le entità dei
     layer per punto, area o entità (raggio + finestra temporale) e traccia le scie
     delle entità in movimento (navi, voli, ISS).</p></div>
+    <div class="card"><span class="tag">Foto / EXIF</span><p>Estrae i metadati in
+    locale: se c'è il GPS, marcatore sulla mappa e link OSM. Ricerca
+    <strong>inversa</strong> dell'immagine su Google Lens, Yandex, Bing e TinEye.</p></div>
   </div>
 
   <h3>Dossier e fascicoli d'indagine</h3>
@@ -319,22 +322,40 @@ apk add foremost medusa bulk-extractor</code></pre>
   <strong>persistente e ri-editabile</strong>: dall'elenco «Dossier salvati» o dal
   pannello <strong>Fascicoli</strong> del Centro Correlazioni lo <strong>riapri
   dentro HORUS</strong>, ne rivedi i punti sulla mappa, aggiungi altre informazioni
-  e <strong>aggiorni lo stesso fascicolo</strong>; puoi anche chiuderlo (torni alla
-  vista normale) o eliminarlo.</p>
+  e <strong>aggiorni lo stesso fascicolo</strong>; puoi anche chiuderlo (dal tab
+  Report o dal Centro Correlazioni, con conferma) o eliminarlo.</p>
+  <p>Una <strong>timeline</strong> mostra la distribuzione temporale delle voci:
+  trascinandola selezioni una finestra che <strong>evidenzia</strong> le voci
+  nell'elenco e i marcatori sulla mappa; un clic su un punto porta la mappa sulla
+  voce. Oltre a HTML e JSON, esporti gli <strong>indicatori</strong> (IP, domini,
+  email) in <strong>CSV</strong> e in bundle <strong>STIX&nbsp;2.1</strong>
+  (interoperabili con altri strumenti SOC), e stampi il dossier in
+  <strong>PDF</strong>.</p>
 
   <h3>Grafo relazioni</h3>
   <p>Centro Correlazioni → <em>Grafo</em>: le voci del fascicolo diventano un
   grafo. Nodi = entità (IP, domini, email, username, ASN, luoghi); archi = legami
   <strong>dedotti</strong> — identificatore condiviso fra voci diverse, vicinanza
   geografica, finestra temporale. Layout <em>force-directed</em> e rendering SVG
-  senza dipendenze; nodi trascinabili ed export in SVG.</p>
+  senza dipendenze; nodi trascinabili ed export in SVG. Un clic su un nodo
+  <strong>IP</strong> o <strong>dominio</strong> ne mostra l'<strong>arricchimento
+  keyless</strong>: RDAP (rete, registrar, date), record DNS e reverse DNS,
+  geolocalizzazione e <strong>ASN</strong> (RDAP.org, ipwho.is).</p>
 
   <h3>News a 360°</h3>
   <p>Ticker con fonti mondiali raggruppate per zona (selezionabili dalle
   Impostazioni) e feed RSS personalizzati. La <strong>ricerca a 360°</strong>
-  interroga anche <strong>GDELT</strong> (database mondiale di notizie, keyless)
-  oltre a Google News. La <strong>modalità lettura</strong> estrae e mostra pulito
-  l'articolo con <strong>traduzione al volo in italiano</strong> (opzionale).</p>
+  interroga <strong>DuckDuckGo</strong> (verticale news, link diretti) e
+  <strong>Google News</strong>: il <strong>motore è selezionabile</strong> dalle
+  Impostazioni (uno, l'altro o entrambi). Dalla barra scegli anche la
+  <strong>finestra temporale</strong> (24 ore / settimana / mese) e la
+  <strong>lingua</strong>. I titoli in lingua straniera si <strong>traducono al
+  passaggio del mouse</strong>; le testate che riprendono la stessa storia sono
+  raggruppate con l'indicatore <strong>&laquo;+N fonti&raquo;</strong>. Gli URL
+  &laquo;wrapper&raquo; di Google News vengono risolti nell'indirizzo reale, così
+  la <strong>modalità lettura</strong> apre e mostra pulito l'articolo (con
+  <strong>traduzione al volo in italiano</strong> opzionale) e lo puoi salvare nel
+  fascicolo con un clic.</p>
 
   <p class="note">Le finestre (lettore news, video, Centro Correlazioni, Grafo)
   sono trascinabili. Le chiavi facoltative (AIS) restano solo in
@@ -431,7 +452,7 @@ nxs-persist status          # stato della persistenza su disco</code></pre>
       <tr><td class="k">nxs-run-tool <span class="tag">tool</span></td><td>Esegue un tool dal menu tenendo aperto il terminale a fine esecuzione.</td></tr>
       <tr><td class="k">nxs-wizard</td><td>Procedure guidate. Senza argomenti apre la GUI.<br><code>list</code> · <code>run NOME</code></td></tr>
       <tr><td class="k">nxs-browser</td><td>Browser stealth integrato (Tor di default, nessuna traccia locale).</td></tr>
-      <tr><td class="k">nxs-horus</td><td><strong>HORUS</strong>, l'Occhio OSINT/GEOINT globale: mappa mondiale con feed in tempo reale, GEOINT/SOCMINT/ricognizione, correlazioni e <strong>grafo relazioni</strong>, fascicoli d'indagine ri-editabili e news a 360° (GDELT). Vedi la sezione 10.</td></tr>
+      <tr><td class="k">nxs-horus</td><td><strong>HORUS</strong>, l'Occhio OSINT/GEOINT globale: mappa mondiale con feed in tempo reale, GEOINT/SOCMINT/ricognizione, correlazioni e <strong>grafo relazioni</strong> (con arricchimento IP/dominio), fascicoli d'indagine ri-editabili con timeline ed export CSV/STIX/PDF, e news a 360° (DuckDuckGo + Google News). Vedi la sezione 10.</td></tr>
       <tr><td class="k">nxs-ai-sandbox</td><td>Sandbox <code>bubblewrap</code> per il (futuro) agente AI: root in sola lettura, home isolata, rete esclusa di default.<br><code>nxs-ai-sandbox [--net] [--workspace CARTELLA] -- COMANDO</code></td></tr>
     </tbody>
   </table>
