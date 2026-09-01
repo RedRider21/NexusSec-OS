@@ -786,11 +786,17 @@ async function loadSavedReports() {
         '<span class="sv-title">' + esc(label) + "</span>" +
         '<span class="sv-meta">' + esc(when) + " · " + fmtBytes(rep.size) + "</span></div>" +
         '<div class="sv-act">' +
+        (rep.json ? '<button class="mini-btn mini-btn-go" data-name="' + esc(rep.name) +
+          '" data-id="' + esc(rep.id) + '" data-demo="' + (rep.demo ? "1" : "") +
+          '">Nel dossier</button>' : "") +
         '<a class="mini-btn" href="' + openUrl + '" target="_blank" rel="noopener">Apri</a>' +
         (rep.json ? '<a class="mini-btn" href="' + jsonUrl + '">JSON</a>' : "") +
         "</div>";
       ul.appendChild(li);
     });
+    ul.querySelectorAll(".mini-btn-go").forEach(b => b.addEventListener("click", () => {
+      loadCase(b.dataset.name, b.dataset.id, b.dataset.demo === "1");
+    }));
   } catch (e) {
     ul.innerHTML = '<li class="empty">Errore nel caricare l\'elenco.</li>';
   }
@@ -1098,6 +1104,70 @@ map.on("moveend", () => {
 // contenere {lat, lon, target, tags}. Retrocompatibile: extra e' opzionale.
 // ---------------------------------------------------------------------------
 const dossier = [];
+// Fascicolo corrente: se aperto da uno salvato, `id` è il suo case_id e
+// "Salva" lo RISCRIVE (continuazione). null = fascicolo nuovo, non ancora salvato.
+let currentCase = null;
+const caseLayer = L.layerGroup().addTo(map);
+function plotCaseEntries() {
+  caseLayer.clearLayers();
+  dossier.forEach(e => {
+    if (typeof e.lat !== "number" || typeof e.lon !== "number") return;
+    L.circleMarker([e.lat, e.lon], { radius: 6, color: "#ffb000", weight: 2,
+      fillColor: "#ffb000", fillOpacity: .5 })
+      .bindPopup(popup(dossierLabel(e.type) + ": " + e.title,
+        [["Quando", esc(e.time)], ["Fonte", esc(e.via || "")]]))
+      .addTo(caseLayer);
+  });
+}
+function updateCaseIndicator() {
+  const box = document.getElementById("case-indicator");
+  if (!box) return;
+  const t = (document.getElementById("report-title").value || "").trim();
+  if (currentCase && currentCase.id) {
+    box.innerHTML = '<span class="ci-on">&#128194; Fascicolo aperto: <b>' +
+      esc(t || currentCase.id) + '</b> — "Salva" aggiorna questo fascicolo.</span>';
+    box.hidden = false;
+  } else if (dossier.length) {
+    box.innerHTML = '<span class="ci-new">&#128196; Nuovo fascicolo (non ancora salvato).</span>';
+    box.hidden = false;
+  } else { box.hidden = true; }
+}
+async function loadCase(name, id, isDemo) {
+  const note = document.getElementById("report-note");
+  try {
+    const r = await fetch("api/report/file?name=" + encodeURIComponent(name.replace(/\.html$/, ".json")));
+    if (!r.ok) throw new Error("JSON non trovato");
+    const c = await r.json();
+    dossier.length = 0;
+    (c.entries || []).forEach(e => dossier.push(e));
+    document.getElementById("report-title").value = c.title || "";
+    document.getElementById("report-operator").value = c.operator || "";
+    document.getElementById("report-objective").value = c.objective || "";
+    // Aprire una DEMO NON la lega: al salvataggio se ne crea uno nuovo, così la
+    // demo resta intatta.
+    currentCase = isDemo ? null : { id: c.case_id || id };
+    renderDossier();
+    plotCaseEntries();
+    updateCaseIndicator();
+    if (window.HORUS_openGraph && document.getElementById("graphwin") &&
+        !document.getElementById("graphwin").hidden) window.HORUS_openGraph();
+    if (note) note.textContent = isDemo
+      ? "Demo caricata nel dossier: modificala e salvala come nuovo fascicolo."
+      : ("Fascicolo aperto (" + dossier.length + " voci). Aggiungi dati e salva per aggiornarlo.");
+  } catch (e) {
+    if (note) note.textContent = "Impossibile aprire il fascicolo: " + (e.message || e);
+  }
+}
+function newCase() {
+  dossier.length = 0;
+  currentCase = null;
+  caseLayer.clearLayers();
+  document.getElementById("report-objective").value = "";
+  renderDossier();
+  updateCaseIndicator();
+  const note = document.getElementById("report-note");
+  if (note) note.textContent = "Nuovo fascicolo vuoto.";
+}
 function addDossier(kind, title, detail, extra) {
   extra = extra || {};
   const now = new Date();
@@ -1150,8 +1220,9 @@ function renderDossier() {
     ul.appendChild(li);
   });
   ul.querySelectorAll(".rep-del").forEach(b => b.addEventListener("click", () => {
-    dossier.splice(parseInt(b.dataset.i, 10), 1); renderDossier();
+    dossier.splice(parseInt(b.dataset.i, 10), 1); renderDossier(); plotCaseEntries();
   }));
+  updateCaseIndicator();
 }
 renderDossier();
 // Ricorda titolo/analista tra le sessioni.
@@ -1171,6 +1242,7 @@ function reportMeta() {
   } catch (e) {}
   return { title: title, operator: operator, objective: objective,
            via: (typeof scanVia === "string" ? scanVia : "IP diretto"),
+           case_id: (currentCase && currentCase.id) ? currentCase.id : "",
            graph_svg: (typeof window.HORUS_graphSVG === "string" ? window.HORUS_graphSVG : ""),
            entries: dossier };
 }
@@ -1184,16 +1256,14 @@ document.getElementById("report-save").addEventListener("click", async () => {
       body: JSON.stringify(reportMeta()),
     });
     const b = await r.json();
+    if (b.case_id) { currentCase = { id: b.case_id }; updateCaseIndicator(); }
     note.textContent = b.path
-      ? ("Salvato: " + b.path + (b.json ? "  +  " + b.json : ""))
+      ? ("Fascicolo salvato (" + (b.case_id || "?") + "). HTML e JSON in ~/NexusSec-loot/horus/.")
       : (b.error || "errore");
     if (b.path) loadSavedReports();
   } catch (e) { note.textContent = "Errore: " + (e.message || e); }
 });
-document.getElementById("report-clear").addEventListener("click", () => {
-  dossier.length = 0; renderDossier();
-  document.getElementById("report-note").textContent = "";
-});
+document.getElementById("report-clear").addEventListener("click", newCase);
 
 // ---------------------------------------------------------------------------
 // GEOINT: geolocalizza IP/dominio + Shodan, e lo mette sulla mappa.

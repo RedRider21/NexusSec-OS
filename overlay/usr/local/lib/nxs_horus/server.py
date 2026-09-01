@@ -1700,7 +1700,7 @@ def _list_reports():
             pass
         st = p.stat()
         out.append({
-            "name": p.name, "title": title, "size": st.st_size,
+            "name": p.name, "id": p.stem, "title": title, "size": st.st_size,
             "mtime": int(st.st_mtime),
             "json": (d / (p.stem + ".json")).is_file(),
             "demo": p.name.startswith("DEMO"),
@@ -1747,20 +1747,25 @@ def _save_report(meta):
 
     d = Path.home() / "NexusSec-loot" / "horus"
     d.mkdir(parents=True, exist_ok=True)
-    ts = time.strftime("%Y%m%d-%H%M%S", time.gmtime())
-    # Suffisso breve: due salvataggi nello stesso secondo non si sovrascrivono.
-    sfx = ts
-    n = 1
-    while (d / ("indagine-%s.html" % sfx)).exists():
-        n += 1
-        sfx = "%s-%d" % (ts, n)
-    ts = sfx
-    path = d / ("indagine-%s.html" % ts)
-    jpath = d / ("indagine-%s.json" % ts)
+    # Identita' del fascicolo: se il client passa un case_id (fascicolo gia'
+    # esistente) si RISCRIVONO gli stessi file (continuazione dell'indagine);
+    # altrimenti se ne conia uno nuovo, univoco. Il case_id e' il nome-base.
+    raw_id = (meta.get("case_id") or "").strip()
+    case_id = re.sub(r"[^A-Za-z0-9_-]", "", raw_id)[:64]
+    if not case_id:
+        ts = time.strftime("%Y%m%d-%H%M%S", time.gmtime())
+        case_id = "caso-" + ts
+        n = 1
+        while (d / (case_id + ".html")).exists():
+            n += 1
+            case_id = "caso-%s-%d" % (ts, n)
+    path = d / (case_id + ".html")
+    jpath = d / (case_id + ".json")
 
     # Copia JSON grezza (interoperabile, re-importabile, per pipeline esterne).
     jpath.write_text(json.dumps({
         "tool": "HORUS", "format": "horus-dossier", "version": 1,
+        "case_id": case_id,
         "generated_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "title": case_title, "operator": operator,
         "objective": objective, "scan_via": via, "entries": entries,
@@ -1924,7 +1929,7 @@ def _save_report(meta):
             map_html, graph_html, coord_html, timeline_html, "".join(sect),
             esc(via), esc(jpath.name)))
     path.write_text(html, encoding="utf-8")
-    return str(path), str(jpath)
+    return str(path), str(jpath), case_id
 
 
 def _online():
@@ -2292,8 +2297,8 @@ class Handler(BaseHTTPRequestHandler):
             if not entries:
                 return self._json({"error": "niente da salvare"}, 400)
             try:
-                html_p, json_p = _save_report(body)
-                return self._json({"path": html_p, "json": json_p})
+                html_p, json_p, case_id = _save_report(body)
+                return self._json({"path": html_p, "json": json_p, "case_id": case_id})
             except OSError as e:
                 return self._json({"error": "salvataggio: %s" % e}, 500)
         if path == "/api/recon/install":
