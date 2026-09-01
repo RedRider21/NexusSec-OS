@@ -572,7 +572,7 @@ body {
 /* ---- Centro Correlazioni: pannello agganciato alla mappa ---- */
 #correlate {
   position: absolute; right: 12px; top: 12px; z-index: 2400;
-  width: 380px; max-width: calc(100% - 24px);
+  width: 430px; max-width: calc(100% - 24px);
   height: calc(100% - 60px); max-height: calc(100% - 60px);
   display: flex; flex-direction: column;
   background: var(--panel); border: 1px solid var(--border);
@@ -839,3 +839,8 @@ body {
 .case-act { flex: 0 0 auto; display: flex; gap: 5px; }
 .cr-del { color: var(--alarm); }
 .cr-del:hover { border-color: var(--alarm); }
+
+/* --- Chiudi fascicolo --- */
+#case-close { margin-left: 6px; }
+.cr-close { color: var(--warn); border-color: var(--warn); font-weight: 700; }
+.cr-close:hover { filter: brightness(1.1); }

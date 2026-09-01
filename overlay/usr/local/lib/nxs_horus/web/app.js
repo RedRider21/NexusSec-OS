@@ -844,8 +844,15 @@ async function openCasesPanel() {
   try {
     const d = await (await fetch("api/reports")).json();
     const list = d.reports || [];
-    if (!list.length) { body.innerHTML = '<p class="corr-empty">Nessun fascicolo salvato. Costruiscine uno e premi “Salva”.</p>'; return; }
-    let h = '<div class="case-list">';
+    const openBar = (currentCase && currentCase.id) || dossier.length
+      ? '<button class="corr-btn cr-close" style="margin-bottom:8px">&#10005; Chiudi fascicolo aperto</button>'
+      : "";
+    if (!list.length) {
+      body.innerHTML = openBar + '<p class="corr-empty">Nessun fascicolo salvato. Costruiscine uno e premi “Salva”.</p>';
+      const cx = body.querySelector(".cr-close"); if (cx) cx.addEventListener("click", closeCase);
+      return;
+    }
+    let h = openBar + '<div class="case-list">';
     list.forEach(r => {
       const when = new Date(r.mtime * 1000).toLocaleString();
       const nv = (r.entries != null) ? (r.entries + " voci · ") : "";
@@ -867,6 +874,7 @@ async function openCasesPanel() {
     body.querySelectorAll(".cr-del").forEach(b => b.addEventListener("click", () => {
       deleteCase(b.dataset.name, b.dataset.label);
     }));
+    const cx = body.querySelector(".cr-close"); if (cx) cx.addEventListener("click", closeCase);
   } catch (e) {
     body.innerHTML = '<p class="corr-empty">Errore nel caricare i fascicoli.</p>';
   }
@@ -1194,14 +1202,40 @@ function updateCaseIndicator() {
   const box = document.getElementById("case-indicator");
   if (!box) return;
   const t = (document.getElementById("report-title").value || "").trim();
+  const closeBtn = ' <button id="case-close" class="mini-btn" title="Chiudi la vista del fascicolo senza salvare">Chiudi fascicolo</button>';
   if (currentCase && currentCase.id) {
     box.innerHTML = '<span class="ci-on">&#128194; Fascicolo aperto: <b>' +
-      esc(t || currentCase.id) + '</b> — "Salva" aggiorna questo fascicolo.</span>';
+      esc(t || currentCase.id) + '</b> — "Salva" aggiorna questo fascicolo.</span>' + closeBtn;
     box.hidden = false;
   } else if (dossier.length) {
-    box.innerHTML = '<span class="ci-new">&#128196; Nuovo fascicolo (non ancora salvato).</span>';
+    box.innerHTML = '<span class="ci-new">&#128196; Nuovo fascicolo (non ancora salvato).</span>' + closeBtn;
     box.hidden = false;
   } else { box.hidden = true; }
+  const cb = document.getElementById("case-close");
+  if (cb) cb.addEventListener("click", closeCase);
+}
+// Chiude la vista del fascicolo (NON lo salva né lo elimina): svuota la working
+// set, toglie i suoi punti dalla mappa, chiude grafo e pannello fascicoli e
+// torna alla visualizzazione normale del mappamondo.
+function closeCase() {
+  if (dossier.length && !(currentCase && currentCase.id)) {
+    if (!confirm("Chiudere il fascicolo senza salvarlo? Le voci non salvate andranno perse.")) return;
+  }
+  dossier.length = 0;
+  currentCase = null;
+  caseLayer.clearLayers();
+  document.getElementById("report-title").value = "";
+  document.getElementById("report-objective").value = "";
+  renderDossier();
+  updateCaseIndicator();
+  try { window.HORUS_graphSVG = ""; } catch (e) {}
+  const gw = document.getElementById("graphwin"); if (gw) gw.hidden = true;
+  if (typeof casesPanelOpen !== "undefined" && casesPanelOpen) {
+    casesPanelOpen = false;
+    const body = document.getElementById("corr-body"); if (body) body.innerHTML = "";
+  }
+  const note = document.getElementById("report-note");
+  if (note) note.textContent = "Fascicolo chiuso: sei tornato alla vista normale.";
 }
 async function loadCase(name, id, isDemo) {
   const note = document.getElementById("report-note");
@@ -1235,6 +1269,7 @@ function newCase() {
   dossier.length = 0;
   currentCase = null;
   caseLayer.clearLayers();
+  document.getElementById("report-title").value = "";
   document.getElementById("report-objective").value = "";
   renderDossier();
   updateCaseIndicator();
