@@ -19,6 +19,11 @@ consumo**.
 
 - Contenuti user-visible (README, menu, log, messaggi) in **italiano** con
   accenti corretti. Commenti nei sorgenti in italiano informale.
+- **i18n** (`nxs_i18n`): l'italiano e' la lingua SORGENTE (chiavi in
+  `strings/it.json`); traduzioni in en/fr/es/de. Le stringhe UI nuove vanno
+  aggiunte come chiave `it` + traduzioni e usate via `t("chiave")` (fallback
+  lingua->en->it->chiave: non rompe mai la UI). Lingua attiva in
+  `~/.config/nxs/lang`, cambiabile da menu (voce Lingua) o `nxs-lang set`.
 - UI **flat**, niente emoji nei file salvo richiesta. Palette: `#050a14`
   (sfondo), `#0a1a26` (pannello), `#00e5ff` (accent), `#c8f5ff` (testo),
   `#5a8a9a` (tenue), `#1a3a52` (bordi), `#ff5a8a` (allarme). L'accent puo'
@@ -31,6 +36,7 @@ NexusSec-OS/
 ├── overlay/                         # payload iniettato nella live (apkovl)
 │   ├── usr/local/bin/nxs-*          # launcher shell (panel, profile, tool, browser, ...)
 │   ├── usr/local/lib/nxs_cc/        # pannello (panel.py) + Centro di Controllo (GTK3)
+│   ├── usr/local/lib/nxs_i18n/      # i18n condiviso (t(), strings/{it,en,fr,es,de}.json)
 │   ├── usr/local/lib/nxs_profiles/  # model, isolation, selector, cli
 │   ├── usr/local/share/nexussec/    # profiles.json + repo.json
 │   ├── home/nexus/                  # .xinitrc, .config/openbox/{rc,autostart,menu}, .themes, sfondi

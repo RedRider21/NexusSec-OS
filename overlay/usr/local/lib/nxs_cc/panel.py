@@ -27,6 +27,14 @@ from gi.repository import Gtk, Gdk, GLib, GdkPixbuf  # noqa: E402
 from .common import apply_css, have, run_bg, install_screens_refresh_monitor  # noqa: E402
 from . import panelcfg  # noqa: E402
 
+# i18n condiviso (it/en/fr/es/de). Soft-import: se assente, _t restituisce la
+# chiave (l'interfaccia non va mai in crash per una traduzione mancante).
+try:
+    from nxs_i18n import t as _t  # noqa: E402
+except Exception:                 # noqa: BLE001
+    def _t(key, **kw):
+        return key
+
 # Sistema profili (pacchetto separato, nessuna dipendenza GTK). Se assente, il
 # pannello resta pienamente funzionante senza la sezione profilo.
 try:
@@ -537,7 +545,7 @@ class Panel(Gtk.Window):
         left = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=0)
         root.pack_start(left, False, False, 0)
 
-        menu_btn = _icon_button("nxs-logo", "Menu NexusSec", "nxs-menu")
+        menu_btn = _icon_button("nxs-logo", _t("menu.title"), "nxs-menu")
         menu_btn.connect("clicked", self._on_menu)
         left.pack_start(menu_btn, False, False, 0)
 
@@ -545,11 +553,11 @@ class Panel(Gtk.Window):
                         False, False, 0)
 
         for icon, tip, cmd in (
-            ("utilities-terminal-symbolic", "Terminale", ["nxs-terminal"]),
-            ("system-file-manager-symbolic", "File", ["pcmanfm"]),
-            ("accessories-text-editor-symbolic", "Editor di testo", ["pluma"]),
-            ("nxs-browser", "NexusSec Browser", ["nxs-browser"]),
-            ("preferences-system-symbolic", "Centro di Controllo",
+            ("utilities-terminal-symbolic", _t("app.terminal"), ["nxs-terminal"]),
+            ("system-file-manager-symbolic", _t("app.files_short"), ["pcmanfm"]),
+            ("accessories-text-editor-symbolic", _t("app.editor"), ["pluma"]),
+            ("nxs-browser", _t("app.browser"), ["nxs-browser"]),
+            ("preferences-system-symbolic", _t("app.control_center"),
              ["nxs-control-center"]),
         ):
             b = _icon_button(icon, tip)
@@ -590,7 +598,7 @@ class Panel(Gtk.Window):
         # affollarla su risoluzioni basse. Il popup raccoglie Firewall, Tor,
         # Screenshot e Blocco schermo; l'icona dello scudo riflette lo stato di
         # protezione (alta = firewall on, bassa = firewall off, neutra = ignoto).
-        self.sec_btn = _icon_button("security-medium-symbolic", "Autoprotezione")
+        self.sec_btn = _icon_button("security-medium-symbolic", _t("tray.security"))
         self.sec_btn.connect("clicked", self._toggle_security)
         right.pack_start(self.sec_btn, False, False, 0)
         # stato iniziale in background (evita di bloccare l'avvio con doas nft)
@@ -603,29 +611,29 @@ class Panel(Gtk.Window):
 
         # Applet Schermi (xrandr) e WiFi (scan/connessione): compaiono sempre;
         # se manca l'hardware il popup lo segnala.
-        scr_btn = _icon_button("video-display-symbolic", "Schermi")
+        scr_btn = _icon_button("video-display-symbolic", _t("tray.screens"))
         scr_btn.connect("clicked", self._toggle_screens)
         right.pack_start(scr_btn, False, False, 0)
 
-        self.wifi_btn = _icon_button("network-wireless-offline-symbolic", "Reti WiFi")
+        self.wifi_btn = _icon_button("network-wireless-offline-symbolic", _t("tray.wifi"))
         self.wifi_btn.connect("clicked", self._toggle_wifi)
         right.pack_start(self.wifi_btn, False, False, 0)
 
         # Audio (volume/uscite via wpctl-PipeWire): clic = popup, rotella = +/-.
-        self.vol_btn = _icon_button("audio-volume-medium-symbolic", "Audio")
+        self.vol_btn = _icon_button("audio-volume-medium-symbolic", _t("tray.audio"))
         self.vol_btn.connect("clicked", self._toggle_volume)
         self.vol_btn.add_events(Gdk.EventMask.SCROLL_MASK)
         self.vol_btn.connect("scroll-event", self._vol_scroll)
         right.pack_start(self.vol_btn, False, False, 0)
 
         # Bluetooth (bluetoothctl-BlueZ): clic = popup accensione/scan/connetti.
-        self.bt_btn = _icon_button("bluetooth-active-symbolic", "Bluetooth")
+        self.bt_btn = _icon_button("bluetooth-active-symbolic", _t("tray.bluetooth"))
         self.bt_btn.connect("clicked", self._toggle_bluetooth)
         right.pack_start(self.bt_btn, False, False, 0)
 
         # Batteria / alimentazione (sysfs): l'applet compare solo se presente
         # una batteria o un alimentatore (su desktop fissi resta nascosto).
-        self.batt_btn = _icon_button("battery-missing-symbolic", "Batteria")
+        self.batt_btn = _icon_button("battery-missing-symbolic", _t("tray.battery"))
         self.batt_btn.connect("clicked", self._toggle_battery)
         self.batt_btn.set_no_show_all(True)      # la visibilita' la decide il poll
         right.pack_start(self.batt_btn, False, False, 0)
@@ -645,13 +653,13 @@ class Panel(Gtk.Window):
         # Pulsante orologio: apre/chiude il calendario (finestra toplevel).
         self.clock_btn = Gtk.Button()
         self.clock_btn.set_relief(Gtk.ReliefStyle.NONE)
-        self.clock_btn.set_tooltip_text("Calendario")
+        self.clock_btn.set_tooltip_text(_t("tray.calendar"))
         self.clock_btn.get_style_context().add_class("nxs-clock-btn")
         self.clock_btn.add(clock_box)
         self.clock_btn.connect("clicked", self._toggle_calendar)
         right.pack_start(self.clock_btn, False, False, 0)
 
-        sd = _icon_button("user-desktop-symbolic", "Mostra il desktop")
+        sd = _icon_button("user-desktop-symbolic", _t("tray.show_desktop"))
         sd.connect("clicked", self._on_show_desktop)
         right.pack_start(sd, False, False, 0)
 
@@ -884,6 +892,43 @@ class Panel(Gtk.Window):
         b.connect("clicked", on_click)
         return b
 
+    # --- selettore lingua interfaccia (it/en/fr/es/de) ---
+    def _choose_language(self):
+        try:
+            import nxs_i18n
+            langs = list(nxs_i18n.LANGS)
+            names = nxs_i18n.LANG_NAMES
+            cur = nxs_i18n.current_lang()
+        except Exception:                # noqa: BLE001
+            return
+        d = Gtk.Dialog(title=_t("lang.title"), transient_for=self, modal=True)
+        d.add_button("OK", Gtk.ResponseType.OK)
+        d.add_button("Annulla", Gtk.ResponseType.CANCEL)
+        area = d.get_content_area()
+        area.set_spacing(8)
+        try:
+            area.set_border_width(12)
+        except Exception:                # noqa: BLE001
+            pass
+        combo = Gtk.ComboBoxText()
+        for c in langs:
+            combo.append(c, names.get(c, c))
+        combo.set_active_id(cur)
+        lab = Gtk.Label(label=_t("lang.title")); lab.set_xalign(0)
+        area.pack_start(lab, False, False, 0)
+        area.pack_start(combo, False, False, 0)
+        hint = Gtk.Label(); hint.set_xalign(0)
+        hint.set_markup("<small>%s</small>" % _t("lang.restart_hint"))
+        area.pack_start(hint, False, False, 0)
+        self._center_dialog(d)
+        d.set_keep_above(True)
+        d.show_all()
+        resp = d.run()
+        code = combo.get_active_id()
+        d.destroy()
+        if resp == Gtk.ResponseType.OK and code and code != cur:
+            run_bg(["nxs-lang", "set", code])
+
     # --- sistema profili ---
     def _profile_data(self):
         """Dati del profilo corrente, o {} se il sistema profili e' assente."""
@@ -1062,7 +1107,7 @@ class Panel(Gtk.Window):
         col = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
         search = Gtk.SearchEntry()
         search.get_style_context().add_class("nxs-menu-search")
-        search.set_placeholder_text("Cerca strumento...")
+        search.set_placeholder_text(_t("menu.search"))
         col.pack_start(search, False, False, 0)
         col.pack_start(scroller, True, True, 0)
         hbox.pack_start(col, True, True, 0)
@@ -1093,51 +1138,51 @@ class Panel(Gtk.Window):
         if prof:
             lst.pack_start(
                 self._menu_item("menu", prof.get("icon", "system-users"),
-                                "Profilo: %s  (cambia)" % prof.get("name", ""),
+                                _t("menu.profile", name=prof.get("name", "")),
                                 ["nxs-profile"], None, None),
                 False, False, 0)
             sep()
 
         move_to = "bottom" if self.position == "top" else "top"
-        move_label = ("Sposta pannello in basso" if move_to == "bottom"
-                      else "Sposta pannello in alto")
+        move_label = (_t("menu.move_bottom") if move_to == "bottom"
+                      else _t("menu.move_top"))
         move_icon = "go-bottom-symbolic" if move_to == "bottom" else "go-top-symbolic"
 
         # (icona, etichetta, comando, sposta_a, conferma)
         # Voci SCORREVOLI (app e utilita'): vanno nella lista che scorre.
         app_items = [
-            ("preferences-system-symbolic", "Centro di Controllo",
+            ("preferences-system-symbolic", _t("app.control_center"),
              ["nxs-control-center"], None, None),
-            ("utilities-terminal-symbolic", "Terminale", ["nxs-terminal"], None, None),
-            ("system-file-manager-symbolic", "File manager", ["pcmanfm"], None, None),
-            ("accessories-text-editor-symbolic", "Editor di testo", ["pluma"], None, None),
-            ("nxs-browser", "NexusSec Browser", ["nxs-browser"], None, None),
-            ("system-run-symbolic", "Procedure guidate", ["nxs-wizard"], None, None),
+            ("utilities-terminal-symbolic", _t("app.terminal"), ["nxs-terminal"], None, None),
+            ("system-file-manager-symbolic", _t("app.files"), ["pcmanfm"], None, None),
+            ("accessories-text-editor-symbolic", _t("app.editor"), ["pluma"], None, None),
+            ("nxs-browser", _t("app.browser"), ["nxs-browser"], None, None),
+            ("system-run-symbolic", _t("app.wizard"), ["nxs-wizard"], None, None),
             (None, None, None, None, None),
             # Utilita' di sessione (stile MATE): blocco schermo/salvaschermo e
             # cattura schermata, comode a portata di menu.
-            ("system-lock-screen-symbolic", "Blocca schermo (salvaschermo)",
+            ("system-lock-screen-symbolic", _t("menu.lock"),
              ["nxs-screensaver"], None, None),
-            ("applets-screenshooter-symbolic", "Cattura schermata",
+            ("applets-screenshooter-symbolic", _t("menu.screenshot"),
              ["nxs-screenshot", "full", "1"], None, None),
             (None, None, None, None, None),
             # Dischi e casi forensi: raggiungibili anche dal menu, non solo
             # dalle icone del desktop (che si coprono con le finestre aperte).
-            ("drive-harddisk", "Dischi", ["nxs-disks"], None, None),
-            ("nxs-case", "Casi forensi", ["nxs-case"], None, None),
-            ("nxs-horus", "HORUS (OSINT/GEOINT)", ["nxs-horus"], None, None),
+            ("drive-harddisk", _t("app.disks"), ["nxs-disks"], None, None),
+            ("nxs-case", _t("app.cases"), ["nxs-case"], None, None),
+            ("nxs-horus", _t("app.horus"), ["nxs-horus"], None, None),
             (None, None, None, None, None),
-            ("computer-symbolic", "Info sistema",
+            ("computer-symbolic", _t("app.sysinfo"),
              ["nxs-control-center", "sysinfo"], None, None),
-            ("applications-system-symbolic", "Monitor risorse",
+            ("applications-system-symbolic", _t("app.monitor"),
              ["nxs-control-center", "monitor"], None, None),
-            ("system-software-install-symbolic", "Gestore pacchetti",
+            ("system-software-install-symbolic", _t("app.packages"),
              ["nxs-control-center", "pacchetti"], None, None),
-            ("network-wired-symbolic", "Rete",
+            ("network-wired-symbolic", _t("app.network"),
              ["nxs-control-center", "rete"], None, None),
             (None, None, None, None, None),
             (move_icon, move_label, None, move_to, None),
-            ("view-refresh-symbolic", "Riavvia Openbox",
+            ("view-refresh-symbolic", _t("menu.restart_openbox"),
              ["openbox", "--restart"], None, None),
         ]
         for icon, label, cmd, mv, conf in app_items:
@@ -1147,6 +1192,11 @@ class Panel(Gtk.Window):
                 lst.pack_start(
                     self._menu_item("menu", icon, label, cmd, mv, conf),
                     False, False, 0)
+        # Selettore lingua interfaccia (it/en/fr/es/de).
+        lang_item = self._menu_item("menu", "preferences-desktop-locale-symbolic",
+                                    _t("menu.language"))
+        lang_item.connect("clicked", lambda _w: self._choose_language())
+        lst.pack_start(lang_item, False, False, 0)
         sep()
 
         # --- Sezione APPLICAZIONI: app installate via .desktop (LibreOffice,
@@ -1293,12 +1343,12 @@ class Panel(Gtk.Window):
         footer.pack_start(Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL),
                           False, False, 0)
         power_items = [
-            ("system-log-out-symbolic", "Esci (logout)",
-             ["openbox", "--exit"], None, "Uscire dalla sessione (logout)?"),
-            ("system-reboot-symbolic", "Riavvia il sistema",
-             ["nxs-shutdown", "reboot"], None, "Riavviare il sistema?"),
-            ("system-shutdown-symbolic", "Spegni",
-             ["nxs-shutdown", "poweroff"], None, "Spegnere il sistema?"),
+            ("system-log-out-symbolic", _t("power.logout"),
+             ["openbox", "--exit"], None, _t("power.confirm_logout")),
+            ("system-reboot-symbolic", _t("power.reboot"),
+             ["nxs-shutdown", "reboot"], None, _t("power.confirm_reboot")),
+            ("system-shutdown-symbolic", _t("power.poweroff"),
+             ["nxs-shutdown", "poweroff"], None, _t("power.confirm_poweroff")),
         ]
         for icon, label, cmd, mv, conf in power_items:
             footer.pack_start(self._menu_item("menu", icon, label, cmd, mv, conf),
@@ -2044,9 +2094,8 @@ class Panel(Gtk.Window):
                 self.sec_btn.set_image(_tray_img(self._sec_icon_for(fw)))
                 self.sec_btn.show_all()
                 self.sec_btn.set_tooltip_text(
-                    {"on": "Autoprotezione — firewall attivo",
-                     "off": "Autoprotezione — firewall SPENTO"}.get(
-                        fw, "Autoprotezione"))
+                    {"on": _t("sec.tip_fw_on"),
+                     "off": _t("sec.tip_fw_off")}.get(fw, _t("sec.tip")))
                 return False
             GLib.idle_add(apply)
         threading.Thread(target=work, daemon=True).start()
@@ -2060,7 +2109,7 @@ class Panel(Gtk.Window):
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
         box.get_style_context().add_class("nxs-calbox")
         box.set_size_request(260, -1)
-        title = Gtk.Label(); title.set_markup("<b>Autoprotezione</b>")
+        title = Gtk.Label(); title.set_markup("<b>%s</b>" % _t("sec.title"))
         title.set_xalign(0)
         box.pack_start(title, False, False, 0)
 
@@ -2078,30 +2127,30 @@ class Panel(Gtk.Window):
             r.pack_end(sw, False, False, 0)
             box.pack_start(r, False, False, 0)
 
-        sw_row("Firewall (inbound deny)", fw == "on", fw == "unknown",
+        sw_row(_t("sec.firewall"), fw == "on", fw == "unknown",
                self._sec_fw_toggle)
-        sw_row("Tor (SOCKS 9050)", tor == "on", False, self._sec_tor_toggle)
+        sw_row(_t("sec.tor"), tor == "on", False, self._sec_tor_toggle)
 
         if fw == "unknown":
             h = Gtk.Label(); h.set_xalign(0); h.set_line_wrap(True)
-            h.set_markup("<small>Stato firewall non leggibile senza password: "
-                         "gestiscilo dal Centro di Controllo.</small>")
+            h.set_markup("<small>%s</small>" % _t("sec.fw_unknown"))
             box.pack_start(h, False, False, 0)
 
         box.pack_start(Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL),
                        False, False, 2)
-        lbl2 = Gtk.Label(); lbl2.set_markup("<b>Strumenti</b>"); lbl2.set_xalign(0)
+        lbl2 = Gtk.Label(); lbl2.set_markup("<b>%s</b>" % _t("sec.tools"))
+        lbl2.set_xalign(0)
         box.pack_start(lbl2, False, False, 0)
 
         rowa = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=4)
-        for txt, mode in (("Schermo intero", "full"), ("Area", "area")):
+        for txt, mode in ((_t("sec.fullscreen"), "full"), (_t("sec.area"), "area")):
             b = Gtk.Button(label=txt)
             b.get_style_context().add_class("nxs-menu-item")
             b.connect("clicked", lambda _w, m=mode: self._sec_screenshot(m))
             rowa.pack_start(b, True, True, 0)
         box.pack_start(rowa, False, False, 0)
 
-        block = Gtk.Button(label="Blocca schermo")
+        block = Gtk.Button(label=_t("sec.lock"))
         block.get_style_context().add_class("nxs-menu-item")
         block.connect("clicked", self._sec_lock)
         box.pack_start(block, False, False, 0)

@@ -1,0 +1,36 @@
+#!/bin/sh
+# nxs-lang - lingua dell'interfaccia NexusSec (it/en/fr/es/de).
+# La scelta e' salvata in ~/.config/nxs/lang e usata da pannello, Centro di
+# Controllo e app che chiamano nxs_i18n.t().
+#
+#   nxs-lang get              stampa la lingua attiva
+#   nxs-lang list             elenca i codici disponibili
+#   nxs-lang set <codice>     imposta la lingua e riavvia il pannello
+set -eu
+export PYTHONPATH="${PYTHONPATH:-/usr/local/lib}"
+
+case "${1:-get}" in
+  get)
+    python3 -c 'import nxs_i18n; print(nxs_i18n.current_lang())'
+    ;;
+  list)
+    python3 -c 'import nxs_i18n
+for c in nxs_i18n.LANGS: print(c, nxs_i18n.LANG_NAMES[c])'
+    ;;
+  set)
+    [ -n "${2:-}" ] || { echo "uso: nxs-lang set <it|en|fr|es|de>" >&2; exit 2; }
+    python3 -c 'import sys, nxs_i18n; sys.exit(0 if nxs_i18n.set_lang(sys.argv[1]) else 1)' "$2" \
+      || { echo "lingua non valida: $2 (usa: nxs-lang list)" >&2; exit 1; }
+    echo "lingua impostata: $2"
+    # Applica riavviando il pannello. pkill DIRETTO (si auto-esclude) e rilancio
+    # da un launcher separato il cui argv NON contiene 'nxs_cc.panel'.
+    if command -v nxs-panel >/dev/null 2>&1; then
+      pkill -f nxs_cc.panel 2>/dev/null || true
+      sleep 1
+      setsid nxs-panel >/dev/null 2>&1 &
+    fi
+    ;;
+  *)
+    echo "uso: nxs-lang {get|list|set <codice>}" >&2; exit 2
+    ;;
+esac
