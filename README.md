@@ -78,9 +78,21 @@ scarichi e' **volatile** (si perde al riavvio):
 - tool **pip** -> `~/.local/` (pipx), in RAM.
 
 E' il comportamento "monomissione/stealth" voluto. In VirtualBox dai alla VM
-**>= 2 GB di RAM** (3-4 per Forensics/Web con container). Per **conservare** i
-download tra i riavvii: installa su disco (`nxs-install` -> `setup-disk -m sys`,
-serve un disco virtuale) oppure usa una cache apk persistente + `lbu`.
+**>= 2 GB di RAM** (3-4 per Forensics/Web con container).
+
+**Con la chiavetta persistente (`NXSDATA`, `nxs-persist`)** i tool installati al
+volo **sopravvivono al riavvio**, senza complicare la live "nuda" (tutto e'
+attivo solo se `NXSDATA` e' montato):
+
+- **container / Kali** -> lo storage Podman e' su `NXSDATA`: restano;
+- **pip / pipx / git** -> vivono in `~/.local`, reso **persistente** (bind mount):
+  tornano **senza reinstallare nulla**;
+- **apk** (es. `nmap`) -> vengono **registrati** (`/var/nxs-data/tool-state/apk-tools`)
+  e **reinstallati al boot, offline dalla cache**, in background (il desktop non
+  aspetta). Gestione: `nxs-tool persisted` / `nxs-tool forget <pkg>`.
+
+Per una persistenza **totale** come un PC normale resta l'installazione su disco
+(`nxs-install` -> `setup-disk -m sys`).
 
 ## Confronto con Kali / Parrot Security
 
@@ -609,6 +621,12 @@ Legenda metodo: `apk` nativo Alpine · `pip` (pipx) · `ctr` container Podman ·
   progetto TinyCore): menu start con i tool del profilo, lista finestre
   (`wmctrl`), orologio/calendario, spostabile alto/basso. La sotto-etichetta
   mostra il profilo attivo, l'accent segue il colore del profilo.
+- **Autoprotezione** (applet "scudo", un solo slot sulla barra): interruttori
+  **Firewall** e **Tor** (`nxs-tor`, SOCKS 9050), **Screenshot** (intero/area) e
+  **Blocco schermo**; l'icona riflette lo stato del firewall.
+- **Multilingua** (it / en / fr / es / de): layer i18n condiviso (`nxs_i18n`) con
+  selettore nel menu (voce **Lingua**) e CLI `nxs-lang`; l'italiano e' la lingua
+  sorgente, con fallback lingua->inglese->italiano.
 - **Centro di Controllo** (`nxs-control-center`): info sistema, monitor, rete,
   **gestore pacchetti apk**, temi, sfondo, pannello, autostart, e tile
   **Profilo operativo**.
@@ -676,6 +694,10 @@ cambia vista in **satellite** (Esri), **strade** (OSM) o **chiara** (Esri).
   inserire nelle Impostazioni (mai distribuita).
 - I **satelliti** sono propagati dai TLE **nel browser** con `satellite.js`
   (nessun WebGL): niente carico sul backend e movimento fluido.
+- **Mappa offline**: le tile viste online vengono salvate in **IndexedDB** e
+  riproposte senza rete; dalle Impostazioni puoi **precaricare il mondo a basso
+  zoom** (poche centinaia di tile) e **svuotare la cache**. Utile su una distro
+  spesso offline, senza incorporare immagini nella ISO.
 
 ### Altri strumenti
 
@@ -695,6 +717,9 @@ cambia vista in **satellite** (Esri), **strade** (OSM) o **chiara** (Esri).
   **Fascicoli** del Centro Correlazioni) lo **riapri dentro HORUS**, ne rivedi i
   punti sulla mappa, **aggiungi altre informazioni** e **aggiorni lo stesso
   fascicolo**; puoi anche **chiuderlo** (torni alla vista normale) o **eliminarlo**.
+  Puoi allegare **schermate** di ciò che vedi (pulsante «+ Schermata») ed
+  esportare gli indicatori in **CSV** e **STIX 2.1**, il fascicolo in **PDF** o un
+  **bundle ZIP** completo (HTML + JSON + CSV + STIX + schermate).
 - **Grafo relazioni** (Centro Correlazioni → *Grafo*): trasforma le voci del
   fascicolo in un **grafo** — nodi = entità (IP, domini, email, username, ASN,
   luoghi) e archi = **legami dedotti** (identificatore condiviso fra voci diverse,
