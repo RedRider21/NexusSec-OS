@@ -73,6 +73,13 @@ fi
 #     che sopravvive al riavvio e NON riempie la RAM;
 #   - lo stato dei tool (~/.config/nxs: profilo, ambiente Kali) e il loot.
 # Podman gira ROOTLESS come 'nexus', quindi tutto dev'essere di sua proprieta.
+# lbu (backup Alpine su supporto di avvio) salva /etc, ma NON /var/lib, dove
+# BlueZ tiene le chiavi di accoppiamento: senza questa riga il telefono andrebbe
+# riabbinato a ogni avvio anche con un supporto scrivibile. nxs-shutdown fa il
+# "lbu commit" allo spegnimento. Vale solo se il supporto e SCRIVIBILE: una ISO
+# scritta con dd e ISO9660 (sola lettura), li serve NXSDATA (vedi nxs-persist).
+command -v lbu >/dev/null 2>&1 && lbu include /var/lib/bluetooth 2>/dev/null || true
+
 [ -f /usr/local/lib/nxs-persist-setup.sh ] && . /usr/local/lib/nxs-persist-setup.sh
 NXSDATA="$(findfs LABEL=NXSDATA 2>/dev/null || blkid -L NXSDATA 2>/dev/null || true)"
 NXSLUKS="$(command -v nxs_find_luks >/dev/null 2>&1 && nxs_find_luks || true)"

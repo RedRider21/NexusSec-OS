@@ -559,6 +559,12 @@ def _podman_run(tool: str, args: list[str], interactive: bool = True) -> list[st
         cmd += ["--privileged"]
     if data.get("net") == "host":
         cmd += ["--net", "host"]
+    # Pubblicazione porte: mappa "ports":["127.0.0.1:5000:5000",...] su -p.
+    # AUTOPROTEZIONE: i server web dei tool OSINT (es. PhoneInfoga) vanno esposti
+    # SOLO su loopback, mai su 0.0.0.0 (che con --net host sarebbe raggiungibile
+    # dalla LAN quando il firewall e' spento durante un pentest).
+    for _p in (data.get("ports") or []):
+        cmd += ["-p", _p]
     if data.get("entrypoint"):           # override (es. theHarvester: l'EP e' il server REST)
         cmd += ["--entrypoint", data["entrypoint"]]
     cmd.append(img)

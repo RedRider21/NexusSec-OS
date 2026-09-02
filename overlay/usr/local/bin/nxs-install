@@ -1,41 +1,160 @@
 #!/bin/sh
 # NexusSec - installazione su disco / persistenza (Alpine).
 #
-# Due modi per NON perdere l'arsenale (immagini container/kali) al riavvio:
-#  A) INSTALLAZIONE SU DISCO (consigliata): il sistema va su disco; lo storage
-#     di Podman e tutto il resto sono su disco => persistenza COMPLETA e
-#     automatica (anche i tool apk installati restano). Avvolge setup-disk /
-#     setup-alpine ufficiali Alpine.
-#  B) PERSISTENZA LIVE: resti da live ma crei una partizione dati NXSDATA
-#     (nxs-persist) su cui salvare immagini container/kali + stato tool.
+# Tre modi per NON perdere l'arsenale (immagini container/kali) al riavvio:
+#  A) DISCO INTERO: il sistema prende tutto il disco. Persistenza completa,
+#     ma cancella qualunque cosa ci sia sopra.
+#  B) A FIANCO: si installa in UNA partizione (esistente o ricavata dallo
+#     spazio libero) lasciando intatto il resto, Windows compreso.
+#  C) PERSISTENZA LIVE: resti da live e salvi solo arsenale + stato su una
+#     partizione dati NXSDATA (nxs-persist).
+#
+# L'elenco dei dischi arriva da nxs-disks, cosi' si vede COSA c'e' sopra prima
+# di scriverci: "setup-disk -m sys DISCO" usa il disco senza chiedere nulla.
 priv() { if [ "$(id -u)" = 0 ]; then "$@"; \
          elif command -v doas >/dev/null 2>&1; then doas "$@"; \
          else sudo "$@"; fi; }
+
+elenco_dischi() {
+  if command -v nxs-disks >/dev/null 2>&1; then
+    nxs-disks --lista-completa
+  else
+    lsblk -o NAME,SIZE,TYPE,FSTYPE,LABEL,MOUNTPOINT 2>/dev/null
+  fi
+}
+
+# Chiede conferma facendo RISCRIVERE il percorso: un Invio distratto non deve
+# poter cancellare un disco di sistema.
+conferma_percorso() {
+  printf "  Per confermare riscrivi il percorso completo (%s): " "$1"
+  read c
+  [ "$c" = "$1" ]
+}
 
 echo "==============================================================="
 echo "  NexusSec OS - installazione su disco / persistenza"
 echo "==============================================================="
 echo
 echo "  A) INSTALLA SU DISCO (persistenza completa e automatica)"
-echo "     1) setup-alpine   configurazione guidata completa + installazione"
-echo "     2) setup-disk     installa il sistema corrente su un disco (sys)"
+echo "     1) guidata      setup-alpine: configurazione completa"
+echo "     2) disco intero installa prendendo TUTTO il disco"
+echo "     3) a fianco     installa in una partizione, lascia il resto"
 echo
-echo "  B) PERSISTENZA LIVE (resti live, salvi solo arsenale + stato)"
-echo "     3) nxs-persist    crea la partizione dati NXSDATA"
-echo "     4) stato persistenza"
+echo "  B) PERSISTENZA LIVE (resti live, salvi arsenale + stato + credenziali)"
+echo "     4) nxs-persist  crea la partizione dati NXSDATA"
+echo "     5) stato persistenza"
 echo
+echo "     d) mostra dischi e partizioni"
 echo "     q) annulla"
 printf "  Scelta: "; read ans
+
 case "$ans" in
+  d) elenco_dischi ;;
+
   1) exec priv setup-alpine ;;
-  2) echo "  Dischi disponibili:"; lsblk -o NAME,SIZE,TYPE,MODEL 2>/dev/null
+
+  2) echo "  Dischi disponibili:"; elenco_dischi
      printf "  Disco di destinazione (es. /dev/sda): "; read disk
-     if [ -n "$disk" ]; then
-       echo "  Dopo l'installazione lo storage Podman sara su disco:"
-       echo "  l'arsenale scaricato restera tra i riavvii."
-       exec priv setup-disk -m sys "$disk"
-     fi ;;
-  3) exec nxs-persist ;;
-  4) exec nxs-persist status ;;
+     [ -n "$disk" ] || exit 0
+     [ -b "$disk" ] || { echo "  ERRORE: $disk non e un dispositivo a blocchi."; exit 1; }
+     echo
+     echo "  =========================================================="
+     echo "  ATTENZIONE: contenuto ATTUALE di $disk"
+     echo "  =========================================================="
+     lsblk -o NAME,SIZE,FSTYPE,LABEL,MOUNTPOINT "$disk" 2>/dev/null
+     echo
+     echo "  Tutto quanto elencato sopra verra CANCELLATO."
+     echo "  Se su questo disco c e Windows o un altro Linux da tenere,"
+     echo "  annulla e usa la scelta 3 (a fianco)."
+     echo
+     conferma_percorso "$disk" || { echo "  Non confermato: non e stato toccato nulla."; exit 0; }
+     echo "  Dopo l installazione lo storage Podman sara su disco:"
+     echo "  l arsenale scaricato restera tra i riavvii."
+     exec priv setup-disk -m sys "$disk"
+     ;;
+
+  3) # --- installazione A FIANCO ------------------------------------------
+     echo "  Dischi, partizioni e spazio libero:"; elenco_dischi
+     echo
+     printf "  Disco su cui installare (es. /dev/sda): "; read disk
+     [ -n "$disk" ] || exit 0
+     [ -b "$disk" ] || { echo "  ERRORE: $disk non e un dispositivo a blocchi."; exit 1; }
+
+     echo
+     echo "  Destinazioni possibili su $disk:"
+     echo "  --- partizioni esistenti (verranno FORMATTATE) ---"
+     nxs-disks --partizioni 2>/dev/null | grep "^$disk" \
+       | awk -F'\t' '{printf "    %-16s %10s  %-8s %s\n", $1, $2, $3, $4}'
+     echo "  --- spazio non allocato (ci si crea una partizione nuova) ---"
+     libero="$(nxs-disks --liberi "$disk" 2>/dev/null)"
+     if [ -n "$libero" ]; then
+       printf '%s\n' "$libero" | awk -F'\t' '{printf "    libero           %10s\n", $3}'
+     else
+       echo "    (nessuno spazio libero >= 2 GiB)"
+       echo
+       echo "    Per fare spazio: rimpicciolisci Windows DA WINDOWS"
+       echo "    (Gestione disco > Riduci volume). Farlo da qui su un NTFS"
+       echo "    e rischioso e non lo proponiamo."
+     fi
+     echo
+     echo "  Scrivi il percorso di una partizione da formattare (es. /dev/sda3)"
+     echo "  oppure la parola  libero  per usare lo spazio non allocato."
+     printf "  Destinazione: "; read dest
+     [ -n "$dest" ] || exit 0
+
+     if [ "$dest" = "libero" ]; then
+       [ -n "$libero" ] || { echo "  Non c e spazio libero utilizzabile."; exit 1; }
+       ini=$(printf '%s\n' "$libero" | head -1 | cut -f1)
+       fin=$(printf '%s\n' "$libero" | head -1 | cut -f2)
+       dimh=$(printf '%s\n' "$libero" | head -1 | cut -f3)
+       echo
+       echo "  Verra creata una partizione nuova di circa $dimh su $disk."
+       echo "  Le partizioni esistenti NON vengono toccate."
+       printf "  Confermi? scrivi  si  : "; read c
+       [ "$c" = "si" ] || { echo "  Annullato."; exit 0; }
+       # Identifichiamo la partizione NUOVA confrontando l elenco prima/dopo:
+       # parted non ne stampa il nome in modo affidabile su tutti i backend.
+       tp=$(mktemp); td=$(mktemp)
+       lsblk -ln -o NAME "$disk" | sort > "$tp"
+       priv parted -s "$disk" mkpart primary ext4 "${ini}B" "${fin}B" || {
+         rm -f "$tp" "$td"; echo "  ERRORE: creazione della partizione fallita."; exit 1; }
+       priv partprobe "$disk" 2>/dev/null || true
+       sleep 2
+       lsblk -ln -o NAME "$disk" | sort > "$td"
+       nuova=$(comm -13 "$tp" "$td" | head -1)
+       rm -f "$tp" "$td"
+       [ -n "$nuova" ] || { echo "  ERRORE: non riesco a identificare la partizione nuova."; exit 1; }
+       dest="/dev/$nuova"
+       echo "  Creata: $dest"
+     else
+       [ -b "$dest" ] || { echo "  ERRORE: $dest non e una partizione."; exit 1; }
+       case "$(lsblk -no MOUNTPOINT "$dest" 2>/dev/null | tr -d ' ')" in
+         /|/boot|/boot/efi) echo "  ERRORE: $dest e in uso dal sistema corrente."; exit 1 ;;
+       esac
+       echo
+       echo "  =========================================================="
+       echo "  $dest verra FORMATTATA: il suo contenuto andra perso."
+       echo "  Il RESTO del disco (Windows, altri Linux, dati) resta intatto."
+       echo "  =========================================================="
+       lsblk -o NAME,SIZE,FSTYPE,LABEL "$dest" 2>/dev/null
+       echo
+       conferma_percorso "$dest" || { echo "  Non confermato: non e stato toccato nulla."; exit 0; }
+     fi
+
+     echo "  Formattazione di $dest in ext4..."
+     priv mkfs.ext4 -q -L NEXUSSEC "$dest" || { echo "  ERRORE: formattazione fallita."; exit 1; }
+     priv mkdir -p /mnt
+     priv mount "$dest" /mnt || { echo "  ERRORE: montaggio di $dest fallito."; exit 1; }
+     echo
+     echo "  Installazione del sistema in $dest, bootloader su $disk."
+     echo "  NOTA: il menu di avvio potrebbe non elencare Windows da solo"
+     echo "  (Alpine non installa os-prober). Windows resta comunque avviabile"
+     echo "  dal menu di avvio del firmware (di solito F12 / F9 / Esc)."
+     echo
+     exec priv setup-disk -m sys -b "$disk" /mnt
+     ;;
+
+  4) exec nxs-persist ;;
+  5) exec nxs-persist status ;;
   *) echo "annullato" ;;
 esac

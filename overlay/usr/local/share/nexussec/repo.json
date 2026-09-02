@@ -3072,6 +3072,35 @@
       "entry": "Villain.py",
       "bin": "villain",
       "description": "Framework C2 leggero multi-sessione: gestione reverse shell e payload (Python)."
+    },
+    "sn0int": {
+      "category": "osint",
+      "method": "apk",
+      "apk": "sn0int",
+      "bin": "sn0int",
+      "description": "Framework OSINT semi-automatico con package manager di moduli e storage a grafo (Rust, ispirato a recon-ng/Maltego). Pacchetto Alpine nativo: peso minimo."
+    },
+    "maigret": {
+      "category": "osint",
+      "method": "pip",
+      "pip": "maigret",
+      "bin": "maigret",
+      "description": "Dossier su uno username cercandolo in 3000+ siti; ricerca ricorsiva sugli identificatori trovati ed export report HTML/PDF/JSON. Erede evoluto di Sherlock."
+    },
+    "phoneinfoga": {
+      "category": "osint",
+      "method": "container",
+      "image": "docker.io/sundowndev/phoneinfoga:latest",
+      "ports": ["127.0.0.1:5000:5000"],
+      "run": "serve",
+      "description": "OSINT su numeri di telefono con REST API + web client (Vue). Avvia il server web (esposto solo su 127.0.0.1:5000): poi apri http://localhost:5000 nel browser NexusSec."
+    },
+    "h8mail": {
+      "category": "osint",
+      "method": "pip",
+      "pip": "h8mail",
+      "bin": "h8mail",
+      "description": "Caccia a un indirizzo email nei data-breach e in sorgenti di ricognizione (locali o servizi premium); ricostruisce anche gli account collegati."
     }
   }
 }

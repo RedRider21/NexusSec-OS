@@ -573,7 +573,19 @@ def _replace_line(path: Path, prefix: str, newline: str) -> None:
     if not done:
         out.append(newline)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text("\n".join(out) + "\n")
+    # SCRITTURA ATOMICA (file temporaneo + rename). Con write_text il file
+    # viene prima TRONCATO e poi riempito: chi lo sta leggendo in quel preciso
+    # istante lo trova vuoto o a meta. GTK sorveglia settings.ini e lo rilegge
+    # a ogni modifica, quindi all avvio - dove il pannello parte mentre
+    # "nxs-tool apply" riscrive questo stesso file - poteva ricavarne un tema
+    # icone vuoto e ripiegare sul default: le icone NOSTRE (nxs-logo,
+    # nxs-browser) sparivano dalla barra, mentre quelle di Adwaita restavano.
+    # Era il "alcune si vedono e altre no". Con rename() il file passa da una
+    # versione completa all altra senza stati intermedi.
+    import os as _os
+    tmp = path.with_name(path.name + ".tmp")
+    tmp.write_text("\n".join(out) + "\n")
+    _os.replace(str(tmp), str(path))
 
 
 def set_icon_theme(key: str | None = None, refresh: bool = False) -> str:

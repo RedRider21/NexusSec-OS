@@ -154,11 +154,13 @@
         <button id="report-save" class="btn">Salva / aggiorna fascicolo</button>
         <button id="report-clear" class="btn btn-alt">Nuovo fascicolo</button>
         <button id="report-close" class="btn btn-alt" hidden>Chiudi fascicolo</button>
+        <button id="report-shot" class="btn btn-alt" title="Allega al dossier una schermata di ciò che vedi ora">+ Schermata</button>
         <div class="rep-exports">
           <span>Esporta:</span>
           <button id="report-pdf" class="mini-btn" title="Stampa / salva come PDF">PDF</button>
           <button id="report-csv" class="mini-btn" title="Indicatori (IP/dominio/email) in CSV">CSV indicatori</button>
           <button id="report-stix" class="mini-btn" title="Bundle STIX 2.1 degli indicatori">STIX</button>
+          <button id="report-zip" class="mini-btn" title="Bundle completo: HTML + JSON + CSV + STIX + schermate">Tutto (ZIP)</button>
         </div>
         <p class="hint" id="report-note"></p>
 
@@ -381,6 +383,19 @@
             meglio di un JSON) in <code>~/.local/share/nxs_horus</code>. Non
             riparte da solo dopo un riavvio del sistema.</p>
         </div>
+
+        <label class="fld">
+          <span>Mappa offline (cache tile su questo computer)</span>
+          <div class="map-cache-row">
+            <button id="map-prime" type="button" class="btn btn-alt">Precarica mondo (zoom basso)</button>
+            <button id="map-cache-clear" type="button" class="btn btn-alt">Svuota cache</button>
+          </div>
+          <p class="hint" id="map-cache-status">&mdash;</p>
+          <p class="hint">Le tile viste online restano disponibili offline. Il
+            precarico salva i livelli a basso zoom del planisfero (poche centinaia
+            di tile) così il mondo è visibile anche senza rete. La cache resta in
+            <code>IndexedDB</code>, solo su questo computer.</p>
+        </label>
 
         <div class="settings-actions">
           <button id="settings-save" class="btn">Salva</button>

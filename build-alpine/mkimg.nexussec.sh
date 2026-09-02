@@ -87,7 +87,25 @@ profile_nexussec() {
 	apks="$apks
 		alpine-base
 		nexussec-base
+		sleuthkit
+		testdisk
+		ddrescue
+		libewf
+		binwalk
+		exiftool
 		"
+	# I sei sopra NON sono preinstallati: finiscono nel REPO SUL MEDIA, cosi'
+	# il profilo Forensics e nxs-case funzionano anche SENZA RETE - che e' la
+	# condizione normale di un accertamento serio. Prima nessuno di questi era
+	# sul media: "apk add sec-profile-forensics" da ambiente isolato falliva,
+	# perche' trovava il meta-pacchetto ma non le sue dipendenze.
+	#   sleuthkit -> mmls/fls/mactime: partizioni, file cancellati, TIMELINE
+	#   libewf    -> ewfacquire/ewfverify: acquisizione E01 e riverifica
+	#   testdisk  -> recupero di partizioni distrutte
+	#   ddrescue  -> copia da supporti danneggiati
+	#   binwalk   -> contenuti annidati in firmware e file compositi
+	#   exiftool  -> metadati di foto e documenti (GPS, autore, date)
+	# Costo misurato scaricando i .apk reali: +22,1 MB sulla ISO.
 	# Repository locale con i nostri APKBUILD compilati (vedi README).
 	apkovl="genapkovl-nexussec.sh"
 }

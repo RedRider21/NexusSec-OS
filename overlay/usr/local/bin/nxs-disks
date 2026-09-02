@@ -1,0 +1,21 @@
+#!/bin/sh
+# NexusSec OS - gestore dischi. Senza argomenti apre la GUI GTK3; con --lista,
+# --lista-completa, --partizioni o --liberi DISCO stampa in testo (usato da
+# nxs-install, che e' uno script di shell e non deve tirarsi dietro GTK).
+#
+# I dischi si VEDONO sempre, ma non vengono MAI montati da soli: la distro e'
+# anche forensic. Ogni montaggio e' esplicito e in sola lettura per default.
+# Nessun udisks2 e nessun gvfs: usa lsblk/findmnt/parted/mount/cryptsetup.
+for c in python3 python3.12 python3.11 python3.10; do
+  command -v "$c" >/dev/null 2>&1 || continue
+  case "${1:-}" in
+    --lista|--list|lista|--lista-completa|--full|--partizioni|--liberi)
+      exec env PYTHONPATH="/usr/local/lib${PYTHONPATH:+:$PYTHONPATH}" "$c" \
+           -c "import sys; from nxs_disks.cli import main; sys.exit(main())" "$@" ;;
+    *)
+      exec env GTK_IM_MODULE=gtk-im-context-simple PYTHONPATH="/usr/local/lib${PYTHONPATH:+:$PYTHONPATH}" \
+           "$c" -m nxs_disks "$@" ;;
+  esac
+done
+echo "nxs-disks: python3 non disponibile" >&2
+exit 1

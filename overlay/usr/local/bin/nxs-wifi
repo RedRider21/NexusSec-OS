@@ -29,22 +29,91 @@ ensure_up() {
   [ -n "$IFACE" ] || return 1
   priv rfkill unblock wifi 2>/dev/null
   priv ip link set "$IFACE" up 2>/dev/null
-  # wpa_supplicant attivo? altrimenti avvialo (crea conf minima se assente).
-  if ! wpa_cli -i "$IFACE" ping >/dev/null 2>&1; then
-    priv sh -c "[ -f '$WPACONF' ] || { mkdir -p /etc/wpa_supplicant; \
-      printf 'ctrl_interface=/var/run/wpa_supplicant\nupdate_config=1\n' > '$WPACONF'; }"
+  # CAUSA A MONTE (verificata): senza "GROUP=" nella conf, wpa_supplicant crea
+  # /var/run/wpa_supplicant come drwxr-x--- root:root -> wpa_cli da UTENTE
+  # fallisce SEMPRE. Sintomo classico: la rete si aggancia davvero ma il
+  # pannello mostra "disconnesso" per sempre. Creiamo/ripariamo la conf con
+  # GROUP=wheel (nexus e in wheel) e chiamiamo wpa_cli SEMPRE via priv.
+  priv sh -c "mkdir -p /etc/wpa_supplicant
+    if [ ! -f '$WPACONF' ]; then
+      printf 'ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=wheel\nupdate_config=1\n' > '$WPACONF'
+    elif ! grep -q '^ctrl_interface=.*GROUP=' '$WPACONF'; then
+      if grep -q '^ctrl_interface=' '$WPACONF'; then
+        sed -i 's|^ctrl_interface=.*|ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=wheel|' '$WPACONF'
+      else
+        sed -i '1i ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=wheel' '$WPACONF'
+      fi
+    fi" 2>/dev/null
+  # wpa_supplicant attivo? altrimenti avvialo.
+  if ! priv wpa_cli -i "$IFACE" ping >/dev/null 2>&1; then
     priv wpa_supplicant -B -i "$IFACE" -c "$WPACONF" >/dev/null 2>&1
     sleep 1
   fi
   return 0
 }
 
+# DHCP: dhcpcd (client robusto: applica IP/gateway/DNS e rinnova il lease).
+# Se assente o fallisce, ripiego su udhcpc di BusyBox con lo script standard
+# (senza lo script l IP verrebbe ottenuto ma NON applicato all interfaccia).
+# Estratta in funzione perche la usano sia "connect" sia "auto".
+got_ip() { ip -4 addr show "$IFACE" 2>/dev/null | grep -q 'inet '; }
+fai_dhcp() {
+  if command -v dhcpcd >/dev/null 2>&1; then
+    # -n: rinnova/riparte se gia attivo. dhcpcd va in background: attendiamo
+    # che l IP venga applicato (fino ~10s) prima di dichiarare fallimento.
+    priv dhcpcd -n "$IFACE" >> "$LOG" 2>&1 || true
+    k=0; while [ "$k" -lt 10 ] && ! got_ip; do sleep 1; k=$((k + 1)); done
+  fi
+  got_ip && return 0
+  SCRIPT=/usr/share/udhcpc/default.script
+  [ -x "$SCRIPT" ] || SCRIPT=/etc/udhcpc/default.script
+  j=0
+  while [ "$j" -lt 4 ]; do
+    if [ -x "$SCRIPT" ]; then
+      priv udhcpc -i "$IFACE" -n -q -t 5 -s "$SCRIPT" >> "$LOG" 2>&1 && break
+    else
+      priv udhcpc -i "$IFACE" -n -q -t 5 >> "$LOG" 2>&1 && break
+    fi
+    sleep 2; j=$((j + 1))
+  done
+}
+
 case "${1:-}" in
   iface) echo "$IFACE" ;;
 
+  auto)
+    # RICONNESSIONE AUTOMATICA all avvio. Con la persistenza su NXSDATA la conf
+    # conserva TUTTE le reti gia usate: qui avviamo wpa_supplicant, che si
+    # aggancia da solo a quella in portata, e prendiamo l IP.
+    #
+    # Senza questo le reti restavano salvate ma NESSUNO le agganciava finche
+    # non si apriva l applet del WiFi a mano: wpa_supplicant non e in nessun
+    # runlevel e partiva solo su richiesta da nxs-wifi.
+    [ -n "$IFACE" ] || exit 0
+    grep -q "^network=" "$WPACONF" 2>/dev/null || exit 0   # nessuna rete salvata
+    ensure_up || exit 0
+    priv wpa_cli -i "$IFACE" enable_network all >/dev/null 2>&1
+    priv wpa_cli -i "$IFACE" reconnect >/dev/null 2>&1
+    echo "=== auto $(date) [iface=$IFACE] ===" >> "$LOG"
+    st=""; i=0
+    while [ "$i" -lt 25 ]; do
+      st=$(priv wpa_cli -i "$IFACE" status 2>/dev/null | sed -n 's/^wpa_state=//p')
+      [ "$st" = "COMPLETED" ] && break
+      sleep 1; i=$((i + 1))
+    done
+    if [ "$st" != "COMPLETED" ]; then
+      echo "  auto: nessuna rete conosciuta in portata (stato: $st)" >> "$LOG"
+      exit 0
+    fi
+    got_ip || fai_dhcp
+    ssid=$(priv wpa_cli -i "$IFACE" status 2>/dev/null | sed -n 's/^ssid=//p')
+    ip=$(ip -4 addr show "$IFACE" 2>/dev/null | sed -n 's/.*inet \([0-9.]*\).*/\1/p' | head -1)
+    echo "  auto: connesso a $ssid, IP=$ip" >> "$LOG"
+    ;;
+
   status)
     [ -n "$IFACE" ] || { echo "no-wifi"; exit 0; }
-    st=$(wpa_cli -i "$IFACE" status 2>/dev/null)
+    st=$(priv wpa_cli -i "$IFACE" status 2>/dev/null)
     state=$(printf '%s\n' "$st" | sed -n 's/^wpa_state=//p')
     ssid=$(printf '%s\n' "$st" | sed -n 's/^ssid=//p')
     if [ "$state" = "COMPLETED" ] && [ -n "$ssid" ]; then
@@ -149,29 +218,7 @@ case "${1:-}" in
     # la password (select_network aveva disabilitato le altre).
     priv wpa_cli -i "$IFACE" enable_network all >/dev/null 2>&1
     priv wpa_cli -i "$IFACE" save_config >/dev/null 2>&1
-    # DHCP: dhcpcd (client robusto: applica IP/gateway/DNS e rinnova il lease).
-    # Se assente o fallisce, ripiego su udhcpc di BusyBox con lo script standard
-    # (senza lo script l'IP verrebbe ottenuto ma NON applicato all'interfaccia).
-    got_ip() { ip -4 addr show "$IFACE" 2>/dev/null | grep -q 'inet '; }
-    if command -v dhcpcd >/dev/null 2>&1; then
-      # -n: rinnova/riparte se gia' attivo. dhcpcd va in background: attendiamo
-      # che l'IP venga applicato (fino ~10s) prima di dichiarare fallimento.
-      priv dhcpcd -n "$IFACE" >> "$LOG" 2>&1 || true
-      k=0; while [ "$k" -lt 10 ] && ! got_ip; do sleep 1; k=$((k + 1)); done
-    fi
-    if ! got_ip; then
-      SCRIPT=/usr/share/udhcpc/default.script
-      [ -x "$SCRIPT" ] || SCRIPT=/etc/udhcpc/default.script
-      j=0
-      while [ "$j" -lt 4 ]; do
-        if [ -x "$SCRIPT" ]; then
-          priv udhcpc -i "$IFACE" -n -q -t 5 -s "$SCRIPT" >> "$LOG" 2>&1 && break
-        else
-          priv udhcpc -i "$IFACE" -n -q -t 5 >> "$LOG" 2>&1 && break
-        fi
-        sleep 2; j=$((j + 1))
-      done
-    fi
+    fai_dhcp
     ip=$(ip -4 addr show "$IFACE" 2>/dev/null | sed -n 's/.*inet \([0-9.]*\).*/\1/p' | head -1)
     echo "  ESITO: associato, IP=$ip" >> "$LOG"
     if [ -n "$ip" ]; then echo "ok"; else echo "err-dhcp"; exit 1; fi
@@ -205,6 +252,6 @@ case "${1:-}" in
     ;;
 
   *)
-    echo "uso: nxs-wifi {iface|status|scan|connect SSID [PSK]|disconnect|debug}" >&2
+    echo "uso: nxs-wifi {iface|status|scan|connect SSID [PSK]|auto|disconnect|debug}" >&2
     exit 2 ;;
 esac

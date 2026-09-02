@@ -1898,6 +1898,151 @@ def open_screensaver(_btn=None):
     win.show_all()
 
 
+
+# ---------------------------------------------------------------------------
+# Mouse e touchpad: taratura del doppio clic
+# ---------------------------------------------------------------------------
+# CAUSA A MONTE che questa vista risolve: GTK riconosce il doppio clic solo se
+# i due clic arrivano entro un TEMPO e restano entro una DISTANZA. I default
+# (400 ms, 5 px) sono tarati sul mouse, dove il puntatore non si sposta di un
+# pixel fra i due clic. Col dito sul touchpad la distanza e' il vincolo che
+# salta per primo, ed e' il motivo per cui un doppio tap VELOCE fallisce mentre
+# uno lento - piu' deliberato, quindi piu' preciso - riesce.
+#
+# Il tempo NON va allungato a caso: piu' e' lungo, piu' il sistema ASPETTA
+# prima di concludere che era un clic singolo, e i clic singoli sembrano lenti.
+# Per questo qui si regolano entrambi, e c'e' una zona di prova per tararli.
+_DC_TEMPI = [("Molto veloce", 300), ("Veloce", 450), ("Normale", 600),
+             ("Lento", 800), ("Molto lento", 1000)]
+_DC_DIST = [("Stretta (mouse)", 5), ("Media", 10), ("Ampia (touchpad)", 16),
+            ("Molto ampia", 24)]
+
+
+def _dc_leggi():
+    """Legge tempo e distanza correnti da settings.ini (default GTK se assenti)."""
+    tempo, dist = 400, 5
+    try:
+        for riga in (HOME / ".config/gtk-3.0/settings.ini").read_text().splitlines():
+            r = riga.strip()
+            if r.startswith("gtk-double-click-time="):
+                tempo = int(r.split("=", 1)[1])
+            elif r.startswith("gtk-double-click-distance="):
+                dist = int(r.split("=", 1)[1])
+    except Exception:                            # noqa: BLE001
+        pass
+    return tempo, dist
+
+
+def _dc_scrivi(tempo, dist):
+    """Applica a GTK3 e GTK2. GTK sorveglia settings.ini: le finestre gia'
+    aperte recepiscono il cambiamento subito, senza riavviare nulla."""
+    from nxs_profiles.model import _replace_line     # scrittura ATOMICA
+    _replace_line(HOME / ".config" / "gtk-3.0" / "settings.ini",
+                  "gtk-double-click-time", "gtk-double-click-time=%d" % tempo)
+    _replace_line(HOME / ".config" / "gtk-3.0" / "settings.ini",
+                  "gtk-double-click-distance", "gtk-double-click-distance=%d" % dist)
+    _replace_line(HOME / ".gtkrc-2.0",
+                  "gtk-double-click-time", "gtk-double-click-time = %d" % tempo)
+    _replace_line(HOME / ".gtkrc-2.0",
+                  "gtk-double-click-distance", "gtk-double-click-distance = %d" % dist)
+    try:
+        st = Gtk.Settings.get_default()
+        st.set_property("gtk-double-click-time", tempo)
+        st.set_property("gtk-double-click-distance", dist)
+    except Exception:                            # noqa: BLE001
+        pass
+
+
+def open_mouse(_btn=None):
+    """Taratura del doppio clic, con zona di prova."""
+    win, body = panel_window("Mouse e touchpad", 560, 520)
+    tempo, dist = _dc_leggi()
+
+    intro = Gtk.Label(label=(
+        "GTK riconosce il doppio clic solo se i due clic arrivano entro un "
+        "tempo E restano entro una distanza. Col dito sul touchpad e' la "
+        "distanza a saltare per prima: e' il motivo per cui un doppio tap "
+        "veloce puo' fallire mentre uno lento riesce."))
+    intro.set_xalign(0); intro.set_line_wrap(True)
+    intro.get_style_context().add_class("nxs-val")
+    body.pack_start(intro, False, False, 0)
+
+    def _riga(etichetta, presets, valore, nota):
+        box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        lab = Gtk.Label(label=etichetta); lab.set_xalign(0)
+        lab.get_style_context().add_class("nxs-key")
+        lab.set_size_request(210, -1)
+        box.pack_start(lab, False, False, 0)
+        combo = Gtk.ComboBoxText()
+        for nome, v in presets:
+            combo.append(str(v), "%s  (%d)" % (nome, v))
+        if not combo.set_active_id(str(valore)):
+            combo.append(str(valore), "Personalizzato  (%d)" % valore)
+            combo.set_active_id(str(valore))
+        box.pack_start(combo, True, True, 0)
+        body.pack_start(box, False, False, 0)
+        n = Gtk.Label(label=nota); n.set_xalign(0); n.set_line_wrap(True)
+        n.get_style_context().add_class("nxs-val")
+        body.pack_start(n, False, False, 0)
+        return combo
+
+    c_tempo = _riga("Velocita del doppio clic:", _DC_TEMPI, tempo,
+                    "Millisecondi entro cui devono arrivare i due clic. Piu' e' "
+                    "alto, piu' e' facile il doppio clic, ma il sistema aspetta "
+                    "quel tempo prima di concludere che era un clic singolo.")
+    c_dist = _riga("Tolleranza di movimento:", _DC_DIST, dist,
+                   "Di quanti pixel puo' spostarsi il puntatore fra i due clic. "
+                   "Col mouse bastano 5; col dito servono di piu'.")
+
+    # --- zona di prova ---------------------------------------------------
+    sep = Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL)
+    sep.set_margin_top(10)
+    body.pack_start(sep, False, False, 0)
+    prova_lab = Gtk.Label(label="Prova qui sotto: fai un doppio clic o un doppio tap.")
+    prova_lab.set_xalign(0)
+    prova_lab.get_style_context().add_class("nxs-key")
+    body.pack_start(prova_lab, False, False, 0)
+
+    zona = Gtk.EventBox()
+    zona.set_size_request(-1, 110)
+    zona.add_events(Gdk.EventMask.BUTTON_PRESS_MASK)
+    inner = Gtk.Label(label="zona di prova")
+    inner.get_style_context().add_class("nxs-val")
+    zona.add(inner)
+    body.pack_start(zona, False, False, 0)
+
+    conta = {"singoli": 0, "doppi": 0}
+
+    def on_click(_w, ev):
+        if ev.type == Gdk.EventType._2BUTTON_PRESS:
+            conta["doppi"] += 1
+            inner.set_text("DOPPIO CLIC riconosciuto  (doppi: %d · singoli: %d)"
+                           % (conta["doppi"], conta["singoli"]))
+        elif ev.type == Gdk.EventType.BUTTON_PRESS:
+            conta["singoli"] += 1
+            inner.set_text("clic singolo  (doppi: %d · singoli: %d)"
+                           % (conta["doppi"], conta["singoli"]))
+        return False
+    zona.connect("button-press-event", on_click)
+
+    stato = Gtk.Label(label="")
+    stato.set_xalign(0); stato.set_line_wrap(True)
+    stato.get_style_context().add_class("nxs-val")
+    body.pack_start(stato, False, False, 0)
+
+    def applica(*_a):
+        t = int(c_tempo.get_active_id() or 600)
+        d = int(c_dist.get_active_id() or 16)
+        _dc_scrivi(t, d)
+        conta["singoli"] = conta["doppi"] = 0
+        inner.set_text("zona di prova")
+        stato.set_text("Applicato subito: %d ms, %d px. Riprova qui sopra." % (t, d))
+    c_tempo.connect("changed", applica)
+    c_dist.connect("changed", applica)
+
+    win.show_all()
+    return win
+
 # ---------------------------------------------------------------------------
 # Gestione Bluetooth (stile blueman-manager) - backend nxs-bluetooth (BlueZ)
 # ---------------------------------------------------------------------------
@@ -2127,7 +2272,8 @@ def open_bluetooth(_btn=None):
         st["busy"] = True
         set_status(msg)
         def worker():
-            out = bt(action, mac, timeout=40)
+            # 70s: pair/connect attendono fino a 60s la conferma sul device.
+            out = bt(action, mac, timeout=70)
             def done():
                 st["busy"] = False
                 low = out.lower()
@@ -2204,7 +2350,7 @@ def open_bluetooth(_btn=None):
         spinner.start(); scan_btn.set_sensitive(False)
         set_status("Scansione in corso (qualche secondo)...")
         def worker():
-            devs = _bt_parse_devices(bt("scan", "8", timeout=20))
+            devs = _bt_parse_devices(bt("scan", "12", timeout=45))
             def done():
                 st["busy"] = False
                 spinner.stop(); scan_btn.set_sensitive(True)
@@ -2733,6 +2879,25 @@ def open_screens(_btn=None):
     intro.set_xalign(0)
     intro.get_style_context().add_class("nxs-val")
     body.pack_start(intro, False, False, 0)
+
+    # Comportamento AUTOMATICO: all'avvio e ogni volta che si collega/scollega
+    # un monitor o si chiude il coperchio (lo applica nxs-screens-watch).
+    # Prima non esisteva nulla del genere: un monitor collegato dopo l'avvio
+    # restava spento e ci si vedeva solo la splash di boot.
+    polbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+    pol_lab = Gtk.Label(label="All'avvio e al collegamento di un monitor:")
+    pol_lab.set_xalign(0)
+    polbox.pack_start(pol_lab, False, False, 0)
+    pol = Gtk.ComboBoxText()
+    pol.append("mirror", "Duplica")
+    pol.append("extend", "Estendi")
+    _cur = (run_capture(["nxs-screens", "get-policy"]).strip() or "mirror")
+    pol.set_active_id(_cur if _cur in ("mirror", "extend") else "mirror")
+    # connesso DOPO set_active_id, altrimenti scatterebbe subito riapplicando.
+    pol.connect("changed", lambda w: run_bg(
+        ["nxs-screens", "set-policy", w.get_active_id() or "mirror"]))
+    polbox.pack_start(pol, False, False, 0)
+    body.pack_start(polbox, False, False, 0)
 
     outbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
     body.pack_start(outbox, False, False, 0)

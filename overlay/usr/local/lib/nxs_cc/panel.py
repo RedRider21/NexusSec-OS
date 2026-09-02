@@ -252,15 +252,53 @@ def scan_desktop_apps():
     return sorted(apps.values(), key=lambda a: a["name"].lower())
 
 
-def _app_image(icon):
-    """Immagine per una voce app: icona con nome dal tema, o file se path assoluto."""
+def _app_image(icon, px=22):
+    """Immagine per una voce app, SEMPRE alla dimensione richiesta.
+
+    CAUSA A MONTE dell "icona enorme nel menu": alcune applicazioni spediscono
+    la propria icona in UNA SOLA misura, grande. lxterminal, per esempio, ha
+    solo /usr/share/icons/hicolor/128x128/apps/lxterminal.png (verificato).
+    Gtk.Image.new_from_icon_name NON forza il ridimensionamento: quando il tema
+    offre unicamente la variante da 128px, quella finisce nel menu a grandezza
+    naturale e sfonda la riga. Gtk.IconTheme.load_icon con FORCE_SIZE garantisce
+    invece esattamente la misura chiesta.
+    """
+    # 1) percorso assoluto nel .desktop: caricalo e scalalo
     try:
         if icon and icon.startswith("/") and os.path.exists(icon):
-            pix = GdkPixbuf.Pixbuf.new_from_file_at_size(icon, 22, 22)
+            pix = GdkPixbuf.Pixbuf.new_from_file_at_size(icon, px, px)
             return Gtk.Image.new_from_pixbuf(pix)
     except Exception:                                # noqa: BLE001
         pass
-    return Gtk.Image.new_from_icon_name(icon or "application-x-executable",
+
+    nome = icon or "application-x-executable"
+    # il campo Icon a volte porta l estensione: per il tema serve il nome nudo
+    for ext in (".png", ".svg", ".xpm"):
+        if nome.endswith(ext):
+            nome = nome[:-len(ext)]
+            break
+
+    # 2) nome dal tema, con dimensione FORZATA
+    try:
+        pix = Gtk.IconTheme.get_default().load_icon(
+            nome, px, Gtk.IconLookupFlags.FORCE_SIZE)
+        if pix is not None:
+            return Gtk.Image.new_from_pixbuf(pix)
+    except Exception:                                # noqa: BLE001
+        pass
+
+    # 3) ripiego: alcune app mettono il file in pixmaps, fuori da ogni tema
+    for base in ("/usr/share/pixmaps/", "/usr/local/share/pixmaps/"):
+        for ext in (".png", ".svg", ".xpm"):
+            f = base + nome + ext
+            try:
+                if os.path.exists(f):
+                    return Gtk.Image.new_from_pixbuf(
+                        GdkPixbuf.Pixbuf.new_from_file_at_size(f, px, px))
+            except Exception:                        # noqa: BLE001
+                pass
+
+    return Gtk.Image.new_from_icon_name("application-x-executable",
                                         Gtk.IconSize.LARGE_TOOLBAR)
 
 
@@ -548,6 +586,21 @@ class Panel(Gtk.Window):
         right.pack_start(Gtk.Separator(orientation=Gtk.Orientation.VERTICAL),
                          False, False, 0)
 
+        # Applet AUTOPROTEZIONE (scudo): UN SOLO slot sulla barra per non
+        # affollarla su risoluzioni basse. Il popup raccoglie Firewall, Tor,
+        # Screenshot e Blocco schermo; l'icona dello scudo riflette lo stato di
+        # protezione (alta = firewall on, bassa = firewall off, neutra = ignoto).
+        self.sec_btn = _icon_button("security-medium-symbolic", "Autoprotezione")
+        self.sec_btn.connect("clicked", self._toggle_security)
+        right.pack_start(self.sec_btn, False, False, 0)
+        # stato iniziale in background (evita di bloccare l'avvio con doas nft)
+        GLib.timeout_add(1500, lambda: (self._refresh_sec_icon(), False)[1])
+        # aggiornamento periodico leggero dell'indicatore (in thread)
+        GLib.timeout_add(30000, self._refresh_sec_icon_periodic)
+
+        right.pack_start(Gtk.Separator(orientation=Gtk.Orientation.VERTICAL),
+                         False, False, 0)
+
         # Applet Schermi (xrandr) e WiFi (scan/connessione): compaiono sempre;
         # se manca l'hardware il popup lo segnala.
         scr_btn = _icon_button("video-display-symbolic", "Schermi")
@@ -635,6 +688,34 @@ class Panel(Gtk.Window):
         else:
             self.move(geo.x, geo.y + geo.height - PANEL_HEIGHT)
 
+    def _center_dialog(self, d):
+        """Centra un dialogo sul MONITOR di questo pannello.
+
+        Perche' non basta transient_for: il genitore e' il pannello, una barra
+        alta PANEL_HEIGHT incollata a un bordo, e il default GTK
+        (CENTER_ON_PARENT) lo piazza percio' a filo del bordo inferiore. E non
+        basta nemmeno CENTER_ALWAYS: su X con due monitor "schermo" e' l'area
+        virtuale complessiva, quindi il dialogo finirebbe a cavallo dei due.
+        Usiamo la geometria del monitor su cui vive questa barra."""
+        try:
+            geo = getattr(self, "_geo", None)
+            if geo is None:
+                d.set_position(Gtk.WindowPosition.CENTER_ALWAYS)
+                return
+            d.set_position(Gtk.WindowPosition.NONE)
+
+            def _place(*_a):
+                try:
+                    w, h = d.get_size()
+                    d.move(geo.x + max(0, (geo.width - w) // 2),
+                           geo.y + max(0, (geo.height - h) // 2))
+                except Exception:            # noqa: BLE001
+                    pass
+                return False
+            d.connect("show", lambda *_a: GLib.idle_add(_place))
+        except Exception:                    # noqa: BLE001
+            pass
+
     def _safe_place(self):
         """Riposiziona questa barra in modo sicuro: no-op se la barra e' stata
         distrutta (hotplug) o lo schermo non e' piu' disponibile."""
@@ -653,7 +734,7 @@ class Panel(Gtk.Window):
 
     # --- popup come finestre toplevel keep_above (i Gtk.Popover su Openbox
     #     senza compositor finivano "sotto" lo sfondo) ---
-    def _spawn_popup(self, key, content, align, autoclose=True):
+    def _spawn_popup(self, key, content, align, autoclose=True, keep_bottom=False):
         # toggle: se gia' aperto, chiudi
         if key in self._popups:
             self._popups.pop(key).destroy()
@@ -695,6 +776,24 @@ class Panel(Gtk.Window):
         else:
             y = geo.y + geo.height - PANEL_HEIGHT - ph
         w.move(x, y)
+
+        # Ancoraggio al FONDO per il pannello in basso: se il contenuto cambia
+        # altezza (es. la ricerca del menu filtra le voci -> il popup si accorcia)
+        # GTK ridimensiona la finestra tenendo fisso il bordo ALTO, cosi' il bordo
+        # basso risaliva lasciando uno spazio dal pannello. Riposizioniamo a ogni
+        # size-allocate mantenendo il bordo basso incollato al pannello.
+        if keep_bottom and self.position != "top":
+            bottom_y = geo.y + geo.height - PANEL_HEIGHT
+            top_min = geo.y + margin
+            self._popup_last_y = {} if not hasattr(self, "_popup_last_y") else self._popup_last_y
+
+            def _reanchor(_w, alloc, _key=key, _x=x, _by=bottom_y, _tmin=top_min):
+                ny = max(_tmin, _by - alloc.height)
+                if self._popup_last_y.get(_key) != ny:
+                    self._popup_last_y[_key] = ny
+                    _w.move(_x, ny)
+                return False
+            w.connect("size-allocate", _reanchor)
 
         def on_focus_out(*_a):
             # Chiusura al clic FUORI, ma DIFFERITA e "intelligente": se il focus
@@ -773,6 +872,9 @@ class Panel(Gtk.Window):
                     transient_for=self, modal=True,
                     message_type=Gtk.MessageType.QUESTION,
                     buttons=Gtk.ButtonsType.YES_NO, text=confirm)
+                # Senza questo il dialogo esce incollato al bordo inferiore:
+                # il genitore e' il pannello (vedi _center_dialog).
+                self._center_dialog(d)
                 d.set_keep_above(True)
                 resp = d.run()
                 d.destroy()
@@ -1012,6 +1114,19 @@ class Panel(Gtk.Window):
             ("nxs-browser", "NexusSec Browser", ["nxs-browser"], None, None),
             ("system-run-symbolic", "Procedure guidate", ["nxs-wizard"], None, None),
             (None, None, None, None, None),
+            # Utilita' di sessione (stile MATE): blocco schermo/salvaschermo e
+            # cattura schermata, comode a portata di menu.
+            ("system-lock-screen-symbolic", "Blocca schermo (salvaschermo)",
+             ["nxs-screensaver"], None, None),
+            ("applets-screenshooter-symbolic", "Cattura schermata",
+             ["nxs-screenshot", "full", "1"], None, None),
+            (None, None, None, None, None),
+            # Dischi e casi forensi: raggiungibili anche dal menu, non solo
+            # dalle icone del desktop (che si coprono con le finestre aperte).
+            ("drive-harddisk", "Dischi", ["nxs-disks"], None, None),
+            ("nxs-case", "Casi forensi", ["nxs-case"], None, None),
+            ("nxs-horus", "HORUS (OSINT/GEOINT)", ["nxs-horus"], None, None),
+            (None, None, None, None, None),
             ("computer-symbolic", "Info sistema",
              ["nxs-control-center", "sysinfo"], None, None),
             ("applications-system-symbolic", "Monitor risorse",
@@ -1190,7 +1305,7 @@ class Panel(Gtk.Window):
                               False, False, 0)
         col.pack_end(footer, False, False, 0)
 
-        self._spawn_popup("menu", hbox, align="left")
+        self._spawn_popup("menu", hbox, align="left", keep_bottom=True)
 
         # Apertura SEMPRE in cima: anche con gli adjustment di focus neutralizzati
         # il primo layout puo' lasciare il viewport a un offset != 0 (la voce che
@@ -1622,7 +1737,7 @@ class Panel(Gtk.Window):
             status.set_text("Scansione in corso (qualche secondo)...")
             def worker():
                 devs = []
-                for line in self._run_out(["nxs-bluetooth", "scan", "6"], 15).splitlines():
+                for line in self._run_out(["nxs-bluetooth", "scan", "12"], 45).splitlines():
                     p = line.split("\t")
                     if len(p) >= 2:
                         devs.append((p[0], p[1], p[2] if len(p) > 2 else ""))
@@ -1674,7 +1789,10 @@ class Panel(Gtk.Window):
                                   else "Connessione in corso...")
 
         def worker():
-            self._run_out(["nxs-bluetooth", act, mac], 25)
+            # 70s: pair/connect ora attendono fino a 60s la conferma sul
+            # dispositivo (vedi nxs-bluetooth). Con 25s il pannello uccideva il
+            # processo a meta pairing.
+            self._run_out(["nxs-bluetooth", act, mac], 70)
             # aggiorna l'indicatore in barra subito e finche' lo stato si assesta
             GLib.idle_add(self._refresh_media_once)
             for d in (800, 2000, 3500):
@@ -1872,6 +1990,7 @@ class Panel(Gtk.Window):
             d.set_transient_for(self)
         except Exception:
             pass
+        self._center_dialog(d)
         d.set_keep_above(True)
         d.add_button("Annulla", Gtk.ResponseType.CANCEL)
         d.add_button("Connetti", Gtk.ResponseType.OK)
@@ -1899,6 +2018,115 @@ class Panel(Gtk.Window):
         psk = e.get_text() if resp == Gtk.ResponseType.OK else None
         d.destroy()
         return psk
+
+    # --- applet AUTOPROTEZIONE (scudo): Firewall + Tor + Screenshot + Blocco ---
+    # Un solo pulsante sulla barra: il popup raccoglie tutti i controlli, cosi'
+    # non si affolla la barra sui monitor a bassa risoluzione.
+    def _sec_fw_state(self):
+        """Stato firewall: 'on' | 'off' | 'unknown' (nxs-firewall state)."""
+        return (self._run_out(["nxs-firewall", "state"], timeout=6).strip()
+                or "unknown")
+
+    def _sec_tor_state(self):
+        """Stato Tor: 'on' | 'off' (nxs-tor status)."""
+        return "on" if self._run_out(["nxs-tor", "status"], timeout=6).strip() == "on" else "off"
+
+    def _sec_icon_for(self, fw):
+        return {"on": "security-high-symbolic",
+                "off": "security-low-symbolic"}.get(fw, "security-medium-symbolic")
+
+    def _refresh_sec_icon(self):
+        """Aggiorna (in thread) l'icona scudo secondo lo stato del firewall."""
+        def work():
+            fw = self._sec_fw_state()
+
+            def apply():
+                self.sec_btn.set_image(_tray_img(self._sec_icon_for(fw)))
+                self.sec_btn.show_all()
+                self.sec_btn.set_tooltip_text(
+                    {"on": "Autoprotezione — firewall attivo",
+                     "off": "Autoprotezione — firewall SPENTO"}.get(
+                        fw, "Autoprotezione"))
+                return False
+            GLib.idle_add(apply)
+        threading.Thread(target=work, daemon=True).start()
+        return False
+
+    def _refresh_sec_icon_periodic(self):
+        self._refresh_sec_icon()
+        return True                       # ripeti il timer
+
+    def _toggle_security(self, _btn):
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
+        box.get_style_context().add_class("nxs-calbox")
+        box.set_size_request(260, -1)
+        title = Gtk.Label(); title.set_markup("<b>Autoprotezione</b>")
+        title.set_xalign(0)
+        box.pack_start(title, False, False, 0)
+
+        fw = self._sec_fw_state()
+        tor = self._sec_tor_state()
+
+        def sw_row(label_txt, active, unknown, cb):
+            r = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+            r.get_style_context().add_class("nxs-dt-row")
+            lab = Gtk.Label(label=label_txt); lab.set_xalign(0)
+            r.pack_start(lab, True, True, 0)
+            sw = Gtk.Switch(); sw.set_valign(Gtk.Align.CENTER)
+            sw.set_active(bool(active)); sw.set_sensitive(not unknown)
+            sw.connect("state-set", cb)
+            r.pack_end(sw, False, False, 0)
+            box.pack_start(r, False, False, 0)
+
+        sw_row("Firewall (inbound deny)", fw == "on", fw == "unknown",
+               self._sec_fw_toggle)
+        sw_row("Tor (SOCKS 9050)", tor == "on", False, self._sec_tor_toggle)
+
+        if fw == "unknown":
+            h = Gtk.Label(); h.set_xalign(0); h.set_line_wrap(True)
+            h.set_markup("<small>Stato firewall non leggibile senza password: "
+                         "gestiscilo dal Centro di Controllo.</small>")
+            box.pack_start(h, False, False, 0)
+
+        box.pack_start(Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL),
+                       False, False, 2)
+        lbl2 = Gtk.Label(); lbl2.set_markup("<b>Strumenti</b>"); lbl2.set_xalign(0)
+        box.pack_start(lbl2, False, False, 0)
+
+        rowa = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=4)
+        for txt, mode in (("Schermo intero", "full"), ("Area", "area")):
+            b = Gtk.Button(label=txt)
+            b.get_style_context().add_class("nxs-menu-item")
+            b.connect("clicked", lambda _w, m=mode: self._sec_screenshot(m))
+            rowa.pack_start(b, True, True, 0)
+        box.pack_start(rowa, False, False, 0)
+
+        block = Gtk.Button(label="Blocca schermo")
+        block.get_style_context().add_class("nxs-menu-item")
+        block.connect("clicked", self._sec_lock)
+        box.pack_start(block, False, False, 0)
+
+        self._spawn_popup("security", box, align="right")
+
+    def _sec_fw_toggle(self, _sw, active):
+        # Live (doas nopass): immediato. Sistema hardenizzato: serve password ->
+        # usare il Centro di Controllo. Qui best-effort, poi rinfresca l'icona.
+        run_bg(["nxs-firewall", "on" if active else "off"])
+        GLib.timeout_add(1200, self._refresh_sec_icon)
+        return False
+
+    def _sec_tor_toggle(self, _sw, active):
+        run_bg(["nxs-tor", "on" if active else "off"])
+        return False
+
+    def _sec_screenshot(self, mode):
+        self._close_popup("security")
+        # ritardo per far sparire il popup dallo scatto (0 per 'area': selezioni subito)
+        run_bg(["nxs-screenshot", mode, "1" if mode == "full" else "0"])
+
+    def _sec_lock(self, _w):
+        self._close_popup("security")
+        run_bg(["nxs-screensaver"])
 
     # --- applet Schermi (xrandr via nxs-screens) ---
     def _toggle_screens(self, _btn):

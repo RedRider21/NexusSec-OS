@@ -145,7 +145,8 @@ RAM perche' la live installa il desktop in tmpfs al boot).
 - **Firmware**: il meta `linux-firmware` (~400MB, blob GPU) e `-intel` (122MB)
   gonfiano l'ISO. Usiamo il meta `nexussec-firmware` (subset wireless USB) nel
   MODLOOP via sed sulla sezione kernel (token CORTO: la lista finisce nel
-  nome-dir della sezione, limite 255 char). ISO risultante ~523MB.
+  nome-dir della sezione, limite 255 char). ISO risultante ~725MB (0.7 GB): il salto da ~523MB e' dovuto al browser
+  webkit2gtk preinstallato, non a una regressione.
 - **Clone aports**: gitlab.alpinelinux.org va spesso in overload -> retry +
   mirror github.com/alpinelinux/aports nel build script.
 

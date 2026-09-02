@@ -30,6 +30,39 @@ _ensure_obexd() {
   pgrep -x obexd >/dev/null 2>&1
 }
 
+# Agent BlueZ: serve ATTIVO durante pairing e inquiry. NoInputNoOutput = "Just
+# Works" (nessun codice da confermare sul PC, che non ha tastierino BT): e la
+# capability che fa completare il pairing dei telefoni senza dialoghi lato PC.
+_agent_on() {
+  bluetoothctl power on >/dev/null 2>&1
+  bluetoothctl agent NoInputNoOutput >/dev/null 2>&1
+  bluetoothctl default-agent >/dev/null 2>&1
+  bluetoothctl pairable on >/dev/null 2>&1
+}
+
+# Vero se la stringa e ancora un MAC "travestito" da nome (nome NON risolto).
+_is_unresolved() {
+  case "$1" in
+    "") return 0 ;;
+    [0-9A-Fa-f][0-9A-Fa-f]-[0-9A-Fa-f][0-9A-Fa-f]-[0-9A-Fa-f][0-9A-Fa-f]-*) return 0 ;;
+    [0-9A-Fa-f][0-9A-Fa-f]:[0-9A-Fa-f][0-9A-Fa-f]:*) return 0 ;;
+  esac
+  return 1
+}
+
+# Quanti device hanno ancora il nome NON risolto (usato per decidere se serve
+# un secondo giro di inquiry).
+_unresolved_count() {
+  n=0
+  for m in $(bluetoothctl devices 2>/dev/null | awk '{print $2}'); do
+    [ -n "$m" ] || continue
+    nm=$(bluetoothctl info "$m" 2>/dev/null \
+         | sed -n 's/^[[:space:]]*Name:[[:space:]]*//p' | head -1)
+    _is_unresolved "$nm" && n=$((n + 1))
+  done
+  echo "$n"
+}
+
 # Deduce un nome-icona simbolica dal campo "Icon" di bluetoothctl info.
 _devicon() {
   case "$1" in
@@ -98,10 +131,8 @@ case "${1:-status}" in
     ;;
   on)
     command -v rfkill >/dev/null 2>&1 && rfkill unblock bluetooth 2>/dev/null
-    _have && bluetoothctl power on >/dev/null 2>&1
-    _have && bluetoothctl agent on >/dev/null 2>&1
-    _have && bluetoothctl default-agent >/dev/null 2>&1
-    _have && bluetoothctl pairable on >/dev/null 2>&1
+    _have || exit 0
+    _agent_on
     ;;
   off) _have && bluetoothctl power off >/dev/null 2>&1 ;;
   discoverable)
@@ -114,13 +145,24 @@ case "${1:-status}" in
     [ -n "${1:-}" ] && _have && bluetoothctl system-alias "$*" >/dev/null 2>&1
     ;;
   scan)
-    # scansione breve, poi elenco device (formato esteso a 5 colonne)
+    # Scansione + elenco device (formato esteso a 5 colonne).
+    # CAUSA A MONTE del "mostra solo il MAC": il nome di un device BR/EDR
+    # arriva nell EIR o via remote-name-request DURANTE l inquiry, e l inquiry
+    # standard dura ~10.24s. Con i 6s di prima la scansione trovava il device
+    # (MAC) ma si CHIUDEVA prima che il nome fosse risolto -> restava il MAC per
+    # sempre. Ora: inquiry di 12s e, se restano nomi non risolti, un secondo
+    # giro breve. Serve anche discoverable: molti telefoni rispondono alla
+    # richiesta di nome solo se il PC e a sua volta visibile.
     _have || exit 0
     command -v rfkill >/dev/null 2>&1 && rfkill unblock bluetooth 2>/dev/null
-    bluetoothctl power on >/dev/null 2>&1
-    bluetoothctl agent on >/dev/null 2>&1
-    bluetoothctl default-agent >/dev/null 2>&1
-    bluetoothctl --timeout "${2:-6}" scan on >/dev/null 2>&1
+    secs="${2:-12}"
+    _agent_on
+    bluetoothctl discoverable on >/dev/null 2>&1
+    bluetoothctl --timeout "$secs" scan on >/dev/null 2>&1
+    # Secondo giro SOLO se serve davvero (non rallenta il caso gia risolto).
+    if [ "$(_unresolved_count)" -gt 0 ]; then
+      bluetoothctl --timeout 8 scan on >/dev/null 2>&1
+    fi
     _list_devices
     ;;
   devices) _have || exit 0; _list_devices ;;
@@ -135,11 +177,14 @@ case "${1:-status}" in
     # trust (riconnessione automatica) e infine connect.
     [ -n "${2:-}" ] && _have || exit 0
     mac="$2"
-    bluetoothctl power on >/dev/null 2>&1
+    _agent_on
     if ! bluetoothctl info "$mac" 2>/dev/null | grep -q "Paired: yes"; then
-      # sessione unica: l'agent auto-accept resta vivo mentre avviene il pairing
+      # 15s NON bastavano: con un telefono il pairing si completa solo dopo che
+      # l utente ha toccato "Abbina" sul dispositivo, e raggiungerlo richiede
+      # piu tempo del timeout -> il pairing veniva abortito a meta. 60s.
+      bluetoothctl discoverable on >/dev/null 2>&1
       printf 'agent NoInputNoOutput\ndefault-agent\npair %s\n' "$mac" \
-        | bluetoothctl --timeout 15 >/dev/null 2>&1
+        | bluetoothctl --timeout 60 >/dev/null 2>&1
       bluetoothctl trust "$mac" >/dev/null 2>&1
     fi
     bluetoothctl connect "$mac" 2>&1
@@ -150,9 +195,13 @@ case "${1:-status}" in
     # senza agent i device audio non completano il pairing. Poi trust + connect.
     [ -n "${2:-}" ] && _have || exit 0
     mac="$2"
-    bluetoothctl power on >/dev/null 2>&1
+    _agent_on
+    # Visibile durante il pairing: senza, il telefono non trova il PC e
+    # l abbinamento avviato dal telefono non parte proprio.
+    bluetoothctl discoverable on >/dev/null 2>&1
+    # 60s: il tempo materiale di confermare sul telefono (vedi "connect").
     printf 'agent NoInputNoOutput\ndefault-agent\npair %s\n' "$mac" \
-      | bluetoothctl --timeout 15 2>&1
+      | bluetoothctl --timeout 60 2>&1
     bluetoothctl trust "$mac" >/dev/null 2>&1
     bluetoothctl connect "$mac" >/dev/null 2>&1
     ;;

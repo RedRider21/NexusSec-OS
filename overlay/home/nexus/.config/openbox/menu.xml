@@ -7,6 +7,7 @@
     <item label="File manager"><action name="Execute"><command>pcmanfm</command></action></item>
     <item label="Editor di testo"><action name="Execute"><command>pluma</command></action></item>
     <item label="NexusSec Browser"><action name="Execute"><command>nxs-browser</command></action></item>
+    <item label="HORUS (OSINT globale)"><action name="Execute"><command>nxs-horus</command></action></item>
     <item label="Centro di Controllo"><action name="Execute"><command>nxs-control-center</command></action></item>
     <separator/>
     <item label="Riavvia Openbox"><action name="Reconfigure"/></item>

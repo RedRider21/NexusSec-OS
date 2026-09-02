@@ -1,0 +1,91 @@
+#!/bin/sh
+# nxs-tor - interruttore Tor di SISTEMA in user-space (SOCKS 127.0.0.1:9050).
+#
+# AUTOPROTEZIONE / anonimato: instrada verso Tor il traffico dei tool NexusSec
+# che rispettano il proxy 9050 (HORUS, ecc.). E' la sorgente unica di verita'
+# del toggle Tor del pannello. Gira SENZA privilegi di root (SocksPort 9050 e'
+# una porta alta); serve root solo per installare il pacchetto 'tor' se manca.
+#
+# Uso:
+#   nxs-tor on|off|status|toggle    (default: status)
+#
+# Note:
+#  - un solo demone Tor sulla 9050 e' condiviso da tutta la distro (convenzione
+#    gia' usata da nxs-browser e dal backend HORUS, che verificano 127.0.0.1:9050);
+#  - lo stato "on" e' definito dalla porta 9050 in ascolto (chiunque l'abbia
+#    avviata: cosi' il pannello resta coerente anche col Tor del browser).
+set -eu
+
+PORT=9050
+CONF_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/nxs"
+DATADIR="$CONF_DIR/tor"
+PIDFILE="$DATADIR/tor.pid"
+LOG="$DATADIR/tor.log"
+
+priv() {
+  if [ "$(id -u)" = 0 ]; then "$@"
+  elif command -v doas >/dev/null 2>&1; then doas "$@"
+  elif command -v sudo >/dev/null 2>&1; then sudo "$@"
+  else return 1; fi
+}
+
+# 9050 in ascolto su loopback? (busybox netstat, presente in Alpine)
+port_up() { netstat -ltn 2>/dev/null | grep -q "127\.0\.0\.1:$PORT[[:space:]]"; }
+
+# nostro demone (avviato da noi) ancora vivo?
+mine_running() { [ -f "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE" 2>/dev/null)" 2>/dev/null; }
+
+do_on() {
+  if port_up; then echo "on"; return 0; fi
+  if ! command -v tor >/dev/null 2>&1; then
+    echo "nxs-tor: installo il pacchetto 'tor'..." >&2
+    priv apk add --no-cache tor >/dev/null 2>&1 || {
+      echo "nxs-tor: impossibile installare 'tor' (serve rete o privilegi)." >&2
+      echo "off"; return 1; }
+  fi
+  mkdir -p "$DATADIR"; chmod 700 "$DATADIR" 2>/dev/null || true
+  # Demone user-space: solo SOCKS su loopback, nessun servizio in ascolto.
+  tor --RunAsDaemon 1 \
+      --SocksPort "127.0.0.1:$PORT" \
+      --DataDirectory "$DATADIR" \
+      --PidFile "$PIDFILE" \
+      --Log "notice file $LOG" >/dev/null 2>&1 || true
+  # attesa bootstrap: la 9050 apre in fretta anche prima del 100%
+  i=0
+  while [ "$i" -lt 30 ]; do
+    if port_up; then echo "on"; return 0; fi
+    sleep 1; i=$((i+1))
+  done
+  echo "nxs-tor: Tor non ha aperto la porta $PORT (vedi $LOG)." >&2
+  echo "off"; return 1
+}
+
+do_off() {
+  # ferma SOLO il nostro demone (non tocca eventuali tor gestiti altrove, es.
+  # dal processo del browser, per non spegnere l'anonimato di una finestra viva)
+  if mine_running; then
+    kill "$(cat "$PIDFILE" 2>/dev/null)" 2>/dev/null || true
+    rm -f "$PIDFILE" 2>/dev/null || true
+  else
+    # fallback: un tor con la NOSTRA data-dir avviato senza pidfile leggibile
+    pkill -f "DataDirectory $DATADIR" 2>/dev/null || true
+  fi
+  i=0
+  while [ "$i" -lt 5 ]; do
+    port_up || { echo "off"; return 0; }
+    sleep 1; i=$((i+1))
+  done
+  if port_up; then
+    echo "nxs-tor: la porta $PORT resta in ascolto (Tor gestito da un altro processo, es. il browser)." >&2
+    echo "on"; return 1
+  fi
+  echo "off"
+}
+
+case "${1:-status}" in
+  on)     do_on ;;
+  off)    do_off ;;
+  toggle) if port_up; then do_off; else do_on; fi ;;
+  status) if port_up; then echo "on"; else echo "off"; fi ;;
+  *) echo "uso: nxs-tor {on|off|status|toggle}" >&2; exit 2 ;;
+esac

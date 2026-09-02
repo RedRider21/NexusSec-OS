@@ -30,7 +30,7 @@ echo "[host] runtime: $RT | arch: $ARCH ($PODMAN_ARCH) | container: $CNAME"
 
 CID=$("$RT" run -d --replace --name "$CNAME" --arch="$PODMAN_ARCH" \
   -e NXS_ARCH="$ARCH" -e NXS_EPOCH="${NXS_EPOCH:-}" \
-  -e NXS_FASTBOOT="${NXS_FASTBOOT:-}" --privileged \
+  -e NXS_FASTBOOT="${NXS_FASTBOOT:-}" -e NXS_JOBS="${NXS_JOBS:-}" --privileged \
   -v "$ROOT:/work" -w /work alpine:edge sh -ec '
   exec >>/work/out/build-$NXS_ARCH.log 2>&1
   set -eu
@@ -74,6 +74,16 @@ REPOS
   cp /root/.abuild/nexussecos-arsenal.rsa.pub /etc/apk/keys/
 
   echo "[ctr] compilo i meta-pacchetti (repo locale nexussec)..."
+  # NXS_JOBS limita il parallelismo di make. Utile su arch emulati (aarch64 via
+  # qemu): abuild di default lancia -j$(nproc) processi cc1plus emulati insieme
+  # e l emulatore puo crashtare con ICE flaky (verificato 2 volte su
+  # bulk-extractor). Con un job-count basso la compilazione e piu lenta ma
+  # stabile. Default: invariato (tutto il parallelismo disponibile). abuild
+  # legge la variabile JOBS (non MAKEFLAGS).
+  if [ -n "${NXS_JOBS:-}" ]; then
+    export JOBS="$NXS_JOBS"
+    echo "[ctr] NXS_JOBS=$NXS_JOBS -> abuild JOBS=-j$NXS_JOBS"
+  fi
   mkdir -p /root/nexussec
   cp -a /work/aports/* /root/nexussec/
   for p in nexussec-base nexussec-firmware sec-profile-pentest \
@@ -87,10 +97,24 @@ REPOS
   # container/pip, quindi proseguo con un avviso invece di abortire la ISO.
   # podman rootless: tar non puo ripristinare perm/owner durante unpack.
   export TAR_OPTIONS="--no-same-owner --no-same-permissions"
+  # RITENTATIVI: su architetture EMULATE (aarch64 via qemu) gcc crolla in modo
+  # ALEATORIO - ICE oppure Segmentation fault, ogni volta su un file diverso -
+  # anche con NXS_JOBS basso. Non e un difetto del sorgente: gli stessi tool
+  # compilano al primo colpo su x86_64 nativo, dove i fallimenti sono ZERO.
+  # Essendo un guasto aleatorio dell emulatore, il rimedio giusto e RIPROVARE:
+  # osservato su bulk-extractor (ICE su scan_ntfsusn, poi scan_ntfsmft) e su
+  # chkrootkit (segfault su chkutmp).
   for p in dmitry foremost medusa chkrootkit rkhunter bulk-extractor; do
     [ -d /root/nexussec/$p ] || continue
-    ( cd /root/nexussec/$p && abuild -F checksum && abuild -F -r ) \
-      || echo "[ctr] ATTENZIONE: tool non compilato (resta on-demand): $p"
+    fatto=
+    for tentativo in 1 2 3; do
+      if ( cd /root/nexussec/$p && abuild -F checksum && abuild -F -r ); then
+        fatto=1; break
+      fi
+      echo "[ctr] $p: tentativo $tentativo fallito (probabile crollo emulatore), riprovo..."
+      sleep 3
+    done
+    [ -n "$fatto" ] || echo "[ctr] ATTENZIONE: tool non compilato (resta on-demand): $p"
   done
   echo "[ctr] pacchetti pronti:"; find /root/packages -name "*.apk"
 

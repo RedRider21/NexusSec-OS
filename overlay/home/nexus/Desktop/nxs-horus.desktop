@@ -1,8 +1,0 @@
-[Desktop Entry]
-Type=Application
-Name=HORUS
-Comment=Occhio OSINT globale: feed mondiali su mappa e ricognizione locale
-Exec=nxs-horus
-Icon=nxs-horus
-Terminal=false
-Categories=Network;Security;

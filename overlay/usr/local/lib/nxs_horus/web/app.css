@@ -908,3 +908,11 @@ body {
 #case-close { margin-left: 6px; }
 .cr-close { color: var(--warn); border-color: var(--warn); font-weight: 700; }
 .cr-close:hover { filter: brightness(1.1); }
+
+/* Mappa offline: riga pulsanti cache nelle Impostazioni */
+.map-cache-row { display:flex; gap:8px; flex-wrap:wrap; margin-top:4px; }
+.map-cache-row .btn { flex:1 1 auto; }
+
+/* Report: miniatura delle schermate allegate al dossier */
+.rep-thumb { display:block; max-width:100%; max-height:120px; border:1px solid var(--line,#1a3a52);
+  border-radius:6px; margin:4px 0; object-fit:cover; }

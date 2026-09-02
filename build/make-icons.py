@@ -411,6 +411,63 @@ def g_player(d, accent):
 
 
 # nome-icona -> (funzione, contesto)
+def g_forensic(d, accent):
+    """Caso forense: lente d ingrandimento sul piatto di un disco.
+
+    Si legge come "esaminare un supporto" - il gesto che nxs-case automatizza -
+    e resta riconoscibile anche a 16 px, dove restano solo due cerchi e un
+    manico. Volutamente NON una cartella: la cartella e' il contenitore, non
+    il mestiere.
+    """
+    tile(d, accent)
+    # piatto del disco, in basso a sinistra
+    d.ellipse([44, 92, 168, 216], outline=WHITE, width=9)
+    d.ellipse([98, 146, 114, 162], fill=WHITE)
+    # lente: cerchio spesso in alto a destra, leggermente sovrapposto
+    d.ellipse([116, 40, 212, 136], outline=WHITE, width=13)
+    # impugnatura verso il basso a destra
+    d.line([200, 124, 226, 150], fill=WHITE, width=17)
+
+
+def _qbez(p0, p1, p2, n=24):
+    """Campiona una bezier quadratica in n punti (PIL non le disegna nativamente)."""
+    pts = []
+    for i in range(n + 1):
+        t = i / n
+        u = 1 - t
+        x = u * u * p0[0] + 2 * u * t * p1[0] + t * t * p2[0]
+        y = u * u * p0[1] + 2 * u * t * p1[1] + t * t * p2[1]
+        pts.append((x, y))
+    return pts
+
+
+def g_horus(d, accent):
+    """Occhio di Horus (Wedjat) con pupilla a globo: l'occhio che vede il globo.
+
+    Horus e' il figlio di Osiris: il logo del discendente 'locale e privato'
+    dello strumento OSIRIS. Sopracciglio + palpebre + la linea che scende e la
+    spirale (i tratti canonici del Wedjat); la pupilla e' un piccolo globo con
+    meridiani. A 16 px restano l'occhio e il globo, che bastano a riconoscerlo.
+    """
+    tile(d, accent)
+    w = 14
+    # sopracciglio
+    d.line(_qbez((44, 80), (124, 36), (220, 68)), fill=WHITE, width=w, joint="curve")
+    # palpebra superiore
+    d.line(_qbez((32, 136), (104, 72), (216, 108)), fill=WHITE, width=w, joint="curve")
+    # palpebra inferiore
+    d.line(_qbez((32, 136), (112, 176), (184, 148)), fill=WHITE, width=w, joint="curve")
+    # linea che scende dall'angolo interno
+    d.line([(60, 156), (48, 208)], fill=WHITE, width=w, joint="curve")
+    # spirale/curl dall'angolo esterno
+    curl = _qbez((180, 152), (188, 200), (148, 208)) + _qbez((148, 208), (124, 212), (128, 184))
+    d.line(curl, fill=WHITE, width=w, joint="curve")
+    # pupilla = globo con meridiani
+    d.ellipse([80, 96, 146, 162], outline=WHITE, width=w)
+    d.line([(84, 129), (142, 129)], fill=WHITE, width=6)
+    d.ellipse([106, 96, 120, 162], outline=WHITE, width=6)
+
+
 ICONS = {
     "nxs-browser":          (g_browser, "apps"),
     "applications-internet": (g_browser, "apps"),
@@ -421,6 +478,8 @@ ICONS = {
     "nxs-video":            (g_video, "apps"),
     "video-x-generic":      (g_video, "apps"),
     "nxs-logo":             (g_logo, "apps"),
+    "nxs-case":             (g_forensic, "apps"),
+    "nxs-horus":            (g_horus, "apps"),
     "utilities-terminal":   (g_terminal, "apps"),
     "preferences-system":   (g_gear, "apps"),
     "drive-harddisk":       (g_disk, "apps"),

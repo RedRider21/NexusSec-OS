@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Dischi
+Comment=Dischi e partizioni: consultazione e montaggio in sola lettura
+Exec=nxs-disks
+Icon=drive-harddisk
+Terminal=false
+Categories=System;Filesystem;

@@ -151,7 +151,16 @@ footer{border-top:1px solid var(--line);padding:24px 0 60px;color:var(--muted);f
   <p>Il pulsante in basso a sinistra apre il menu. In cima trovi subito le
   <strong>utilità di base</strong> (Centro di Controllo, Terminale, File manager,
   Editor, Browser, Info sistema, Monitor, Gestore pacchetti, Rete); sotto, gli
-  <strong>strumenti del profilo</strong> raggruppati per categoria.</p>
+  <strong>strumenti del profilo</strong> raggruppati per categoria. Nel menu sono
+  presenti anche <strong>HORUS</strong> (OSINT/GEOINT), <strong>Blocca schermo
+  (salvaschermo)</strong> e <strong>Cattura schermata</strong>, in stile MATE.</p>
+  <div class="note"><strong>Autoprotezione (scudo nel pannello)</strong>: un solo
+  pulsante nella barra — per non affollarla sui monitor a bassa risoluzione — apre
+  un pannellino con <strong>Firewall</strong> (interruttore inbound-deny),
+  <strong>Tor</strong> (SOCKS 9050), <strong>Screenshot</strong> (schermo intero/area)
+  e <strong>Blocca schermo</strong>. L'icona dello scudo riflette lo stato del
+  firewall (alto = attivo, basso = spento). Su sistema hardenizzato le azioni che
+  richiedono password si gestiscono dal Centro di Controllo.</div>
   <ul class="hexlist">
     <li>Le <strong>categorie</strong> sono a fisarmonica: un clic sull'intestazione
       espande o richiude la sezione (con centinaia di tool una lista piatta sarebbe
@@ -274,7 +283,8 @@ apk add foremost medusa bulk-extractor</code></pre>
   <p>Tutti i comandi propri di NexusSec hanno il prefisso <code>nxs-</code>. Molti
   sono richiamati dal pannello o dai menu (icone della barra, applet, voci del menu
   start), ma sono anche <strong>eseguibili a mano dal terminale</strong>. Di seguito
-  l'elenco completo, raggruppato per funzione. Quasi tutti stampano l'uso se lanciati
+  l'elenco <strong>completo</strong> dei 43 comandi, raggruppato per funzione, con i
+  rispettivi <strong>sottocomandi</strong>. Quasi tutti stampano l'uso se lanciati
   con <code>--help</code> o con un argomento non valido.</p>
 
   <h3>Sistema e sessione</h3>
@@ -282,18 +292,21 @@ apk add foremost medusa bulk-extractor</code></pre>
     <thead><tr><th>Comando</th><th>Cosa fa</th></tr></thead>
     <tbody>
       <tr><td class="k">nxs-control-center</td><td>Apre il <strong>Centro di Controllo</strong> (impostazioni di sistema).</td></tr>
-      <tr><td class="k">nxs-panel</td><td>Avvia il pannello inferiore (menu start + tray + applet).</td></tr>
-      <tr><td class="k">nxs-terminal</td><td>Apre il terminale (lxterminal, ripiego xterm a tema).</td></tr>
+      <tr><td class="k">nxs-panel</td><td>Avvia il pannello inferiore (menu start + tray + applet). Ne parte <strong>uno per monitor</strong>.</td></tr>
+      <tr><td class="k">nxs-terminal</td><td>Apre il terminale (lxterminal, ripiego xterm a tema Nebula).</td></tr>
       <tr><td class="k">nxs-term <span class="tag">cmd</span></td><td>Esegue un comando dentro un terminale in modo affidabile (usato dai menu).</td></tr>
       <tr><td class="k">nxs-python</td><td>Apre una shell Python 3.</td></tr>
-      <tr><td class="k">nxs-sysinfo</td><td>Riepilogo sistema (CPU, RAM, versioni) per menu/pannello.</td></tr>
-      <tr><td class="k">nxs-monitor</td><td>Monitor risorse (htop, ripiego top).</td></tr>
-      <tr><td class="k">nxs-diag</td><td>Diagnostica rapida del desktop: binari, profilo, pannello, GTK, log.</td></tr>
-      <tr><td class="k">nxs-app <span class="tag">app</span></td><td>Lancia un'app GUI; se manca, mostra come installarla con <code>apk</code>.</td></tr>
-      <tr><td class="k">nxs-users</td><td>Gestione utenti (backend di <em>Impostazioni &gt; Gestione utenti</em>).</td></tr>
-      <tr><td class="k">nxs-datetime</td><td>Imposta ora, data e fuso orario di sistema.</td></tr>
-      <tr><td class="k">nxs-shutdown</td><td>Spegni / Riavvia / Esci dalla sessione.</td></tr>
-      <tr><td class="k">nxs-boot-splash</td><td>Splash di avvio a schermo intero (interno, primo autostart).</td></tr>
+      <tr><td class="k">nxs-sysinfo</td><td>Riepilogo sistema (CPU, RAM, versioni) per menu e pannello.</td></tr>
+      <tr><td class="k">nxs-monitor</td><td>Monitor risorse (<code>htop</code>, ripiego <code>top</code>).</td></tr>
+      <tr><td class="k">nxs-diag</td><td>Diagnostica del desktop: binari presenti, profilo attivo, pannello, GTK, log di autostart. Primo comando da lanciare quando “il desktop fa una cosa strana”.</td></tr>
+      <tr><td class="k">nxs-app <span class="tag">app</span></td><td>Lancia un'app GUI; se manca, spiega come installarla con <code>apk</code>.</td></tr>
+      <tr><td class="k">nxs-users</td><td>Gestione utenti. Le password si passano da <strong>stdin</strong>, mai come argomento (in <code>ps</code> sarebbero visibili a tutti).
+        <br><code>nxs-users list</code> · <code>passwd UTENTE</code> · <code>add UTENTE</code> · <code>del UTENTE</code></td></tr>
+      <tr><td class="k">nxs-datetime</td><td>Ora, data e fuso orario di sistema.
+        <br><code>nxs-datetime set-datetime "AAAA-MM-GG hh:mm"</code> · <code>set-tz ZONA</code> · <code>get-tz</code></td></tr>
+      <tr><td class="k">nxs-shutdown</td><td>Spegni / riavvia / esci. Se il supporto è scrivibile fa prima <code>lbu commit</code>, salvando la configurazione.
+        <br><code>nxs-shutdown poweroff</code> · <code>reboot</code> · <code>logout</code></td></tr>
+      <tr><td class="k">nxs-boot-splash</td><td>Splash di avvio a schermo intero (interno: primo processo dell'autostart).</td></tr>
       <tr><td class="k">nxs-welcome</td><td>Messaggio di benvenuto nel terminale iniziale (interno).</td></tr>
     </tbody>
   </table>
@@ -302,9 +315,17 @@ apk add foremost medusa bulk-extractor</code></pre>
   <table>
     <thead><tr><th>Comando</th><th>Cosa fa</th></tr></thead>
     <tbody>
-      <tr><td class="k">nxs-wifi <span class="tag">scan|connect|status|debug</span></td><td>Gestione WiFi (scan reti, connessione, stato). <code>nxs-wifi debug</code> è la diagnostica: interfaccia, stato radio (rfkill), firmware, IP, client DHCP.</td></tr>
-      <tr><td class="k">nxs-netinfo</td><td>Stato rete sintetico (interfacce, IP, gateway) per menu/pannello.</td></tr>
-      <tr><td class="k">nxs-firewall</td><td>Firewall di sicurezza basato su <strong>nftables</strong> (regole on/off).</td></tr>
+      <tr><td class="k">nxs-wifi</td><td>WiFi via <code>wpa_supplicant</code>. La passphrase si legge da <strong>stdin</strong>, non dagli argomenti.
+        <br><code>nxs-wifi iface</code> interfaccia rilevata · <code>status</code> stato · <code>scan</code> elenco reti · <code>connect SSID</code> (passphrase da stdin) · <code>auto</code> riaggancia da sola una rete già usata (lanciato all'avvio) · <code>disconnect</code> · <code>debug</code> diagnostica completa</td></tr>
+      <tr><td class="k">nxs-bluetooth</td><td>Bluetooth via BlueZ: accensione, scansione, abbinamento, trasferimento file OBEX.
+        <br><code>status</code> · <code>adapter</code> · <code>on</code> / <code>off</code> · <code>discoverable on|off</code> · <code>scan [secondi]</code> · <code>devices</code> · <code>info MAC</code> · <code>pair MAC</code> · <code>connect MAC</code> · <code>disconnect MAC</code> · <code>trust MAC</code> / <code>untrust MAC</code> · <code>remove MAC</code> · <code>alias NOME</code>
+        <br><code>send MAC FILE</code> invia un file · <code>receive on [CARTELLA]</code> / <code>off</code> / <code>status</code> ricezione (default <code>~/NexusSec-loot</code>)</td></tr>
+      <tr><td class="k">nxs-netinfo</td><td>Stato della rete (interfacce, IP, gateway, DNS) per menu e Centro di Controllo.</td></tr>
+      <tr><td class="k">nxs-firewall</td><td>Firewall <code>nftables</code>: in ingresso tutto chiuso, in uscita libero.
+        <br><code>on</code> · <code>off</code> · <code>status</code> · <code>state</code> (on|off|unknown, per il pannello) · <code>allow PORTA[/tcp|/udp]</code> · <code>deny PORTA</code> · <code>boot</code> (applicato all'avvio)
+        <br><em>Per pentest:</em> per mettersi in <strong>ascolto</strong> serve un <code>allow</code> della porta, oppure <code>off</code>.</td></tr>
+      <tr><td class="k">nxs-tor</td><td>Interruttore <strong>Tor di sistema</strong> in user-space (SOCKS <code>127.0.0.1:9050</code>): instrada verso Tor i tool che rispettano il proxy (HORUS, ecc.). È la sorgente unica di verità del toggle Tor del pannello.
+        <br><code>on</code> · <code>off</code> · <code>status</code> · <code>toggle</code>. Gira senza root (serve root solo per installare il pacchetto <code>tor</code> se manca).</td></tr>
     </tbody>
   </table>
 
@@ -312,12 +333,12 @@ apk add foremost medusa bulk-extractor</code></pre>
   <table>
     <thead><tr><th>Comando</th><th>Cosa fa</th></tr></thead>
     <tbody>
-      <tr><td class="k">nxs-audio</td><td>Volume e uscite audio via <strong>PipeWire</strong> (<code>wpctl</code>).</td></tr>
-      <tr><td class="k">nxs-audio-unmute</td><td>Sblocca e alza l'audio su tutti i livelli, con ritentativi.</td></tr>
-      <tr><td class="k">nxs-bluetooth</td><td>Controllo Bluetooth via <strong>BlueZ</strong> (<code>bluetoothctl</code>).</td></tr>
+      <tr><td class="k">nxs-audio</td><td>Volume e uscite audio (PipeWire / <code>wpctl</code>).
+        <br><code>get</code> · <code>set PERCENTUALE</code> · <code>up</code> / <code>down</code> · <code>mute</code> · <code>sinks</code> elenca le uscite · <code>default ID</code> imposta l'uscita</td></tr>
+      <tr><td class="k">nxs-audio-unmute</td><td>Sblocca e alza l'audio su <strong>tutti</strong> i livelli (ALSA + PipeWire) con ritentativi. Parte da solo all'avvio: su macchina reale il codec spesso nasce muto.</td></tr>
       <tr><td class="k">nxs-player</td><td>Lettore audio (GTK3 + GStreamer).</td></tr>
       <tr><td class="k">nxs-video</td><td>Visualizzatore video (GTK3 + GStreamer).</td></tr>
-      <tr><td class="k">nxs-screenshot</td><td>Screenshot a schermo intero in <code>/tmp</code> (scrot).</td></tr>
+      <tr><td class="k">nxs-screenshot</td><td>Cattura schermate con <code>scrot</code>, salvate in <code>~/Immagini/NexusSec</code> con notifica. Modalità: <code>full</code> (schermo intero, default), <code>area</code> (selezione col mouse), <code>window</code> (finestra attiva); secondo argomento facoltativo = ritardo in secondi. Disponibile anche dal pannello (applet <strong>Autoprotezione</strong>) e dal menu, oltre al tasto <kbd>Stamp</kbd>.</td></tr>
     </tbody>
   </table>
 
@@ -325,12 +346,19 @@ apk add foremost medusa bulk-extractor</code></pre>
   <table>
     <thead><tr><th>Comando</th><th>Cosa fa</th></tr></thead>
     <tbody>
-      <tr><td class="k">nxs-brightness</td><td>Regola la luminosità dello schermo.</td></tr>
-      <tr><td class="k">nxs-screens</td><td>Gestione schermi e risoluzioni (<code>xrandr</code>).</td></tr>
-      <tr><td class="k">nxs-battery</td><td>Stato batteria/alimentazione da <code>/sys/class/power_supply</code>.</td></tr>
-      <tr><td class="k">nxs-screensaver</td><td>Salvaschermo animato (GTK3 + Cairo).</td></tr>
-      <tr><td class="k">nxs-screensaver-idle</td><td>Avvia il salvaschermo dopo inattività (xautolock).</td></tr>
-      <tr><td class="k">nxs-lxappearance</td><td>Configuratore del tema GTK (wrapper di lxappearance).</td></tr>
+      <tr><td class="k">nxs-screens</td><td>Monitor e risoluzioni via <code>xrandr</code>.
+        <br><code>outputs</code> elenca gli output · <code>modes NOME</code> risoluzioni disponibili · <code>mirror</code> duplica · <code>extend</code> estende · <code>only NOME</code> usa un solo schermo · <code>mode NOME LxA</code> · <code>primary NOME</code>
+        <br><code>autostart</code> disposizione all'avvio · <code>policy</code> riapplica · <code>get-policy</code> / <code>set-policy mirror|extend</code> comportamento automatico · <code>lid</code> stato del coperchio</td></tr>
+      <tr><td class="k">nxs-screens-watch</td><td>Demone che <strong>riallinea gli schermi da solo</strong> quando colleghi o scolleghi un monitor, o chiudi il coperchio del portatile. Parte dall'autostart.
+        <br>Senza di lui un monitor collegato dopo l'avvio resta spento (ci si vede solo la splash del kernel), perché un output <em>connesso ma senza CRTC</em> non viene mai disegnato da X.</td></tr>
+      <tr><td class="k">nxs-brightness</td><td>Luminosità dello schermo.
+        <br><code>get</code> · <code>set VALORE</code> · <code>up</code> / <code>down</code> <span class="tag">passo%</span></td></tr>
+      <tr><td class="k">nxs-battery</td><td>Batteria e alimentazione da <code>/sys/class/power_supply</code>.
+        <br><code>status</code> · <code>info</code></td></tr>
+      <tr><td class="k">nxs-screensaver</td><td>Salvaschermo animato (GTK3 + Cairo). Accetta il nome dell'animazione, es. <code>nxs-screensaver nebula</code>.</td></tr>
+      <tr><td class="k">nxs-screensaver-idle</td><td>Avvia il salvaschermo dopo N minuti di inattività (<code>xautolock</code>).
+        <br><code>start</code> · <code>stop</code> · <code>restart</code> — configurazione in <code>~/.config/nxs/screensaver.conf</code></td></tr>
+      <tr><td class="k">nxs-lxappearance</td><td>Configuratore del tema GTK (wrapper di <code>lxappearance</code>).</td></tr>
     </tbody>
   </table>
 
@@ -338,12 +366,21 @@ apk add foremost medusa bulk-extractor</code></pre>
   <table>
     <thead><tr><th>Comando</th><th>Cosa fa</th></tr></thead>
     <tbody>
-      <tr><td class="k">nxs-tool <span class="tag">…</span></td><td>Gestore profili e tool isolati (bubblewrap). La CLI principale — vedi esempi sotto.</td></tr>
-      <tr><td class="k">nxs-profile</td><td>Selettore grafico del profilo operativo.</td></tr>
-      <tr><td class="k">nxs-run-tool <span class="tag">tool</span></td><td>Esegue un tool del profilo dal menu tenendo aperto il terminale.</td></tr>
-      <tr><td class="k">nxs-wizard</td><td>Procedure guidate (apre la GUI o esegue da CLI).</td></tr>
-      <tr><td class="k">nxs-browser</td><td>Browser stealth integrato (Tor di default, senza tracce locali).</td></tr>
-      <tr><td class="k">nxs-ai-sandbox</td><td>Sandbox bubblewrap per il (futuro) agente AI di NexusSec.</td></tr>
+      <tr><td class="k">nxs-tool</td><td>La CLI principale: profili operativi e arsenale on-demand.
+        <br><code>profiles</code> elenca i profili · <code>profile NOME</code> attiva · <code>apply</code> riapplica sfondo e accent · <code>list</code> tool del profilo
+        <br><code>install TOOL</code> · <code>run TOOL</code> · <code>launch TOOL</code> installa-se-serve ed esegue · <code>uninstall TOOL</code>
+        <br><code>kali PACCHETTO</code> esegue un pacchetto Kali qualunque in container · <code>kali-list</code></td></tr>
+      <tr><td class="k">nxs-profile</td><td>Selettore <strong>grafico</strong> del profilo operativo (Pentest, Forensics, OSINT, Web).</td></tr>
+      <tr><td class="k">nxs-run-tool <span class="tag">tool</span></td><td>Esegue un tool dal menu tenendo aperto il terminale a fine esecuzione.</td></tr>
+      <tr><td class="k">nxs-wizard</td><td>Procedure guidate. Senza argomenti apre la GUI.
+        <br><code>list</code> elenca le procedure · <code>run NOME</code> esegue da CLI</td></tr>
+      <tr><td class="k">nxs-browser</td><td>Browser stealth integrato (Tor di default, nessuna traccia locale).</td></tr>
+      <tr><td class="k">nxs-horus</td><td><strong>HORUS</strong>, l'Occhio OSINT/GEOINT globale: mappa mondiale (nera di default) con feed pubblici <strong>in tempo reale e in aggiornamento continuo</strong>. Layer: terremoti (USGS), voli (OpenSky), vulcani attivi (Smithsonian GVP, incl. Etna), incendi (NASA EONET), cavi sottomarini (TeleGeography), ISS, <strong>satelliti</strong> (TLE CelesTrak, orbite calcolate live nel browser con satellite.js), <strong>telecamere del traffico</strong> ufficiali e keyless (TfL Londra con clip video, Caltrans, Ontario, Digitraffic Finlandia, NZTA Nuova Zelanda) e <strong>navi AIS</strong> mondiali in streaming continuo (aisstream, chiave gratuita; senza chiave Nord Europa via Digitraffic).
+        <br>Ogni layer è memorizzato in <strong>IndexedDB</strong> (all'apertura rivedi subito l'ultimo stato, anche offline); interruttore master + slider 5–60 s per la cadenza. In più: <strong>GEOINT</strong> (geolocalizza IP/dominio + porte/CVE da Shodan InternetDB), ricerca per <strong>area</strong> (voli+terremoti in un riquadro), <strong>report</strong> d'indagine HTML in ~/NexusSec-loot/horus/, ticker <strong>news</strong> con fonti mondiali raggruppate per zona (Italia, Europa, Nord/Sud America, Russia, Cina, Medio Oriente, Asia, Oceania, Africa) selezionabili dalle Impostazioni e modalità lettura integrata, e ricognizione che pilota gli strumenti installati (whois, dig, nmap, maigret, h8mail, holehe, subfinder, theHarvester). Gli scan partono dal tuo IP o da Tor, non da server di terzi. Le chiavi facoltative (AIS gratuito/premium) restano solo in ~/.config/nxs.
+        <br><strong>Mappa offline</strong>: le tile viste online vengono salvate in IndexedDB e riproposte senza rete; dalle Impostazioni puoi <em>precaricare il mondo a basso zoom</em> (poche centinaia di tile) e svuotare la cache. <strong>OSINT su numeri</strong> (PhoneInfoga) nel tab Telefono, esposto solo su <code>127.0.0.1:5000</code>. <strong>Report</strong>: allega <em>schermate</em> di ciò che vedi (pulsante «+ Schermata»), esporta indicatori in <strong>CSV</strong> e <strong>STIX 2.1</strong>, il fascicolo in <strong>PDF</strong> o un <strong>bundle ZIP</strong> completo (HTML + JSON + CSV + STIX + schermate).
+        <br>Il nome: nel mito egizio Horus è il figlio di Osiris — HORUS è il discendente <strong>locale e privato</strong> dello strumento OSIRIS che l'ha ispirato; l'Occhio di Horus (Wedjat) è l'occhio che tutto vede.</td></tr>
+      <tr><td class="k">nxs-ai-sandbox</td><td>Sandbox <code>bubblewrap</code> per il (futuro) agente AI: root in sola lettura, home isolata, rete esclusa di default.
+        <br><code>nxs-ai-sandbox [--net] [--workspace CARTELLA] -- COMANDO</code></td></tr>
     </tbody>
   </table>
 
@@ -351,13 +388,35 @@ apk add foremost medusa bulk-extractor</code></pre>
   <table>
     <thead><tr><th>Comando</th><th>Cosa fa</th></tr></thead>
     <tbody>
-      <tr><td class="k">nxs-install</td><td>Installazione su disco / attivazione persistenza.</td></tr>
-      <tr><td class="k">nxs-persist <span class="tag">status</span></td><td>Crea/gestisce la persistenza dati (partizione <code>NXSDATA</code>).</td></tr>
-      <tr><td class="k">nxs-unlock-data</td><td>Sblocca e monta la persistenza <strong>cifrata</strong> (LUKS).</td></tr>
-      <tr><td class="k">nxs-writeblock</td><td>Write-blocker forense a livello di blocco (protezione da scrittura).</td></tr>
-      <tr><td class="k">nxs-harden</td><td>Irrobustimento di sicurezza del sistema.</td></tr>
+      <tr><td class="k">nxs-case</td><td>Casi forensi: fa quello che Autopsy aggiunge sopra The Sleuth Kit — gestione del caso, catena di custodia, relazione — <strong>senza Java</strong>. I motori sono <code>ewfacquire</code>/<code>ewfverify</code> e <code>mmls</code>/<code>fls</code>/<code>mactime</code>, tutti sul media.
+        <br>Un pulsante <strong>esegue tutta la sequenza</strong> (protezione in scrittura, acquisizione in E01, verifica degli hash, partizioni e cronologia, relazione); in alternativa ogni passo ha il suo pulsante.
+        <br>Ogni operazione si registra <strong>da sola</strong> nella catena di custodia con orario <strong>UTC</strong>, versione dello strumento e hash: il verbale non dipende da cosa ci si ricorda di annotare. Il registro è append-only. I casi stanno in <code>~/NexusSec-loot/casi/</code>, la relazione è un HTML autonomo che si stampa in PDF dal browser.</td></tr>
+      <tr><td class="k">nxs-disks</td><td>Dischi e partizioni. Senza argomenti apre la <strong>finestra grafica</strong>; con un argomento stampa in testo.
+        <br><code>--lista</code> · <code>--lista-completa</code> include lo spazio non allocato · <code>--partizioni</code> · <code>--liberi DISCO</code>
+        <br>I dischi si <strong>vedono sempre</strong> ma non vengono <strong>mai</strong> montati da soli, e il montaggio è in <strong>sola lettura</strong> salvo richiesta esplicita: la distro è anche forense. Non usa <code>udisks2</code> né <code>gvfs</code> (che serve proprio ad automontare), ma <code>lsblk</code>, <code>findmnt</code>, <code>parted</code> e <code>cryptsetup</code>.</td></tr>
+      <tr><td class="k">nxs-install</td><td>Installazione su disco e persistenza. Mostra il contenuto dei dischi (tramite <code>nxs-disks</code>) <em>prima</em> di scriverci, e chiede di riscrivere il percorso per confermare.
+        <br><strong>1</strong> guidata (<code>setup-alpine</code>) · <strong>2</strong> disco intero (cancella tutto) · <strong>3</strong> <strong>a fianco</strong>: installa in una partizione esistente o nello spazio libero, lasciando intatto il resto (Windows compreso) · <strong>4-5</strong> persistenza live · <strong>d</strong> mostra i dischi</td></tr>
+      <tr><td class="k">nxs-persist</td><td>Partizione dati persistente <code>NXSDATA</code>: ci finiscono arsenale, stato dei tool, bottino e <strong>reti WiFi salvate e abbinamenti Bluetooth</strong>. Non una sola rete: vengono ricordate <strong>tutte</strong> quelle usate, e all'avvio <code>nxs-wifi auto</code> si riaggancia da solo a quella in portata. Anche i dispositivi Bluetooth sono ricordati <strong>tutti</strong>, indicizzati per indirizzo MAC; quelli marcati <em>trusted</em> si ricollegano senza riabbinare. <br><em>Avvertenza:</em> le chiavi Bluetooth sono legate al <strong>MAC dell'adattatore</strong> del PC, quindi spostando la chiavetta su un altro computer i telefoni vanno riabbinati. Le reti WiFi invece seguono la chiavetta ovunque.
+        <br><code>nxs-persist status</code> · <code>nxs-persist /dev/sdX1</code> prepara la partizione</td></tr>
+      <tr><td class="k">nxs-unlock-data</td><td>Sblocca e monta la persistenza <strong>cifrata</strong> (LUKS2, etichetta <code>NXSCRYPT</code>). Chiamato dal login prima di <code>startx</code>.
+        <br><code>login</code> · <code>status</code></td></tr>
+      <tr><td class="k">nxs-writeblock</td><td>Write-blocker forense a livello di <strong>blocco</strong> (<code>blockdev --setro</code>): più forte del solo <code>mount -o ro</code>, perché nessuno strumento può scrivere — nemmeno il replay del journal al montaggio. Agganciato al profilo <em>Forensics</em>, inerte negli altri.
+        <br><code>on</code> · <code>off</code> · <code>status</code> · <code>lock DEVICE</code> · <code>unlock DEVICE</code> sblocca deliberatamente (es. il disco di destinazione)
+        <br>Il supporto di avvio e <code>NXSDATA</code> non vengono mai toccati.</td></tr>
+      <tr><td class="k">nxs-harden</td><td>Irrobustimento del sistema <strong>installato</strong> (sulla live resta comoda: autologin e <code>doas</code> senza password).
+        <br><code>status</code> · <code>apply</code> · <code>password</code> · <code>autologin on|off</code> · <code>doas pass|nopass</code> · <code>lockvt on|off</code> blocca il cambio VT (il lock schermo non si aggira con Ctrl+Alt+Fn)</td></tr>
     </tbody>
   </table>
+  <div class="note"><strong>Autoprotezione — «se siamo deboli noi stessi è la fine».</strong>
+  NexusSec non espone i propri strumenti: il backend di HORUS è legato solo a
+  <code>127.0.0.1</code> e i <strong>server web dei tool OSINT girano in container
+  con la porta pubblicata solo su loopback</strong> (es. PhoneInfoga su
+  <code>127.0.0.1:5000</code>, non più su <code>0.0.0.0</code> con rete host): così
+  restano irraggiungibili dalla LAN anche quando, durante un pentest, si spegne il
+  firewall per mettersi in ascolto. A questo si aggiungono il firewall inbound
+  default-deny attivo al boot, Tor opzionale via <code>nxs-tor</code>, le password
+  sempre passate via <em>stdin</em> (mai negli argomenti/<code>ps</code>) e la
+  persistenza cifrata LUKS.</div>
 
   <h3>Esempi: pilotare profili e tool con <code>nxs-tool</code></h3>
   <pre><code>nxs-tool profiles           # elenca i profili
@@ -367,7 +426,7 @@ nxs-tool install nmap       # installa un tool
 nxs-tool launch sqlmap      # installa-se-serve ed esegue
 nxs-tool uninstall wpscan   # rimuove un tool
 
-nxs-tool kali <pkg>         # esegue un pacchetto Kali qualsiasi (container)
+nxs-tool kali &lt;pkg&gt;         # esegue un pacchetto Kali qualsiasi (container)
 nxs-tool kali-list          # tool installati nell'ambiente Kali condiviso
 
 nxs-profile                 # selettore grafico dei profili
@@ -387,7 +446,7 @@ nxs-persist status          # stato della persistenza su disco</code></pre>
 </div>
 
 <footer class="wrap">
-  NexusSec OS — manuale utente, edition 2026.08 · Vetrina, download e repository:
-  <code>github.com/dPlusOS21/NexusSecOS-Arsenal</code>
+  NexusSec OS — manuale utente, edition 2026.08 · Download delle ISO e repository:
+  <code>github.com/RedRider21/NexusSec-OS</code>
 </footer>
 </div>

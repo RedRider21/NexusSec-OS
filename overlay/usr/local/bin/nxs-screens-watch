@@ -1,0 +1,60 @@
+#!/bin/sh
+# nxs-screens-watch - riallinea gli schermi quando cambia la situazione.
+#
+# CAUSA A MONTE che risolve (non c'era NULLA che facesse questo):
+#   - "nxs-screens autostart" girava UNA volta sola all'avvio di Openbox. Se il
+#     monitor HDMI veniva enumerato da X un istante dopo, l'output restava
+#     "connected" ma SENZA CRTC. Un output senza CRTC non viene mai disegnato da
+#     X: sul monitor esterno restava visibile la SPLASH del kernel e nient'altro.
+#   - Chiudendo il coperchio del portatile nessuno riconfigurava xrandr: il
+#     desktop restava steso anche sullo schermo spento e sull'esterno se ne
+#     vedeva solo una porzione, senza la barra in basso. L'unico rimedio era
+#     aprire il cambio profilo e confermare (che rilancia pannello + sfondo).
+#
+# Perche' POLLING e non eventi RandR: GDK/GTK emette "monitors-changed" solo per
+# i monitor ATTIVI. Un output appena collegato ma non ancora configurato non e'
+# un monitor attivo, quindi NESSUN segnale arriva. "xrandr --query" vede invece
+# lo stato "connected" reale. Costo: una query da ~10ms ogni 3s, trascurabile.
+#
+# Reagisce SOLO a: (a) un monitor collegato/scollegato, (b) coperchio aperto/
+# chiuso. NON reagisce all'accensione/spegnimento manuale di un output, cosi'
+# non combatte contro la scelta fatta dall'utente nel Centro di Controllo.
+
+INTERVAL="${NXS_SCREENS_POLL:-3}"
+LOG=/tmp/nxs-screens-watch.log
+
+# Una sola istanza per sessione.
+PIDF="${HOME:-/home/nexus}/.cache/nxs/screens-watch.pid"
+mkdir -p "$(dirname "$PIDF")" 2>/dev/null || true
+if [ -r "$PIDF" ]; then
+  _old=$(cat "$PIDF" 2>/dev/null)
+  if [ -n "$_old" ] && kill -0 "$_old" 2>/dev/null; then exit 0; fi
+fi
+echo $$ > "$PIDF" 2>/dev/null || true
+
+# Insieme degli output CONNESSI (indipendente dal fatto che siano accesi).
+connected_set() { xrandr --query 2>/dev/null | awk '/ connected/{printf "%s,", $1}'; }
+lid_now()       { nxs-screens lid 2>/dev/null; }
+signature()     { printf '%s|%s' "$(connected_set)" "$(lid_now)"; }
+
+echo "=== nxs-screens-watch avviato $(date) (poll ${INTERVAL}s) ===" >> "$LOG"
+
+# All'avvio applichiamo comunque una volta: copre il caso "HDMI gia' collegato
+# ma enumerato da X dopo l'autostart di Openbox".
+sleep 2
+nxs-screens policy >/dev/null 2>&1
+prev="$(signature)"
+echo "stato iniziale: $prev" >> "$LOG"
+
+while :; do
+  sleep "$INTERVAL"
+  cur="$(signature)"
+  [ "$cur" = "$prev" ] && continue
+  # Assestamento: collegando un cavo xrandr puo' riportare stati transitori.
+  sleep 1
+  cur="$(signature)"
+  [ "$cur" = "$prev" ] && continue
+  echo "$(date +%H:%M:%S) cambio: $prev -> $cur" >> "$LOG"
+  nxs-screens policy >/dev/null 2>&1
+  prev="$(signature)"
+done

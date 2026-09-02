@@ -4,10 +4,12 @@
 exec >>/tmp/nxs-autostart.log 2>&1
 echo "=== autostart $(date) ==="
 
-# 0) MONITOR: normalizza subito gli schermi. Con 2+ monitor connessi estende il
-#    desktop (portatile principale + esterno a destra), cosi' l'output esterno
-#    viene preso in carico da X e la console/splash di boot NON resta
-#    appiccicata li'. Va fatto PRIMA di splash/pcmanfm/pannello.
+# 0) MONITOR: normalizza subito gli schermi. Con 2+ monitor connessi applica la
+#    policy (default: DUPLICA; si cambia con "nxs-screens set-policy extend" o
+#    dal Centro di Controllo), cosi' l'output esterno viene preso in carico da X
+#    e la splash di boot NON resta appiccicata li'. Va fatto PRIMA di
+#    splash/pcmanfm/pannello.
+#    NB: un output "connected" ma senza CRTC non viene MAI disegnato da X.
 command -v nxs-screens >/dev/null 2>&1 && nxs-screens autostart
 
 # SEQUENZA splash -> desktop, SENZA "sbirciata" del desktop prima della splash.
@@ -52,14 +54,34 @@ command -v nxs-audio-unmute >/dev/null 2>&1 && (sleep 2; nxs-audio-unmute) &
 #    profilo va impostato via "pcmanfm --set-wallpaper", quindi deve gia' esserci.
 command -v pcmanfm >/dev/null 2>&1 && pcmanfm --desktop --profile=NexusSec &
 
-# 4) Sfondo + accent del profilo corrente (quando pcmanfm e' pronto).
-(sleep 1.5; nxs-tool apply) &
-
-# 5) Pannello inferiore nativo GTK3 (la barra Python), anch'esso dietro la splash.
-nxs-panel &
+# 4+5) Sfondo/accent/tema-icone del profilo, POI il pannello.
+#      ORDINE IMPORTANTE: "nxs-tool apply" riscrive gtk-3.0/settings.ini per
+#      impostare il tema icone del profilo. Prima il pannello partiva in
+#      PARALLELO e poteva leggere quel file proprio mentre veniva riscritto,
+#      ritrovandosi senza tema icone: le icone nostre (logo del menu, browser)
+#      non comparivano nella barra, quelle di Adwaita si -> "alcune si vedono e
+#      altre no", e servivano un cambio profilo per rimetterle a posto.
+#      Avviando il pannello DOPO, legge un file gia' stabile. Il ritardo non si
+#      nota: siamo comunque dietro la splash, che dura ~6,5 s.
+(sleep 1.5; nxs-tool apply; nxs-panel) &
 
 # 6) Integrazione VirtualBox (mouse seamless + auto-resize). Innocuo altrove.
 command -v VBoxClient-all >/dev/null 2>&1 && VBoxClient-all 2>/dev/null &
+
+# 5b) WiFi: riaggancia da solo una rete gia' usata. Con la persistenza attiva
+#     (NXSDATA) la configurazione conserva TUTTE le reti a cui ti sei collegato,
+#     quindi al riavvio non serve reinserire la password. Senza questa riga le
+#     reti restavano salvate ma nessuno le agganciava: wpa_supplicant non sta in
+#     nessun runlevel e partiva solo aprendo l'applet del WiFi a mano.
+command -v nxs-wifi >/dev/null 2>&1 && (sleep 4; nxs-wifi auto) &
+
+# 6a) WATCHER SCHERMI: riallinea la disposizione quando si collega/scollega un
+#     monitor o si chiude il coperchio. Senza questo demone nulla reagiva agli
+#     eventi: il monitor esterno collegato dopo l'avvio restava spento (con la
+#     sola splash del kernel visibile) e chiudendo il coperchio il desktop
+#     restava steso sullo schermo spento, mostrando solo una porzione senza
+#     barra. Prima l'unico rimedio era passare dal cambio profilo.
+command -v nxs-screens-watch >/dev/null 2>&1 && nxs-screens-watch &
 
 # 6b) Salvaschermo automatico: xautolock lancia nxs-screensaver dopo N minuti
 #     di inattivita' (config in ~/.config/nxs/screensaver.conf, modificabile dal

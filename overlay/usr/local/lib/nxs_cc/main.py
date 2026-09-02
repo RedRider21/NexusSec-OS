@@ -75,6 +75,19 @@ APP_TITLE = "NexusSec // Centro di Controllo"
 # Viste apribili direttamente da riga di comando (usate dal menu Openbox
 # per saltare al pannello giusto senza passare da un terminale):
 #   nxs-control-center pacchetti
+def _apri_casi(_btn=None):
+    """Apre la gestione dei casi forensi (import pigro, come per i dischi)."""
+    from nxs_case.view import open_case
+    return open_case()
+
+
+def _apri_dischi(_btn=None):
+    """Apre il gestore dischi. Import pigro: nxs_disks vive in un modulo suo
+    (riusabile in Vesper) e il Centro di Controllo deve partire anche senza."""
+    from nxs_disks.view import open_disks
+    return open_disks()
+
+
 VIEW_MAP = {
     "sysinfo": views.open_sysinfo,
     "monitor": views.open_monitor,
@@ -108,6 +121,12 @@ VIEW_MAP = {
     "users": views.open_users,
     "schermi": views.open_screens,
     "screens": views.open_screens,
+    "dischi": _apri_dischi,
+    "disks": _apri_dischi,
+    "casi": _apri_casi,
+    "case": _apri_casi,
+    "mouse": views.open_mouse,
+    "touchpad": views.open_mouse,
 }
 
 
@@ -233,6 +252,15 @@ def build_window() -> Gtk.Window:
         Tile("preferences-desktop-display", "Schermi",
              "Estendi, duplica o usa un solo monitor; risoluzioni (xrandr)",
              launch("schermi")),
+        Tile("drive-harddisk", "Dischi",
+             "Dischi e partizioni; montaggio esplicito in sola lettura",
+             launch("dischi")),
+        Tile("input-mouse", "Mouse e touchpad",
+             "Taratura del doppio clic, con zona di prova",
+             launch("mouse")),
+        Tile("nxs-case", "Casi forensi",
+             "Acquisizione E01, verifica, timeline e relazione automatica",
+             launch("casi")),
     ]), False, False, 0)
 
     body.pack_start(section("Sicurezza", [

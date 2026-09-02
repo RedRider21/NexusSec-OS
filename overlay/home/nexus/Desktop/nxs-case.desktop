@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Casi forensi
+Comment=Acquisizione, verifica, analisi e relazione con catena di custodia
+Exec=nxs-case
+Icon=nxs-case
+Terminal=false
+Categories=System;Security;

@@ -8,9 +8,119 @@
 L.Icon.Default.prototype.options.imagePath = "vendor/leaflet/images/";
 
 // ---------------------------------------------------------------------------
-// Basemap: la NERA e' il default (CARTO dark). Le altre sono nel selettore.
-// Le tile richiedono rete: se offline la mappa resta scura ma i pannelli e i
-// feed che rispondono continuano a funzionare.
+// CACHE TILE OFFLINE (IndexedDB). HORUS gira su una distro spesso OFFLINE: le
+// tile viste online vengono salvate e riproposte senza rete. Un precarico dei
+// livelli a basso zoom (Impostazioni) rende il MONDO visibile anche offline,
+// senza incorporare immagini binarie nella ISO.
+// ---------------------------------------------------------------------------
+const TILE_DB = "horus-tiles", TILE_STORE = "tiles";
+let _tileDbP = null;
+function tileDb() {
+  if (_tileDbP) return _tileDbP;
+  _tileDbP = new Promise((res, rej) => {
+    const rq = indexedDB.open(TILE_DB, 1);
+    rq.onupgradeneeded = () => {
+      const db = rq.result;
+      if (!db.objectStoreNames.contains(TILE_STORE)) db.createObjectStore(TILE_STORE);
+    };
+    rq.onsuccess = () => res(rq.result);
+    rq.onerror = () => rej(rq.error);
+  }).catch(() => null);
+  return _tileDbP;
+}
+async function tileGet(key) {
+  const db = await tileDb(); if (!db) return null;
+  return new Promise(res => {
+    try {
+      const r = db.transaction(TILE_STORE, "readonly").objectStore(TILE_STORE).get(key);
+      r.onsuccess = () => res(r.result || null);
+      r.onerror = () => res(null);
+    } catch (e) { res(null); }
+  });
+}
+async function tilePut(key, blob) {
+  const db = await tileDb(); if (!db) return;
+  try {
+    db.transaction(TILE_STORE, "readwrite").objectStore(TILE_STORE).put(blob, key);
+  } catch (e) { /* quota/altro: la cache e' best-effort */ }
+}
+async function tileClear() {
+  const db = await tileDb(); if (!db) return;
+  return new Promise(res => {
+    try {
+      const r = db.transaction(TILE_STORE, "readwrite").objectStore(TILE_STORE).clear();
+      r.onsuccess = () => res(true); r.onerror = () => res(false);
+    } catch (e) { res(false); }
+  });
+}
+async function tileCount() {
+  const db = await tileDb(); if (!db) return 0;
+  return new Promise(res => {
+    try {
+      const r = db.transaction(TILE_STORE, "readonly").objectStore(TILE_STORE).count();
+      r.onsuccess = () => res(r.result || 0); r.onerror = () => res(0);
+    } catch (e) { res(0); }
+  });
+}
+
+// TileLayer con cache: prima IndexedDB, poi rete (e salva), infine caricamento
+// diretto come ripiego. Gli object URL blob vengono revocati allo scarico tile.
+const CachedTileLayer = L.TileLayer.extend({
+  createTile(coords, done) {
+    const img = document.createElement("img");
+    img.setAttribute("role", "presentation"); img.alt = "";
+    const url = this.getTileUrl(coords);
+    const finish = () => done(null, img);
+    tileGet(url).then(blob => {
+      if (blob) { img.onload = finish; img.src = URL.createObjectURL(blob); return; }
+      fetch(url, { mode: "cors" }).then(r => r.ok ? r.blob() : Promise.reject())
+        .then(b => { img.onload = finish; img.src = URL.createObjectURL(b); tilePut(url, b); })
+        .catch(() => {                       // offline/CORS: prova diretto
+          img.onload = finish; img.onerror = () => done(null, img);
+          img.crossOrigin = ""; img.src = url;
+        });
+    }).catch(() => { img.onload = finish; img.src = url; });
+    return img;
+  },
+  onAdd(m) {
+    L.TileLayer.prototype.onAdd.call(this, m);
+    this.on("tileunload", e => {
+      const s = e.tile && e.tile.src;
+      if (s && s.indexOf("blob:") === 0) { try { URL.revokeObjectURL(s); } catch (_) {} }
+    });
+    return this;
+  }
+});
+function cachedTileLayer(url, opts) { return new CachedTileLayer(url, opts); }
+
+// Precarico del mondo a basso zoom: scarica e salva in IndexedDB i livelli
+// z0..zMax (poche centinaia di tile) cosi' offline il planisfero c'e' comunque.
+async function primeWorld(layer, zMax, onProgress) {
+  const tpl = layer._url, opts = layer.options;
+  let total = 0; for (let z = 0; z <= zMax; z++) total += Math.pow(4, z);
+  let done = 0, ok = 0;
+  for (let z = 0; z <= zMax; z++) {
+    const n = Math.pow(2, z);
+    for (let x = 0; x < n; x++) for (let y = 0; y < n; y++) {
+      const url = L.Util.template(tpl, Object.assign(
+        { x, y, z, s: (opts.subdomains && opts.subdomains[0]) || "a" }, opts));
+      done++;
+      if (!(await tileGet(url))) {
+        try {
+          const r = await fetch(url, { mode: "cors" });
+          if (r.ok) { await tilePut(url, await r.blob()); ok++; }
+        } catch (e) { /* salta la tile non raggiungibile */ }
+      } else { ok++; }
+      if (onProgress && (done % 8 === 0 || done === total)) onProgress(done, total, ok);
+    }
+  }
+  return { total, ok };
+}
+
+// ---------------------------------------------------------------------------
+// Basemap: la NERA e' il default (Esri dark). Le altre sono nel selettore.
+// Con la cache offline: le aree gia' viste (e i livelli precaricati) restano
+// visibili senza rete; le zone mai viste offline restano scure.
 // ---------------------------------------------------------------------------
 // Basemap TUTTE keyless: Esri (arcgisonline) e OSM. NIENTE CARTO: le sue tile
 // ora richiedono una API key e mostrano un watermark sulla mappa.
@@ -18,16 +128,16 @@ const esriAttr = "Tiles &copy; Esri";
 const bases = {
   // noWrap: mondo SINGOLO (le tile non si ripetono). Cosi' gli overlay (cavi,
   // navi, ecc.) non "appaiono e scompaiono" quando ci si sposta lateralmente.
-  "Nera (default)": L.tileLayer(
+  "Nera (default)": cachedTileLayer(
     "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}",
     { attribution: esriAttr + " - Dark Gray Canvas", maxZoom: 16, noWrap: true }),
-  "Satellite": L.tileLayer(
+  "Satellite": cachedTileLayer(
     "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
     { attribution: esriAttr + ", Maxar, Earthstar Geographics", maxZoom: 19, noWrap: true }),
-  "Strade": L.tileLayer(
+  "Strade": cachedTileLayer(
     "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-    { attribution: "&copy; OpenStreetMap", maxZoom: 19, noWrap: true }),
-  "Chiara": L.tileLayer(
+    { attribution: "&copy; OpenStreetMap", maxZoom: 19, noWrap: true, subdomains: "abc" }),
+  "Chiara": cachedTileLayer(
     "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}",
     { attribution: esriAttr + " - Light Gray Canvas", maxZoom: 16, noWrap: true }),
 };
@@ -1340,13 +1450,14 @@ function addDossier(kind, title, detail, extra) {
   if (typeof extra.lat === "number" && typeof extra.lon === "number" &&
       !isNaN(extra.lat) && !isNaN(extra.lon)) { e.lat = extra.lat; e.lon = extra.lon; }
   if (extra.tags && extra.tags.length) e.tags = extra.tags;
+  if (extra.img) e.img = extra.img;                 // schermata (data URL PNG)
   dossier.push(e);
   renderDossier();
 }
 const DOSSIER_LABEL = {
   geoint: "GEOINT", recon: "Ricognizione", socmint: "SOCMINT",
   email: "Email", correlazione: "Correlazione", area: "Area",
-  exif: "Metadati foto", nota: "Nota", news: "Notizia",
+  exif: "Metadati foto", nota: "Nota", news: "Notizia", screenshot: "Schermata",
 };
 function dossierLabel(t) { return DOSSIER_LABEL[t] || t; }
 function renderDossier() {
@@ -1379,8 +1490,9 @@ function renderDossier() {
     if (!inCaseWindow(e)) li.classList.add("tl-out");
     let meta = e.time + " · " + esc(e.via);
     if (e.lat != null) meta += " · &#128205; " + e.lat.toFixed(4) + ", " + e.lon.toFixed(4);
+    const thumb = e.img ? '<img class="rep-thumb" src="' + e.img + '" alt="schermata">' : "";
     li.innerHTML = '<div class="rk">' + esc(dossierLabel(e.type)) + "</div><div class='rt'>" +
-      esc(e.title) + "</div><div class='rd'>" + meta + "</div>" +
+      esc(e.title) + "</div>" + thumb + "<div class='rd'>" + meta + "</div>" +
       '<button class="rep-del" data-i="' + i + '" title="Rimuovi questa voce">&times;</button>';
     ul.appendChild(li);
   });
@@ -1413,6 +1525,7 @@ function inCaseWindow(e) {
 const TL_TYPE_COLOR = {
   geoint: "#00e5ff", recon: "#7dffa8", socmint: "#b78cff", email: "#ffd166",
   area: "#ff9a5a", correlazione: "#7ee0ff", exif: "#ff5a8a", news: "#c8f5ff", nota: "#5a8a9a",
+  screenshot: "#9aa7b0",
 };
 function renderTimeline() {
   const box = document.getElementById("report-timeline");
@@ -1587,9 +1700,12 @@ function exportIndicatorsCSV() {
   ind.forEach(i => { csv += [q(i.type), q(i.value), q(i.sources.join("; "))].join(",") + "\n"; });
   _dl("horus-indicatori-" + Date.now() + ".csv", csv, "text/csv;charset=utf-8");
 }
-function exportIndicatorsSTIX() {
-  const ind = extractIndicators();
-  if (!ind.length) { document.getElementById("report-note").textContent = "Nessun indicatore nel dossier."; return; }
+function _uuid() {
+  return (crypto && crypto.randomUUID) ? crypto.randomUUID()
+    : "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, c => {
+        const r = Math.random() * 16 | 0; return (c === "x" ? r : (r & 0x3 | 0x8)).toString(16); });
+}
+function buildSTIX(ind) {
   const now = new Date().toISOString();
   const pat = i => {
     if (i.type === "ipv4-addr") return "[ipv4-addr:value = '" + i.value + "']";
@@ -1597,58 +1713,185 @@ function exportIndicatorsSTIX() {
     if (i.type === "email") return "[email-addr:value = '" + i.value + "']";
     return "[x-misc:value = '" + i.value + "']";
   };
-  const uuid = () => (crypto && crypto.randomUUID) ? crypto.randomUUID()
-    : "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, c => {
-        const r = Math.random() * 16 | 0; return (c === "x" ? r : (r & 0x3 | 0x8)).toString(16); });
   const title = (document.getElementById("report-title").value || "HORUS dossier").trim();
   const objects = ind.map(i => ({
-    type: "indicator", spec_version: "2.1", id: "indicator--" + uuid(),
+    type: "indicator", spec_version: "2.1", id: "indicator--" + _uuid(),
     created: now, modified: now, name: i.value,
     description: "Fonti: " + (i.sources.join("; ") || "—"),
     indicator_types: ["anomalous-activity"], pattern: pat(i),
     pattern_type: "stix", valid_from: now,
   }));
-  const bundle = { type: "bundle", id: "bundle--" + uuid(), _horus: title, objects: objects };
-  _dl("horus-stix-" + Date.now() + ".json", JSON.stringify(bundle, null, 2), "application/json");
+  return { type: "bundle", id: "bundle--" + _uuid(), _horus: title, objects: objects };
 }
-// Stampa/PDF: rende una versione pulita del dossier in un iframe e la stampa
-// (l'utente sceglie "Salva come PDF"). Niente popup: l'iframe e' affidabile.
-function printDossierPDF() {
-  if (!dossier.length) { document.getElementById("report-note").textContent = "Il dossier è vuoto."; return; }
+function exportIndicatorsSTIX() {
+  const ind = extractIndicators();
+  if (!ind.length) { document.getElementById("report-note").textContent = "Nessun indicatore nel dossier."; return; }
+  _dl("horus-stix-" + Date.now() + ".json", JSON.stringify(buildSTIX(ind), null, 2), "application/json");
+}
+// HTML autonomo del fascicolo (usato sia dalla stampa/PDF sia dall'export ZIP).
+// Include le schermate allegate (data URL PNG) e, se presente, il grafo relazioni.
+function buildReportHTML() {
   const title = esc(document.getElementById("report-title").value.trim() || "Fascicolo HORUS");
   const op = esc(document.getElementById("report-operator").value.trim());
   const obj = esc(document.getElementById("report-objective").value.trim());
-  let rows = dossier.map(e => {
+  const rows = dossier.map(e => {
     let meta = e.time + " · " + esc(e.via || "");
     if (e.lat != null) meta += " · " + e.lat.toFixed(4) + ", " + e.lon.toFixed(4);
+    const shot = e.img ? '<div class="pi"><img src="' + e.img + '" alt="schermata"></div>' : "";
     return '<div class="pe"><div class="pk">' + esc(dossierLabel(e.type)) + '</div>' +
       '<div class="pt">' + esc(e.title || "") + '</div>' +
       '<div class="pd">' + esc(e.detail || "").replace(/\n/g, "<br>") + '</div>' +
-      '<div class="pm">' + meta + '</div></div>';
+      shot + '<div class="pm">' + meta + '</div></div>';
   }).join("");
   const gsvg = (typeof window.HORUS_graphSVG === "string") ? window.HORUS_graphSVG : "";
-  const html = '<!doctype html><meta charset="utf-8"><title>' + title + '</title><style>' +
+  return '<!doctype html><meta charset="utf-8"><title>' + title + '</title><style>' +
     'body{font:13px/1.5 system-ui,sans-serif;color:#111;margin:24px}' +
     'h1{font-size:20px;margin:0 0 4px}.sub{color:#555;margin:0 0 16px}' +
     '.pe{border:1px solid #ccc;border-radius:6px;padding:8px 10px;margin:0 0 8px;break-inside:avoid}' +
     '.pk{font-size:11px;color:#06c;font-weight:700;text-transform:uppercase}' +
     '.pt{font-weight:600;margin:2px 0}.pd{white-space:normal;color:#222}.pm{color:#777;font-size:11px;margin-top:4px}' +
+    '.pi img{max-width:100%;border:1px solid #ccc;border-radius:6px;margin-top:6px}' +
     'svg{max-width:100%;height:auto;border:1px solid #ccc;border-radius:6px;margin-top:10px}' +
     '@media print{body{margin:0}}</style>' +
     '<h1>' + title + '</h1><p class="sub">' +
     (op ? "Operatore: " + op + " · " : "") + dossier.length + " voci" +
     (obj ? '<br>Obiettivo: ' + obj : "") + '</p>' + rows +
     (gsvg ? '<h2 style="font-size:15px">Grafo relazioni</h2>' + gsvg : "");
+}
+function buildDossierJSON() {
+  return {
+    tool: "HORUS", version: "2.1",
+    title: document.getElementById("report-title").value.trim() || "",
+    operator: document.getElementById("report-operator").value.trim() || "",
+    objective: document.getElementById("report-objective").value.trim() || "",
+    generated: new Date().toISOString(),
+    entries: dossier,
+  };
+}
+// Stampa/PDF: rende il fascicolo in un iframe e lo stampa (l'utente sceglie
+// "Salva come PDF"). Niente popup: l'iframe e' affidabile.
+function printDossierPDF() {
+  if (!dossier.length) { document.getElementById("report-note").textContent = "Il dossier è vuoto."; return; }
   let ifr = document.getElementById("print-frame");
   if (!ifr) { ifr = document.createElement("iframe"); ifr.id = "print-frame";
     ifr.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0"; document.body.appendChild(ifr); }
   const doc = ifr.contentWindow.document;
-  doc.open(); doc.write(html); doc.close();
+  doc.open(); doc.write(buildReportHTML()); doc.close();
   setTimeout(() => { ifr.contentWindow.focus(); ifr.contentWindow.print(); }, 300);
+}
+
+// --- ZIP minimale (solo "store", nessuna compressione): niente dipendenze,
+//     funziona offline. Sufficiente per impacchettare il bundle del dossier. ---
+const _crcTable = (() => {
+  const t = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) {
+    let c = n;
+    for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+    t[n] = c >>> 0;
+  }
+  return t;
+})();
+function _crc32(u8) {
+  let c = 0xFFFFFFFF;
+  for (let i = 0; i < u8.length; i++) c = _crcTable[(c ^ u8[i]) & 0xFF] ^ (c >>> 8);
+  return (c ^ 0xFFFFFFFF) >>> 0;
+}
+function _toU8(d) { return (d instanceof Uint8Array) ? d : new TextEncoder().encode(String(d)); }
+function _dataUrlToU8(u) {
+  try {
+    const bin = atob(u.split(",", 2)[1]);
+    const out = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+    return out;
+  } catch (e) { return null; }
+}
+function makeZip(files) {                       // files: [{name, data}]
+  const enc = new TextEncoder();
+  const chunks = []; const central = [];
+  let offset = 0;
+  const push = u => { chunks.push(u); offset += u.length; };
+  files.forEach(f => {
+    const nameU = enc.encode(f.name);
+    const data = _toU8(f.data);
+    const crc = _crc32(data);
+    const lh = new DataView(new ArrayBuffer(30));
+    lh.setUint32(0, 0x04034b50, true); lh.setUint16(4, 20, true);
+    lh.setUint16(6, 0x0800, true); lh.setUint16(8, 0, true);
+    lh.setUint16(10, 0, true); lh.setUint16(12, 0x21, true);
+    lh.setUint32(14, crc, true); lh.setUint32(18, data.length, true);
+    lh.setUint32(22, data.length, true); lh.setUint16(26, nameU.length, true);
+    lh.setUint16(28, 0, true);
+    const localOffset = offset;
+    push(new Uint8Array(lh.buffer)); push(nameU); push(data);
+    const ch = new DataView(new ArrayBuffer(46));
+    ch.setUint32(0, 0x02014b50, true); ch.setUint16(4, 20, true);
+    ch.setUint16(6, 20, true); ch.setUint16(8, 0x0800, true);
+    ch.setUint16(10, 0, true); ch.setUint16(12, 0, true); ch.setUint16(14, 0x21, true);
+    ch.setUint32(16, crc, true); ch.setUint32(20, data.length, true);
+    ch.setUint32(24, data.length, true); ch.setUint16(28, nameU.length, true);
+    ch.setUint32(42, localOffset, true);
+    central.push({ header: new Uint8Array(ch.buffer), name: nameU });
+  });
+  const centralStart = offset; let centralSize = 0;
+  central.forEach(c => { push(c.header); push(c.name); centralSize += c.header.length + c.name.length; });
+  const eo = new DataView(new ArrayBuffer(22));
+  eo.setUint32(0, 0x06054b50, true); eo.setUint16(8, files.length, true);
+  eo.setUint16(10, files.length, true); eo.setUint32(12, centralSize, true);
+  eo.setUint32(16, centralStart, true);
+  push(new Uint8Array(eo.buffer));
+  return new Blob(chunks, { type: "application/zip" });
+}
+function exportDossierZIP() {
+  const note = document.getElementById("report-note");
+  if (!dossier.length) { note.textContent = "Il dossier è vuoto."; return; }
+  note.textContent = "Creazione ZIP…";
+  const files = [];
+  files.push({ name: "report.html", data: buildReportHTML() });
+  files.push({ name: "dossier.json", data: JSON.stringify(buildDossierJSON(), null, 2) });
+  const ind = extractIndicators();
+  if (ind.length) {
+    const q = s => '"' + String(s).replace(/"/g, '""') + '"';
+    let csv = "tipo,valore,fonti\n";
+    ind.forEach(i => { csv += [q(i.type), q(i.value), q(i.sources.join("; "))].join(",") + "\n"; });
+    files.push({ name: "indicatori.csv", data: csv });
+    files.push({ name: "stix.json", data: JSON.stringify(buildSTIX(ind), null, 2) });
+  }
+  let n = 0;
+  dossier.forEach(e => {
+    if (e.img && e.img.indexOf("data:") === 0) {
+      const b = _dataUrlToU8(e.img);
+      if (b) files.push({ name: "schermate/shot-" + (++n) + ".png", data: b });
+    }
+  });
+  try {
+    _dlBlob("horus-dossier-" + Date.now() + ".zip", makeZip(files));
+    note.textContent = "ZIP creato (" + files.length + " file).";
+  } catch (e) { note.textContent = "Errore ZIP: " + (e.message || e); }
+}
+function _dlBlob(name, blob) {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+}
+// Aggiunge al dossier una schermata di cio' che l'analista vede ora (scrot lato
+// backend). Utile come prova visiva nel report.
+async function addScreenshotToDossier() {
+  const note = document.getElementById("report-note");
+  note.textContent = "Cattura schermata…";
+  try {
+    const d = await (await fetch("api/screenshot")).json();
+    if (!d.png) { note.textContent = d.error || "cattura non riuscita"; return; }
+    const now = new Date();
+    addDossier("screenshot", "Schermata " + now.toLocaleString(), "", { img: d.png });
+    note.textContent = "Schermata aggiunta al dossier.";
+  } catch (e) { note.textContent = "Errore schermata: " + (e.message || e); }
 }
 document.getElementById("report-csv").addEventListener("click", exportIndicatorsCSV);
 document.getElementById("report-stix").addEventListener("click", exportIndicatorsSTIX);
 document.getElementById("report-pdf").addEventListener("click", printDossierPDF);
+document.getElementById("report-zip").addEventListener("click", exportDossierZIP);
+document.getElementById("report-shot").addEventListener("click", addScreenshotToDossier);
 
 // ---------------------------------------------------------------------------
 // GEOINT: geolocalizza IP/dominio + Shodan, e lo mette sulla mappa.
@@ -2188,7 +2431,38 @@ async function openSettings() {
   } catch (e) { /* offline */ }
   // Stato registrazione storico (background su SQLite vs client)
   await loadTrackSettings();
+  updateMapCacheStatus();
 }
+
+// --- Mappa offline: stato/azioni della cache tile (IndexedDB) ---
+async function updateMapCacheStatus() {
+  const el = document.getElementById("map-cache-status");
+  if (!el) return;
+  const n = await tileCount();
+  el.textContent = n ? (n + " tile in cache (disponibili offline)")
+                     : "cache vuota — precarica il mondo o naviga la mappa online";
+}
+(function wireMapCache() {
+  const prime = document.getElementById("map-prime");
+  const clear = document.getElementById("map-cache-clear");
+  if (prime) prime.addEventListener("click", async () => {
+    const el = document.getElementById("map-cache-status");
+    const cur = Object.values(bases).find(b => map.hasLayer(b)) || bases["Nera (default)"];
+    prime.disabled = true; clear.disabled = true;
+    try {
+      // z0..5 = 1365 tile: mondo intero a basso zoom, pochi MB, resta offline.
+      await primeWorld(cur, 5, (done, total) => {
+        if (el) el.textContent = "Precarico mondo… " + done + "/" + total;
+      });
+      await updateMapCacheStatus();
+    } catch (e) { if (el) el.textContent = "Errore nel precarico: " + (e.message || e); }
+    prime.disabled = false; clear.disabled = false;
+  });
+  if (clear) clear.addEventListener("click", async () => {
+    await tileClear();
+    await updateMapCacheStatus();
+  });
+})();
 
 async function loadTrackSettings() {
   const modeSel = document.getElementById("set-track-mode");

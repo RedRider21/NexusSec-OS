@@ -1488,6 +1488,30 @@ def _phone_start_argv():
     return None
 
 
+def _capture_screen():
+    """Cattura lo schermo (scrot) e ritorna i byte PNG; b'' se non disponibile.
+
+    Serve al pulsante 'Aggiungi schermata' del Report: allega al dossier cio' che
+    l'analista sta vedendo (mappa + pannelli), utile come prova nel PDF/ZIP."""
+    scrot = shutil.which("scrot")
+    if not scrot:
+        return b""
+    fd, tmp = tempfile.mkstemp(suffix=".png")
+    os.close(fd)
+    try:
+        subprocess.run([scrot, "-o", tmp], timeout=15,
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        with open(tmp, "rb") as f:
+            return f.read()
+    except (OSError, subprocess.SubprocessError):
+        return b""
+    finally:
+        try:
+            os.remove(tmp)
+        except OSError:
+            pass
+
+
 def _opener():
     """Opener urllib: via Tor se disponibile e PySocks c'e', altrimenti diretto.
 
@@ -2420,6 +2444,13 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json(_enrich(kind, value))
             except Exception as e:
                 return self._json({"error": "arricchimento fallito: %s" % e}, 502)
+        if path == "/api/screenshot":
+            png = _capture_screen()
+            if not png:
+                return self._json(
+                    {"error": "scrot non disponibile o cattura fallita"}, 502)
+            b64 = base64.b64encode(png).decode("ascii")
+            return self._json({"png": "data:image/png;base64," + b64})
         if path == "/api/reports":
             return self._json({"reports": _list_reports()})
         if path == "/api/report/file":

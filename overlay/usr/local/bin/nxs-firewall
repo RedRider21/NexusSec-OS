@@ -85,6 +85,20 @@ case "${1:-status}" in
     if [ -f "$DISABLED" ]; then echo "Firewall: disattivato."; fi
     have_nft && priv nft list ruleset 2>/dev/null || echo "(nessuna regola)"
     ;;
+  state)
+    # stato macchina-leggibile per il pannello: on|off|unknown (una sola parola).
+    # 'unknown' quando serve la password di doas (sistema hardenizzato) e non la
+    # possiamo chiedere da qui: il pannello mostra allora uno scudo neutro.
+    if [ -f "$DISABLED" ]; then echo off; exit 0; fi
+    have_nft || { echo off; exit 0; }
+    if [ "$(id -u)" = 0 ]; then
+      nft list table inet nxsfw >/dev/null 2>&1 && echo on || echo off
+    elif command -v doas >/dev/null 2>&1; then
+      if doas -n nft list table inet nxsfw >/dev/null 2>&1; then echo on
+      elif doas -n true 2>/dev/null; then echo off
+      else echo unknown; fi
+    else echo unknown; fi
+    ;;
   allow)
     [ -n "${2:-}" ] || { echo "uso: nxs-firewall allow <porta[/tcp|/udp]>"; exit 2; }
     _ensure_conf
@@ -106,6 +120,6 @@ case "${1:-status}" in
     _ensure_conf
     _build_ruleset | priv nft -f - 2>/dev/null || true
     ;;
-  *) echo "uso: nxs-firewall {on|off|status|allow PORTA|deny PORTA|boot}" >&2; exit 2 ;;
+  *) echo "uso: nxs-firewall {on|off|status|state|allow PORTA|deny PORTA|boot}" >&2; exit 2 ;;
 esac
 exit 0

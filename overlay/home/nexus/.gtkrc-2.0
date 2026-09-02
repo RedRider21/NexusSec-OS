@@ -2,3 +2,7 @@
 gtk-theme-name="NexusSec-Core"
 gtk-icon-theme-name="NexusSec-Base"
 gtk-font-name="DejaVu Sans 10"
+# Doppio clic col touchpad: vedi la spiegazione in
+# .config/gtk-3.0/settings.ini (5 px di default sono troppo pochi per un tap).
+gtk-double-click-time = 800
+gtk-double-click-distance = 16

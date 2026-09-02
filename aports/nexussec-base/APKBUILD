@@ -3,7 +3,7 @@
 # Sostituisce i pacchetti TinyCore (.tcz) con gli equivalenti Alpine.
 pkgname=nexussec-base
 pkgver=1.0.0
-pkgrel=8
+pkgrel=9
 pkgdesc="NexusSec OS - desktop base (Openbox + Python + isolamento tool)"
 url="https://github.com/thecloners21"
 arch="noarch"
@@ -31,6 +31,12 @@ license="MIT"
 #   Servono anche /etc/subuid e /etc/subgid per nexus (li scrive genapkovl).
 # Persistenza/installazione su disco: e2fsprogs (mkfs.ext4 partizione dati
 #   NXSDATA) + parted (partizionamento in nxs-persist/nxs-install).
+# Dischi (nxs-disks): ntfs-3g/exfatprogs/dosfstools sono i DRIVER dei
+#   filesystem altrui - senza, i dischi del PC si vedono ma non si
+#   leggono (la partizione Windows e' quasi sempre NTFS). smartmontools
+#   da lo stato di salute. Costo misurato: 2,6 MiB in tutto.
+#   NON aggiungere udisks2 (10 MiB) ne gvfs (27 MiB, tira dentro gtk4):
+#   gvfs serve proprio ad AUTOMONTARE, che qui non vogliamo (forensic).
 # Rete: wpa_supplicant+iw (WiFi e test wireless: scan/monitor mode),
 #   dhcpcd (client DHCP robusto: applica IP/gateway/DNS e rinnova il lease,
 #   piu' affidabile di udhcpc di BusyBox; usato da nxs-wifi con udhcpc come
@@ -69,6 +75,8 @@ depends="
 	xdotool
 	wmctrl
 	xautolock
+	scrot
+	xmessage
 	font-dejavu
 	adwaita-icon-theme
 	gtk+3.0
@@ -84,6 +92,10 @@ depends="
 	parted
 	lsblk
 	findmnt
+	ntfs-3g
+	exfatprogs
+	dosfstools
+	smartmontools
 	pipx
 	py3-pip
 	git

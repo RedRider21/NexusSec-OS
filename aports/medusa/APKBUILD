@@ -1,12 +1,12 @@
 # Maintainer: NexusSec <deplano.d@gmail.com>
 pkgname=medusa
 pkgver=2.2
-pkgrel=0
+pkgrel=4
 pkgdesc="Brute-forcer di login modulare e parallelo"
 url="https://github.com/jmk-foofus/medusa"
 arch="all"
 license="GPL-2.0-or-later"
-makedepends="openssl-dev libssh2-dev ncurses-dev"
+makedepends="openssl-dev libssh2-dev ncurses-dev automake"
 # Pin al commit immutabile (tag 2.2).
 _commit=5a7b76ee9fb48e4983719f074335b003b7fd6ad5
 source="$pkgname-$pkgver.tar.gz::https://github.com/jmk-foofus/medusa/archive/$_commit.tar.gz"
@@ -28,7 +28,20 @@ prepare() {
 build() {
 	cd "$builddir"
 	chmod +x configure
+	# config.sub/config.guess del tarball sono datati 2005: non riconoscono ne'
+	# ARM64 (fallisce "cannot guess build type") ne' la tripletta musl di Alpine
+	# ("x86_64-alpine-linux-musl" -> config.sub abortisce con "not recognized").
+	# Li sostituisco con quelli AGGIORNATI di 'automake' (messo tra i makedepends
+	# apposta: NON e' una dep fissa del container, quindi va richiesto esplicito),
+	# che conoscono entrambe le architetture. Cosi' medusa compila x86_64 e aarch64.
+	for _gc in config.sub config.guess; do
+		_fresh="$(find /usr/share/automake-* -name "$_gc" 2>/dev/null | head -1)"
+		[ -n "$_fresh" ] && cp "$_fresh" "$builddir/$_gc"
+	done
 	# configure gia committato (no autoreconf, evita AM_CONFIG_HEADER deprecato).
+	# --build/--host ESPLICITI: ridondanti con i config.* aggiornati ma innocui,
+	# tengono la tripletta coerente con abuild. CBUILD/CHOST li esporta abuild
+	# (es. aarch64-alpine-linux-musl).
 	# strcasestr richiede _GNU_SOURCE; -fcommon per i globali senza extern.
 	# strcasestr richiede _GNU_SOURCE; -fcommon per i globali senza extern;
 	# il callback keyboard-interactive di libssh2 ha firma "incompatibile"
@@ -37,7 +50,8 @@ build() {
 	# completo per ssh/ftp/http/smb/rdp/mysql/telnet/... (tutti gli altri moduli).
 	CFLAGS="$CFLAGS -fcommon -D_GNU_SOURCE -Wno-error=incompatible-pointer-types \
 		-Wno-error=deprecated-declarations -Wno-error=implicit-function-declaration" \
-		./configure --prefix=/usr --enable-static=no --enable-module-vnc=no
+		./configure --prefix=/usr --enable-static=no --enable-module-vnc=no \
+			--build="$CBUILD" --host="$CHOST"
 	make
 }
 package() {
