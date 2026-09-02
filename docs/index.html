@@ -256,7 +256,9 @@ footer a{color:var(--dim)}footer a:hover{color:var(--ink)}
   <div class="methods">
     <div class="mcard"><div class="m">mappa</div><h4>Feed mondiali</h4>
       <p>Terremoti, voli, navi AIS, satelliti (TLE live), vulcani, incendi,
-        cavi, telecamere del traffico. Aggiornamento continuo, offline-ready.</p></div>
+        cavi, telecamere del traffico. Aggiornamento continuo. <strong>Mappa
+        offline</strong>: le tile viste si salvano in cache e puoi precaricare il
+        mondo a basso zoom per lavorare senza rete.</p></div>
     <div class="mcard"><div class="m">analisi</div><h4>GEOINT &middot; SOCMINT &middot; recon</h4>
       <p>Geolocalizza IP/dominio (+Shodan), username ed email, e pilota whois,
         dig, nmap, maigret, subfinder, theHarvester.</p></div>
@@ -270,11 +272,17 @@ footer a{color:var(--dim)}footer a:hover{color:var(--ink)}
         titolo al volo e raggruppamento &laquo;stessa storia, +N fonti&raquo;.</p></div>
     <div class="mcard"><div class="m">fascicoli</div><h4>Dossier ri-editabili</h4>
       <p>Riapri un fascicolo, rivedilo sulla <strong>timeline</strong>, amplialo
-        dentro HORUS. Salvi una notizia nel dossier con un clic ed esporti in
-        HTML/JSON, <strong>PDF</strong>, <strong>CSV</strong> e <strong>STIX</strong>.</p></div>
+        dentro HORUS. Allega <strong>schermate</strong> di ciò che vedi ed esporti in
+        HTML/JSON, <strong>PDF</strong>, <strong>CSV</strong>, <strong>STIX</strong>
+        o un <strong>bundle ZIP</strong> completo.</p></div>
     <div class="mcard"><div class="m">foto</div><h4>Intelligence fotografica</h4>
       <p>EXIF in locale: se c'è il GPS, marcatore sulla mappa e link OSM; ricerca
         <strong>inversa</strong> dell'immagine su Google Lens, Yandex, Bing, TinEye.</p></div>
+    <div class="mcard"><div class="m">privacy</div><h4>Autoprotezione</h4>
+      <p>Backend legato solo a <code>127.0.0.1</code> e web dei tool OSINT
+        (PhoneInfoga) esposti <strong>solo su loopback</strong>: non esponi mai i
+        tuoi strumenti. Firewall e <strong>Tor</strong> a portata di scudo nel
+        pannello.</p></div>
   </div>
   <p style="text-align:center;margin-top:18px">
     <a class="btn ghost" href="manuale.html#horus">Approfondisci nel manuale &rarr;</a></p>

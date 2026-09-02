@@ -161,7 +161,16 @@ footer{border-top:1px solid var(--line);padding:24px 0 60px;color:var(--muted);f
   <p>Il pulsante in basso a sinistra apre il menu. In cima trovi subito le
   <strong>utilità di base</strong> (Centro di Controllo, Terminale, File manager,
   Editor, Browser, Info sistema, Monitor, Gestore pacchetti, Rete); sotto, gli
-  <strong>strumenti del profilo</strong> raggruppati per categoria.</p>
+  <strong>strumenti del profilo</strong> raggruppati per categoria. Nel menu ci
+  sono anche <strong>HORUS</strong> (OSINT/GEOINT), <strong>Blocca schermo
+  (salvaschermo)</strong> e <strong>Cattura schermata</strong>, in stile MATE.</p>
+  <div class="note"><strong>Autoprotezione (scudo nel pannello)</strong>: un solo
+  pulsante nella barra — per non affollarla sui monitor a bassa risoluzione — apre
+  un pannellino con <strong>Firewall</strong> (interruttore inbound-deny),
+  <strong>Tor</strong> (SOCKS 9050), <strong>Screenshot</strong> (schermo intero/area)
+  e <strong>Blocca schermo</strong>. L'icona dello scudo riflette lo stato del
+  firewall. Su sistema hardenizzato le azioni che richiedono password si gestiscono
+  dal Centro di Controllo.</div>
   <ul class="hexlist">
     <li>Le <strong>categorie</strong> sono a fisarmonica: un clic sull'intestazione
       espande o richiude la sezione (con centinaia di tool una lista piatta sarebbe
@@ -413,7 +422,8 @@ nxs-persist status          # stato della persistenza su disco</code></pre>
       <tr><td class="k">nxs-wifi</td><td>WiFi via <code>wpa_supplicant</code>. La passphrase si legge da <strong>stdin</strong>, non dagli argomenti.<br><code>iface</code> interfaccia rilevata · <code>status</code> · <code>scan</code> elenco reti · <code>connect SSID</code> (passphrase da stdin) · <code>auto</code> riaggancia da sola una rete già usata (lanciato all'avvio) · <code>disconnect</code> · <code>debug</code> diagnostica completa</td></tr>
       <tr><td class="k">nxs-bluetooth</td><td>Bluetooth via BlueZ: accensione, scansione, abbinamento, trasferimento file OBEX.<br><code>status</code> · <code>adapter</code> · <code>on</code>/<code>off</code> · <code>discoverable on|off</code> · <code>scan [secondi]</code> · <code>devices</code> · <code>info MAC</code> · <code>pair MAC</code> · <code>connect MAC</code> · <code>disconnect MAC</code> · <code>trust MAC</code>/<code>untrust MAC</code> · <code>remove MAC</code> · <code>alias NOME</code><br><code>send MAC FILE</code> invia un file · <code>receive on [CARTELLA]</code>/<code>off</code>/<code>status</code> ricezione (default <code>~/NexusSec-loot</code>)</td></tr>
       <tr><td class="k">nxs-netinfo</td><td>Stato della rete (interfacce, IP, gateway, DNS) per menu e Centro di Controllo.</td></tr>
-      <tr><td class="k">nxs-firewall</td><td>Firewall <code>nftables</code>: in ingresso tutto chiuso, in uscita libero.<br><code>on</code> · <code>off</code> · <code>status</code> · <code>allow PORTA[/tcp|/udp]</code> · <code>deny PORTA</code> · <code>boot</code><br><em>Per pentest:</em> per mettersi in <strong>ascolto</strong> serve un <code>allow</code> della porta, oppure <code>off</code>.</td></tr>
+      <tr><td class="k">nxs-firewall</td><td>Firewall <code>nftables</code>: in ingresso tutto chiuso, in uscita libero.<br><code>on</code> · <code>off</code> · <code>status</code> · <code>state</code> (on|off|unknown, per il pannello) · <code>allow PORTA[/tcp|/udp]</code> · <code>deny PORTA</code> · <code>boot</code><br><em>Per pentest:</em> per mettersi in <strong>ascolto</strong> serve un <code>allow</code> della porta, oppure <code>off</code>.</td></tr>
+      <tr><td class="k">nxs-tor</td><td>Interruttore <strong>Tor di sistema</strong> in user-space (SOCKS <code>127.0.0.1:9050</code>): instrada verso Tor i tool che rispettano il proxy (HORUS, ecc.). Sorgente unica di verità del toggle Tor del pannello.<br><code>on</code> · <code>off</code> · <code>status</code> · <code>toggle</code>. Senza root (root solo per installare <code>tor</code> se manca).</td></tr>
     </tbody>
   </table>
 
@@ -425,7 +435,7 @@ nxs-persist status          # stato della persistenza su disco</code></pre>
       <tr><td class="k">nxs-audio-unmute</td><td>Sblocca e alza l'audio su <strong>tutti</strong> i livelli (ALSA + PipeWire) con ritentativi. Parte da solo all'avvio: su macchina reale il codec spesso nasce muto.</td></tr>
       <tr><td class="k">nxs-player</td><td>Lettore audio (GTK3 + GStreamer).</td></tr>
       <tr><td class="k">nxs-video</td><td>Visualizzatore video (GTK3 + GStreamer).</td></tr>
-      <tr><td class="k">nxs-screenshot</td><td>Screenshot a schermo intero salvato in <code>/tmp</code> (<code>scrot</code>), con notifica.</td></tr>
+      <tr><td class="k">nxs-screenshot</td><td>Cattura schermate con <code>scrot</code>, salvate in <code>~/Immagini/NexusSec</code> con notifica. Modalità: <code>full</code> (intero, default), <code>area</code> (selezione), <code>window</code> (finestra attiva); 2° argomento facoltativo = ritardo in secondi. Disponibile dal pannello (applet <strong>Autoprotezione</strong>), dal menu e col tasto <kbd>Stamp</kbd>.</td></tr>
     </tbody>
   </table>
 
@@ -452,7 +462,7 @@ nxs-persist status          # stato della persistenza su disco</code></pre>
       <tr><td class="k">nxs-run-tool <span class="tag">tool</span></td><td>Esegue un tool dal menu tenendo aperto il terminale a fine esecuzione.</td></tr>
       <tr><td class="k">nxs-wizard</td><td>Procedure guidate. Senza argomenti apre la GUI.<br><code>list</code> · <code>run NOME</code></td></tr>
       <tr><td class="k">nxs-browser</td><td>Browser stealth integrato (Tor di default, nessuna traccia locale).</td></tr>
-      <tr><td class="k">nxs-horus</td><td><strong>HORUS</strong>, l'Occhio OSINT/GEOINT globale: mappa mondiale con feed in tempo reale, GEOINT/SOCMINT/ricognizione, correlazioni e <strong>grafo relazioni</strong> (con arricchimento IP/dominio), fascicoli d'indagine ri-editabili con timeline ed export CSV/STIX/PDF, e news a 360° (DuckDuckGo + Google News). Vedi la sezione 10.</td></tr>
+      <tr><td class="k">nxs-horus</td><td><strong>HORUS</strong>, l'Occhio OSINT/GEOINT globale: mappa mondiale con feed in tempo reale, GEOINT/SOCMINT/ricognizione, correlazioni e <strong>grafo relazioni</strong> (con arricchimento IP/dominio), fascicoli d'indagine ri-editabili con timeline ed export CSV/STIX/PDF, e news a 360° (DuckDuckGo + Google News). In più: <strong>mappa offline</strong> (cache tile IndexedDB + precarico mondo a basso zoom dalle Impostazioni), <strong>schermate</strong> allegabili al dossier e <strong>bundle ZIP</strong> completo (HTML+JSON+CSV+STIX+schermate); l'OSINT su numeri (PhoneInfoga) è esposto solo su <code>127.0.0.1:5000</code>. Vedi la sezione 10.</td></tr>
       <tr><td class="k">nxs-ai-sandbox</td><td>Sandbox <code>bubblewrap</code> per il (futuro) agente AI: root in sola lettura, home isolata, rete esclusa di default.<br><code>nxs-ai-sandbox [--net] [--workspace CARTELLA] -- COMANDO</code></td></tr>
     </tbody>
   </table>
@@ -472,6 +482,17 @@ nxs-persist status          # stato della persistenza su disco</code></pre>
       <tr><td class="k">nxs-harden</td><td>Irrobustimento del sistema <strong>installato</strong> (sulla live resta comoda: autologin e <code>doas</code> senza password).<br><code>status</code> · <code>apply</code> · <code>password</code> · <code>autologin on|off</code> · <code>doas pass|nopass</code> · <code>lockvt on|off</code> blocca il cambio VT</td></tr>
     </tbody>
   </table>
+
+  <div class="note"><strong>Autoprotezione — «se siamo deboli noi stessi è la fine».</strong>
+  NexusSec non espone i propri strumenti: il backend di HORUS è legato solo a
+  <code>127.0.0.1</code> e i <strong>server web dei tool OSINT girano in container
+  con la porta pubblicata solo su loopback</strong> (es. PhoneInfoga su
+  <code>127.0.0.1:5000</code>, non più su <code>0.0.0.0</code> con rete host): così
+  restano irraggiungibili dalla LAN anche quando, durante un pentest, si spegne il
+  firewall per mettersi in ascolto. A questo si aggiungono il firewall inbound
+  default-deny attivo al boot, Tor opzionale via <code>nxs-tor</code>, le password
+  sempre via <em>stdin</em> (mai negli argomenti/<code>ps</code>) e la persistenza
+  cifrata LUKS.</div>
 
   <div class="note">Se il <strong>WiFi non si connette</strong>, il primo comando da
   lanciare è <code>nxs-wifi debug</code>: dice se l'interfaccia è rilevata, se la
