@@ -19,13 +19,54 @@ if [ "$(id -u)" != 0 ]; then
   exit 1
 fi
 
-# --- risoluzione ISO ---
+# --- cartella del repo, indipendente dalla directory da cui si lancia ---
+SCRIPT_DIR=$(cd "$(dirname "$0")" 2>/dev/null && pwd)
+REPO_ROOT=$(cd "$SCRIPT_DIR/.." 2>/dev/null && pwd)
+
+# --- risoluzione ISO (interattiva) ---
 ISO="${1:-}"
-if [ -z "$ISO" ]; then
-  ISO="$(ls -1t out/alpine-nexussec-*-x86_64.iso 2>/dev/null | head -1 || true)"
-  [ -n "$ISO" ] || { echo "Nessuna ISO trovata in out/. Passala come 1o argomento." >&2; exit 1; }
+if [ -n "$ISO" ] && [ ! -f "$ISO" ]; then
+  echo "ISO indicata non trovata: $ISO" >&2
+  ISO=""
 fi
-[ -f "$ISO" ] || { echo "ISO non trovata: $ISO" >&2; exit 1; }
+if [ -z "$ISO" ]; then
+  # cerca in: <repo>/out, ./out, . (deduplica mantenendo l'ordine per data)
+  OLDIFS=$IFS; IFS='
+'
+  set --
+  for f in $(ls -1t "$REPO_ROOT"/out/alpine-nexussec-*.iso ./out/alpine-nexussec-*.iso ./*.iso 2>/dev/null); do
+    dup=0
+    for g in "$@"; do [ "$g" = "$f" ] && dup=1 && break; done
+    [ "$dup" = 0 ] && set -- "$@" "$f"
+  done
+  IFS=$OLDIFS
+  if [ "$#" -eq 1 ]; then
+    ISO="$1"
+    echo "ISO trovata: $ISO"
+  elif [ "$#" -gt 1 ]; then
+    echo "ISO disponibili:"
+    i=0
+    for f in "$@"; do
+      i=$((i+1))
+      printf "  %d) %s  (%s)\n" "$i" "$f" "$(numfmt --to=iec "$(stat -c %s "$f")" 2>/dev/null || echo '?')"
+    done
+    printf "Scegli il numero [1]: "
+    read -r SEL
+    [ -n "$SEL" ] || SEL=1
+    case "$SEL" in
+      *[!0-9]*|"") echo "Scelta non valida." >&2; exit 1;;
+    esac
+    [ "$SEL" -ge 1 ] && [ "$SEL" -le "$#" ] || { echo "Numero fuori intervallo." >&2; exit 1; }
+    ISO=$(eval "echo \${$SEL}")
+  fi
+fi
+# ultima spiaggia: chiedi il percorso a mano finche' non e' valido (o vuoto=annulla)
+while [ -z "${ISO:-}" ] || [ ! -f "$ISO" ]; do
+  echo "Nessuna ISO trovata automaticamente (cercata in $REPO_ROOT/out)."
+  printf "Incolla il percorso della ISO (vuoto = annulla): "
+  read -r ISO
+  [ -n "$ISO" ] || { echo "Annullato."; exit 1; }
+done
 ISO_SIZE="$(stat -c %s "$ISO")"
 
 # --- risoluzione DEVICE ---
