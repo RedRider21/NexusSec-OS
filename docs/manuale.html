@@ -408,6 +408,17 @@ apk add foremost medusa bulk-extractor</code></pre>
         <br><code>status</code> · <code>apply</code> · <code>password</code> · <code>autologin on|off</code> · <code>doas pass|nopass</code> · <code>lockvt on|off</code> blocca il cambio VT (il lock schermo non si aggira con Ctrl+Alt+Fn)</td></tr>
     </tbody>
   </table>
+  <div class="note"><strong>Persistenza dei tool installati al volo.</strong> Con
+  la chiavetta persistente (<code>NXSDATA</code>) i tool che installi durante l'uso
+  restano dopo il riavvio: quelli <strong>container/Kali</strong> (storage Podman) e
+  quelli <strong>pip/pipx/git</strong> (che vivono in <code>~/.local</code>, reso
+  persistente) tornano <em>senza reinstallare nulla</em>; quelli <strong>apk</strong>
+  (es. <code>nmap</code>) vengono <strong>registrati</strong> e <strong>reinstallati
+  al boot, offline, dalla cache</strong> (in background, il desktop non aspetta).
+  Tutto questo è attivo <em>solo</em> con NXSDATA montato: la live «nuda» resta
+  invariata. Comandi utili: <code>nxs-tool persisted</code> (elenco) e
+  <code>nxs-tool forget &lt;pacchetto&gt;</code>. Per una persistenza totale come un
+  PC normale c'è comunque l'<strong>installazione su disco</strong>.</div>
   <div class="note"><strong>Autoprotezione — «se siamo deboli noi stessi è la fine».</strong>
   NexusSec non espone i propri strumenti: il backend di HORUS è legato solo a
   <code>127.0.0.1</code> e i <strong>server web dei tool OSINT girano in container

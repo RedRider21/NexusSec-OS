@@ -5,9 +5,20 @@
 # Prepara /var/nxs-data (gia' montato) per l'uso: cartelle, storage Podman
 # rootless su disco, link stato/loot/cache dalla home effimera. Idempotente.
 nxs_persist_setup() {
-	for d in containers nxs-state loot apk-cache; do
+	for d in containers nxs-state loot apk-cache tool-state local; do
 		install -d -o nexus -g nexus "/var/nxs-data/$d"
 	done
+	# Persisti ~/.local: pip/pipx e i tool 'git' installano QUI (venv + launcher
+	# in ~/.local/bin, cloni in ~/.local/share). Bind mount -> sopravvivono al
+	# reboot senza reinstallare nulla. Primo avvio: travaso il contenuto di
+	# fabbrica dentro la cartella dati, poi il bind.
+	if [ -z "$(ls -A /var/nxs-data/local 2>/dev/null)" ] && [ -n "$(ls -A /home/nexus/.local 2>/dev/null)" ]; then
+		cp -a /home/nexus/.local/. /var/nxs-data/local/ 2>/dev/null || true
+	fi
+	install -d -o nexus -g nexus /home/nexus/.local
+	mountpoint -q /home/nexus/.local 2>/dev/null || \
+		mount --bind /var/nxs-data/local /home/nexus/.local 2>/dev/null || true
+	chown nexus:nexus /home/nexus/.local 2>/dev/null || true
 	install -d -o nexus -g nexus /home/nexus/.config/containers
 	cat > /home/nexus/.config/containers/storage.conf <<STOR
 [storage]
@@ -25,6 +36,31 @@ STOR
 		/home/nexus/.config/containers/storage.conf 2>/dev/null || true
 	# Reti WiFi salvate + abbinamenti Bluetooth: vedi nxs_persist_creds.
 	nxs_persist_creds
+	# Reinstalla i tool 'apk' registrati (vivono in /usr, cioe' in RAM): in
+	# background e offline dalla cache, cosi' il desktop non aspetta.
+	nxs_persist_reinstall_tools
+}
+
+# Reinstalla i pacchetti apk registrati da nxs-tool (lista su NXSDATA). I tool
+# 'container/kali' e 'pip/git' persistono gia' da soli (storage Podman e
+# ~/.local); qui copriamo SOLO gli apk, che altrimenti sparirebbero col reboot.
+# Gira in BACKGROUND e prova PRIMA offline (cache), poi con rete: il boot non si
+# blocca e funziona anche senza Internet.
+nxs_persist_reinstall_tools() {
+	list=/var/nxs-data/tool-state/apk-tools
+	[ -f "$list" ] || return 0
+	command -v apk >/dev/null 2>&1 || return 0
+	(
+		pkgs=""
+		while IFS= read -r p; do
+			[ -n "$p" ] || continue
+			apk info -e "$p" >/dev/null 2>&1 && continue   # gia' presente
+			pkgs="$pkgs $p"
+		done < "$list"
+		[ -n "$pkgs" ] || exit 0
+		# offline dalla cache; se non basta, ritenta con la rete
+		apk add --no-network $pkgs >/dev/null 2>&1 || apk add $pkgs >/dev/null 2>&1 || true
+	) &
 }
 
 # --- Credenziali di rete: reti WiFi e abbinamenti Bluetooth ----------------

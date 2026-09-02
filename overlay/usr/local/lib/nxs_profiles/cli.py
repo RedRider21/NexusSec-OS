@@ -12,6 +12,10 @@ Uso:
   nxs-tool launch <tool> [args...]  installa-se-serve e poi esegue (terminale)
   nxs-tool uninstall <tool>         rimuove il tool (apk del)
 
+  --- Persistenza tool (solo con chiavetta persistente NXSDATA) ---
+  nxs-tool persisted                elenca i tool apk che verranno reinstallati al boot
+  nxs-tool forget <pacchetto>       toglie un tool dalla lista (non piu' reinstallato)
+
   --- Arsenale Kali (qualsiasi dei ~600+ tool, anche non elencati) ---
   nxs-tool kali <pacchetto> [args...]   installa-se-serve ed esegue un tool Kali
   nxs-tool kali-install <pacchetto>     solo installa nell'ambiente Kali condiviso
@@ -120,6 +124,30 @@ def _kali_list(_args):
     return 0
 
 
+def _persisted(_args):
+    """Elenca i tool apk registrati per la reinstallazione al boot."""
+    if not isolation._persist_active():
+        print("(persistenza non attiva: nessuna chiavetta NXSDATA montata)")
+        return 0
+    pkgs = isolation.persisted_apk_tools()
+    if not pkgs:
+        print("(nessun tool apk registrato: verranno aggiunti quando ne installi)")
+        return 0
+    print("# tool apk che il boot reinstalla (offline dalla cache):")
+    for p in pkgs:
+        print(f"  {p}")
+    return 0
+
+
+def _forget(args):
+    """Toglie uno o piu' pacchetti dalla lista di persistenza."""
+    if not args:
+        print("uso: nxs-tool forget <pacchetto> [pacchetto...]"); return 1
+    isolation._persist_forget_apk(args)
+    print("rimosso dalla persistenza: " + " ".join(args))
+    return 0
+
+
 CMDS = {
     "profile": _profile,
     "apply": _apply,
@@ -129,6 +157,8 @@ CMDS = {
     "run": _run,
     "launch": _launch,
     "uninstall": _uninstall,
+    "persisted": _persisted,
+    "forget": _forget,
     "kali": _kali,
     "kali-install": _kali_install,
     "kali-list": _kali_list,

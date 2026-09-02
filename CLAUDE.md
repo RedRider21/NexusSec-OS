@@ -326,6 +326,11 @@ Modello: **una immagine, due modalità**. La live resta comoda (autologin,
 2. Profili dinamici + sfondi + accent + menu (FATTO).
 3. Catalogo tool allineato a Kali/Parrot (FATTO).
 4. Build `abuild` + `mkimage` (scaffold FATTO; ISO da costruire su Alpine).
-5. Persistenza tool (install su disco / cache apk + lbu) — da rifinire.
+5. Persistenza tool (con chiavetta NXSDATA) — FATTO per la live: `~/.local`
+   (pip/pipx/git) via bind mount; tool `apk` registrati in
+   `/var/nxs-data/tool-state/apk-tools` (hook in `isolation.install`) e
+   reinstallati OFFLINE dalla cache al boot (`nxs_persist_reinstall_tools`,
+   background); container/kali gia' persistenti (storage Podman). Tutto GATED su
+   NXSDATA montato: live nuda invariata. CLI: `nxs-tool persisted|forget`.
 6. **Agente AI Python** al cuore del sistema (prossimo step,
    `overlay/usr/local/lib/nxs-ai/`).

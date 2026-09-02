@@ -47,6 +47,58 @@ from . import model
 LOOT = Path(os.path.expanduser("~")) / "NexusSec-loot"   # output condiviso coi container
 GIT_BASE = Path(os.path.expanduser("~")) / ".local" / "share" / "nexussec" / "git"
 LOCAL_BIN = Path(os.path.expanduser("~")) / ".local" / "bin"
+
+# --- Persistenza tool (solo se NXSDATA e' montato) --------------------------
+# I tool 'container'/'kali' e quelli 'pip'/'git' (che vivono in ~/.local) sono
+# gia' persistiti dalla partizione dati. Restano da gestire i tool 'apk', che
+# vivono in /usr (RAM della live): li registriamo qui e li reinstalla il boot
+# (offline, dalla cache). In live NUDA (niente NXSDATA) tutto questo e' inattivo.
+NXS_DATA = Path("/var/nxs-data")
+PERSIST_TOOLS = NXS_DATA / "tool-state" / "apk-tools"
+
+
+def _persist_active() -> bool:
+    """True se la persistenza NXSDATA e' montata."""
+    try:
+        return os.path.ismount(str(NXS_DATA))
+    except OSError:
+        return False
+
+
+def _persist_record_apk(pkgs) -> None:
+    """Registra i pacchetti apk installati a runtime (dedup). Best-effort."""
+    if not _persist_active():
+        return
+    try:
+        PERSIST_TOOLS.parent.mkdir(parents=True, exist_ok=True)
+        have_lines = set(PERSIST_TOOLS.read_text().split()) if PERSIST_TOOLS.exists() else set()
+        new = [p for p in pkgs if p and p not in have_lines]
+        if new:
+            with PERSIST_TOOLS.open("a") as f:
+                for p in new:
+                    f.write(p + "\n")
+    except OSError:
+        pass
+
+
+def _persist_forget_apk(pkgs) -> None:
+    """Toglie pacchetti dalla lista di persistenza (dopo un uninstall/forget)."""
+    try:
+        if not PERSIST_TOOLS.exists():
+            return
+        drop = set(pkgs)
+        keep = [l for l in PERSIST_TOOLS.read_text().split() if l and l not in drop]
+        PERSIST_TOOLS.write_text("".join(x + "\n" for x in keep))
+    except OSError:
+        pass
+
+
+def persisted_apk_tools():
+    """Elenco dei pacchetti apk registrati per la persistenza (vuoto se assente)."""
+    try:
+        return [l for l in PERSIST_TOOLS.read_text().split() if l]
+    except OSError:
+        return []
 KALI_IMG = "docker.io/kalilinux/kali-rolling:latest"     # base Debian/Kali (scaricata UNA volta)
 
 # Ambiente Kali CONDIVISO E PERSISTENTE: un'unica immagine che ACCUMULA i tool.
@@ -439,6 +491,14 @@ def install(tool: str, log=print) -> bool:
     # apk_extra: pacchetti companion necessari al pieno funzionamento (es. nmap
     # -> nmap-scripts per gli script NSE / rilevamento debolezze).
     pkgs = [pkg] + list(model.tool_data(tool).get("apk_extra", []))
+    if _persist_active():
+        # Persistenza attiva: NON --no-cache, cosi' il pacchetto resta nella cache
+        # (su NXSDATA) per la reinstallazione OFFLINE al boot; poi lo registriamo.
+        log(f"[*] apk add {' '.join(pkgs)}")
+        ok = subprocess.run(priv(["apk", "add"] + pkgs)).returncode == 0
+        if ok:
+            _persist_record_apk(pkgs)
+        return ok
     log(f"[*] apk add --no-cache {' '.join(pkgs)}")
     return subprocess.run(priv(["apk", "add", "--no-cache"] + pkgs)).returncode == 0
 
@@ -498,7 +558,11 @@ def uninstall(tool: str, log=print) -> bool:
     pkg = _apk_name(tool)
     if pkg and have("apk"):
         log(f"[*] apk del {pkg}")
-        return subprocess.run(priv(["apk", "del", pkg])).returncode == 0
+        ok = subprocess.run(priv(["apk", "del", pkg])).returncode == 0
+        if ok:
+            # non reinstallarlo piu' al boot
+            _persist_forget_apk([pkg] + list(model.tool_data(tool).get("apk_extra", [])))
+        return ok
     log(f"[!] {tool}: niente da rimuovere.")
     return False
 
