@@ -121,7 +121,7 @@ body {
 .auto-row { display: flex; align-items: center; gap: 6px; margin: 10px 0 4px;
   color: var(--muted); font-size: 12px; }
 .auto-row select {
-  background: var(--panel); color: var(--text); border: 1px solid var(--border);
+  background-color: var(--panel); color: var(--text); border: 1px solid var(--border);
   border-radius: 6px; padding: 4px 6px; font-size: 12px;
 }
 .auto-row select:focus { outline: none; border-color: var(--accent); }
@@ -181,7 +181,7 @@ body {
 .fld span { display: block; color: var(--muted); font-size: 11px; margin-bottom: 5px; }
 .fld select, .fld input {
   width: 100%;
-  background: var(--panel-2);
+  background-color: var(--panel-2);
   color: var(--text);
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -357,7 +357,7 @@ body {
 .ticker-q-clear { background: none; border: none; color: var(--muted); cursor: pointer;
   font-size: 15px; line-height: 1; padding: 0 6px 0 0; flex: 0 0 auto; }
 .ticker-q-clear:hover { color: var(--alarm); }
-.ticker-sel { background: var(--panel-2); color: var(--text); border: 1px solid var(--border);
+.ticker-sel { background-color: var(--panel-2); color: var(--text); border: 1px solid var(--border);
   border-radius: 5px; font-size: 10px; padding: 2px 4px; margin: 0 2px; flex: 0 0 auto; }
 .ticker-sel:focus { outline: none; border-color: var(--accent); }
 #ticker-track .news-more { color: var(--accent); font-size: 10px; opacity: .85;
@@ -655,7 +655,7 @@ body {
 .corr-params { display: flex; gap: 14px; color: var(--muted); font-size: 12px; }
 .corr-params label { display: flex; align-items: center; gap: 5px; }
 .corr-params select {
-  background: var(--panel-2); color: var(--text); border: 1px solid var(--border);
+  background-color: var(--panel-2); color: var(--text); border: 1px solid var(--border);
   border-radius: 6px; padding: 3px 6px; font-size: 12px;
 }
 #corr-body {
@@ -738,7 +738,7 @@ body {
 .ch-panel { display: flex; flex-direction: column; gap: 10px; padding: 4px 2px; }
 .ch-row { display: flex; align-items: flex-end; gap: 8px; }
 .ch-lbl { display: flex; flex-direction: column; gap: 4px; font-size: 11px; color: var(--muted); flex: 1; }
-.ch-lbl select { width: 100%; padding: 5px 6px; background: var(--panel-2); color: var(--text);
+.ch-lbl select { width: 100%; padding: 5px 6px; background-color: var(--panel-2); color: var(--text);
   border: 1px solid var(--border); border-radius: 6px; font-size: 12px; }
 .ch-row .corr-btn { flex: 0 0 auto; }
 #ch-player { display: flex; flex-direction: column; gap: 6px; padding: 6px 0; }
@@ -916,3 +916,24 @@ body {
 /* Report: miniatura delle schermate allegate al dossier */
 .rep-thumb { display:block; max-width:100%; max-height:120px; border:1px solid var(--line,#1a3a52);
   border-radius:6px; margin:4px 0; object-fit:cover; }
+
+/* Combobox leggibili anche in WebKit2GTK (VM, software rendering).
+   Senza appearance:none i <select> usano il widget NATIVO GTK -> fondo BIANCO
+   del tema e testo poco visibile (in Chrome invece il CSS era già rispettato).
+   Forziamo lo stile CSS: fondo scuro, testo chiaro, freccia disegnata; coloriamo
+   anche le <option> del menu a tendina. */
+select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-color: var(--panel-2);
+  color: var(--text);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath fill='%2300e5ff' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  padding-right: 22px;
+}
+select option, select optgroup {
+  background-color: var(--panel-2);
+  color: var(--text);
+}
