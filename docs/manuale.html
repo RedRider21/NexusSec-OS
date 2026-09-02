@@ -484,6 +484,17 @@ nxs-persist status          # stato della persistenza su disco</code></pre>
     </tbody>
   </table>
 
+  <div class="note"><strong>Persistenza dei tool installati al volo.</strong> Con
+  la chiavetta persistente (<code>NXSDATA</code>) i tool che installi durante l'uso
+  restano dopo il riavvio: quelli <strong>container/Kali</strong> (storage Podman) e
+  quelli <strong>pip/pipx/git</strong> (che vivono in <code>~/.local</code>, reso
+  persistente) tornano <em>senza reinstallare nulla</em>; quelli <strong>apk</strong>
+  (es. <code>nmap</code>) vengono <strong>registrati</strong> e <strong>reinstallati
+  al boot, offline, dalla cache</strong> (in background, il desktop non aspetta).
+  Attivo <em>solo</em> con NXSDATA montato: la live «nuda» resta invariata. Comandi:
+  <code>nxs-tool persisted</code> e <code>nxs-tool forget &lt;pacchetto&gt;</code>.
+  Per una persistenza totale come un PC normale c'è l'<strong>installazione su disco</strong>.</div>
+
   <div class="note"><strong>Autoprotezione — «se siamo deboli noi stessi è la fine».</strong>
   NexusSec non espone i propri strumenti: il backend di HORUS è legato solo a
   <code>127.0.0.1</code> e i <strong>server web dei tool OSINT girano in container
