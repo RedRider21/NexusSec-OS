@@ -1,66 +1,90 @@
-# NexusSec-Cards - tema Openbox stile "scheda" (iOS-like): header pieno a
-# colori del profilo, corpo scuro pulito. Deriva dalle card colorate del sito
-# (docs) usate per illustrare i profili. Generato da build/make-openbox-themes.py
-# (placeholder #a06bff = colore del profilo, #734db7 = variante scura).
-# NON modificare a mano i temi generati: modificare QUESTO template e rigenerare.
+# NexusSec-Cards - tema Openbox stile macOS/iOS. Generato da
+# build/make-openbox-themes.py (placeholder #a06bff = colore del profilo,
+# #734db7 = variante scura). NON modificare i temi generati a mano:
+# modificare QUESTO template e rigenerare (make themes).
+#
+# Look: barra scura "graphite" (i semafori si leggono bene su qualsiasi
+# profilo), tre pulsanti a SFERA a SINISTRA con il simbolo scavato dentro
+# (rosso=chiudi, giallo=minimizza, verde=massimizza), coordinazione col profilo
+# su BORDO e TESTO del titolo. Gli angoli arrotondati li aggiunge picom (attivo
+# solo con la famiglia Cards). I pulsanti a sinistra li imposta il titleLayout
+# in rc.xml, gestito da nxs_profiles.model quando si sceglie Cards.
+#
+# Ispirato ad Arc-Dark-OSX (Dr-Noob / Dino Duratovic, GPL-3) per la tecnica dei
+# colori per-pulsante; le maschere .xbm a sfera-con-simbolo sono originali
+# NexusSec (generate da build/make-openbox-themes.py via PIL).
+#
+# NB: le sfere colorate usano i colori PER-PULSANTE di Openbox
+# (window.active.button.<nome>.unpressed.image.color): il simbolo e' un FORO
+# nella maschera .xbm, quindi appare nel colore della barra (button bg
+# parentrelative).
 
-# --- Geometria: bordi morbidi, niente maniglia ingombrante -------------------
+# --- Geometria ---------------------------------------------------------------
 padding.width: 8
-padding.height: 5
+padding.height: 6
 border.width: 1
 window.handle.width: 0
 window.client.padding.width: 0
 window.client.padding.height: 0
 
-# --- Bordo finestra: filo del colore profilo sull'attiva --------------------
+# --- Bordo: filo del colore profilo sull'attiva ------------------------------
 window.active.border.color: #a06bff
 window.inactive.border.color: #2a2f37
 
-# --- Barra del titolo: tinta piena accent (look "scheda" iOS), testo bianco --
+# --- Barra del titolo: graphite neutro (contrasto per i semafori) ------------
 window.active.title.bg: flat solid
-window.active.title.bg.color: #a06bff
+window.active.title.bg.color: #2b2f38
 window.inactive.title.bg: flat solid
-window.inactive.title.bg.color: #1b2028
+window.inactive.title.bg.color: #23272e
 window.active.label.bg: parentrelative
 window.inactive.label.bg: parentrelative
-window.active.label.text.color: #ffffff
-window.inactive.label.text.color: #8a94a2
+# testo del titolo col colore del profilo (tocco di coordinazione)
+window.active.label.text.color: #a06bff
+window.inactive.label.text.color: #7f8792
 window.label.text.justify: center
 window.active.label.text.font:shadow=n
 window.inactive.label.text.font:shadow=n
 
-# --- Pulsanti: icone bianche sull'header colorato ----------------------------
-window.active.button.unpressed.image.color: #ffffff
-window.inactive.button.unpressed.image.color: #8a94a2
-window.active.button.hover.image.color: #ffffff
-window.inactive.button.hover.image.color: #c8d0da
-window.active.button.pressed.image.color: #ffffff
-window.active.button.disabled.image.color: #734db7
-window.inactive.button.disabled.image.color: #2a2f37
-window.active.button.hover.bg: flat solid
-window.active.button.hover.bg.color: #734db7
-window.active.button.pressed.bg: flat solid
-window.active.button.pressed.bg.color: #734db7
+# --- Pulsanti a SFERA: colori semaforo per-pulsante --------------------------
+# bg parentrelative: il foro del simbolo mostra la barra (graphite).
+window.active.button.unpressed.bg: parentrelative
+window.active.button.pressed.bg: parentrelative
+window.active.button.hover.bg: parentrelative
+window.active.button.disabled.bg: parentrelative
+window.inactive.button.unpressed.bg: parentrelative
+window.inactive.button.pressed.bg: parentrelative
+window.inactive.button.hover.bg: parentrelative
+window.inactive.button.disabled.bg: parentrelative
 
-# --- Maniglia (sottile) ------------------------------------------------------
-window.active.handle.bg: flat solid
-window.active.handle.bg.color: #a06bff
-window.inactive.handle.bg: flat solid
-window.inactive.handle.bg.color: #1b2028
-window.active.grip.bg: flat solid
-window.active.grip.bg.color: #a06bff
-window.inactive.grip.bg: flat solid
-window.inactive.grip.bg.color: #1b2028
+# chiudi = rosso, minimizza = giallo, massimizza = verde
+window.active.button.close.unpressed.image.color: #ff5f57
+window.active.button.iconify.unpressed.image.color: #febc2e
+window.active.button.max.unpressed.image.color: #28c840
+window.active.button.close.hover.image.color: #ff8079
+window.active.button.iconify.hover.image.color: #ffd25f
+window.active.button.max.hover.image.color: #57d76a
+window.active.button.close.pressed.image.color: #d94b44
+window.active.button.iconify.pressed.image.color: #d99e24
+window.active.button.max.pressed.image.color: #1fa233
+window.active.button.max.toggled.unpressed.image.color: #28c840
+# inattiva: sfere spente (grigie) come su macOS
+window.inactive.button.unpressed.image.color: #5a616c
+window.inactive.button.hover.image.color: #7f8792
+window.inactive.button.close.unpressed.image.color: #5a616c
+window.inactive.button.iconify.unpressed.image.color: #5a616c
+window.inactive.button.max.unpressed.image.color: #5a616c
+window.active.button.disabled.image.color: #3a3f48
+window.inactive.button.disabled.image.color: #33383f
 
-# --- Menu: corpo scuro, intestazione e voce attiva col colore profilo --------
+# --- Menu: scuro con intestazione/voce attiva col colore profilo -------------
 menu.border.color: #a06bff
 menu.border.width: 1
 menu.title.bg: flat solid
-menu.title.bg.color: #a06bff
-menu.title.text.color: #ffffff
+menu.title.bg.color: #2b2f38
+menu.title.text.color: #a06bff
 menu.title.text.justify: center
 menu.items.bg: flat solid
-menu.items.bg.color: #141a22
+menu.items.bg.color: #23272e
 menu.items.text.color: #e6ebf2
 menu.items.disabled.text.color: #5a6472
 menu.items.active.bg: flat solid
@@ -73,8 +97,8 @@ menu.items.justify: left
 osd.border.width: 1
 osd.border.color: #a06bff
 osd.bg: flat solid
-osd.bg.color: #141a22
-osd.label.text.color: #ffffff
+osd.bg.color: #23272e
+osd.label.text.color: #a06bff
 osd.hilight.bg: flat solid
 osd.hilight.bg.color: #a06bff
 osd.unhilight.bg: flat solid

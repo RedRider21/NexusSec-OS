@@ -2531,9 +2531,10 @@ _THEME_FAMILIES = [
      "Il nostro HUD scuro con accento ciano. Fisso, non cambia col profilo."),
     ("retro", "Retro 1977 (chiaro)",
      "Tema flat chiaro derivato da «1977». Segue il colore del profilo attivo."),
-    ("cards", "Cards (stile iOS)",
-     "Barra del titolo a tinta piena, come le schede dei profili sul sito. "
-     "Segue il colore del profilo attivo."),
+    ("cards", "Cards (stile macOS)",
+     "Pulsanti a sfera semaforo a sinistra (chiudi/minimizza/massimizza) con il "
+     "simbolo dentro, angoli arrotondati (picom). Bordo e titolo seguono il "
+     "colore del profilo. Attiva un compositor solo mentre e' selezionata."),
 ]
 _PROMPT_STYLES = [
     ("default", "NexusSec (una riga)",

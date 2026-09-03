@@ -61,6 +61,7 @@ depends="
 	dbus
 	agetty
 	openbox
+	picom
 	xorg-server
 	xinit
 	setxkbmap

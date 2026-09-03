@@ -61,6 +61,12 @@ RC_XML = Path(os.environ.get(
 #   raw:<nome> -> un qualsiasi tema Openbox installato, fisso (non coordinato)
 THEME_FAMILY_FILE = CONF_DIR / "theme"
 THEME_FAMILIES = ("core", "retro", "cards")
+# titleLayout di Openbox: default = pulsanti a DESTRA (N=icona, L=titolo, I/M/C);
+# Cards (macOS) = pulsanti a SINISTRA (C=chiudi, I=minimizza, M=massimizza, L).
+OB_TITLELAYOUT_DEFAULT = "NLIMC"
+OB_TITLELAYOUT_LEFT = "CIML"
+# Compositor per gli angoli arrotondati: attivo SOLO con la famiglia Cards.
+PICOM_CONF = HOME / ".config" / "picom.conf"
 
 BG_DIR = Path(os.environ.get(
     "NXS_BG_DIR", str(HOME / ".themes" / "NexusSec-Core" / "backgrounds")))
@@ -602,14 +608,17 @@ def resolve_ob_theme(family: str | None = None, key: str | None = None) -> str:
     return cand
 
 
-def _set_ob_theme_name(name: str, reconfigure: bool = True) -> None:
-    """Scrive <theme><name>NAME</name> in rc.xml e ricarica Openbox."""
+def _apply_rc(name: str, layout: str, reconfigure: bool = True) -> None:
+    """Scrive in rc.xml sia <theme><name> sia <titleLayout> (una sola
+    read-modify-write) e ricarica Openbox una volta sola."""
     try:
         txt = RC_XML.read_text()
     except OSError:
         return
     new = re.sub(r"(<theme>.*?<name>)[^<]*(</name>)",
                  r"\g<1>" + name + r"\g<2>", txt, count=1, flags=re.DOTALL)
+    new = re.sub(r"<titleLayout>[^<]*</titleLayout>",
+                 "<titleLayout>" + layout + "</titleLayout>", new, count=1)
     if new != txt:
         try:
             RC_XML.write_text(new)
@@ -623,14 +632,47 @@ def _set_ob_theme_name(name: str, reconfigure: bool = True) -> None:
             pass
 
 
+def _manage_picom(enable: bool) -> None:
+    """Compositor per gli angoli arrotondati dello stile Cards. Avvia picom se
+    serve (e non gira gia'), lo ferma altrimenti. Best-effort: se picom non c'e'
+    o il backend GLX non e' disponibile (certe VM), non blocca nulla."""
+    try:
+        running = subprocess.run(["pgrep", "-x", "picom"],
+                                 stdout=subprocess.DEVNULL,
+                                 stderr=subprocess.DEVNULL).returncode == 0
+    except (FileNotFoundError, OSError):
+        running = False
+    if enable and not running:
+        try:
+            cmd = ["picom", "-b"]
+            if PICOM_CONF.is_file():
+                cmd += ["--config", str(PICOM_CONF)]
+            subprocess.Popen(cmd, stdout=subprocess.DEVNULL,
+                             stderr=subprocess.DEVNULL)
+        except (FileNotFoundError, OSError):
+            pass
+    elif not enable and running:
+        try:
+            subprocess.run(["pkill", "-x", "picom"],
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        except (FileNotFoundError, OSError):
+            pass
+
+
 def set_window_theme(key: str | None = None, reconfigure: bool = True) -> None:
     """Applica il tema finestre Openbox COORDINATO col profilo.
     La famiglia scelta (~/.config/nxs/theme) decide QUALE tema statico usare:
     'core' = HUD scuro fisso; 'retro'/'cards' = NexusSec-<Fam>-<profilo>, cosi'
     la decorazione segue il colore del profilo restando un file STATICO e curato
-    (nessuna generazione a runtime: vedi CLAUDE.md). Scrive il nome in rc.xml e
-    ricarica Openbox. write_openbox_theme resta un no-op."""
-    _set_ob_theme_name(resolve_ob_theme(key=key), reconfigure=reconfigure)
+    (nessuna generazione a runtime: vedi CLAUDE.md). Per 'cards' (stile macOS)
+    sposta anche i pulsanti a SINISTRA (titleLayout) e accende picom per gli
+    angoli arrotondati; per le altre famiglie ripristina i pulsanti a destra e
+    spegne picom. write_openbox_theme resta un no-op."""
+    fam = theme_family()
+    name = resolve_ob_theme(fam, key)
+    layout = OB_TITLELAYOUT_LEFT if fam == "cards" else OB_TITLELAYOUT_DEFAULT
+    _apply_rc(name, layout, reconfigure=reconfigure)
+    _manage_picom(fam == "cards")
 
 
 # ---------------------------------------------------------------- tema icone
