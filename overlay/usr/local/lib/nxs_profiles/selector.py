@@ -28,18 +28,35 @@ _EXTRA_CSS = b"""
   background-color: #0a1422; border: 1px solid #1a3a52;
   border-radius: 4px; padding: 14px; margin: 6px; min-width: 210px;
 }
-.nxs-profilo-card:hover { border-color: #00e5ff; background-color: #0c1a2a; }
-.nxs-profilo-card.sel { border-color: #00e5ff; background-color: rgba(0,229,255,0.10); }
+.nxs-profilo-card:hover { background-color: #0c1a2a; }
 .nxs-profilo-name { font-weight: bold; font-size: 13pt; }
 .nxs-profilo-desc { color: #5a8a9a; font-size: 9pt; }
 .nxs-profilo-accent { min-height: 5px; border-radius: 2px; margin-bottom: 8px; }
 """
 
 
-def _accent_css(accent: str) -> bytes:
-    # Coloriamo la barretta accent di ogni scheda col colore del profilo.
-    return (".nxs-accent-%s { background-color: %s; }"
-            % (accent.lstrip("#"), accent)).encode()
+def _hex_to_rgba(h: str, a: float) -> str:
+    h = h.lstrip("#")
+    if len(h) == 3:
+        h = "".join(c * 2 for c in h)
+    try:
+        r, g, b = int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
+    except ValueError:
+        r, g, b = 0, 229, 255
+    return "rgba(%d,%d,%d,%.2f)" % (r, g, b, a)
+
+
+def _card_css(accent: str) -> bytes:
+    # Ogni scheda si tinge col PROPRIO colore di profilo: barretta accent,
+    # bordo/velatura in hover e in selezione. Il provider viene agganciato al
+    # contesto della singola scheda, quindi questi selettori generici colpiscono
+    # solo QUELLA scheda (niente ciano fisso residuo dopo il cambio profilo).
+    return (
+        ".nxs-profilo-accent { background-color: %s; }"
+        ".nxs-profilo-card:hover { border-color: %s; }"
+        ".nxs-profilo-card.sel { border-color: %s; background-color: %s; }"
+        % (accent, accent, accent, _hex_to_rgba(accent, 0.12))
+    ).encode()
 
 
 class Selector(Gtk.Window):
@@ -119,14 +136,16 @@ class Selector(Gtk.Window):
         ctx = btn.get_style_context()
         ctx.add_class("nxs-profilo-card")
 
+        # Provider col colore del profilo agganciato alla SCHEDA (btn): tinge
+        # barretta, hover e selezione di questa sola scheda col suo accent.
+        accent = d.get("accent", "#00e5ff")
+        prov = Gtk.CssProvider(); prov.load_from_data(_card_css(accent))
+        ctx.add_provider(prov, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION + 1)
+
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
 
-        accent = d.get("accent", "#00e5ff")
-        prov = Gtk.CssProvider(); prov.load_from_data(_accent_css(accent))
         bar = Gtk.Box()
         bar.get_style_context().add_class("nxs-profilo-accent")
-        bar.get_style_context().add_class("nxs-accent-%s" % accent.lstrip("#"))
-        bar.get_style_context().add_provider(prov, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
         box.pack_start(bar, False, False, 0)
 
         row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)

@@ -22,7 +22,7 @@ import time
 import gi
 gi.require_version("Gtk", "3.0")
 gi.require_version("Gdk", "3.0")
-from gi.repository import Gtk, Gdk, GLib, GdkPixbuf  # noqa: E402
+from gi.repository import Gtk, Gdk, GLib, GdkPixbuf, Pango  # noqa: E402
 
 from .common import apply_css, have, run_bg, install_screens_refresh_monitor  # noqa: E402
 from . import panelcfg  # noqa: E402
@@ -2410,11 +2410,24 @@ class Panel(Gtk.Window):
                 self.tasks.remove(child)
             self._task_btns = {}
             for wid, _desk, title in wins:
-                short = title if len(title) <= 28 else title[:27] + "…"
-                b = Gtk.Button(label=short)
+                b = Gtk.Button()
+                # Label con ellissi: larghezza NATURALE limitata (~20 caratteri)
+                # e minimo comprimibile. Cosi' quando ci sono tante finestre i
+                # bottoni si stringono da soli (assorbono il deficit di spazio)
+                # invece di spingere fuori dal pannello clock e icone a destra.
+                lbl = Gtk.Label(label=title)
+                lbl.set_ellipsize(Pango.EllipsizeMode.END)
+                lbl.set_max_width_chars(20)
+                lbl.set_width_chars(0)          # min comprimibile (niente base fissa)
+                lbl.set_xalign(0.0)
+                b.add(lbl)
                 b.set_tooltip_text(title)
                 b.get_style_context().add_class("nxs-task")
                 b.connect("clicked", self._on_task, wid)
+                # (False, False): larghezza naturale quando c'è spazio; sotto
+                # pressione GtkBox li comprime fra minimo e naturale, cosi' la
+                # tasklist (che occupa il centro, pack True) assorbe il deficit e
+                # il lato destro — clock e icone — non viene mai spinto fuori.
                 self.tasks.pack_start(b, False, False, 0)
                 self._task_btns[wid] = b
             self.tasks.show_all()
