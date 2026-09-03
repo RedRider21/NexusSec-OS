@@ -768,12 +768,21 @@ completi in [`build-alpine/README.md`](build-alpine/README.md):
 
 ### Immagini, architetture e release
 
-- L'immagine ufficiale corrente è **x86_64** (PC/laptop, BIOS+EFI).
-- **ARM64 (aarch64)** prosegue in **sviluppo parallelo**: le build funzionano su
-  hardware reale (è l'emulatore di build a piantarsi sul C++ pesante) e tornano
-  come asset una volta stabilizzate. Sono allo studio anche **altri formati di
-  distribuzione** per hardware diverso — immagini dedicate a **Raspberry Pi** e
-  altre single-board.
+- **ISO x86_64** (PC/laptop Intel/AMD, BIOS + UEFI): l'immagine di riferimento.
+- **ISO ARM64 (aarch64)** — **solo-UEFI**. Fa boot dove c'è un firmware **UEFI
+  ARM standard**: VM ARM con QEMU/EDK2, **UTM/Parallels su Mac Apple Silicon**,
+  e hardware ARM con UEFI conforme (SBSA). **Non** fa boot sugli SBC (Raspberry
+  Pi & co.), che usano un boot proprietario e vogliono un'immagine per SD.
+  Su Mac Apple Silicon oggi gira **in VM**, non sul bare-metal (un boot nativo
+  richiederebbe l'approccio Asahi — voce di roadmap).
+- **Immagine microSD per Raspberry Pi 4/5** (`nexussec-rpi-*.img.gz`) — nuovo
+  formato per gli SBC ARM: usa il boot Raspberry Pi (kernel `linux-rpi` +
+  firmware GPU) con i pacchetti e l'apkovl NexusSec. Si scrive su microSD con
+  `dd` / Raspberry Pi Imager / balenaEtcher. Build: `build-alpine/build-sd-rpi.sh`
+  (profilo `mkimg.nexussec-rpi.sh`). ⚠️ Costruita col metodo diskless ufficiale
+  Alpine ma **da validare su hardware reale**.
+- **ARM64**: le build funzionano su hardware reale (è l'emulatore di build a
+  piantarsi sul C++ pesante) e tornano come asset una volta stabilizzate.
 - **Policy release**: sulle GitHub Releases si tiene allegata **solo l'ISO più
   recente** (per contenere lo spazio); le **note di ogni versione** restano
   consultabili nello storico delle release anche senza l'ISO.

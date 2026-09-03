@@ -334,3 +334,13 @@ Modello: **una immagine, due modalità**. La live resta comoda (autologin,
    NXSDATA montato: live nuda invariata. CLI: `nxs-tool persisted|forget`.
 6. **Agente AI Python** al cuore del sistema (prossimo step,
    `overlay/usr/local/lib/nxs-ai/`).
+7. **Immagine SD per SBC (Raspberry Pi 4/5)** — la ISO aarch64 e' SOLO-UEFI e non
+   fa boot sugli SBC (U-Boot / boot proprietario, non UEFI standard). Serve un
+   formato diverso: immagine per **scheda SD** con la partizione FAT32 di boot del
+   RPi (bootcode/firmware + kernel + initramfs) e il rootfs Alpine + apkovl/overlay
+   NexusSec. Scaffold: `build-alpine/build-sd-rpi.sh` (genera `out/nexussec-rpi-*.img.gz`).
+   DA TESTARE su hardware reale (build "alla cieca", nessun RPi in sviluppo).
+8. **Immagine installabile per Mac Apple Silicon (bare metal, non solo VM)** —
+   sessione futura: oggi su M1/M2/M3 si avvia solo in VM (UTM/Parallels); un boot
+   nativo richiederebbe l'approccio Asahi (m1n1 + device tree + kernel patchato).
+   Da valutare fattibilita' e portata.
