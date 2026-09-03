@@ -97,6 +97,12 @@ FEEDS = {
         "url": "",
         "kind": "cameras",
     },
+    # Layer "intelligence" da OpenStreetMap via Overpass, legati al riquadro
+    # visibile (bbox): basi militari, ospedali, punti strategici (infrastrutture
+    # critiche). Vedi _overpass()/_overpass_to_geojson(). KEYLESS.
+    "military": {"url": "", "kind": "wikidata"},
+    "hospitals": {"url": "", "kind": "wikidata"},
+    "strategic": {"url": "", "kind": "wikidata"},
     "ships": {
         # Digitraffic (Fintraffic): AIS pubblico KEYLESS. Copre Baltico/Nord
         # Europa (l'AIS globale senza chiave non esiste). GeoJSON di posizioni;
@@ -932,6 +938,93 @@ def _resolve_article(url):
     return {"url": final, "embeddable": embeddable}
 
 
+# --- Proxy per il visore web interno -----------------------------------------
+# Wikidata/Wikipedia/Wikimedia/OSM vietano l'iframe (X-Frame-Options/CSP), quindi
+# per mostrarle DENTRO HORUS scarichiamo qui la pagina e la ri-serviamo dalla
+# nostra origine (senza quegli header). Iniettiamo <base href> cosi' CSS/JS/img
+# (relativi o protocol-relative) restano caricati dal sito originale, e ogni
+# link si apre in un tab esterno. Allowlist rigida: solo domini "enciclopedici".
+_EMBED_ALLOW = (
+    "wikidata.org", "wikipedia.org", "wikimedia.org", "wikinews.org",
+    "wikivoyage.org", "wikibooks.org", "wikisource.org", "openstreetmap.org",
+    "n2yo.com",
+)
+_BASE_RE = re.compile(r"<head[^>]*>", re.IGNORECASE)
+
+
+def _embed_host_ok(url):
+    try:
+        host = (urlparse(url).hostname or "").lower()
+    except Exception:
+        return False
+    return any(host == d or host.endswith("." + d) for d in _EMBED_ALLOW)
+
+
+def _embed_page(url, origin=""):
+    """Scarica una pagina della allowlist e la restituisce (HTML, base_url) con
+    <base> iniettato. Solleva se il dominio non e' consentito o il fetch fallisce.
+    `origin` (es. http://127.0.0.1:8787) prefissa gli URL riscritti verso il
+    nostro proxy: senza, il <base href> iniettato li risolverebbe sul sito
+    remoto invece che sul nostro server."""
+    if not _embed_host_ok(url):
+        raise ValueError("dominio non consentito")
+    req = urllib.request.Request(url, headers={
+        "User-Agent": UA,
+        "Accept": "text/html,application/xhtml+xml",
+        "Accept-Language": "it,en;q=0.7",
+    })
+    with _opener().open(req, timeout=TIMEOUT) as r:
+        final = r.geturl()
+        raw = r.read()
+        if (r.headers.get("Content-Encoding", "") or "").lower() == "gzip":
+            import gzip
+            raw = gzip.decompress(raw)
+        ctype = (r.headers.get("Content-Type", "") or "").lower()
+    if not _embed_host_ok(final):        # redirect fuori allowlist: rifiuta
+        raise ValueError("redirect non consentito")
+    charset = "utf-8"
+    m = re.search(r"charset=([\w-]+)", ctype)
+    if m:
+        charset = m.group(1)
+    html = raw.decode(charset, "replace")
+    tag = '<base href="%s" target="_blank">' % final.replace('"', "%22")
+    if _BASE_RE.search(html):
+        html = _BASE_RE.sub(lambda mm: mm.group(0) + tag, html, count=1)
+    else:
+        html = tag + html
+    # maps.wikimedia.org rifiuta l'hotlinking (403 se il Referer non e' Wikimedia):
+    # le mappine delle coordinate non caricherebbero nell'iframe. Le instradiamo
+    # sul nostro proxy immagini, che le scarica col Referer giusto.
+    pfx = (origin.rstrip("/") + "/") if origin else "/"
+    html = _MAPS_IMG_RE.sub(
+        lambda m: pfx + "api/embed-img?url=" + quote(
+            m.group(0).replace("&amp;", "&"), safe=""),
+        html)
+    return html
+
+
+# --- Proxy immagini per il visore (mappe Wikimedia anti-hotlinking) -----------
+_MAPS_IMG_RE = re.compile(r"https://maps\.wikimedia\.org/[^\s\"'<>]+")
+_EMBED_IMG_ALLOW = ("maps.wikimedia.org", "upload.wikimedia.org")
+
+
+def _embed_img(url):
+    """Scarica un'immagine Wikimedia (mappa coordinate) col Referer di Wikidata,
+    aggirando l'anti-hotlinking. Ritorna (bytes, content_type)."""
+    host = (urlparse(url).hostname or "").lower()
+    if host not in _EMBED_IMG_ALLOW:
+        raise ValueError("host immagine non consentito")
+    req = urllib.request.Request(url, headers={
+        "User-Agent": UA,
+        "Referer": "https://www.wikidata.org/",
+        "Accept": "image/avif,image/webp,image/png,image/*,*/*;q=0.8",
+    })
+    with _opener().open(req, timeout=TIMEOUT) as r:
+        data = r.read()
+        ctype = r.headers.get("Content-Type", "image/png") or "image/png"
+    return data, ctype
+
+
 # Modalita' lettura: tanti siti vietano l'iframe (X-Frame-Options/CSP), quindi
 # invece di incorporare la pagina ne ESTRAIAMO il testo qui e lo mostriamo
 # pulito nella finestrella. Niente dipendenze: un piccolo HTMLParser che salta
@@ -1545,6 +1638,131 @@ def _fetch(url, headers=None, timeout=None):
         return json.loads(raw.decode("utf-8", "replace"))
 
 
+# ---------------------------------------------------------------------------
+# Wikidata Query Service (SPARQL): layer "intelligence" GLOBALI e FISSI (basi
+# militari, ospedali, punti strategici). WDQS restituisce decine di migliaia di
+# punti geolocalizzati in pochi secondi (una query Overpass mondiale invece va
+# in timeout: gli ospedali sono ~40k). KEYLESS. Cache server 12h + IndexedDB
+# lato client (persistono tra sessioni, offline-ready). Nessun vincolo bbox.
+# ---------------------------------------------------------------------------
+# QLever (qlever.dev) come PRIMARIO: gestisce le query mondiali pesanti in
+# ~2s dove WDQS va in 502 (es. punti strategici, 163k risultati). WDQS resta
+# come fallback. NB: il vecchio dominio qlever.cs.uni-freiburg.de fa 308 verso
+# qlever.dev e urllib non segue il 308 -> usare direttamente il nuovo host.
+_WIKIDATA_EPS = (
+    "https://qlever.dev/api/wikidata",
+    "https://query.wikidata.org/sparql",
+)
+_WIKIDATA_TTL = 43200         # cache server 12h (dati fissi)
+_WIKIDATA_CACHE = {}          # fid -> (ts, data)
+_WD_PREFIX = ("PREFIX wd: <http://www.wikidata.org/entity/> "
+              "PREFIX wdt: <http://www.wikidata.org/prop/direct/> ")
+# Solo coordinate (i nomi in blocco fanno andare WDQS in 502 a queste scale):
+# il nome si apre al clic via il link Wikidata nel fumetto.
+_WIKIDATA_Q = {
+    "military": _WD_PREFIX +
+        "SELECT ?item ?coord WHERE { ?item wdt:P31/wdt:P279* wd:Q245016 ; "
+        "wdt:P625 ?coord . }",
+    "hospitals": _WD_PREFIX +
+        "SELECT ?item ?coord WHERE { ?item wdt:P31/wdt:P279* wd:Q16917 ; "
+        "wdt:P625 ?coord . }",
+    "strategic": _WD_PREFIX +
+        "SELECT ?item ?coord ?class WHERE { "
+        "VALUES ?class { wd:Q159719 wd:Q1248784 wd:Q12323 wd:Q44782 } "
+        "?item wdt:P31/wdt:P279* ?class ; wdt:P625 ?coord . }",
+}
+# QID -> etichetta leggibile (kind del punto e categorie del layer strategico).
+_WD_KIND = {
+    "Q245016": "base militare", "Q16917": "ospedale",
+    "Q159719": "centrale elettrica", "Q1248784": "aeroporto",
+    "Q12323": "diga", "Q44782": "porto",
+}
+_WD_UA = ("NexusSec-HORUS/1.0 (OSINT dashboard; "
+          "+https://github.com/RedRider21/NexusSec-OS)")
+# WDQS scrive "Point(lon lat)", QLever "POINT(lon lat)": match case-insensitive
+# (senza, i punti QLever venivano scartati o mal interpretati).
+_WD_POINT = re.compile(r"Point\(([-0-9.eE]+)\s+([-0-9.eE]+)\)", re.IGNORECASE)
+
+
+def _wikidata(fid):
+    """Esegue la query SPARQL del layer `fid` su WDQS (fallback QLever). Cache
+    12h: i dati sono fissi e li conserva anche il client (IndexedDB)."""
+    import urllib.parse
+    hit = _WIKIDATA_CACHE.get(fid)
+    now = time.time()
+    if hit and now - hit[0] < _WIKIDATA_TTL:
+        return hit[1]
+    q = "?format=json&query=" + urllib.parse.quote(_WIKIDATA_Q[fid])
+    last = None
+    for ep in _WIKIDATA_EPS:
+        try:
+            data = _fetch(ep + q, headers={
+                "User-Agent": _WD_UA,
+                "Accept": "application/sparql-results+json"}, timeout=90)
+            _WIKIDATA_CACHE[fid] = (now, data)
+            return data
+        except Exception as e:      # noqa: BLE001
+            last = e
+    raise last or RuntimeError("Wikidata non raggiungibile")
+
+
+def _wikidata_to_geojson(fid, data):
+    """Converte i binding SPARQL (coord = WKT 'Point(lon lat)') in GeoJSON."""
+    feats = []
+    default_kind = _WD_KIND.get(
+        {"military": "Q245016", "hospitals": "Q16917"}.get(fid, ""), "")
+    for b in data.get("results", {}).get("bindings", []):
+        m = _WD_POINT.match((b.get("coord") or {}).get("value", ""))
+        if not m:
+            continue
+        lon, lat = float(m.group(1)), float(m.group(2))
+        qid = (b.get("item") or {}).get("value", "").rsplit("/", 1)[-1]
+        if fid == "strategic":
+            cq = (b.get("class") or {}).get("value", "").rsplit("/", 1)[-1]
+            kind = _WD_KIND.get(cq, "")
+        else:
+            kind = default_kind
+        feats.append({
+            "type": "Feature",
+            "geometry": {"type": "Point", "coordinates": [lon, lat]},
+            "properties": {"name": "", "kind": kind, "wd": qid},
+        })
+    return {"type": "FeatureCollection", "features": feats}
+
+
+_WDLABEL_CACHE = {}           # qid -> nome (it/en)
+
+
+def _wdlabels(ids):
+    """Risolve i nomi (etichette it/en) di una manciata di QID via l'API
+    wbgetentities di Wikidata (keyless, fino a 50 id per chiamata). Serve a
+    mostrare il nome dell'entita' nel fumetto PRIMA di aprire la scheda, senza
+    appesantire la query mondiale delle coordinate. Cache in RAM."""
+    import urllib.parse
+    ids = [q for q in ids if re.match(r"^Q[0-9]+$", q or "")][:50]
+    out, miss = {}, []
+    for q in ids:
+        if q in _WDLABEL_CACHE:
+            out[q] = _WDLABEL_CACHE[q]
+        else:
+            miss.append(q)
+    if miss:
+        url = ("https://www.wikidata.org/w/api.php?action=wbgetentities&ids="
+               + "|".join(miss) + "&props=labels&languages=it|en&format=json")
+        try:
+            data = _fetch(url, headers={"User-Agent": _WD_UA}, timeout=15)
+            for q, ent in (data.get("entities") or {}).items():
+                lab = (ent.get("labels") or {})
+                name = ((lab.get("it") or {}).get("value")
+                        or (lab.get("en") or {}).get("value") or "")
+                _WDLABEL_CACHE[q] = name
+                out[q] = name
+        except Exception:
+            for q in miss:            # fallback: lascia vuoto (il fumetto usa il generico)
+                out.setdefault(q, "")
+    return out
+
+
 def _eonet_to_geojson(data):
     """Normalizza gli eventi EONET (vulcani/incendi) in un FeatureCollection
     di punti: prende l'ULTIMA geometria di ogni evento (la piu' recente) e
@@ -1615,9 +1833,14 @@ def _gvp_to_geojson(data):
 _CAMS = {"ts": 0, "data": None}
 # Distretti Caltrans piu' densi (California): Bay Area (4), Los Angeles (7),
 # San Diego (11). Tetti per rete: tante telecamere = tanti marker, e l'ambiente
-# WebKit della distro rende in software; teniamo il totale gestibile.
-_CALTRANS_DISTRICTS = (4, 7, 11)
-_CAM_CAP = {"tfl": 300, "caltrans": 300, "ontario": 200, "finland": 260, "nz": 220}
+# WebKit della distro rende in software; il canvas della mappa regge migliaia di
+# marker. Caltrans espone 12 distretti KEYLESS (~3500 telecamere in tutto): li
+# usiamo tutti per coprire l'intera California invece di 3 sole aree.
+_CALTRANS_DISTRICTS = tuple(range(1, 13))
+# Cap per rete: alzati per una copertura molto piu' ampia (le reti hanno
+# centinaia/migliaia di telecamere).
+_CAM_CAP = {"tfl": 900, "caltrans": 4000, "ontario": 1000, "finland": 800,
+            "nz": 500, "singapore": 200}
 
 
 def _cam_feat(lat, lon, title, network, image, url, view, video=""):
@@ -1662,34 +1885,41 @@ def _cameras_official():
                 break
     except Exception:
         pass
-    # Caltrans - California DOT: piu' distretti, currentImageURL = JPEG diretto.
-    ct = 0
-    for d in _CALTRANS_DISTRICTS:
+    # Caltrans - California DOT: 12 distretti, currentImageURL = JPEG diretto.
+    # I distretti si scaricano IN PARALLELO (12 richieste sequenziali erano ~40s).
+    from concurrent.futures import ThreadPoolExecutor
+
+    def _caltrans_district(d):
         try:
-            data = _fetch("https://cwwp2.dot.ca.gov/data/d%d/cctv/cctvStatusD%02d.json"
+            return _fetch("https://cwwp2.dot.ca.gov/data/d%d/cctv/cctvStatusD%02d.json"
                           % (d, d))
         except Exception:
-            continue
-        for row in data.get("data", []):
-            c = row.get("cctv") or {}
-            loc = c.get("location") or {}
-            lat, lon = loc.get("latitude"), loc.get("longitude")
-            img = ((c.get("imageData") or {}).get("static") or {}).get("currentImageURL")
-            if not img or lat in (None, "") or lon in (None, ""):
-                continue
-            if str(c.get("inService", "true")).lower() == "false":
-                continue
-            try:
-                feats.append(_cam_feat(lat, lon, loc.get("locationName", ""),
-                                       "Caltrans · California", img, img,
-                                       loc.get("route", "")))
-            except (TypeError, ValueError):
-                continue
-            ct += 1
+            return None
+    ct = 0
+    with ThreadPoolExecutor(max_workers=6) as ex:
+        for data in ex.map(_caltrans_district, _CALTRANS_DISTRICTS):
             if ct >= _CAM_CAP["caltrans"]:
                 break
-        if ct >= _CAM_CAP["caltrans"]:
-            break
+            if not data:
+                continue
+            for row in data.get("data", []):
+                c = row.get("cctv") or {}
+                loc = c.get("location") or {}
+                lat, lon = loc.get("latitude"), loc.get("longitude")
+                img = ((c.get("imageData") or {}).get("static") or {}).get("currentImageURL")
+                if not img or lat in (None, "") or lon in (None, ""):
+                    continue
+                if str(c.get("inService", "true")).lower() == "false":
+                    continue
+                try:
+                    feats.append(_cam_feat(lat, lon, loc.get("locationName", ""),
+                                           "Caltrans · California", img, img,
+                                           loc.get("route", "")))
+                except (TypeError, ValueError):
+                    continue
+                ct += 1
+                if ct >= _CAM_CAP["caltrans"]:
+                    break
     # Ontario 511 - Ministero dei Trasporti dell'Ontario (Canada). La Url della
     # "View" e' gia' un JPEG diretto.
     try:
@@ -1766,6 +1996,27 @@ def _cameras_official():
                                    _t("direction") or ""))
             cnt += 1
             if cnt >= _CAM_CAP["nz"]:
+                break
+    except Exception:
+        pass
+    # LTA - Singapore (Asia). data.gov.sg espone le immagini del traffico in
+    # tempo reale, KEYLESS: ogni camera ha coord e un JPEG diretto.
+    try:
+        data = _fetch("https://api.data.gov.sg/v1/transport/traffic-images")
+        cnt = 0
+        for it in (data.get("items") or []):
+            for c in (it.get("cameras") or []):
+                loc = c.get("location") or {}
+                lat, lon = loc.get("latitude"), loc.get("longitude")
+                img = c.get("image")
+                if lat is None or lon is None or not img:
+                    continue
+                feats.append(_cam_feat(lat, lon, "Camera " + str(c.get("camera_id", "")),
+                                       "LTA · Singapore", img, img, ""))
+                cnt += 1
+                if cnt >= _CAM_CAP["singapore"]:
+                    break
+            if cnt >= _CAM_CAP["singapore"]:
                 break
     except Exception:
         pass
@@ -1917,6 +2168,71 @@ def _tle_fetch():
         if len(out) >= 900:
             break
     return out
+
+
+# Starlink: layer separato (~6000 satelliti), scaricato SOLO se l'utente accende
+# la spunta. Cache propria (memoria 2h + file), come per il set curato.
+_TLE_SL = {"ts": 0, "data": None, "try": 0}
+_TLE_SL_LOCK = threading.Lock()
+
+
+def _tle_starlink_fetch():
+    try:
+        req = urllib.request.Request(
+            "https://celestrak.org/NORAD/elements/gp.php?GROUP=starlink&FORMAT=tle",
+            headers={"User-Agent": UA})
+        with _opener().open(req, timeout=20) as r:
+            txt = r.read().decode("utf-8", "replace")
+    except Exception:
+        return []
+    lines = [l.rstrip() for l in txt.splitlines() if l.strip()]
+    out = []
+    for i in range(0, len(lines) - 2, 3):
+        name, l1, l2 = lines[i].strip(), lines[i + 1], lines[i + 2]
+        if l1.startswith("1 ") and l2.startswith("2 "):
+            out.append({"name": name, "l1": l1, "l2": l2, "group": "starlink"})
+    return out
+
+
+def _tle_starlink():
+    """TLE del gruppo Starlink (keyless). Cache 2h in memoria + file dedicato."""
+    now = time.time()
+    if _TLE_SL["data"] and now - _TLE_SL["ts"] < 7200:
+        return _TLE_SL["data"]
+    slf = _CONF_DIR / "tle-starlink.json"
+    if not _TLE_SL_LOCK.acquire(blocking=False):
+        return _TLE_SL["data"] or _tle_load_named(slf)
+    try:
+        now = time.time()
+        if _TLE_SL["data"] and now - _TLE_SL["ts"] < 7200:
+            return _TLE_SL["data"]
+        if not _TLE_SL["data"] and now - _TLE_SL["try"] < 60:
+            return _TLE_SL["data"] or _tle_load_named(slf)
+        _TLE_SL["try"] = now
+        out = _tle_starlink_fetch()
+        if out:
+            _TLE_SL["data"] = out
+            _TLE_SL["ts"] = time.time()
+            _tle_save_named(slf, out)
+            return out
+        return _TLE_SL["data"] or _tle_load_named(slf)
+    finally:
+        _TLE_SL_LOCK.release()
+
+
+def _tle_load_named(path):
+    try:
+        return json.loads(Path(path).read_text()).get("sats") or []
+    except Exception:
+        return []
+
+
+def _tle_save_named(path, sats):
+    try:
+        _CONF_DIR.mkdir(parents=True, exist_ok=True)
+        Path(path).write_text(json.dumps({"ts": time.time(), "sats": sats}))
+    except OSError:
+        pass
 
 
 def _resolve(target):
@@ -2411,8 +2727,11 @@ class Handler(BaseHTTPRequestHandler):
             return self._json({"up": _port_up("127.0.0.1", PHONE_PORT),
                                "port": PHONE_PORT})
         if path == "/api/tle":
+            q = parse_qs(urlparse(self.path).query)
+            grp = (q.get("group", [""])[0] or "").lower()
             try:
-                return self._json({"sats": _tle()})
+                sats = _tle_starlink() if grp == "starlink" else _tle()
+                return self._json({"sats": sats})
             except Exception as e:
                 return self._json({"sats": [], "error": str(e)}, 502)
         if path == "/api/tools":
@@ -2495,6 +2814,46 @@ class Handler(BaseHTTPRequestHandler):
             except (KeyError, ValueError):
                 return self._json({"error": "parametri area mancanti"}, 400)
             return self._json(_area(*vals))
+        if path == "/api/wdlabel":
+            q = parse_qs(urlparse(self.path).query)
+            ids = (q.get("ids", [""])[0] or "").split(",")
+            return self._json(_wdlabels(ids))
+        if path == "/api/embed-img":
+            q = parse_qs(urlparse(self.path).query)
+            u = q.get("url", [""])[0]
+            if not u.startswith("https://"):
+                return self.send_error(400)
+            try:
+                data, ctype = _embed_img(u)
+            except Exception:
+                self.send_error(502)
+                return
+            self.send_response(200)
+            self.send_header("Content-Type", ctype)
+            self.send_header("Content-Length", str(len(data)))
+            self.send_header("Cache-Control", "public, max-age=86400")
+            self.end_headers()
+            self.wfile.write(data)
+            return
+        if path == "/api/embed":
+            q = parse_qs(urlparse(self.path).query)
+            u = q.get("url", [""])[0]
+            if not u.startswith(("http://", "https://")):
+                return self.send_error(400)
+            host = self.headers.get("Host", "127.0.0.1")
+            try:
+                html = _embed_page(u, origin="http://" + host)
+            except Exception:
+                self.send_error(502)
+                return
+            body = html.encode("utf-8", "replace")
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Content-Length", str(len(body)))
+            self.send_header("Cache-Control", "no-cache")
+            self.end_headers()
+            self.wfile.write(body)
+            return
         if path.startswith("/api/feed/"):
             return self._feed(path[len("/api/feed/"):])
         if path == "/api/recorder":
@@ -2559,6 +2918,15 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json(_cameras_official())
             except Exception as e:
                 return self._json({"error": "telecamere non raggiungibili: %s" % e}, 502)
+
+        # Layer Wikidata (basi militari / ospedali / punti strategici): query
+        # SPARQL MONDIALE, punti fissi, cache 12h. Nessun vincolo di riquadro.
+        if fd["kind"] == "wikidata":
+            try:
+                data = _wikidata(fid)
+            except Exception as e:
+                return self._json({"error": "Wikidata non raggiungibile: %s" % e}, 502)
+            return self._json(_wikidata_to_geojson(fid, data))
 
         url = fd["url"]
         headers = dict(fd.get("headers") or {})

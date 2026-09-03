@@ -190,6 +190,36 @@ function popup(title, rows, links) {
 }
 function when(ms) { try { return new Date(ms).toLocaleString(); } catch (e) { return ""; } }
 
+// --- Nomi Wikidata risolti "a richiesta" (lazy) ---
+// Le query mondiali (basi/ospedali/strategici) caricano SOLO le coordinate, per
+// restare veloci; il nome dell'entita' lo risolviamo al volo quando si apre il
+// fumetto (via api/wdlabel -> wbgetentities). Cache di promesse per QID.
+const _wdLabelCache = new Map();
+function wdLabel(qid) {
+  if (!qid) return Promise.resolve("");
+  if (_wdLabelCache.has(qid)) return _wdLabelCache.get(qid);
+  const p = fetch("api/wdlabel?ids=" + encodeURIComponent(qid))
+    .then(r => r.json()).then(d => (d && d[qid]) || "").catch(() => "");
+  _wdLabelCache.set(qid, p);
+  return p;
+}
+// Marker per i layer "intel" (Wikidata): fumetto con nome (risolto al volo) +
+// tipo + link Wikidata (che si apre nella finestra interna).
+function intelMarker(c, p, color, fallback, kindLabel, layer) {
+  const rows = () => [[kindLabel, esc(p.kind || "")]];
+  const links = () => [["Wikidata", p.wd ? "https://www.wikidata.org/wiki/" + p.wd : ""]];
+  const mk = L.circleMarker([c[1], c[0]], dot(color, 5))
+    .bindPopup(popup(p.name || fallback, rows(), links()), { maxWidth: 260 });
+  mk.on("popupopen", () => {
+    if (!p.wd || p.name) return;             // gia' risolto: niente
+    wdLabel(p.wd).then(nm => {
+      if (nm) { p.name = nm; mk.setPopupContent(popup(nm, rows(), links())); }
+    });
+  });
+  mk.addTo(layer);
+  return mk;
+}
+
 const FEEDS = [
   {
     id: "quakes", nome: "Terremoti (24h)", color: "#ff5a8a",
@@ -400,6 +430,53 @@ const FEEDS = [
     desc: "CelesTrak - orbite calcolate live (stazioni, GPS, meteo, GEO...)",
     render() { return 0; },
   },
+  {
+    // Starlink: costellazione SpaceX (~6000). Layer SEPARATO, spento di default
+    // (spunta a parte): si carica solo se acceso, cosi' chi non lo vuole non
+    // paga marker/CPU. TLE dal gruppo "starlink" di CelesTrak (vedi startSats).
+    id: "starlink", nome: "Starlink", color: "#7dd3fc",
+    desc: "CelesTrak - costellazione SpaceX (~6000, calcolata live)",
+    render() { return 0; },
+  },
+  {
+    id: "military", nome: "Basi militari", color: "#d1495b",
+    desc: "Installazioni militari nel mondo (Wikidata), caricate una volta",
+    render(data, layer) {
+      let n = 0;
+      (data.features || []).forEach(f => {
+        const c = f.geometry && f.geometry.coordinates; if (!c) return;
+        intelMarker(c, f.properties, "#d1495b", "Sito militare", "Tipo", layer);
+        n++;
+      });
+      return n;
+    },
+  },
+  {
+    id: "hospitals", nome: "Ospedali", color: "#2ec4b6",
+    desc: "Ospedali nel mondo (Wikidata), caricati una volta",
+    render(data, layer) {
+      let n = 0;
+      (data.features || []).forEach(f => {
+        const c = f.geometry && f.geometry.coordinates; if (!c) return;
+        intelMarker(c, f.properties, "#2ec4b6", "Ospedale", "Tipo", layer);
+        n++;
+      });
+      return n;
+    },
+  },
+  {
+    id: "strategic", nome: "Punti strategici", color: "#f4a259",
+    desc: "Infrastrutture critiche nel mondo (Wikidata): centrali, aeroporti, dighe, porti",
+    render(data, layer) {
+      let n = 0;
+      (data.features || []).forEach(f => {
+        const c = f.geometry && f.geometry.coordinates; if (!c) return;
+        intelMarker(c, f.properties, "#f4a259", "Punto strategico", "Categoria", layer);
+        n++;
+      });
+      return n;
+    },
+  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -437,8 +514,8 @@ function toggleFeed(id) {
 }
 // Dispatch: i satelliti girano con un motore proprio (calcolo client), gli
 // altri col motore di streaming generico.
-function startFeed(id) { if (id === "satellites") startSats(); else startLayer(id); }
-function stopFeed(id) { if (id === "satellites") stopSats(); else stopLayer(id); }
+function startFeed(id) { if (SAT_LAYERS[id]) startSats(id); else startLayer(id); }
+function stopFeed(id) { if (SAT_LAYERS[id]) stopSats(id); else stopLayer(id); }
 
 // Ricorda quali layer sono accesi, cosi' restano attivi dopo un refresh.
 function saveActive() {
@@ -510,6 +587,11 @@ const STREAM = {
   fires:   { live: false, interval: 900 },
   cables:  { live: false, interval: 86400 },
   cameras: { live: false, interval: 300 },
+  // Layer OSM GLOBALI (punti fissi): scaricati una volta a livello mondiale e
+  // tenuti in IndexedDB (persistono tra sessioni). Refresh raro (12h).
+  military:  { live: false, interval: 43200 },
+  hospitals: { live: false, interval: 43200 },
+  strategic: { live: false, interval: 43200 },
 };
 const dueAt = {};      // id -> timestamp(ms) del prossimo poll
 const polling = {};    // id -> in corso (evita sovrapposizioni)
@@ -727,6 +809,14 @@ async function pollLayer(id) {
     const r = await fetch(url);
     const body = await r.json();
     if (!r.ok || body.error) throw new Error(body.error || ("HTTP " + r.status));
+    // Layer bbox (OSM): quando l'area e' troppo ampia il server risponde con un
+    // "hint" e nessun elemento -> mostriamo l'invito a ingrandire, non "0".
+    if (body.hint && !(body.features && body.features.length)) {
+      layers[id].clearLayers();
+      cnt.textContent = "⤢"; cnt.classList.remove("err"); cnt.title = body.hint;
+      feedMsg(body.hint);
+      return;
+    }
     await dbPut(id, body);
     // Se c'e' un fumetto aperto su un layer "live", NON ridisegniamo (lo
     // chiuderemmo sotto il naso): i dati restano aggiornati in IndexedDB e
@@ -766,45 +856,58 @@ function loadFeed(id) { return pollLayer(id); }
 const GROUP_IT = {
   stations: "Stazioni", "gps-ops": "GPS", galileo: "Galileo",
   "glo-ops": "GLONASS", beidou: "BeiDou", weather: "Meteo", noaa: "NOAA",
-  goes: "GOES", science: "Scienza", geo: "Geostazionari",
+  goes: "GOES", science: "Scienza", geo: "Geostazionari", starlink: "Starlink",
 };
-let satRecs = [];        // {name, group, satrec}
-let satTLEts = 0;        // quando abbiamo preso i TLE (ms)
-let satLoading = false;
+// Due layer satellitari, ciascuno con i suoi TLE/record: "satellites" (set
+// curato) e "starlink" (costellazione SpaceX, ~6000, caricata a parte solo se
+// l'utente accende la spunta). Stato per-layer per non mischiarli.
+const SAT_LAYERS = {
+  satellites: { query: "api/tle", color: "#e0b3ff", radius: 3, label: "Satelliti", redrawMs: 1000 },
+  // Starlink e' ~10k satelliti: ridisegnarli ogni secondo saturerebbe il WebKit
+  // software della distro, quindi lo ricalcoliamo piu' di rado (movimento ancora
+  // fluido a queste quote).
+  starlink: { query: "api/tle?group=starlink", color: "#7dd3fc", radius: 2, label: "Starlink", redrawMs: 3000 },
+};
+const satState = {
+  satellites: { recs: [], ts: 0, loading: false },
+  starlink: { recs: [], ts: 0, loading: false },
+};
 
-async function loadTLE() {
-  if (satLoading) return;
-  satLoading = true;
-  const cnt = feedEl("satellites").querySelector(".cnt");
+async function loadTLE(id) {
+  const st = satState[id], cfg = SAT_LAYERS[id];
+  if (st.loading) return;
+  st.loading = true;
+  const cnt = feedEl(id).querySelector(".cnt");
   cnt.textContent = "..."; cnt.classList.remove("err");
   try {
-    const d = await (await fetch("api/tle")).json();
+    const d = await (await fetch(cfg.query)).json();
     const sats = d.sats || [];
     if (!sats.length) throw new Error(d.error || "nessun TLE disponibile");
-    satRecs = [];
+    const recs = [];
     sats.forEach(s => {
       try {
         const rec = satellite.twoline2satrec(s.l1, s.l2);
-        if (rec && !rec.error) satRecs.push({ name: s.name, group: s.group, satrec: rec });
+        if (rec && !rec.error) recs.push({ name: s.name, group: s.group, satrec: rec });
       } catch (e) { /* TLE malformato: salta */ }
     });
-    satTLEts = Date.now();
+    st.recs = recs; st.ts = Date.now();
     feedMsg("");
   } catch (e) {
     cnt.textContent = "!"; cnt.classList.add("err"); cnt.title = String(e.message || e);
-    feedMsg("Satelliti: " + (e.message || e));
-  } finally { satLoading = false; }
+    feedMsg(cfg.label + ": " + (e.message || e));
+  } finally { st.loading = false; }
 }
 
-function drawSats() {
-  if (!active["satellites"] || !window.satellite || !satRecs.length) return;
+function drawSats(id) {
+  const st = satState[id], cfg = SAT_LAYERS[id];
+  if (!active[id] || !window.satellite || !st.recs.length) return;
   const now = new Date();
   const gmst = satellite.gstime(now);
-  const layer = layers["satellites"];
+  const layer = layers[id];
   layer.clearLayers();
   let n = 0;
-  for (let i = 0; i < satRecs.length; i++) {
-    const s = satRecs[i];
+  for (let i = 0; i < st.recs.length; i++) {
+    const s = st.recs[i];
     let pv;
     try { pv = satellite.propagate(s.satrec, now); } catch (e) { continue; }
     const pos = pv && pv.position;
@@ -823,22 +926,23 @@ function drawSats() {
       ["Velocità", vel],
       ["Lat, Lon", lat.toFixed(2) + ", " + lon.toFixed(2)],
     ];
-    L.circleMarker([lat, lon], dot("#e0b3ff", 3))
+    L.circleMarker([lat, lon], dot(cfg.color, cfg.radius))
       .bindPopup(popup(s.name || "Satellite", rows,
         [["Scheda N2YO", "https://www.n2yo.com/?s=" + (s.satrec.satnum || "")]]),
         { maxWidth: 260 })
       .addTo(layer);
     n++;
   }
-  feedEl("satellites").querySelector(".cnt").textContent = n;
+  feedEl(id).querySelector(".cnt").textContent = n;
 }
 
-async function startSats() {
+async function startSats(id) {
   if (!window.satellite) { feedMsg("satellite.js non caricato"); return; }
-  if (!satRecs.length || Date.now() - satTLEts > 7200000) await loadTLE();
-  drawSats();
+  const st = satState[id];
+  if (!st.recs.length || Date.now() - st.ts > 7200000) await loadTLE(id);
+  drawSats(id);
 }
-function stopSats() { /* lo scheduler smette di ridisegnare quando inattivo */ }
+function stopSats(id) { /* lo scheduler smette di ridisegnare quando inattivo */ }
 
 document.getElementById("feed-refresh").addEventListener("click", () => {
   Object.keys(active).forEach(id => { if (active[id]) { pollLayer(id); dueAt[id] = Date.now() + cadence(id); } });
@@ -1255,14 +1359,76 @@ const lightbox = document.getElementById("lightbox");
 const lightboxImg = document.getElementById("lightbox-img");
 function openLightbox(src) { lightboxImg.src = src; lightbox.hidden = false; }
 function closeLightbox() { lightbox.hidden = true; lightboxImg.removeAttribute("src"); }
+
+// --- Finestra telecamera ingrandibile (come reader/live/webwin) --------------
+// Clic su una telecamera del fumetto -> finestra interna ridimensionabile con
+// immagine/clip in diretta che continua a rinfrescarsi. Le foto non-telecamera
+// (es. vulcani) restano sul lightbox semplice.
+const camwinEl = document.getElementById("camwin");
+const camwinImg = document.getElementById("camwin-img");
+const camwinVid = document.getElementById("camwin-vid");
+let camwinTimer = null;
+function closeCam() {
+  camwinEl.hidden = true;
+  if (camwinTimer) { clearInterval(camwinTimer); camwinTimer = null; }
+  camwinImg.removeAttribute("src");
+  try { camwinVid.pause(); } catch (e) {}
+  camwinVid.removeAttribute("src");
+}
+function openCam(o) {
+  document.getElementById("camwin-title").textContent = o.title || "Telecamera";
+  document.getElementById("camwin-net").textContent = o.net || "";
+  const ext = document.getElementById("camwin-ext");
+  if (o.extUrl) { ext.href = o.extUrl; ext.hidden = false; } else { ext.hidden = true; }
+  if (camwinTimer) { clearInterval(camwinTimer); camwinTimer = null; }
+  if (o.video) {
+    camwinImg.hidden = true; camwinVid.hidden = false;
+    camwinVid.src = o.video; camwinVid.play().catch(() => {});
+  } else {
+    camwinVid.hidden = true; try { camwinVid.pause(); } catch (e) {}
+    camwinVid.removeAttribute("src");
+    camwinImg.hidden = false;
+    const base = o.image;
+    const bust = () => { camwinImg.src = base + (base.indexOf("?") < 0 ? "?" : "&") + "t=" + Date.now(); };
+    bust();
+    if (o.live) camwinTimer = setInterval(bust, 6000);   // JPEG che si rinnova
+  }
+  camwinEl.classList.remove("expanded");
+  camwinEl.hidden = false;
+}
+function openCamFromEl(el) {
+  const pop = el.closest(".cam-pop");
+  const b = pop && pop.querySelector("b");
+  const net = pop && pop.querySelector(".cam-net");
+  const a = pop && pop.querySelector("a[href]");
+  const isVid = el.tagName === "VIDEO";
+  openCam({
+    title: b ? b.textContent : "Telecamera",
+    net: net ? net.textContent.trim() : "",
+    extUrl: a ? a.href : "",
+    video: isVid ? el.getAttribute("data-src") : "",
+    image: isVid ? "" : el.getAttribute("data-src"),
+    live: !isVid,
+  });
+}
+document.getElementById("camwin-close").addEventListener("click", closeCam);
+document.getElementById("camwin-expand").addEventListener("click",
+  () => camwinEl.classList.toggle("expanded"));
+
 document.addEventListener("click", e => {
+  // Telecamera del traffico (immagine live o clip): finestra ingrandibile.
+  const cam = e.target.closest("img.cam-live, video.cam-vid");
+  if (cam) { openCamFromEl(cam); return; }
+  // Altre immagini .cam (foto vulcani ecc.): lightbox semplice.
   const img = e.target.closest("img.cam");
   if (img && img.src) { openLightbox(img.src); }
 });
 lightbox.addEventListener("click", e => {
   if (e.target === lightbox || e.target.id === "lightbox-close") closeLightbox();
 });
-document.addEventListener("keydown", e => { if (e.key === "Escape") closeLightbox(); });
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") { closeLightbox(); closeCam(); }
+});
 
 // ---------------------------------------------------------------------------
 // Aggiornamento in tempo reale: l'interruttore master accende/spegne il flusso
@@ -1300,15 +1466,20 @@ setInterval(() => {
   if (!autoOn.checked) { paintAuto(); return; }
   const now = Date.now();
   Object.keys(active).forEach(id => {
-    if (!active[id] || id === "satellites") return;   // i satelliti hanno il loro giro
+    if (!active[id] || SAT_LAYERS[id]) return;   // i satelliti hanno il loro giro
     if (dueAt[id] == null) dueAt[id] = now;
     if (now >= dueAt[id]) { pollLayer(id); dueAt[id] = now + cadence(id); }
   });
-  // Satelliti: ricalcolo posizioni ogni secondo (movimento fluido); TLE ogni 2h.
-  if (active["satellites"]) {
-    if (!satLoading && now - satTLEts > 7200000) loadTLE();
-    if (!popupOpen) drawSats();
-  }
+  // Satelliti (curati + Starlink): ricalcolo posizioni ogni secondo (movimento
+  // fluido); TLE ogni 2h. Ogni layer satellitare gira solo se acceso.
+  Object.keys(SAT_LAYERS).forEach(id => {
+    if (!active[id]) return;
+    const st = satState[id];
+    if (!st.loading && now - st.ts > 7200000) loadTLE(id);
+    if (!popupOpen && now - (st.lastDraw || 0) >= SAT_LAYERS[id].redrawMs) {
+      drawSats(id); st.lastDraw = now;
+    }
+  });
   if (activeArea && now >= areaDue) {
     areaSearch(activeArea);
     areaDue = now + parseInt(autoInt.value, 10) * 1000;
@@ -2376,14 +2547,61 @@ document.getElementById("live-close").addEventListener("click", closeLive);
 document.getElementById("live-expand").addEventListener("click",
   () => liveEl.classList.toggle("expanded"));
 
+// --- Visore web interno: apre Wikidata/Wikipedia/Wikimedia/OSM DENTRO HORUS ---
+// (via proxy api/embed che aggira X-Frame-Options) invece che in un tab esterno.
+const EMBED_ALLOW = [
+  "wikidata.org", "wikipedia.org", "wikimedia.org", "wikinews.org",
+  "wikivoyage.org", "wikibooks.org", "wikisource.org", "openstreetmap.org",
+  "n2yo.com",
+];
+function embeddableUrl(url) {
+  try {
+    const u = new URL(url, location.href);
+    if (u.protocol !== "http:" && u.protocol !== "https:") return false;
+    const h = u.hostname.toLowerCase();
+    return EMBED_ALLOW.some(d => h === d || h.endsWith("." + d));
+  } catch (e) { return false; }
+}
+const webwinEl = document.getElementById("webwin");
+const webwinFrame = document.getElementById("webwin-frame");
+const webwinMsg = document.getElementById("webwin-msg");
+function openEmbed(url, title) {
+  document.getElementById("webwin-title").textContent = title || "Scheda";
+  document.getElementById("webwin-ext").href = url;
+  webwinMsg.hidden = true;
+  webwinFrame.hidden = false;
+  webwinFrame.src = "api/embed?url=" + encodeURIComponent(url);
+  webwinEl.classList.remove("expanded");
+  webwinEl.hidden = false;
+}
+function closeEmbed() {
+  webwinEl.hidden = true;
+  webwinFrame.src = "about:blank";
+}
+webwinFrame.addEventListener("error", () => {
+  webwinFrame.hidden = true; webwinMsg.hidden = false;
+  webwinMsg.textContent = "Impossibile caricare la scheda. Usa “apri ↗” per aprirla nel browser.";
+});
+document.getElementById("webwin-close").addEventListener("click", closeEmbed);
+document.getElementById("webwin-expand").addEventListener("click",
+  () => webwinEl.classList.toggle("expanded"));
+
 document.addEventListener("click", e => {
   const lv = e.target.closest("a.live-open");
   if (lv) { e.preventDefault(); openLive(); return; }
   const a = e.target.closest("a.news-item");
-  if (a) { e.preventDefault(); openReader(a.getAttribute("href"), a.dataset.title, a.dataset.src); }
+  if (a) { e.preventDefault(); openReader(a.getAttribute("href"), a.dataset.title, a.dataset.src); return; }
+  // Link a domini enciclopedici (Wikidata/Wikipedia/OSM/N2YO...): finestra
+  // interna. ECCEZIONE: i link "apri ↗" (classe linklike) delle finestre stesse
+  // devono SEMPRE aprire il tab esterno, quindi NON li intercettiamo.
+  const w = e.target.closest("a[href]");
+  if (w && !w.classList.contains("linklike") && embeddableUrl(w.getAttribute("href"))) {
+    e.preventDefault();
+    openEmbed(w.href, w.textContent || "Scheda");
+  }
 });
 document.addEventListener("keydown", e => {
-  if (e.key === "Escape") { closeReader(); closeLive(); }
+  if (e.key === "Escape") { closeReader(); closeLive(); closeEmbed(); }
 });
 
 loadNews();
@@ -2601,6 +2819,8 @@ function makeDraggable(winId, handleId) {
 }
 makeDraggable("reader", "reader-head");
 makeDraggable("live", "live-head");
+makeDraggable("webwin", "webwin-head");
+makeDraggable("camwin", "camwin-head");
 makeDraggable("correlate", "corr-head");
 
 // Avvio

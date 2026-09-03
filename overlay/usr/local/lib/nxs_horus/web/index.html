@@ -228,6 +228,43 @@
         </div>
       </div>
 
+      <!-- Visore web interno: apre Wikidata/Wikipedia/Wikimedia/OSM in una
+           finestra interna espandibile (via proxy /api/embed che aggira
+           X-Frame-Options), invece di un tab esterno. -->
+      <div id="webwin" hidden>
+        <div id="webwin-head">
+          <div class="webwin-meta">
+            <span id="webwin-title">Scheda</span>
+          </div>
+          <a id="webwin-ext" href="#" target="_blank" rel="noopener" class="linklike">apri &#8599;</a>
+          <button id="webwin-expand" title="Espandi/riduci" aria-label="Espandi">&#9974;</button>
+          <button id="webwin-close" aria-label="Chiudi">&times;</button>
+        </div>
+        <div id="webwin-body">
+          <iframe id="webwin-frame" title="Scheda"
+            sandbox="allow-scripts allow-popups allow-forms"></iframe>
+          <div id="webwin-msg" hidden></div>
+        </div>
+      </div>
+
+      <!-- Telecamera del traffico: finestra interna ingrandibile (come le altre),
+           con immagine/clip in diretta che continua a rinfrescarsi. -->
+      <div id="camwin" hidden>
+        <div id="camwin-head">
+          <div class="camwin-meta">
+            <span id="camwin-title">Telecamera</span>
+            <span id="camwin-net"></span>
+          </div>
+          <a id="camwin-ext" href="#" target="_blank" rel="noopener" class="linklike">apri &#8599;</a>
+          <button id="camwin-expand" title="Espandi/riduci" aria-label="Espandi">&#9974;</button>
+          <button id="camwin-close" aria-label="Chiudi">&times;</button>
+        </div>
+        <div id="camwin-body">
+          <img id="camwin-img" alt="">
+          <video id="camwin-vid" muted loop playsinline preload="none" hidden></video>
+        </div>
+      </div>
+
       <!-- Centro Correlazioni: pannello agganciato alla mappa. Selezioni
            area/punto/entita' e ottieni tutti gli incroci fra i layer. -->
       <div id="correlate" hidden>

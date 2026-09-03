@@ -122,7 +122,8 @@ body {
   color: var(--muted); font-size: 12px; }
 .auto-row select {
   background-color: var(--panel); color: var(--text); border: 1px solid var(--border);
-  border-radius: 6px; padding: 4px 6px; font-size: 12px;
+  border-radius: 6px; padding: 4px 22px 4px 8px; font-size: 12px;
+  min-width: 62px; background-position: right 6px center;
 }
 .auto-row select:focus { outline: none; border-color: var(--accent); }
 .count { margin-left: auto; color: var(--accent); font-variant-numeric: tabular-nums;
@@ -614,6 +615,73 @@ body {
   position: absolute; inset: 0; display: flex; align-items: center;
   justify-content: center; text-align: center; padding: 0 24px;
   background: #000; color: var(--text); font-size: 13px; line-height: 1.5;
+}
+
+/* ---- Visore web interno (Wikidata/Wikipedia/OSM) ---- */
+#webwin {
+  position: absolute; right: 12px; bottom: 36px; z-index: 2650;
+  width: 560px; max-width: calc(100% - 24px);
+  height: 420px; max-height: calc(100% - 60px);
+  background: var(--bg); display: flex; flex-direction: column;
+  border: 1px solid var(--border); border-radius: 10px; overflow: hidden;
+  box-shadow: 0 12px 40px rgba(0,0,0,.6);
+}
+#webwin.expanded { width: calc(100% - 24px); height: calc(100% - 60px); }
+#webwin-head {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 10px; background: var(--panel);
+  border-bottom: 1px solid var(--border); cursor: move;
+}
+.webwin-meta { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; }
+#webwin-title { color: var(--accent); font-weight: 600; font-size: 13px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#webwin-ext { flex: 0 0 auto; }
+#webwin-expand, #webwin-close {
+  flex: 0 0 auto; background: var(--panel-2); color: var(--accent);
+  border: 1px solid var(--border); border-radius: 8px; cursor: pointer; line-height: 1;
+}
+#webwin-expand { width: 30px; height: 30px; font-size: 16px; }
+#webwin-close { width: 34px; height: 34px; font-size: 22px; }
+#webwin-expand:hover, #webwin-close:hover { border-color: var(--accent); }
+#webwin-body { flex: 1; position: relative; background: #fff; }
+#webwin-frame { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+#webwin-msg {
+  position: absolute; inset: 0; display: flex; align-items: center;
+  justify-content: center; text-align: center; padding: 0 24px;
+  background: var(--bg); color: var(--text); font-size: 13px; line-height: 1.5;
+}
+
+/* ---- Telecamera del traffico: finestra interna ingrandibile ---- */
+#camwin {
+  position: absolute; right: 12px; bottom: 36px; z-index: 2680;
+  width: 520px; max-width: calc(100% - 24px);
+  height: 380px; max-height: calc(100% - 60px);
+  background: #000; display: flex; flex-direction: column;
+  border: 1px solid var(--border); border-radius: 10px; overflow: hidden;
+  box-shadow: 0 12px 40px rgba(0,0,0,.6);
+}
+#camwin.expanded { width: calc(100% - 24px); height: calc(100% - 60px); }
+#camwin-head {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 10px; background: var(--panel);
+  border-bottom: 1px solid var(--border); cursor: move;
+}
+.camwin-meta { flex: 1; min-width: 0; display: flex; align-items: baseline; gap: 8px; }
+#camwin-title { color: var(--accent); font-weight: 600; font-size: 13px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#camwin-net { color: var(--muted); font-size: 11px; flex: 0 0 auto; }
+#camwin-ext { flex: 0 0 auto; }
+#camwin-expand, #camwin-close {
+  flex: 0 0 auto; background: var(--panel-2); color: var(--accent);
+  border: 1px solid var(--border); border-radius: 8px; cursor: pointer; line-height: 1;
+}
+#camwin-expand { width: 30px; height: 30px; font-size: 16px; }
+#camwin-close { width: 34px; height: 34px; font-size: 22px; }
+#camwin-expand:hover, #camwin-close:hover { border-color: var(--accent); }
+#camwin-body { flex: 1; position: relative; background: #000; }
+#camwin-img, #camwin-vid {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: contain; background: #000;
 }
 
 /* ---- Centro Correlazioni: pannello agganciato alla mappa ---- */
