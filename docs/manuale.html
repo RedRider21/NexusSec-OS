@@ -118,9 +118,17 @@ footer{border-top:1px solid var(--line);padding:24px 0 60px;color:var(--muted);f
   in <strong>BIOS</strong> (isolinux) sia in <strong>UEFI</strong> (grub-efi); in
   VirtualBox: VM Linux 64-bit, ≥ 2 GB di RAM (3–4 GB se userai i container
   Forensics/Web), boot dall'immagine. La ISO <strong>ARM64 (aarch64)</strong> è
-  <strong>solo UEFI</strong> (su ARM non esiste il boot BIOS) e si avvia con
-  <code>qemu-system-aarch64 -M virt</code> o UTM usando firmware UEFI
-  (edk2/AAVMF).</p>
+  <strong>solo UEFI</strong> (su ARM non esiste il boot BIOS) e si avvia dove c'è
+  un firmware UEFI ARM: <code>qemu-system-aarch64 -M virt</code> con edk2/AAVMF,
+  <strong>UTM/Parallels su Mac Apple Silicon</strong>, o hardware ARM con UEFI
+  conforme (SBSA). Sul Mac Apple Silicon gira <strong>in VM</strong>, non sul
+  bare-metal.</p>
+  <div class="note"><strong>Single-board (Raspberry Pi 4/5).</strong> Gli SBC
+  <em>non</em> fanno boot da ISO UEFI: hanno un boot proprietario che legge una
+  FAT32. Per loro c'è un formato dedicato, l'<strong>immagine per microSD</strong>
+  <code>nexussec-rpi-*.img.gz</code> (boot <code>linux-rpi</code> + firmware GPU +
+  overlay NexusSec), da scrivere sulla scheda con <em>dd</em>, Raspberry Pi Imager
+  o balenaEtcher. Costruzione: <code>build-alpine/build-sd-rpi.sh</code>.</div>
   <p>All'accensione una <strong>splashscreen flat con barra di caricamento</strong>
   accompagna la preparazione del desktop; al termine compare il
   <strong>selettore di profilo</strong>, dove scegli la modalità di lavoro. Da lì
