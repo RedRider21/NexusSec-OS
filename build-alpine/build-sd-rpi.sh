@@ -35,6 +35,7 @@ echo "[host] build ARM emulata (binfmt qemu-aarch64): piu' lenta. Segui: tail -f
 
 CID=$("$RT" run -d --replace --name "$CNAME" --arch="$PODMAN_ARCH" \
   -e NXS_ARCH="$ARCH" -e PART_SLACK_PCT="$PART_SLACK_PCT" -e MIN_IMG_MB="$MIN_IMG_MB" \
+  -e NXS_EPOCH="${NXS_EPOCH:-}" \
   --privileged -v "$ROOT:/work" -w /work alpine:edge sh -ec '
   exec >>/work/out/build-sd-rpi.log 2>&1
   set -eu
@@ -95,6 +96,10 @@ REPOS
   mkdir -p /tmp/ovl/var/lib/nexussec-repo /tmp/ovl/etc/apk/keys
   cp -a /root/packages/nexussec/. /tmp/ovl/var/lib/nexussec-repo/
   cp /root/.abuild/*.rsa.pub /tmp/ovl/etc/apk/keys/
+
+  # Data del nome immagine (SOURCE_DATE_EPOCH): se passato NXS_EPOCH lo forziamo,
+  # cosi la microSD puo essere datata a un giorno preciso (allineata alle ISO).
+  if [ -n "$NXS_EPOCH" ]; then export SOURCE_DATE_EPOCH="$NXS_EPOCH"; fi
 
   echo "[ctr] mkimage (profilo nexussec-rpi -> tar.gz diskless)..."
   export PACKAGER_PUBKEY="$(ls /root/.abuild/*.rsa.pub | head -1)"
