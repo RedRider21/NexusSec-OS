@@ -7,6 +7,12 @@ case ":$PATH:" in
   *) PATH="$HOME/.local/bin:$PATH"; export PATH ;;
 esac
 
+# Prompt commutabile: busybox ash legge $ENV a ogni shell interattiva. Lo
+# esportiamo QUI (prima di startx) cosi' lo ereditano X, i terminali e le shell
+# figlie -> il prompt scelto (nxs-prompt) vale ovunque. bash usa invece ~/.bashrc
+# (che sorgia lo stesso shrc). Vedi ~/.config/nxs/shrc.
+export ENV="$HOME/.config/nxs/shrc"
+
 # XDG_RUNTIME_DIR per PipeWire/WirePlumber (la live non ha logind/elogind).
 # La dir /run/user/<uid> la crea local.d (di proprieta' nexus). Lo esportiamo
 # qui, PRIMA di startx, cosi' X, il pannello e i tool audio lo ereditano.

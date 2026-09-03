@@ -41,6 +41,21 @@ Il set di strumenti per categoria e' allineato a Kali/Parrot
 - Opzione **"Pulisci profilo precedente"** (monomissione): `apk del` del
   meta-pacchetto precedente -> sistema sempre pulito e mono-scopo.
 
+### Aspetto coordinato: temi finestre + prompt
+
+- **Temi finestre coordinati col profilo.** Oltre al default `NexusSec-Core`
+  (HUD scuro, fisso) puoi scegliere due famiglie che seguono in automatico il
+  **colore del profilo attivo**: **Retro** (flat chiaro, derivato dal tema
+  "1977") e **Cards** (stile "scheda" iOS, barra del titolo a tinta piena).
+  Selezione da *Centro di Controllo → Aspetto coordinato* o `nxs-theme set
+  <core|retro|cards>`. Sono temi Openbox **statici** generati per profilo
+  (`make themes`); si puo' anche usare un tema Openbox qualsiasi con `raw:<nome>`
+  (inclusi gli originali `1977-*` preinstallati).
+- **Prompt del terminale commutabile.** `default` (una riga, accent NexusSec),
+  `parrot` (due righe stile Parrot/Kali: `┌──[user@host]─[dir]` / `└──╼`) o
+  `plain`. Da *Aspetto coordinato* o `nxs-prompt set <stile>`; vale sui nuovi
+  terminali (bash e busybox ash).
+
 ### Pacchetti e isolamento dei tool
 
 `nxs-tool` e' un sottile "direttore d'orchestra" che sceglie il metodo giusto
@@ -779,13 +794,14 @@ completi in [`build-alpine/README.md`](build-alpine/README.md):
   formato per gli SBC ARM: usa il boot Raspberry Pi (kernel `linux-rpi` +
   firmware GPU) con i pacchetti e l'apkovl NexusSec. Si scrive su microSD con
   `dd` / Raspberry Pi Imager / balenaEtcher. Build: `build-alpine/build-sd-rpi.sh`
-  (profilo `mkimg.nexussec-rpi.sh`). ⚠️ Costruita col metodo diskless ufficiale
-  Alpine ma **da validare su hardware reale**.
-- **ARM64**: le build funzionano su hardware reale (è l'emulatore di build a
-  piantarsi sul C++ pesante) e tornano come asset una volta stabilizzate.
-- **Policy release**: sulle GitHub Releases si tiene allegata **solo l'ISO più
-  recente** (per contenere lo spazio); le **note di ogni versione** restano
-  consultabili nello storico delle release anche senza l'ISO.
+  (profilo `mkimg.nexussec-rpi.sh`). **Disponibile al download** nella release
+  più recente, insieme alle due ISO. ⚠️ Costruita col metodo diskless ufficiale
+  Alpine ma **da validare su hardware reale** (nessun RPi in sviluppo): trattala
+  come una *beta* finché non arriva conferma sul campo.
+- **Policy release**: sulle GitHub Releases si tiene allegata **solo l'immagine
+  più recente per ciascun formato** (ISO x86_64, ISO aarch64 e immagine microSD
+  RPi), per contenere lo spazio; le **note di ogni versione** restano
+  consultabili nello storico delle release anche senza gli allegati.
 
 ## Layout repository
 

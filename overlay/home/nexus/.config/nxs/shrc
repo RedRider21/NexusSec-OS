@@ -1,0 +1,41 @@
+# ~/.config/nxs/shrc - prompt della shell NexusSec, COMMUTABILE.
+# Sorgiato dalle shell interattive: bash via ~/.bashrc, busybox ash via $ENV
+# (esportato in ~/.profile, quindi ereditato da X, pannello e terminali). Lo
+# stile e' in ~/.config/nxs/prompt (default | parrot | plain) e si cambia con
+# "nxs-prompt set <stile>": apri un NUOVO terminale per vederlo.
+
+# Agisci solo sulle shell INTERATTIVE (l'$ENV di ash viene letto anche da
+# script non interattivi: la' non tocchiamo il prompt).
+case "$-" in
+  *i*) ;;
+  *) return 0 2>/dev/null || exit 0 ;;
+esac
+
+_nxs_pstyle=default
+if [ -r "$HOME/.config/nxs/prompt" ]; then
+  _nxs_pstyle=$(cat "$HOME/.config/nxs/prompt" 2>/dev/null)
+fi
+
+# Utente e host li calcoliamo UNA volta e li incorporiamo nel PS1: alcune
+# versioni di busybox espandono male \u/\h nel prompt. La cartella (\w) resta
+# dinamica (funziona sia in bash sia in busybox). \[ \] marcano le sequenze a
+# larghezza zero (bash le usa per il ritorno a capo; busybox le tollera).
+_nxs_u="${USER:-$(id -un 2>/dev/null || echo user)}"
+_nxs_h="$(hostname 2>/dev/null || echo nexussec)"
+
+case "$_nxs_pstyle" in
+  parrot)
+    # Stile Parrot/Kali a due righe. Box-drawing UTF-8 (terminale UTF-8).
+    PS1="\[\033[1;34m\]┌──[\[\033[1;32m\]${_nxs_u}@${_nxs_h}\[\033[1;34m\]]─[\[\033[1;37m\]\w\[\033[1;34m\]]
+└──╼\[\033[0m\] "
+    ;;
+  plain)
+    PS1="${_nxs_u}@${_nxs_h}:\w\\$ "
+    ;;
+  *)
+    # default: HUD NexusSec a una riga (accent ciano).
+    PS1="\[\033[1;36m\]${_nxs_u}\[\033[0m\]@\[\033[1;34m\]${_nxs_h}\[\033[0m\]:\[\033[1;35m\]\w\[\033[0m\]\\$ "
+    ;;
+esac
+unset _nxs_pstyle _nxs_u _nxs_h
+export PS1

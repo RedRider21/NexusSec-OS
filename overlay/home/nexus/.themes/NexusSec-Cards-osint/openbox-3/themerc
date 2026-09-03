@@ -1,0 +1,81 @@
+# NexusSec-Cards - tema Openbox stile "scheda" (iOS-like): header pieno a
+# colori del profilo, corpo scuro pulito. Deriva dalle card colorate del sito
+# (docs) usate per illustrare i profili. Generato da build/make-openbox-themes.py
+# (placeholder #23d18b = colore del profilo, #199664 = variante scura).
+# NON modificare a mano i temi generati: modificare QUESTO template e rigenerare.
+
+# --- Geometria: bordi morbidi, niente maniglia ingombrante -------------------
+padding.width: 8
+padding.height: 5
+border.width: 1
+window.handle.width: 0
+window.client.padding.width: 0
+window.client.padding.height: 0
+
+# --- Bordo finestra: filo del colore profilo sull'attiva --------------------
+window.active.border.color: #23d18b
+window.inactive.border.color: #2a2f37
+
+# --- Barra del titolo: tinta piena accent (look "scheda" iOS), testo bianco --
+window.active.title.bg: flat solid
+window.active.title.bg.color: #23d18b
+window.inactive.title.bg: flat solid
+window.inactive.title.bg.color: #1b2028
+window.active.label.bg: parentrelative
+window.inactive.label.bg: parentrelative
+window.active.label.text.color: #ffffff
+window.inactive.label.text.color: #8a94a2
+window.label.text.justify: center
+window.active.label.text.font:shadow=n
+window.inactive.label.text.font:shadow=n
+
+# --- Pulsanti: icone bianche sull'header colorato ----------------------------
+window.active.button.unpressed.image.color: #ffffff
+window.inactive.button.unpressed.image.color: #8a94a2
+window.active.button.hover.image.color: #ffffff
+window.inactive.button.hover.image.color: #c8d0da
+window.active.button.pressed.image.color: #ffffff
+window.active.button.disabled.image.color: #199664
+window.inactive.button.disabled.image.color: #2a2f37
+window.active.button.hover.bg: flat solid
+window.active.button.hover.bg.color: #199664
+window.active.button.pressed.bg: flat solid
+window.active.button.pressed.bg.color: #199664
+
+# --- Maniglia (sottile) ------------------------------------------------------
+window.active.handle.bg: flat solid
+window.active.handle.bg.color: #23d18b
+window.inactive.handle.bg: flat solid
+window.inactive.handle.bg.color: #1b2028
+window.active.grip.bg: flat solid
+window.active.grip.bg.color: #23d18b
+window.inactive.grip.bg: flat solid
+window.inactive.grip.bg.color: #1b2028
+
+# --- Menu: corpo scuro, intestazione e voce attiva col colore profilo --------
+menu.border.color: #23d18b
+menu.border.width: 1
+menu.title.bg: flat solid
+menu.title.bg.color: #23d18b
+menu.title.text.color: #ffffff
+menu.title.text.justify: center
+menu.items.bg: flat solid
+menu.items.bg.color: #141a22
+menu.items.text.color: #e6ebf2
+menu.items.disabled.text.color: #5a6472
+menu.items.active.bg: flat solid
+menu.items.active.bg.color: #23d18b
+menu.items.active.text.color: #ffffff
+menu.separator.color: #2a2f37
+menu.items.justify: left
+
+# --- OSD ---------------------------------------------------------------------
+osd.border.width: 1
+osd.border.color: #23d18b
+osd.bg: flat solid
+osd.bg.color: #141a22
+osd.label.text.color: #ffffff
+osd.hilight.bg: flat solid
+osd.hilight.bg.color: #23d18b
+osd.unhilight.bg: flat solid
+osd.unhilight.bg.color: #2a2f37

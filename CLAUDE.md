@@ -265,6 +265,29 @@ ricorrenti su **musl + gcc 15**:
   Entrambe sono ora **no-op**. Il font titolo (Chakra Petch) sta in `rc.xml`.
   La parte INTERNA delle finestre resta GTK (`window-style.css`): i 3 stili
   vetro/telaio/flat agiscono SOLO sul contenuto, non sulla decorazione.
+- **Temi finestre COORDINATI col profilo (2026-09-03).** Oltre al default
+  `NexusSec-Core` (HUD scuro fisso) ci sono due FAMIGLIE che seguono il colore
+  del profilo: `NexusSec-Retro-<profilo>` (flat chiaro, dal tema "1977" di
+  Thayer Williams) e `NexusSec-Cards-<profilo>` (stile "scheda" iOS, header a
+  tinta piena). Sono file STATICI generati a BUILD time da
+  `build/make-openbox-themes.py` (template in `build/openbox-templates/`, un solo
+  `@ACCENT@` per colore) → `make themes`. NON si generano a runtime: si CAMBIA
+  soltanto quale tema statico e' attivo. La famiglia scelta sta in
+  `~/.config/nxs/theme` (`core`/`retro`/`cards`/`raw:<nome>`); `model.py`:
+  `theme_family`/`set_theme_family`/`resolve_ob_theme`/`set_window_theme`.
+  **`set_window_theme` NON e' piu' no-op**: risolve `famiglia+profilo` → nome del
+  tema, riscrive `<theme><name>` in `rc.xml` e fa `openbox --reconfigure`
+  (chiamato gia' da `activate_profile`/`apply_current`, quindi la decorazione
+  segue il profilo). `write_openbox_theme` resta no-op. CLI `nxs-theme`; GUI in
+  Centro di Controllo → "Aspetto coordinato" (`views.open_appearance`). Gli
+  originali `1977-*` sono installati in `~/.themes` e selezionabili come `raw:`.
+- **Prompt del terminale COMMUTABILE (2026-09-03).** Stile in
+  `~/.config/nxs/prompt` (`default` HUD una riga / `parrot` due righe stile
+  Parrot / `plain`), letto da `~/.config/nxs/shrc` (sorgiato da bash via
+  `~/.bashrc` e da busybox ash via `$ENV`, esportato in `~/.profile` PRIMA di
+  startx cosi' lo ereditano tutti i terminali). CLI `nxs-prompt`; stesso pannello
+  "Aspetto coordinato". Nota: alcune busybox espandono male `\u`/`\h` nel PS1 →
+  `shrc` incorpora utente/host calcolati una volta e lascia dinamico solo `\w`.
 
 ## Vincoli (Alpine)
 
@@ -338,8 +361,10 @@ Modello: **una immagine, due modalità**. La live resta comoda (autologin,
    fa boot sugli SBC (U-Boot / boot proprietario, non UEFI standard). Serve un
    formato diverso: immagine per **scheda SD** con la partizione FAT32 di boot del
    RPi (bootcode/firmware + kernel + initramfs) e il rootfs Alpine + apkovl/overlay
-   NexusSec. Scaffold: `build-alpine/build-sd-rpi.sh` (genera `out/nexussec-rpi-*.img.gz`).
-   DA TESTARE su hardware reale (build "alla cieca", nessun RPi in sviluppo).
+   NexusSec. Build: `build-alpine/build-sd-rpi.sh` (genera `out/nexussec-rpi-*.img.gz`,
+   profilo `mkimg.nexussec-rpi.sh`). COSTRUITA e PUBBLICATA come asset nella release
+   piu' recente accanto alle due ISO. DA TESTARE su hardware reale (build "alla
+   cieca", nessun RPi in sviluppo): trattare come beta finche' non validata.
 8. **Immagine installabile per Mac Apple Silicon (bare metal, non solo VM)** —
    sessione futura: oggi su M1/M2/M3 si avvia solo in VM (UTM/Parallels); un boot
    nativo richiederebbe l'approccio Asahi (m1n1 + device tree + kernel patchato).

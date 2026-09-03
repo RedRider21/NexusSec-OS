@@ -2526,6 +2526,149 @@ def open_window_style(_btn=None):
     win.show_all()
 
 
+_THEME_FAMILIES = [
+    ("core",  "NexusSec Core (predefinito)",
+     "Il nostro HUD scuro con accento ciano. Fisso, non cambia col profilo."),
+    ("retro", "Retro 1977 (chiaro)",
+     "Tema flat chiaro derivato da «1977». Segue il colore del profilo attivo."),
+    ("cards", "Cards (stile iOS)",
+     "Barra del titolo a tinta piena, come le schede dei profili sul sito. "
+     "Segue il colore del profilo attivo."),
+]
+_PROMPT_STYLES = [
+    ("default", "NexusSec (una riga)",
+     "utente@host:cartella con accento ciano."),
+    ("parrot",  "Parrot (due righe)",
+     "┌──[utente@host]─[cartella] / └──╼   in stile Parrot/Kali."),
+    ("plain",   "Minimale",
+     "utente@host:cartella$  senza colori."),
+]
+
+
+def open_appearance(_btn=None):
+    """Aspetto COORDINATO col profilo: famiglia del tema finestre + stile del
+    prompt del terminale. Le famiglie Retro/Cards seguono il colore del profilo
+    attivo; il prompt e' commutabile e vale sui nuovi terminali."""
+    win, body = panel_window("Aspetto coordinato", 580, 600)
+    try:
+        from nxs_profiles import model as _m
+    except Exception:                       # noqa: BLE001
+        _m = None
+
+    intro = Gtk.Label(label="Scegli la FAMIGLIA del tema finestre e lo stile del "
+                            "prompt del terminale. «Retro» e «Cards» seguono in "
+                            "automatico il colore del profilo operativo attivo.")
+    intro.set_xalign(0); intro.set_line_wrap(True)
+    intro.get_style_context().add_class("nxs-val")
+    body.pack_start(intro, False, False, 0)
+
+    # --- Tema finestre (famiglia coordinata) ---------------------------------
+    h1 = Gtk.Label(label="Tema finestre"); h1.set_xalign(0)
+    h1.get_style_context().add_class("nxs-section")
+    body.pack_start(h1, False, False, 0)
+
+    cur_fam = _m.theme_family() if _m else "core"
+    fam_group = None; fam_radios = {}
+    for key, name, desc in _THEME_FAMILIES:
+        card = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
+        card.get_style_context().add_class("nxs-card")
+        rb = Gtk.RadioButton.new_with_label_from_widget(fam_group, name)
+        if fam_group is None:
+            fam_group = rb
+        rb.set_active(key == cur_fam)
+        fam_radios[key] = rb
+        card.pack_start(rb, False, False, 0)
+        d = Gtk.Label(label=desc); d.set_xalign(0); d.set_line_wrap(True)
+        d.get_style_context().add_class("nxs-val"); d.set_margin_start(24)
+        card.pack_start(d, False, False, 0)
+        body.pack_start(card, False, False, 0)
+
+    fam_status = Gtk.Label(label=""); fam_status.set_xalign(0)
+    fam_status.get_style_context().add_class("nxs-val")
+    body.pack_start(fam_status, False, False, 0)
+
+    def fam_chosen():
+        for k, rb in fam_radios.items():
+            if rb.get_active():
+                return k
+        return "core"
+
+    def fam_apply(_b=None):
+        if _m is None:
+            fam_status.set_text("Modulo profili non disponibile.")
+            return
+        fam = fam_chosen()
+        _m.set_theme_family(fam)          # salva + applica (openbox --reconfigure)
+        fam_status.set_text("Tema «%s» applicato → %s" %
+                            (fam, _m.resolve_ob_theme()))
+    for rb in fam_radios.values():
+        rb.connect("toggled", lambda w: w.get_active() and fam_apply())
+
+    note = Gtk.Label(label="Per un tema Openbox specifico e non coordinato "
+                           "(es. uno dei «1977») usa «Temi finestre».")
+    note.set_xalign(0); note.set_line_wrap(True)
+    note.get_style_context().add_class("nxs-val")
+    body.pack_start(note, False, False, 0)
+
+    # --- Prompt del terminale ------------------------------------------------
+    h2 = Gtk.Label(label="Prompt del terminale"); h2.set_xalign(0)
+    h2.get_style_context().add_class("nxs-section")
+    body.pack_start(h2, False, False, 0)
+
+    cur_pr = "default"
+    try:
+        cur_pr = (HOME / ".config" / "nxs" / "prompt").read_text().strip() or "default"
+    except OSError:
+        pass
+    pr_group = None; pr_radios = {}
+    for key, name, desc in _PROMPT_STYLES:
+        card = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
+        card.get_style_context().add_class("nxs-card")
+        rb = Gtk.RadioButton.new_with_label_from_widget(pr_group, name)
+        if pr_group is None:
+            pr_group = rb
+        rb.set_active(key == cur_pr)
+        pr_radios[key] = rb
+        card.pack_start(rb, False, False, 0)
+        d = Gtk.Label(label=desc); d.set_xalign(0); d.set_line_wrap(True)
+        d.get_style_context().add_class("nxs-val"); d.set_margin_start(24)
+        card.pack_start(d, False, False, 0)
+        body.pack_start(card, False, False, 0)
+
+    pr_status = Gtk.Label(label=""); pr_status.set_xalign(0)
+    pr_status.get_style_context().add_class("nxs-val")
+    body.pack_start(pr_status, False, False, 0)
+
+    def pr_chosen():
+        for k, rb in pr_radios.items():
+            if rb.get_active():
+                return k
+        return "default"
+
+    def pr_apply(_b=None):
+        st = pr_chosen()
+        try:
+            subprocess.run(["nxs-prompt", "set", st])
+        except OSError:
+            pass
+        pr_status.set_text("Prompt «%s» impostato. Apri un nuovo terminale per "
+                           "vederlo." % st)
+    for rb in pr_radios.values():
+        rb.connect("toggled", lambda w: w.get_active() and pr_apply())
+
+    b_term = icon_button("Apri un terminale di prova", "utilities-terminal")
+    b_term.connect("clicked", lambda _b: run_bg(["nxs-terminal"]))
+    body.pack_start(b_term, False, False, 0)
+
+    btns = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+    b_close = icon_button("Chiudi", "window-close")
+    b_close.connect("clicked", lambda _b: win.destroy())
+    btns.pack_end(b_close, False, False, 0)
+    body.pack_end(btns, False, False, 0)
+
+    win.show_all()
+
+
 # ---------------------------------------------------------------------------
 # SICUREZZA: firewall, utenti, hardening (backend: nxs-firewall/users/harden)
 # ---------------------------------------------------------------------------

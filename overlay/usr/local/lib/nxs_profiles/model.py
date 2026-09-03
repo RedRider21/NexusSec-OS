@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shutil
 import subprocess
 import time
@@ -48,6 +49,18 @@ _OB_ACCENT_KEYS = (
     "menu.items.active.text.color",
     "osd.label.text.color",
 )
+
+# rc.xml di Openbox: contiene <theme><name>...</name></theme>. Cambiare tema
+# finestre = riscrivere quel nome e fare "openbox --reconfigure".
+RC_XML = Path(os.environ.get(
+    "NXS_RC_XML", str(HOME / ".config" / "openbox" / "rc.xml")))
+# Famiglia del tema finestre COORDINATA col profilo (~/.config/nxs/theme):
+#   core  -> NexusSec-Core (HUD scuro fisso, NON segue il profilo) [default]
+#   retro -> NexusSec-Retro-<profilo> (flat chiaro, derivato dal tema "1977")
+#   cards -> NexusSec-Cards-<profilo> (stile "scheda" iOS, header colorato)
+#   raw:<nome> -> un qualsiasi tema Openbox installato, fisso (non coordinato)
+THEME_FAMILY_FILE = CONF_DIR / "theme"
+THEME_FAMILIES = ("core", "retro", "cards")
 
 BG_DIR = Path(os.environ.get(
     "NXS_BG_DIR", str(HOME / ".themes" / "NexusSec-Core" / "backgrounds")))
@@ -537,15 +550,87 @@ def _darken(hex_color: str, factor: float = 0.32) -> str:
         return hex_color
 
 
+def theme_family() -> str:
+    """Famiglia tema finestre scelta (~/.config/nxs/theme). Default: 'core'."""
+    try:
+        v = THEME_FAMILY_FILE.read_text().strip()
+        if v:
+            return v
+    except OSError:
+        pass
+    return "core"
+
+
+def set_theme_family(fam: str) -> None:
+    """Salva la famiglia tema e la applica al profilo corrente."""
+    CONF_DIR.mkdir(parents=True, exist_ok=True)
+    try:
+        THEME_FAMILY_FILE.write_text(fam.strip() + "\n")
+    except OSError:
+        return
+    set_window_theme()
+
+
+def _theme_installed(name: str) -> bool:
+    for d in (HOME / ".themes", HOME / ".local" / "share" / "themes",
+              Path("/usr/share/themes")):
+        if (d / name / "openbox-3" / "themerc").is_file():
+            return True
+    return False
+
+
+def resolve_ob_theme(family: str | None = None, key: str | None = None) -> str:
+    """Dal (famiglia, profilo) al nome del tema Openbox concreto da applicare.
+    Le famiglie coordinate (retro/cards) mappano su NexusSec-<Fam>-<profilo>;
+    con fallback alla variante -base e infine a NexusSec-Core se il tema manca."""
+    if family is None:
+        family = theme_family()
+    if key is None:
+        key = current_profile()
+    if family.startswith("raw:"):
+        name = family[4:].strip()
+        return name if _theme_installed(name) else "NexusSec-Core"
+    if family == "retro":
+        cand = "NexusSec-Retro-%s" % key
+    elif family == "cards":
+        cand = "NexusSec-Cards-%s" % key
+    else:
+        return "NexusSec-Core"
+    if not _theme_installed(cand):
+        base = cand.rsplit("-", 1)[0] + "-base"
+        cand = base if _theme_installed(base) else "NexusSec-Core"
+    return cand
+
+
+def _set_ob_theme_name(name: str, reconfigure: bool = True) -> None:
+    """Scrive <theme><name>NAME</name> in rc.xml e ricarica Openbox."""
+    try:
+        txt = RC_XML.read_text()
+    except OSError:
+        return
+    new = re.sub(r"(<theme>.*?<name>)[^<]*(</name>)",
+                 r"\g<1>" + name + r"\g<2>", txt, count=1, flags=re.DOTALL)
+    if new != txt:
+        try:
+            RC_XML.write_text(new)
+        except OSError:
+            return
+    if reconfigure:
+        try:
+            subprocess.Popen(["openbox", "--reconfigure"],
+                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        except (FileNotFoundError, OSError):
+            pass
+
+
 def set_window_theme(key: str | None = None, reconfigure: bool = True) -> None:
-    """Decorazioni finestra Openbox. ORA DELEGA a write_openbox_theme, che
-    genera il themerc COMPLETO rispettando lo stile finestre scelto
-    (vetro/flat/telaio) oltre all'accent. NON tinge piu' a mano il border con
-    l'accent: lo faceva la vecchia implementazione (_OB_ACCENT_KEYS includeva
-    window.active.border.color) e SOVRASCRIVEVA il bordo generato da
-    write_openbox_theme -> il bordo restava sempre ciano ignorando lo stile.
-    Alias mantenuto per compatibilita' con i chiamanti esistenti."""
-    write_openbox_theme(key=key)
+    """Applica il tema finestre Openbox COORDINATO col profilo.
+    La famiglia scelta (~/.config/nxs/theme) decide QUALE tema statico usare:
+    'core' = HUD scuro fisso; 'retro'/'cards' = NexusSec-<Fam>-<profilo>, cosi'
+    la decorazione segue il colore del profilo restando un file STATICO e curato
+    (nessuna generazione a runtime: vedi CLAUDE.md). Scrive il nome in rc.xml e
+    ricarica Openbox. write_openbox_theme resta un no-op."""
+    _set_ob_theme_name(resolve_ob_theme(key=key), reconfigure=reconfigure)
 
 
 # ---------------------------------------------------------------- tema icone

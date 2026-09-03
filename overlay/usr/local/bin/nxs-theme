@@ -1,0 +1,51 @@
+#!/bin/sh
+# nxs-theme - tema finestre (Openbox) COORDINATO col profilo operativo.
+# La famiglia scelta e' salvata in ~/.config/nxs/theme e applicata dal modello
+# profili (model.set_window_theme): 'core' e' l'HUD scuro fisso, 'retro'/'cards'
+# seguono il colore del profilo attivo (NexusSec-<Fam>-<profilo>).
+#
+#   nxs-theme get                 stampa la famiglia attiva
+#   nxs-theme list                elenca le famiglie coordinate
+#   nxs-theme themes              elenca i temi Openbox installati (per 'raw')
+#   nxs-theme set <famiglia>      core | retro | cards  (segue il profilo)
+#   nxs-theme set raw:<nome>      un tema Openbox qualsiasi, fisso (non coordinato)
+#   nxs-theme apply               riapplica la famiglia al profilo corrente
+set -eu
+export PYTHONPATH="${PYTHONPATH:-/usr/local/lib}"
+
+case "${1:-get}" in
+  get)
+    python3 -c 'import nxs_profiles.model as m
+print(m.theme_family(), "->", m.resolve_ob_theme())'
+    ;;
+  list)
+    echo "core    tema HUD scuro fisso (predefinito)"
+    echo "retro   flat chiaro (1977), segue il colore del profilo"
+    echo "cards   scheda iOS (header colorato), segue il colore del profilo"
+    echo "raw:<nome>  un tema Openbox installato, fisso (vedi: nxs-theme themes)"
+    ;;
+  themes)
+    python3 -c 'import nxs_profiles.model as m, pathlib
+seen=set()
+for d in (m.HOME/".themes", m.HOME/".local"/"share"/"themes", pathlib.Path("/usr/share/themes")):
+    try:
+        for s in sorted(d.iterdir()):
+            if (s/"openbox-3"/"themerc").is_file() and s.name not in seen:
+                seen.add(s.name); print(s.name)
+    except OSError: pass'
+    ;;
+  set)
+    [ -n "${2:-}" ] || { echo "uso: nxs-theme set <core|retro|cards|raw:NOME>" >&2; exit 2; }
+    python3 -c 'import sys, nxs_profiles.model as m
+fam=sys.argv[1]
+if not (fam in m.THEME_FAMILIES or fam.startswith("raw:")):
+    sys.stderr.write("famiglia non valida: %s (usa: nxs-theme list)\n"%fam); sys.exit(1)
+m.set_theme_family(fam)
+print("tema:", fam, "->", m.resolve_ob_theme())' "$2"
+    ;;
+  apply)
+    python3 -c 'import nxs_profiles.model as m; m.set_window_theme()'
+    ;;
+  *)
+    echo "uso: nxs-theme [get|list|themes|set <fam>|apply]" >&2; exit 2 ;;
+esac

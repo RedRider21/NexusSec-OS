@@ -104,6 +104,8 @@ VIEW_MAP = {
     "panel": views.open_statusbar,
     "temi-finestre": views.open_openbox_theme,
     "openbox-theme": views.open_openbox_theme,
+    "aspetto-coordinato": views.open_appearance,
+    "appearance": views.open_appearance,
     "menu": views.open_menu_editor,
     "tema-gtk": views.open_gtk_theme,
     "tastiera": views.open_keyboard,
@@ -212,6 +214,9 @@ def build_window() -> Gtk.Window:
     ]), False, False, 0)
 
     body.pack_start(section("Aspetto e tema", [
+        Tile("preferences-desktop-theme", "Aspetto coordinato",
+             "Famiglia tema finestre (Core/Retro/Cards) + prompt del terminale, "
+             "coordinati col colore del profilo", launch("aspetto-coordinato")),
         Tile("preferences-desktop-theme", "Tema GTK e icone",
              "Tema GTK, set di icone e cursori (lxappearance)", launch("tema-gtk")),
         Tile("preferences-desktop-wallpaper", "Sfondo",

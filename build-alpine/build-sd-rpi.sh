@@ -100,7 +100,7 @@ REPOS
   export PACKAGER_PUBKEY="$(ls /root/.abuild/*.rsa.pub | head -1)"
   export NXS_OVERLAY=/tmp/ovl NXS_OUT=/work/out
   cd /root/aports/scripts
-  sh ./mkimage.sh --profile nexussec-rpi \
+  sh ./mkimage.sh --profile nexussec_rpi \
      --outdir /work/out --arch "$NXS_ARCH" \
      --repository http://dl-cdn.alpinelinux.org/alpine/edge/main \
      --repository http://dl-cdn.alpinelinux.org/alpine/edge/community \
