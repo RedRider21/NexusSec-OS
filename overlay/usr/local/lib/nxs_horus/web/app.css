@@ -358,8 +358,10 @@ body {
   font-size: 15px; line-height: 1; padding: 0 6px 0 0; flex: 0 0 auto; }
 .ticker-q-clear:hover { color: var(--alarm); }
 .ticker-sel { background-color: var(--panel-2); color: var(--text); border: 1px solid var(--border);
-  border-radius: 5px; font-size: 10px; padding: 2px 4px; margin: 0 2px; flex: 0 0 auto; }
+  border-radius: 5px; font-size: 10px; padding: 2px 18px 2px 6px; margin: 0 2px; flex: 0 0 auto;
+  background-position: right 5px center; }
 .ticker-sel:focus { outline: none; border-color: var(--accent); }
+#ticker-lang { min-width: 52px; }
 #ticker-track .news-more { color: var(--accent); font-size: 10px; opacity: .85;
   border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; margin-left: 3px; }
 #ticker.min .ticker-q, #ticker.min .ticker-q-clear,
