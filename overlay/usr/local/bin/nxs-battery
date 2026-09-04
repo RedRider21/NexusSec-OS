@@ -71,6 +71,35 @@ _ac_effective() {
   echo 0
 }
 
+# Stato "mostrato": alcune VM (VirtualBox in primis) e certi embedded controller
+# NON espongono lo stato "Charging": mentre la carica sale restano su
+# "Not charging" o "Unknown". Se la batteria si sta davvero riempiendo la
+# mostriamo come "charging". Come deciderlo senza sbagliare sui portatili veri
+# con soglia di ricarica (che a soglia raggiunta riportano legittimamente
+# "Not charging" a spina attaccata):
+#   1) se l'HW espone il tasso di carica (power_now/current_now) usiamo QUELLO:
+#      >0 = davvero in carica, 0 = collegato ma fermo (soglia) -> resta com'e';
+#   2) se il tasso NON e' esposto (tipico della VM) ripieghiamo sull'euristica
+#      "alla rete e non ancora pieno" -> in carica.
+# arg1=stato grezzo  arg2=ac(0|1)  arg3=pct  arg4=dir batteria
+_disp_state() {
+  raw="$1"; ac="$2"; pct="$3"; bat="$4"
+  case "$raw" in notcharging|unknown) ;; *) echo "$raw"; return ;; esac
+  rate=""
+  for f in power_now current_now; do
+    v="$(_read "$bat/$f")"; [ -n "$v" ] && { rate="$v"; break; }
+  done
+  if [ -n "$rate" ]; then
+    [ "$rate" -gt 0 ] 2>/dev/null && { echo charging; return; }
+    echo "$raw"; return           # tasso esposto ma nullo: fermo (soglia)
+  fi
+  # nessun tasso esposto (VM): deduci dalla rete + non pieno
+  if [ "$ac" = "1" ] && [ "${pct:-0}" -lt 99 ] 2>/dev/null; then
+    echo charging; return
+  fi
+  echo "$raw"
+}
+
 BAT="$(_find_bat)"
 
 case "${1:-status}" in
@@ -80,8 +109,10 @@ case "${1:-status}" in
       exit 0
     fi
     pct="$(_pct "$BAT")"; [ -z "$pct" ] && pct=0
-    st="$(_state "$BAT")"
-    printf '%s\t%s\t%s\n' "$pct" "$st" "$(_ac_effective "$st")"
+    raw="$(_state "$BAT")"
+    ac="$(_ac_effective "$raw")"
+    st="$(_disp_state "$raw" "$ac" "$pct" "$BAT")"
+    printf '%s\t%s\t%s\n' "$pct" "$st" "$ac"
     ;;
   info)
     if [ -z "$BAT" ]; then
@@ -89,11 +120,13 @@ case "${1:-status}" in
       echo "battery=0"
       exit 0
     fi
-    st="$(_state "$BAT")"
-    echo "ac=$(_ac_effective "$st")"
+    raw="$(_state "$BAT")"
+    ac="$(_ac_effective "$raw")"
+    echo "ac=$ac"
     echo "battery=1"
     pct="$(_pct "$BAT")"
     echo "percent=${pct:-0}"
+    st="$(_disp_state "$raw" "$ac" "${pct:-0}" "$BAT")"
     echo "state=$st"
     # energie/cariche in unita' native (uWh o uAh)
     en="$(_read "$BAT/energy_now")"; ef="$(_read "$BAT/energy_full")"
@@ -119,8 +152,7 @@ case "${1:-status}" in
     if [ -n "$ef" ] && [ -n "$efd" ] && [ "$efd" -gt 0 ] 2>/dev/null; then
       echo "health=$(( ef * 100 / efd ))"
     fi
-    # tempo residuo (minuti): carica o scarica
-    st="$(_state "$BAT")"
+    # tempo residuo (minuti): carica o scarica (usa lo stato mostrato, $st)
     if [ -n "$pw" ] && [ "$pw" -gt 0 ] 2>/dev/null; then
       if [ "$st" = "discharging" ] && [ -n "$en" ]; then
         echo "eta_min=$(( en * 60 / pw ))"
