@@ -12,8 +12,9 @@ Pentest* — e il sistema adatta **menu** (solo i tool pertinenti) e **sfondo**
 (inerente alla modalita'). I tool si ottengono **on-demand** e non sporcano il
 sistema base.
 
-Dimensioni: **ISO base ~150-200 MB**; a regime con un profilo attivo
-~400-600 MB in RAM (contro i ~4 GB di Kali, ~2.2 GB di Parrot).
+Dimensioni: **ISO ~0.7 GB** (kernel linux-lts + desktop GTK + Podman + browser
+webkit2gtk preinstallato); a regime con un profilo attivo ~400-600 MB in RAM
+(contro i ~4 GB di Kali, ~2.2 GB di Parrot).
 
 ## Profili operativi (il cuore)
 
@@ -686,12 +687,22 @@ esattamente il ruolo di una plancia che osserva il mondo intero. Da qui il logo
 | Incendi mondiali | NASA EONET | incendi attivi (eventi aperti) |
 | Cavi sottomarini | TeleGeography | dorsali dati oceaniche |
 | Stazione ISS | wheretheiss.at | posizione attuale della ISS |
-| **Satelliti** | CelesTrak (TLE) | orbite calcolate **live nel browser** (stazioni, GPS, Galileo, GLONASS, BeiDou, meteo, NOAA, GOES, geostazionari) |
-| **Telecamere del traffico** | reti pubbliche ufficiali | webcam stradali **keyless**: TfL Londra (con clip video), Caltrans California, Ontario 511, Digitraffic Finlandia, NZTA Nuova Zelanda |
+| **Satelliti** | CelesTrak (TLE) | orbite calcolate **live nel browser** (stazioni, GPS, Galileo, GLONASS, BeiDou, meteo, NOAA, GOES, geostazionari) — ~858 oggetti curati. **Starlink** è un layer **separato opt-in** (~10 000 oggetti, spunta dedicata) |
+| **Telecamere del traffico** | reti pubbliche ufficiali (DOT) | webcam stradali **keyless**, migliaia di feed mondiali: TfL Londra (con clip video), Caltrans California (tutti i 12 distretti), Ontario 511, Digitraffic Finlandia, NZTA Nuova Zelanda, LTA Singapore |
+| **Infrastrutture militari** | Wikidata (QLever/WDQS) | basi, aeroporti e installazioni militari **mondiali** |
+| **Ospedali** | Wikidata (QLever/WDQS) | strutture sanitarie **mondiali** |
+| **Punti strategici** | Wikidata (QLever/WDQS) | infrastrutture critiche (energia, trasporti, comunicazioni) **mondiali** |
 | **Navi (AIS)** | aisstream.io | traffico marittimo mondiale **in streaming continuo** (con chiave gratuita); senza chiave, Digitraffic (Nord Europa) |
 
 La **mappa nera** (Esri Dark) è quella di default; un selettore in alto a destra
 cambia vista in **satellite** (Esri), **strade** (OSM) o **chiara** (Esri).
+
+I fumetti dei punti intel mostrano **subito il nome della singola entità**
+(ospedale, base, infrastruttura), risolto da Wikidata. Le schede di dettaglio
+(Wikidata, OpenStreetMap, schede satellite N2YO, telecamere) si aprono in una
+**finestra integrata ridimensionabile** dentro HORUS — con mappe e immagini
+visibili in-linea (proxy lato server che aggira `X-Frame-Options`) e la
+possibilità di aprire comunque il link **in un tab esterno**.
 
 ### Aggiornamento in tempo reale e persistenza
 
