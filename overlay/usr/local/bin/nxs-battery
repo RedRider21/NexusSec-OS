@@ -71,31 +71,53 @@ _ac_effective() {
   echo 0
 }
 
-# Stato "mostrato": alcune VM (VirtualBox in primis) e certi embedded controller
-# NON espongono lo stato "Charging": mentre la carica sale restano su
-# "Not charging" o "Unknown". Se la batteria si sta davvero riempiendo la
-# mostriamo come "charging". Come deciderlo senza sbagliare sui portatili veri
-# con soglia di ricarica (che a soglia raggiunta riportano legittimamente
-# "Not charging" a spina attaccata):
-#   1) se l'HW espone il tasso di carica (power_now/current_now) usiamo QUELLO:
-#      >0 = davvero in carica, 0 = collegato ma fermo (soglia) -> resta com'e';
-#   2) se il tasso NON e' esposto (tipico della VM) ripieghiamo sull'euristica
-#      "alla rete e non ancora pieno" -> in carica.
+# --- trend della percentuale (memoria fra chiamate) --------------------------
+# Serve a capire se la batteria si sta davvero RIEMPIENDO. Su VirtualBox lo
+# stato resta "Not charging" e il tasso (power_now/current_now) e' esposto ma
+# vale 0 anche mentre ricarica: l'UNICO segnale affidabile e' la percentuale che
+# cresce. Confrontiamo la lettura attuale con quella precedente salvata in un
+# file. "sticky": una volta vista salire, resta "charging" finche' non scende o
+# lo stato grezzo diventa esplicito (Full/Discharging) -> cosi' non lampeggia fra
+# un incremento e l'altro. Il portatile reale fermo a soglia (% stabile) NON
+# scatta mai: resta correttamente "non in carica".
+_TREND_F="/tmp/nxs-battery.$(id -u 2>/dev/null || echo 0).trend"
+_trend_get() { [ -f "$_TREND_F" ] && { read -r _p _t < "$_TREND_F" 2>/dev/null; echo "$_t"; }; }
+_trend_clear() { rm -f "$_TREND_F" 2>/dev/null; }
+_trend_update() {          # arg1=pct -> stampa up|down|flat e aggiorna il file
+  cur="$1"; prev=""; ptrend=""
+  [ -f "$_TREND_F" ] && read -r prev ptrend < "$_TREND_F" 2>/dev/null
+  res=flat; newtrend="$ptrend"
+  if [ -n "$prev" ] && [ "$cur" -gt "$prev" ] 2>/dev/null; then
+    res=up; newtrend=charging
+  elif [ -n "$prev" ] && [ "$cur" -lt "$prev" ] 2>/dev/null; then
+    res=down; newtrend=
+  fi
+  printf '%s %s\n' "$cur" "$newtrend" > "$_TREND_F" 2>/dev/null
+  echo "$res"
+}
+
+# Stato "mostrato": corregge VM/EC che non espongono lo stato "Charging".
 # arg1=stato grezzo  arg2=ac(0|1)  arg3=pct  arg4=dir batteria
 _disp_state() {
   raw="$1"; ac="$2"; pct="$3"; bat="$4"
-  case "$raw" in notcharging|unknown) ;; *) echo "$raw"; return ;; esac
-  rate=""
+  # Stati espliciti dell'ACPI: fidati e azzera il trend.
+  case "$raw" in
+    charging|discharging|full) _trend_clear; echo "$raw"; return ;;
+  esac
+  # notcharging/unknown = caso ambiguo.
+  # 1) tasso di carica esplicito e POSITIVO = sicuramente in carica (HW reale).
   for f in power_now current_now; do
-    v="$(_read "$bat/$f")"; [ -n "$v" ] && { rate="$v"; break; }
+    v="$(_read "$bat/$f")"
+    if [ -n "$v" ] && [ "$v" -gt 0 ] 2>/dev/null; then _trend_clear; echo charging; return; fi
   done
-  if [ -n "$rate" ]; then
-    [ "$rate" -gt 0 ] 2>/dev/null && { echo charging; return; }
-    echo "$raw"; return           # tasso esposto ma nullo: fermo (soglia)
-  fi
-  # nessun tasso esposto (VM): deduci dalla rete + non pieno
-  if [ "$ac" = "1" ] && [ "${pct:-0}" -lt 99 ] 2>/dev/null; then
-    echo charging; return
+  # 2) niente segnale certo (VirtualBox: tasso 0): guarda il TREND della %.
+  if [ "$ac" = "1" ]; then
+    case "$(_trend_update "${pct:-0}")" in
+      up) echo charging; return ;;
+      flat) [ "$(_trend_get)" = "charging" ] && { echo charging; return; } ;;
+    esac
+  else
+    _trend_clear
   fi
   echo "$raw"
 }
