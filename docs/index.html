@@ -83,8 +83,9 @@ section{padding:74px 0;position:relative}
 .pcard{position:relative;border:1px solid var(--line);border-radius:8px;overflow:hidden;
   background:var(--panel);transition:transform .18s,border-color .18s}
 .pcard:hover{transform:translateY(-4px);border-color:var(--c)}
-.pcard .shot{aspect-ratio:16/10;overflow:hidden;border-bottom:1px solid var(--line)}
-.pcard img{width:100%;height:100%;object-fit:cover;display:block}
+.pcard .shot{overflow:hidden;border-bottom:1px solid var(--line)}
+.pcard img{width:100%;aspect-ratio:16/10;height:auto;object-fit:cover;display:block;border-bottom:1px solid var(--line)}
+@supports not (aspect-ratio:1){.pcard img{height:200px}}
 .pcard .body{padding:16px 18px 20px}
 .pcard .tag{font-family:var(--mono);font-size:.68rem;letter-spacing:.18em;
   text-transform:uppercase;color:var(--c)}
