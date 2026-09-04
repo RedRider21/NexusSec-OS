@@ -1451,9 +1451,14 @@ class Panel(Gtk.Window):
                 return name
         return ""
 
-    def _batt_icon(self, pct, state):
-        """Nome-icona simbolica batteria dal livello e dallo stato di carica."""
-        charging = state in ("charging",)
+    def _batt_icon(self, pct, state, ac=False):
+        """Nome-icona simbolica batteria dal livello e dallo stato di carica.
+
+        `ac` = rete collegata (rilevata direttamente o dedotta): quando e' vera
+        mostriamo comunque l'icona "in carica/collegato" anche se lo stato non e'
+        letteralmente `charging` (tipico nelle VM che riportano notcharging/
+        unknown pur essendo a spina)."""
+        charging = state == "charging" or (ac and state != "discharging")
         # nomi presenti in Adwaita: full/good/low/caution/empty (+ -charging)
         if pct >= 80:
             lvl = "full"
@@ -1525,15 +1530,19 @@ class Panel(Gtk.Window):
                 bac = p[2] if len(p) > 2 else "0"
             except (ValueError, IndexError):
                 bpct, bstate, bac = 0, "unknown", "0"
-            self.batt_btn.set_image(_tray_img(self._batt_icon(bpct, bstate)))
+            on_ac = bac == "1"
+            self.batt_btn.set_image(_tray_img(self._batt_icon(bpct, bstate, on_ac)))
             lab = {"charging": "in carica", "discharging": "in scarica",
                    "full": "carica", "notcharging": "non in carica"}.get(
                        bstate, "")
             tip = "Batteria: %d%%" % bpct
             if lab:
                 tip += " (%s)" % lab
-            if bac == "1" and bstate != "full":
+            # Mostra sempre lo stato alimentazione: a rete o a batteria.
+            if on_ac:
                 tip += " — rete collegata"
+            elif bstate == "discharging":
+                tip += " — a batteria"
             self.batt_btn.set_tooltip_text(tip)
             self.batt_btn.show()
         return False
@@ -1681,8 +1690,7 @@ class Panel(Gtk.Window):
                      "unknown": "Stato sconosciuto"}
             ac = info.get("ac", "0") == "1"
             state_lbl.set_text(stmap.get(st, st) +
-                               (" — rete collegata" if ac and st != "full" else
-                                (" — a batteria" if not ac else "")))
+                               (" — rete collegata" if ac else " — a batteria"))
             r = 0
             eta = info.get("eta_min")
             if eta:

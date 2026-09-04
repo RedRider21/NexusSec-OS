@@ -59,6 +59,18 @@ _state() {
   esac
 }
 
+# AC "effettivo": alimentatore Mains/USB online OPPURE dedotto dallo stato
+# batteria. Molte VM (VirtualBox/QEMU/UTM) NON espongono un device Mains, ma lo
+# stato della batteria e' comunque affidabile: se e' charging/full/notcharging
+# il portatile e' per forza attaccato alla corrente (una batteria "piena" o
+# "non in carica" non puo' esserlo a spina staccata: sarebbe "discharging").
+# Arg $1 = stato normalizzato della batteria (per evitare di rileggerlo).
+_ac_effective() {
+  [ "$(_ac_online)" = "1" ] && { echo 1; return; }
+  case "$1" in charging|full|notcharging) echo 1; return ;; esac
+  echo 0
+}
+
 BAT="$(_find_bat)"
 
 case "${1:-status}" in
@@ -68,19 +80,21 @@ case "${1:-status}" in
       exit 0
     fi
     pct="$(_pct "$BAT")"; [ -z "$pct" ] && pct=0
-    printf '%s\t%s\t%s\n' "$pct" "$(_state "$BAT")" "$(_ac_online)"
+    st="$(_state "$BAT")"
+    printf '%s\t%s\t%s\n' "$pct" "$st" "$(_ac_effective "$st")"
     ;;
   info)
-    ac="$(_ac_online)"
-    echo "ac=$ac"
     if [ -z "$BAT" ]; then
+      echo "ac=$(_ac_online)"
       echo "battery=0"
       exit 0
     fi
+    st="$(_state "$BAT")"
+    echo "ac=$(_ac_effective "$st")"
     echo "battery=1"
     pct="$(_pct "$BAT")"
     echo "percent=${pct:-0}"
-    echo "state=$(_state "$BAT")"
+    echo "state=$st"
     # energie/cariche in unita' native (uWh o uAh)
     en="$(_read "$BAT/energy_now")"; ef="$(_read "$BAT/energy_full")"
     efd="$(_read "$BAT/energy_full_design")"; pw="$(_read "$BAT/power_now")"

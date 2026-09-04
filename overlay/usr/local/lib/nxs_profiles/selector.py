@@ -47,16 +47,22 @@ def _hex_to_rgba(h: str, a: float) -> str:
 
 
 def _card_css(accent: str) -> bytes:
-    # Ogni scheda si tinge col PROPRIO colore di profilo: barretta accent,
-    # bordo/velatura in hover e in selezione. Il provider viene agganciato al
-    # contesto della singola scheda, quindi questi selettori generici colpiscono
-    # solo QUELLA scheda (niente ciano fisso residuo dopo il cambio profilo).
+    # Hover/selezione: si applicano al BOTTONE (la scheda stessa), quindi il
+    # provider agganciato al contesto della scheda li colpisce correttamente.
+    # NB: la barretta accent NON puo' stare qui: e' un widget FIGLIO del bottone
+    # e in GTK3 un provider agganciato a un widget vale solo per quel widget, non
+    # per i suoi figli -> il colore non la raggiungerebbe (banda trasparente).
     return (
-        ".nxs-profilo-accent { background-color: %s; }"
         ".nxs-profilo-card:hover { border-color: %s; }"
         ".nxs-profilo-card.sel { border-color: %s; background-color: %s; }"
-        % (accent, accent, accent, _hex_to_rgba(accent, 0.12))
+        % (accent, accent, _hex_to_rgba(accent, 0.12))
     ).encode()
+
+
+def _accent_css(accent: str) -> bytes:
+    # Colore della barretta accent: provider agganciato alla BARRETTA stessa,
+    # cosi' ogni scheda mostra la banda col colore del proprio profilo.
+    return (".nxs-profilo-accent { background-color: %s; }" % accent).encode()
 
 
 class Selector(Gtk.Window):
@@ -145,7 +151,12 @@ class Selector(Gtk.Window):
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
 
         bar = Gtk.Box()
-        bar.get_style_context().add_class("nxs-profilo-accent")
+        bctx = bar.get_style_context()
+        bctx.add_class("nxs-profilo-accent")
+        # Il colore va sul provider della barretta stessa (i provider di widget
+        # non ereditano ai figli: sul bottone non la raggiungerebbe).
+        bprov = Gtk.CssProvider(); bprov.load_from_data(_accent_css(accent))
+        bctx.add_provider(bprov, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION + 1)
         box.pack_start(bar, False, False, 0)
 
         row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
