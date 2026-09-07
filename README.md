@@ -843,3 +843,17 @@ NexusSec-OS/
 - Build via `abuild` + `mkimage` (scaffold completo; richiede Alpine).
 - **TinyCore rimosso** (deb2tcz, apt-shim, pipeline `.tcz`/isolinux): superato.
 - **Agente AI Python** al cuore del sistema: prossimo step.
+
+## Licenza e marchi
+
+Il codice sorgente originale di NexusSec OS è distribuito sotto **GNU GPL v3.0
+o successiva** (`GPL-3.0-or-later`): vedi [`LICENSE`](LICENSE) e
+[`COPYRIGHT`](COPYRIGHT). I pacchetti di terze parti inclusi restano soggetti
+alle rispettive licenze.
+
+I nomi «NexusSec»/«NexusSec OS», il logo e l'identità visiva sono **marchi** di
+Daniele Deplano (RedRider21) e non sono concessi dalla licenza del software: le
+condizioni d'uso e le versioni derivate sono descritte in
+[`TRADEMARKS.md`](TRADEMARKS.md).
+
+Copyright (C) 2026 Daniele Deplano (RedRider21).

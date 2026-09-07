@@ -1,0 +1,32 @@
+NexusSec OS
+Copyright (C) 2026 Daniele Deplano (RedRider21)
+
+Il codice sorgente ORIGINALE di NexusSec OS (in particolare: overlay/,
+aports/nexussec-*, build/, gli script nxs-*, il pannello e il Centro di
+Controllo in Python, i profili operativi, gli sfondi, le icone e i temi
+originali) è software libero: puoi ridistribuirlo e/o modificarlo secondo i
+termini della GNU General Public License, versione 3 o (a tua scelta) una
+versione successiva, come pubblicata dalla Free Software Foundation.
+
+Il testo completo della licenza è nel file LICENSE.
+Identificatore SPDX:  GPL-3.0-or-later
+
+Questo programma è distribuito nella speranza che sia utile, ma SENZA ALCUNA
+GARANZIA; senza neppure la garanzia implicita di COMMERCIABILITÀ o IDONEITÀ PER
+UN PARTICOLARE SCOPO. Vedi la GNU General Public License per maggiori dettagli.
+
+--------------------------------------------------------------------------------
+Componenti di terze parti
+
+NexusSec OS è basato su Alpine Linux e include o installa a richiesta numerosi
+pacchetti di terze parti (kernel Linux, GTK, Python, gli strumenti di sicurezza,
+ecc.). Ciascuno di essi resta soggetto alla PROPRIA licenza e al proprio
+copyright: la licenza qui sopra si applica esclusivamente al codice originale di
+NexusSec OS, non ai componenti di terzi.
+
+--------------------------------------------------------------------------------
+Marchi
+
+I nomi «NexusSec» / «NexusSec OS», il logo e l'identità visiva sono marchi di
+Daniele Deplano (RedRider21) e NON sono concessi dalla licenza del software:
+vedi il file TRADEMARKS.md.
