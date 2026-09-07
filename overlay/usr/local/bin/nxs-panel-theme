@@ -1,0 +1,51 @@
+#!/bin/sh
+# nxs-panel-theme - skin colore del pannello/menu NexusSec (indipendenti dal
+# profilo). "profile" = segue l'accent del profilo (predefinito).
+#
+# Uso:
+#   nxs-panel-theme            elenca le skin (segna quella attiva con *)
+#   nxs-panel-theme list       come sopra
+#   nxs-panel-theme get        stampa l'id della skin attiva
+#   nxs-panel-theme set <id>   imposta la skin e riavvia il pannello
+PY=""
+for c in python3 python3.11 python3.9 python3.7; do
+  command -v "$c" >/dev/null 2>&1 && { PY="$c"; break; }
+done
+[ -n "$PY" ] || { echo "nxs-panel-theme: python3 non disponibile" >&2; exit 1; }
+
+exec env PYTHONPATH=/usr/local/lib "$PY" - "$@" <<'PY'
+import sys
+from nxs_cc import paneltheme
+try:
+    from nxs_cc import panelcfg
+except Exception:
+    panelcfg = None
+
+args = sys.argv[1:]
+cmd = args[0] if args else "list"
+
+if cmd in ("list", "ls"):
+    cur = paneltheme.get_theme()
+    for tid, name, src in paneltheme.list_themes():
+        mark = "*" if tid == cur else " "
+        print("%s %-12s %-32s (%s)" % (mark, tid, name, src))
+elif cmd == "get":
+    print(paneltheme.get_theme())
+elif cmd in ("set", "use") and len(args) >= 2:
+    tid = args[1]
+    ids = paneltheme.valid_ids()
+    if tid not in ids:
+        print("id sconosciuto: %s" % tid, file=sys.stderr)
+        print("disponibili: %s" % ", ".join(ids), file=sys.stderr)
+        sys.exit(1)
+    paneltheme.set_theme(tid)
+    if panelcfg is not None:
+        try:
+            panelcfg.restart_panel()
+        except Exception:
+            pass
+    print("skin pannello impostata: %s" % tid)
+else:
+    print("uso: nxs-panel-theme [list | get | set <id>]", file=sys.stderr)
+    sys.exit(1)
+PY

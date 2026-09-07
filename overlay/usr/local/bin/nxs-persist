@@ -1,89 +1,308 @@
 #!/bin/sh
 # nxs-persist - crea/gestisce la PERSISTENZA dati della live NexusSec.
 #
-# La live gira in RAM (tmpfs): senza persistenza, le immagini container/kali
-# (l'arsenale) e lo stato dei tool si perdono al riavvio e riempiono la RAM.
-# Questo script formatta una partizione come "NXSDATA": al boot, nexussec.start
-# la monta in /var/nxs-data e ci sposta lo storage di Podman + stato + loot.
+# La live gira in RAM (tmpfs): senza persistenza le immagini container/kali
+# (l'arsenale), lo stato dei tool, le reti WiFi e il loot si perdono al riavvio
+# e riempiono la RAM. Questo script prepara una partizione etichettata "NXSDATA"
+# (opzionalmente cifrata LUKS): al boot nexussec.start la monta in /var/nxs-data
+# e ci sposta lo storage di Podman + stato + loot (vedi nxs-persist-setup.sh).
 #
-# Uso:  nxs-persist            (interattivo)
-#       nxs-persist status     (mostra stato persistenza)
-#       nxs-persist /dev/sdX1   (formatta quella partizione come NXSDATA)
+# Uso:
+#   nxs-persist            menu interattivo: RILEVA e PROPONE i dispositivi,
+#                          crea la partizione se serve e formatta.
+#   nxs-persist status     mostra lo stato della persistenza.
+#   nxs-persist list       elenca i dispositivi candidati (senza toccare nulla).
+#   nxs-persist /dev/sdX1  formatta QUELLA partizione come NXSDATA.
+#   nxs-persist /dev/sdX   crea una partizione sul disco (chiede quanta) e formatta.
 #
-# NB: FORMATTARE CANCELLA i dati della partizione scelta. Serve una partizione
-# gia esistente e VUOTA (creane una con 'cfdisk /dev/sdX' se necessario).
-set -eu
+# Quando crea una nuova partizione (disco vuoto o spazio libero) chiede QUANTO
+# spazio destinare: INVIO = tutto, oppure un valore es. 8G / 4096M. Il resto del
+# disco resta libero e riutilizzabile.
+#
+# SICUREZZA: non tocca mai il supporto di avvio della live (ISO/EFI/modloop) ne'
+# la radice montata; ogni operazione distruttiva chiede conferma esplicita.
+#
+# NB: una chiavetta scritta con `dd` dell'ISO e' ISO9660 (sola lettura) e non ha
+# spazio libero: per la persistenza serve una SECONDA chiavetta/partizione,
+# oppure spazio non partizionato sulla stessa chiavetta (se ce n'e').
+set -u
 
 priv() { if [ "$(id -u)" = 0 ]; then "$@"; \
          elif command -v doas >/dev/null 2>&1; then doas "$@"; \
          else sudo "$@"; fi; }
 
 LABEL=NXSDATA
+CRYPTLABEL=NXSCRYPT
+MINFREE_MIB=200          # spazio libero minimo utile per una partizione dati
 
+# ---------------------------------------------------------------------------
+# Rilevamento del supporto di avvio / sistema (da NON toccare mai).
+# Una partizione e' "di sistema" se e' montata (root, /media/*, /boot, modloop)
+# o se il suo filesystem e' quello della live (iso9660/squashfs).
+# ---------------------------------------------------------------------------
+_root_src="$(findmnt -no SOURCE / 2>/dev/null || true)"
+
+# gia' presente una persistenza NexusSec? (NXSDATA in chiaro o LUKS NXSCRYPT)
+has_nxsdata() {
+	findfs LABEL=$LABEL >/dev/null 2>&1 && return 0
+	blkid -L $LABEL >/dev/null 2>&1 && return 0
+	command -v cryptsetup >/dev/null 2>&1 || return 1
+	found=1
+	for d in $(blkid -t TYPE=crypto_LUKS -o device 2>/dev/null); do
+		[ "$(blkid -o value -s LABEL "$d" 2>/dev/null)" = "$CRYPTLABEL" ] && found=0
+	done
+	return $found
+}
+
+is_system_dev() {                       # $1 = /dev/... (partizione o disco)
+	dev="$1"
+	[ "$dev" = "$_root_src" ] && return 0
+	mp="$(lsblk -no MOUNTPOINT "$dev" 2>/dev/null | grep -v '^$' | head -1 || true)"
+	case "$mp" in /|/media/*|/boot|/boot/*|/.modloop*) return 0 ;; esac
+	fs="$(lsblk -no FSTYPE "$dev" 2>/dev/null | grep -v '^$' | head -1 || true)"
+	case "$fs" in iso9660|squashfs) return 0 ;; esac
+	return 1
+}
+
+# Un disco e' "di sistema" se lui o una sua partizione lo e' -> non lo si
+# ripartiziona da zero (ma se ha spazio libero si puo' aggiungere una part).
+disk_is_system() {                      # $1 = /dev/sdX (disco)
+	disk="$1"
+	is_system_dev "$disk" && return 0
+	for c in $(lsblk -rno NAME "$disk" 2>/dev/null | tail -n +2); do
+		is_system_dev "/dev/$c" && return 0
+	done
+	return 1
+}
+
+# suffisso partizione: /dev/sda -> /dev/sda1 ; /dev/nvme0n1 -> /dev/nvme0n1p1
+part_dev() {                            # $1 disco, $2 numero
+	case "$1" in *[0-9]) echo "${1}p${2}" ;; *) echo "${1}${2}" ;; esac
+}
+
+human_tran() { case "$1" in usb) echo "USB" ;; nvme) echo "NVMe" ;; sata|ata) echo "SATA" ;; mmc) echo "SD/eMMC" ;; *) echo "disco" ;; esac; }
+
+# Modello leggibile di un DISCO (per identificarlo con sicurezza). Vuoto se n/d.
+dev_model() { m="$(lsblk -dno MODEL "$1" 2>/dev/null | head -1 | sed 's/[[:space:]]*$//')"; [ -n "$m" ] && echo "$m"; }
+
+# Dimensione di un DISCO in MiB (robusto anche su disco senza tabella part.).
+disk_size_mib() {
+	b="$(lsblk -bdno SIZE "$1" 2>/dev/null | head -1)"
+	case "$b" in ''|*[!0-9]*) echo 0 ;; *) echo $((b / 1048576)) ;; esac
+}
+
+# Chiede quanta parte destinare alla persistenza. Stampa su STDOUT la scelta:
+# "ALL" (tutto lo spazio) oppure un numero di MiB. I messaggi vanno su STDERR
+# cosi' la cattura $(...) prende solo il valore. $1 = spazio disponibile in MiB.
+ask_size() {
+	avail="$1"
+	gib=$((avail / 1024))
+	{
+		echo
+		echo "  Spazio disponibile: ~${avail} MiB (~${gib} GiB)."
+		echo "  Quanta parte destinare alla persistenza?"
+		echo "    - INVIO (oppure 'tutto') = usa tutto lo spazio disponibile"
+		echo "    - un valore, es.  8G   oppure  4096M   (minimo ${MINFREE_MIB} MiB)"
+		printf "  Dimensione: "
+	} >&2
+	read sz
+	case "$sz" in
+		''|tutto|TUTTO|all|ALL|max|MAX|100%) echo "ALL"; return 0 ;;
+	esac
+	num="$(printf '%s' "$sz" | tr -d ' ' | sed 's/[^0-9].*$//')"
+	unit="$(printf '%s' "$sz" | tr -d ' 0-9.' | cut -c1)"
+	case "$num" in ''|*[!0-9]*) echo "  valore non valido." >&2; return 1 ;; esac
+	case "$unit" in
+		g|G)   mib=$((num * 1024)) ;;
+		t|T)   mib=$((num * 1024 * 1024)) ;;
+		m|M|'') mib=$((num)) ;;
+		*) echo "  unita' non riconosciuta (usa M o G)." >&2; return 1 ;;
+	esac
+	if [ "$mib" -lt "$MINFREE_MIB" ]; then
+		echo "  troppo piccola: minimo ${MINFREE_MIB} MiB." >&2; return 1
+	fi
+	if [ "$mib" -ge "$avail" ]; then
+		echo "  (richiesti ${mib} MiB >= disponibili ${avail} MiB: uso tutto lo spazio.)" >&2
+		echo "ALL"; return 0
+	fi
+	echo "$mib"; return 0
+}
+
+# ---------------------------------------------------------------------------
+# status
+# ---------------------------------------------------------------------------
 status() {
 	dev="$(findfs LABEL=$LABEL 2>/dev/null || blkid -L $LABEL 2>/dev/null || true)"
+	cdev=""
+	command -v cryptsetup >/dev/null 2>&1 && \
+		cdev="$(blkid -t TYPE=crypto_LUKS 2>/dev/null | while IFS=: read -r d _r; do
+			[ "$(blkid -o value -s LABEL "$d" 2>/dev/null)" = "$CRYPTLABEL" ] && { echo "$d"; break; }
+		done)"
 	if [ -n "$dev" ]; then
-		echo "Persistenza: partizione $LABEL su $dev"
-		if mountpoint -q /var/nxs-data 2>/dev/null; then
-			echo "  montata su /var/nxs-data (ATTIVA)"
-			du -sh /var/nxs-data/containers 2>/dev/null | \
-				awk '{print "  immagini container/kali: "$1}'
-		else
-			echo "  presente ma non montata: riavvia per attivarla."
-		fi
+		echo "Persistenza: partizione $LABEL (in chiaro) su $dev"
+	elif [ -n "$cdev" ]; then
+		echo "Persistenza: partizione $LABEL CIFRATA (LUKS) su $cdev"
 	else
 		echo "Persistenza: NON configurata (live effimera in RAM)."
-		echo "Crea una partizione dati con: nxs-persist /dev/sdX1"
+		return
+	fi
+	if mountpoint -q /var/nxs-data 2>/dev/null; then
+		echo "  montata su /var/nxs-data (ATTIVA)"
+		du -sh /var/nxs-data/containers 2>/dev/null | \
+			awk '{print "  immagini container/kali: "$1}'
+	elif [ -n "$cdev" ]; then
+		echo "  presente ma non sbloccata: la passphrase si chiede al login (tty1)."
+	else
+		echo "  presente ma non montata: riavvia per attivarla."
 	fi
 }
 
-list_parts() {
-	echo "Dischi e partizioni disponibili:"
-	lsblk -o NAME,SIZE,TYPE,FSTYPE,LABEL,MOUNTPOINT 2>/dev/null \
-		|| blkid 2>/dev/null || true
+# ---------------------------------------------------------------------------
+# scan: costruisce l'elenco dei candidati in $CANDF (una riga per candidato):
+#   KIND|TARGET|EXTRA|DESCRIZIONE|CONSIGLIATO(0/1)
+#   KIND=part  TARGET=/dev/sdXN                 (formatta partizione esistente)
+#   KIND=disk  TARGET=/dev/sdX                  (crea partizione su tutto il disco)
+#   KIND=free  TARGET=/dev/sdX  EXTRA="s e"     (crea partizione nello spazio libero, MiB)
+# ---------------------------------------------------------------------------
+CANDF=""
+scan() {
+	CANDF="$(mktemp 2>/dev/null || echo /tmp/nxs-persist.cand.$$)"
+	: > "$CANDF"
+	# elenco grezzo di dischi e partizioni
+	lsblk -Ppo NAME,KNAME,TYPE,SIZE,FSTYPE,LABEL,MOUNTPOINT,PKNAME,RM,TRAN 2>/dev/null \
+	| while read -r line; do
+		NAME=""; KNAME=""; TYPE=""; SIZE=""; FSTYPE=""; LABEL=""; MOUNTPOINT=""; PKNAME=""; RM=""; TRAN=""
+		eval "$line" 2>/dev/null || continue
+		case "$TYPE" in
+		part)
+			is_system_dev "$NAME" && continue
+			[ "$LABEL" = "$LABEL_NXS" ] && continue   # gia' NXSDATA: gestita a parte
+			rec=0; [ "$RM" = "1" ] || [ "$TRAN" = "usb" ] && rec=1
+			libera="con dati"; [ -z "$FSTYPE" ] && libera="vuota"
+			mdl=""; [ -n "$PKNAME" ] && mdl="$(dev_model "/dev/$PKNAME")"
+			d="partizione $SIZE, ${FSTYPE:-nessun fs}, $libera"
+			[ -n "$LABEL" ] && d="$d, etichetta '$LABEL'"
+			[ -n "$mdl" ] && d="$d [su $mdl]"
+			printf '%s|%s||%s|%s\n' part "$NAME" "$d" "$rec" >> "$CANDF"
+			;;
+		disk)
+			# disco intero vuoto (nessuna partizione) e non di sistema
+			nparts="$(lsblk -rno NAME "$NAME" 2>/dev/null | tail -n +2 | wc -l | tr -d ' ')"
+			tr_h="$(human_tran "$TRAN")"
+			if [ "$nparts" = "0" ] && ! disk_is_system "$NAME" && [ -z "$MOUNTPOINT" ]; then
+				rec=0; [ "$RM" = "1" ] || [ "$TRAN" = "usb" ] && rec=1
+				mdl="$(dev_model "$NAME")"; [ -n "$mdl" ] && mdl=" '$mdl'"
+				printf '%s|%s||%s|%s\n' disk "$NAME" "$tr_h$mdl $SIZE, vuoto -> creo una partizione (scegli tu quanta)" "$rec" >> "$CANDF"
+			fi
+			;;
+		esac
+	done
+	# spazio libero non partizionato SU DISCHI GIA' PARTIZIONATI (anche sulla
+	# stessa chiavetta di avvio). I dischi VUOTI sono gia' proposti come "disk".
+	for disk in $(lsblk -rno NAME,TYPE 2>/dev/null | awk '$2=="disk"{print $1}'); do
+		dd="/dev/$disk"
+		[ "$(lsblk -rno NAME "$dd" 2>/dev/null | tail -n +2 | wc -l | tr -d ' ')" = "0" ] && continue
+		free="$(priv parted -sm "$dd" unit MiB print free 2>/dev/null | awk -F: '
+			tolower($0) ~ /free/ { s=$2; e=$3; z=$4; gsub(/MiB/,"",s); gsub(/MiB/,"",e); gsub(/MiB/,"",z);
+				if (z+0 > best+0) { best=z; bs=s; be=e; bz=z } }
+			END { if (best+0 >= MIN) printf "%s %s %d\n", bs, be, bz }' MIN="$MINFREE_MIB")"
+		[ -n "$free" ] || continue
+		set -- $free; fs="$1"; fe="$2"; fz="$3"
+		note=""; disk_is_system "$dd" && note=" (stessa chiavetta di avvio)"
+		tr_h="$(lsblk -rno TRAN "$dd" 2>/dev/null | head -1)"
+		mdl="$(dev_model "$dd")"; [ -n "$mdl" ] && mdl=" '$mdl'"
+		printf '%s|%s|%s %s|%s|%s\n' free "$dd" "$fs" "$fe" \
+			"spazio libero ~${fz} MiB su $(human_tran "$tr_h")$mdl$note -> partizione dati (scegli tu quanta)" 0 >> "$CANDF"
+	done
+}
+LABEL_NXS="$LABEL"
+
+# ---------------------------------------------------------------------------
+# creazione partizione con parted (ritorna il device della nuova partizione)
+# ---------------------------------------------------------------------------
+newpart_from_disk() {                   # $1 disco vuoto  $2 size(ALL|MiB) -> stampa /dev/... nuova part
+	disk="$1"; want="${2:-ALL}"
+	priv parted -s "$disk" mklabel gpt >/dev/null 2>&1 || {
+		echo "  ERRORE: impossibile creare la tabella partizioni su $disk." >&2; return 1; }
+	if [ "$want" = "ALL" ] || [ -z "$want" ]; then
+		endspec="100%"
+	else
+		endspec="$((1 + want))MiB"      # 1MiB di allineamento iniziale + fetta scelta
+	fi
+	priv parted -s -a optimal "$disk" mkpart "$LABEL" ext4 1MiB "$endspec" >/dev/null 2>&1 || {
+		echo "  ERRORE: impossibile creare la partizione su $disk." >&2; return 1; }
+	priv partprobe "$disk" >/dev/null 2>&1 || priv partx -a "$disk" >/dev/null 2>&1 || true
+	sleep 1
+	np="$(part_dev "$disk" 1)"
+	[ -b "$np" ] || np="/dev/$(lsblk -rno NAME,TYPE "$disk" 2>/dev/null | awk '$2=="part"{p=$1} END{print p}')"
+	[ -b "$np" ] && echo "$np" || { echo "  ERRORE: partizione creata ma non rilevata (riavvia e riprova)." >&2; return 1; }
 }
 
-format_part() {
-	part="$1"
-	[ -b "$part" ] || { echo "ERRORE: $part non e un dispositivo a blocchi."; exit 1; }
-	# rifiuta di formattare la radice montata / il media di boot
-	root_src="$(findmnt -no SOURCE / 2>/dev/null || true)"
-	if [ "$part" = "$root_src" ]; then
-		echo "ERRORE: $part e la radice montata. Scegli un'altra partizione."; exit 1
+newpart_from_free() {                   # $1 disco  $2 start(MiB)  $3 end(MiB)
+	disk="$1"; start="$2"; end="$3"
+	lbl="$(priv parted -sm "$disk" print 2>/dev/null | sed -n '2p' | cut -d: -f6)"
+	before="$(lsblk -rno NAME "$disk" 2>/dev/null | tail -n +2 | sort)"
+	if [ "$lbl" = "gpt" ]; then
+		priv parted -s -a optimal "$disk" mkpart "$LABEL" ext4 "${start}MiB" "${end}MiB" >/dev/null 2>&1
+	else
+		priv parted -s -a optimal "$disk" mkpart primary ext4 "${start}MiB" "${end}MiB" >/dev/null 2>&1
+	fi || { echo "  ERRORE: creazione partizione nello spazio libero fallita." >&2; return 1; }
+	priv partprobe "$disk" >/dev/null 2>&1 || priv partx -a "$disk" >/dev/null 2>&1 || true
+	sleep 1
+	after="$(lsblk -rno NAME "$disk" 2>/dev/null | tail -n +2 | sort)"
+	# differenza manuale (comm/process-substitution non affidabili su busybox ash):
+	# la nuova partizione e' quella presente in "after" ma non in "before".
+	np=""
+	for n in $after; do echo "$before" | grep -qxF "$n" || { np="/dev/$n"; break; }; done
+	[ -b "$np" ] || np="/dev/$(printf '%s\n' "$after" | tail -1)"
+	[ -b "$np" ] && echo "$np" || { echo "  ERRORE: partizione creata ma non rilevata (riavvia: nxs-persist la vedra')." >&2; return 1; }
+}
+
+# ---------------------------------------------------------------------------
+# formatta una partizione come NXSDATA (+ LUKS opzionale) e la monta
+#   $1 = /dev/... partizione   $2 = 1 se e' appena stata creata (salta conferma)
+# ---------------------------------------------------------------------------
+do_format() {
+	part="$1"; fresh="${2:-0}"
+	[ -b "$part" ] || { echo "ERRORE: $part non e' un dispositivo a blocchi."; return 1; }
+	if is_system_dev "$part"; then
+		echo "ERRORE: $part fa parte del supporto di avvio/della live: non lo tocco."; return 1
 	fi
-	echo
-	echo "  !!! ATTENZIONE: sto per FORMATTARE $part e CANCELLARE tutto"
-	echo "      cio che contiene, etichettandola come $LABEL."
-	lsblk -o NAME,SIZE,FSTYPE,LABEL "$part" 2>/dev/null || true
-	printf "  Scrivi ESATTAMENTE 'FORMATTA' per procedere: "
-	read ans
-	[ "$ans" = "FORMATTA" ] || { echo "  annullato."; exit 0; }
-	# Cifratura opzionale con LUKS: consigliata (loot/dati a riposo protetti).
+	if [ "$fresh" != "1" ]; then
+		echo
+		echo "  !!! ATTENZIONE: sto per FORMATTARE $part e CANCELLARE tutto"
+		echo "      cio' che contiene, etichettandola come $LABEL."
+		lsblk -o NAME,SIZE,FSTYPE,LABEL,MOUNTPOINT "$part" 2>/dev/null || true
+		printf "  Scrivi ESATTAMENTE 'FORMATTA' per procedere: "
+		read ans
+		[ "$ans" = "FORMATTA" ] || { echo "  annullato."; return 1; }
+	fi
 	enc=""
 	if command -v cryptsetup >/dev/null 2>&1; then
-		printf "  Cifrare la partizione con LUKS? (consigliato) [s/N]: "
+		printf "  Cifrare la partizione con LUKS? (consigliato: protegge loot e dati) [s/N]: "
 		read enc
 	fi
 	priv umount "$part" 2>/dev/null || true
 	case "$enc" in
-		s|S|si|SI|y|Y)
+		s|S|si|Si|SI|y|Y)
 			echo "  cryptsetup luksFormat (scegli una passphrase robusta) ..."
-			priv cryptsetup luksFormat --type luks2 --label NXSCRYPT "$part"
+			priv cryptsetup luksFormat --type luks2 --label "$CRYPTLABEL" "$part" || {
+				echo "  ERRORE: luksFormat fallito."; return 1; }
 			echo "  Sblocco per la prima formattazione (reinserisci la passphrase) ..."
-			priv cryptsetup open "$part" nxsdata
+			priv cryptsetup open "$part" nxsdata || { echo "  ERRORE: apertura LUKS fallita."; return 1; }
 			echo "  mkfs.ext4 -L $LABEL /dev/mapper/nxsdata ..."
-			priv mkfs.ext4 -F -L "$LABEL" /dev/mapper/nxsdata
+			priv mkfs.ext4 -F -L "$LABEL" /dev/mapper/nxsdata || { echo "  ERRORE: mkfs fallito."; return 1; }
 			priv mkdir -p /var/nxs-data
-			priv mount /dev/mapper/nxsdata /var/nxs-data
+			priv mount /dev/mapper/nxsdata /var/nxs-data || { echo "  ERRORE: mount fallito."; return 1; }
 			CRYPTED=1 ;;
 		*)
 			echo "  mkfs.ext4 -L $LABEL $part ..."
-			priv mkfs.ext4 -F -L "$LABEL" "$part"
+			priv mkfs.ext4 -F -L "$LABEL" "$part" || { echo "  ERRORE: mkfs fallito."; return 1; }
 			priv mkdir -p /var/nxs-data
-			priv mount "$part" /var/nxs-data
+			priv mount "$part" /var/nxs-data || { echo "  ERRORE: mount fallito."; return 1; }
 			CRYPTED=0 ;;
 	esac
-	for d in containers nxs-state loot apk-cache; do
+	for d in containers nxs-state loot apk-cache tool-state local; do
 		priv install -d -o nexus -g nexus "/var/nxs-data/$d"
 	done
 	echo
@@ -93,18 +312,148 @@ format_part() {
 		echo "  login su tty1 (prima del desktop). Senza passphrase => live effimera."
 	fi
 	echo "  RIAVVIA per attivarla del tutto (Podman/stato tool passano su disco)."
+	return 0
 }
 
-case "${1:-}" in
-	""|menu)
-		echo "  NexusSec - persistenza dati (arsenale che sopravvive al riavvio)"
+# ---------------------------------------------------------------------------
+# esegue il candidato scelto (riga KIND|TARGET|EXTRA|...)
+# ---------------------------------------------------------------------------
+run_candidate() {
+	kind="$1"; target="$2"; extra="$3"
+	case "$kind" in
+		part) do_format "$target" 0 ;;
+		disk)
+			mdl="$(dev_model "$target")"
+			echo
+			echo "  !!! ATTENZIONE: creo una nuova tabella partizioni su $target"
+			[ -n "$mdl" ] && echo "      (modello: $mdl) e CANCELLO qualsiasi cosa sul disco." \
+			              || echo "      e CANCELLO qualsiasi cosa sul disco."
+			lsblk -o NAME,SIZE,FSTYPE,LABEL,MOUNTPOINT "$target" 2>/dev/null || true
+			printf "  Scrivi ESATTAMENTE 'FORMATTA' per procedere: "
+			read ans; [ "$ans" = "FORMATTA" ] || { echo "  annullato."; return 1; }
+			avail="$(disk_size_mib "$target")"; [ "$avail" -gt 1 ] && avail=$((avail - 1))
+			want="$(ask_size "$avail")" || return 1
+			np="$(newpart_from_disk "$target" "$want")" || return 1
+			echo "  Nuova partizione: $np"
+			do_format "$np" 1 ;;
+		free)
+			set -- $extra; s="$1"; e="$2"
+			avail="$(awk "BEGIN{printf \"%d\", $e - $s}" 2>/dev/null)"
+			echo
+			echo "  Spazio libero su $target: ~${avail} MiB."
+			echo "  Le partizioni esistenti su $target NON vengono toccate."
+			want="$(ask_size "$avail")" || return 1
+			if [ "$want" = "ALL" ]; then
+				endm="$e"
+			else
+				endm="$(awk "BEGIN{printf \"%.2f\", $s + $want}" 2>/dev/null)"
+			fi
+			printf "  Creo la partizione dati (%s-%s MiB) su %s. Procedo? [s/N]: " "$s" "$endm" "$target"
+			read ans; case "$ans" in s|S|si|Si|SI|y|Y) ;; *) echo "  annullato."; return 1 ;; esac
+			np="$(newpart_from_free "$target" "$s" "$endm")" || return 1
+			echo "  Nuova partizione: $np"
+			do_format "$np" 1 ;;
+	esac
+}
+
+# ---------------------------------------------------------------------------
+# menu interattivo
+# ---------------------------------------------------------------------------
+menu() {
+	echo "  NexusSec - persistenza dati (l'arsenale che sopravvive al riavvio)"
+	echo
+	status; echo
+	# gia' configurata? niente da fare.
+	if has_nxsdata; then
+		echo "  La persistenza risulta gia' configurata."
+		echo "  Per rifarla da capo su un altro dispositivo: nxs-persist /dev/sdXN"
+		return 0
+	fi
+	echo "  Cos'e': una partizione (chiavetta o disco) etichettata NXSDATA dove"
+	echo "  NexusSec salva container, tool, reti WiFi e loot. Serve un dispositivo"
+	echo "  SCRIVIBILE: la chiavetta di avvio scritta con dd e' sola lettura, quindi"
+	echo "  di solito occorre una SECONDA chiavetta (o spazio libero su un disco)."
+	echo
+	scan
+	n=0
+	# costruisco un file numerato con le sole colonne utili, consigliati in cima
+	SORTF="$(mktemp 2>/dev/null || echo /tmp/nxs-persist.sort.$$)"
+	sort -t'|' -k5,5r "$CANDF" > "$SORTF" 2>/dev/null || cp "$CANDF" "$SORTF"
+	if [ ! -s "$SORTF" ]; then
+		echo "  Nessun dispositivo utilizzabile trovato."
 		echo
-		status; echo
-		list_parts; echo
-		echo "  Per creare la persistenza: nxs-persist /dev/sdX1"
-		echo "  (la partizione dev'essere gia esistente e verra FORMATTATA)"
+		echo "  Cosa fare:"
+		echo "   - inserisci una SECONDA chiavetta USB (verra' proposta qui), oppure"
+		echo "   - crea/lascia una partizione vuota su un disco e rilancia nxs-persist,"
+		echo "   - se conosci gia' il device:  nxs-persist /dev/sdX1  (partizione)"
+		echo "                                  nxs-persist /dev/sdX   (intero disco)."
+		rm -f "$CANDF" "$SORTF" 2>/dev/null
+		return 0
+	fi
+	echo "  Dispositivi disponibili:"
+	while IFS='|' read -r kind target extra desc rec; do
+		n=$((n + 1))
+		star=""; [ "$rec" = "1" ] && star="  (consigliato)"
+		printf "   [%d] %s  ->  %s%s\n" "$n" "$target" "$desc" "$star"
+	done < "$SORTF"
+	echo "   [0] annulla"
+	echo
+	printf "  Scegli un numero: "
+	read sel
+	case "$sel" in ''|*[!0-9]*) echo "  annullato."; rm -f "$CANDF" "$SORTF"; return 0 ;; esac
+	[ "$sel" = "0" ] && { echo "  annullato."; rm -f "$CANDF" "$SORTF"; return 0; }
+	[ "$sel" -gt "$n" ] 2>/dev/null && { echo "  scelta non valida."; rm -f "$CANDF" "$SORTF"; return 1; }
+	i=0
+	while IFS='|' read -r kind target extra desc rec; do
+		i=$((i + 1))
+		[ "$i" = "$sel" ] && { run_candidate "$kind" "$target" "$extra"; break; }
+	done < "$SORTF"
+	rm -f "$CANDF" "$SORTF" 2>/dev/null
+}
+
+# ---------------------------------------------------------------------------
+# list (solo elenco, senza toccare nulla)
+# ---------------------------------------------------------------------------
+list_only() {
+	scan
+	if [ ! -s "$CANDF" ]; then
+		echo "Nessun dispositivo candidato (serve una seconda chiavetta o spazio libero)."
+	else
+		echo "Dispositivi candidati per la persistenza:"
+		sort -t'|' -k5,5r "$CANDF" | while IFS='|' read -r kind target extra desc rec; do
+			star=""; [ "$rec" = "1" ] && star="  (consigliato)"
+			printf "  %-14s %s%s\n" "$target" "$desc" "$star"
+		done
+	fi
+	rm -f "$CANDF" 2>/dev/null
+}
+
+# ---------------------------------------------------------------------------
+case "${1:-}" in
+	""|menu) menu ;;
+	status)  status ;;
+	list)    list_only ;;
+	-h|--help|help)
+		sed -n '2,20p' "$0" | sed 's/^# \{0,1\}//' ;;
+	/dev/*)
+		if [ ! -e "$1" ]; then
+			echo "ERRORE: $1 non esiste. Dispositivi presenti:"
+			lsblk -o NAME,SIZE,TYPE,FSTYPE,LABEL,MOUNTPOINT 2>/dev/null
+			echo "Suggerimento: lancia 'nxs-persist' senza argomenti per la scelta guidata."
+			exit 1
+		fi
+		if [ ! -b "$1" ]; then echo "ERRORE: $1 non e' un dispositivo a blocchi."; exit 1; fi
+		typ="$(lsblk -no TYPE "$1" 2>/dev/null | head -1)"
+		if [ "$typ" = "disk" ]; then
+			if disk_is_system "$1"; then
+				echo "ERRORE: $1 e' il disco della live/di avvio: non lo ripartiziono."; exit 1
+			fi
+			echo "  $1 e' un disco intero: creo una partizione dati (potrai scegliere quanta)."
+			run_candidate disk "$1" ""
+		else
+			do_format "$1" 0
+		fi
 		;;
-	status) status ;;
-	/dev/*) format_part "$1" ;;
-	*) echo "uso: nxs-persist [status | /dev/sdX1]"; exit 1 ;;
+	*) echo "uso: nxs-persist [status | list | /dev/sdX1 | /dev/sdX]"; exit 1 ;;
 esac
+exit 0

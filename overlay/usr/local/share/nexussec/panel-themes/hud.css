@@ -1,0 +1,34 @@
+/* name: HUD Cyan (fisso) */
+/* NexusSec - skin colore pannello (auto-generato da build/make-panel-themes.py).
+   Palette FISSA: ignora l'accent del profilo. NON modificare a mano. */
+.nxs-panel { background-color:#0a1a26; border-top:1px solid #1a3a52; }
+.nxs-panel.nxs-panel-top { border-top:none; border-bottom:1px solid #1a3a52; }
+.nxs-panel button { color:#c8f5ff; }
+.nxs-panel button:hover { background-color:rgba(0,229,255,0.14); border-color:#1a3a52; }
+.nxs-panel button:active { background-color:rgba(0,229,255,0.24); }
+.nxs-panel button image { color:#00e5ff; }
+.nxs-panel button.nxs-icon:hover image { color:#c8f5ff; }
+.nxs-panel button.nxs-menu { color:#00e5ff; }
+.nxs-panel button.nxs-menu image { color:#00e5ff; }
+.nxs-panel button.nxs-launcher image { color:#00e5ff; }
+.nxs-panel button.nxs-task { color:#5a8a9a; }
+.nxs-panel button.nxs-task:hover { color:#c8f5ff; }
+.nxs-panel button.nxs-task-active { color:#00e5ff; background-color:rgba(0,229,255,0.14); border-color:#1a3a52; }
+.nxs-panel button.nxs-pager-btn { color:#5a8a9a; border-color:#1a3a52; }
+.nxs-panel button.nxs-pager-btn:hover { color:#c8f5ff; }
+.nxs-panel button.nxs-pager-active { color:#050a14; background-color:#00e5ff; border-color:#00e5ff; }
+.nxs-panel label.nxs-clock { color:#c8f5ff; }
+.nxs-panel label.nxs-clock-date { color:#5a8a9a; }
+.nxs-panel separator { background-color:#1a3a52; }
+.nxs-popup, .nxs-popup.background { background-color:#0a1a26; border:1px solid #1a3a52; }
+menu, .menu, menu.background { background-color:#0a1a26; color:#c8f5ff; border:1px solid #1a3a52; }
+menu menuitem { color:#c8f5ff; }
+menu menuitem:hover { background-color:rgba(0,229,255,0.14); }
+popover.nxs-startmenu, popover.nxs-startmenu.background { background-color:#0a1a26; border:1px solid #1a3a52; }
+popover.nxs-startmenu > arrow { background-color:#00334a; border:1px solid #1a3a52; }
+.nxs-menu-strip { background-image: linear-gradient(to top, #03070f, #00334a 45%, #00e5ff); border-right:1px solid #1a3a52; }
+.nxs-menu-strip label.brand { color:#eafcff; }
+.nxs-menu-strip label.brand-sub { color:#eafcff; }
+.nxs-startmenu-list button.nxs-menu-item { color:#c8f5ff; }
+.nxs-startmenu-list button.nxs-menu-item image { color:#00e5ff; }
+.nxs-startmenu-list button.nxs-menu-item:hover { background-color:rgba(0,229,255,0.14); }

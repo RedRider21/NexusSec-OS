@@ -2483,27 +2483,87 @@ def _reposition_panels():
 
 def run():
     # UNA barra per monitor: cosi' bar + menu compaiono su OGNI schermo (interno
-    # e esterno). Le barre si ricostruiscono quando si collega/scollega un
-    # monitor o cambia la risoluzione (monitors-changed / size-changed).
+    # e esterno). Le barre reagiscono ai cambi schermo (monitors-changed /
+    # size-changed / refresh di nxs-screens).
     screen = Gdk.Screen.get_default()
 
+    # Stato: numero di monitor dell'ultima COSTRUZIONE e id del rebuild in coda
+    # (per il debounce). Vedi on_screen_change.
+    _st = {"n": 0, "pending": 0}
+
+    def _mon_count():
+        try:
+            if hasattr(screen, "get_n_monitors"):
+                return max(1, screen.get_n_monitors())
+        except Exception:                        # noqa: BLE001
+            pass
+        return 1
+
     def build(*_a):
-        for p in _ALL_PANELS:
-            p.destroy()
+        # (Ri)crea UNA barra per monitor. ROBUSTA: se la creazione di una barra
+        # fallisce (stato schermo transitorio durante un cambio modo), non lascia
+        # la barra a ZERO -> ritenta poco dopo. Cosi' un assestamento del modo
+        # all'avvio non puo' spegnere il pannello in modo definitivo.
+        for p in list(_ALL_PANELS):
+            try:
+                p.destroy()
+            except Exception:                    # noqa: BLE001
+                pass
         _ALL_PANELS.clear()
-        n = screen.get_n_monitors() if hasattr(screen, "get_n_monitors") else 1
-        for i in range(max(1, n)):
-            p = Panel(i)
-            p.show_all()
-            _ALL_PANELS.append(p)
+        n = _mon_count()
+        ok = 0
+        for i in range(n):
+            try:
+                p = Panel(i)
+                p.show_all()
+                _ALL_PANELS.append(p)
+                ok += 1
+            except Exception:                    # noqa: BLE001
+                pass
+        _st["n"] = n
+        if ok == 0:
+            # Nessuna barra creata (schermo in transizione): ritenta una volta.
+            GLib.timeout_add(400, build)
+        return False
+
+    def _apply_change():
+        _st["pending"] = 0
+        n = _mon_count()
+        if n == _st["n"] and _ALL_PANELS:
+            # STESSO numero di monitor: e' cambiata solo la RISOLUZIONE (tipico
+            # dell'auto-resize di VirtualBox o dell'assestamento del modo video
+            # all'avvio). NON distruggere la barra: basta ridimensionarla e
+            # riposizionarla. Distruggerla e ricrearla mentre si sta ancora
+            # mappando era la causa della "barra assente dopo l'avvio".
+            for p in list(_ALL_PANELS):
+                p._safe_place()
+        else:
+            # Cambiato il NUMERO di monitor (collegato/scollegato uno schermo):
+            # ricostruisci, una barra per schermo.
+            build()
+        return False
+
+    def on_screen_change(*_a):
+        # DEBOUNCE: all'avvio (e ad ogni auto-resize VirtualBox) arriva una
+        # RAFFICA di size-changed/monitors-changed/refresh ravvicinati. Agire ad
+        # ogni singolo evento faceva rifare la barra a ripetizione e, incrociando
+        # la sua stessa mappatura, la lasciava sparita. Coalesciamo la raffica in
+        # UNA sola azione dopo un attimo di quiete.
+        if _st["pending"]:
+            try:
+                GLib.source_remove(_st["pending"])
+            except Exception:                    # noqa: BLE001
+                pass
+        _st["pending"] = GLib.timeout_add(350, _apply_change)
+        return False
 
     build()
-    screen.connect("monitors-changed", build)
-    screen.connect("size-changed", build)
+    screen.connect("monitors-changed", on_screen_change)
+    screen.connect("size-changed", on_screen_change)
     # Fallback affidabile ai segnali GTK: xrandr --off/--primary (usati da
     # nxs-screens) spesso NON scatena monitors-changed. Il file di refresh
     # viene toccato da nxs-screens dopo OGNI cambio schermo.
-    install_screens_refresh_monitor(build)
+    install_screens_refresh_monitor(on_screen_change)
     Gtk.main()
 
 

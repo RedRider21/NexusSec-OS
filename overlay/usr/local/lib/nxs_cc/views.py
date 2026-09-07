@@ -2611,6 +2611,67 @@ def open_appearance(_btn=None):
     note.get_style_context().add_class("nxs-val")
     body.pack_start(note, False, False, 0)
 
+    # --- Tema pannello (skin barra + menu), indipendente dal profilo ---------
+    h_pt = Gtk.Label(label="Tema pannello (barra e menu)"); h_pt.set_xalign(0)
+    h_pt.get_style_context().add_class("nxs-section")
+    body.pack_start(h_pt, False, False, 0)
+
+    pt_intro = Gtk.Label(label="Colori di barra, menu e popup. «Segui il profilo» "
+                               "usa il colore del profilo attivo (standard); le "
+                               "altre skin sono a colori fissi, indipendenti dal "
+                               "profilo. Puoi aggiungere skin tue lasciando un file "
+                               ".css in ~/.config/nxs/panel-themes/.")
+    pt_intro.set_xalign(0); pt_intro.set_line_wrap(True)
+    pt_intro.get_style_context().add_class("nxs-val")
+    body.pack_start(pt_intro, False, False, 0)
+
+    try:
+        from nxs_cc import paneltheme as _pt
+    except Exception:                       # noqa: BLE001
+        _pt = None
+
+    pt_ids = []
+    pt_combo = Gtk.ComboBoxText()
+    if _pt is not None:
+        cur_pt = _pt.get_theme()
+        for tid, name, src in _pt.list_themes():
+            pt_combo.append_text(name if src == "builtin"
+                                 else "%s — %s" % (name, src))
+            pt_ids.append(tid)
+        try:
+            pt_combo.set_active(pt_ids.index(cur_pt))
+        except ValueError:
+            pt_combo.set_active(0)
+    else:
+        pt_combo.set_sensitive(False)
+
+    row_pt = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+    lab_pt = Gtk.Label(label="Skin:"); lab_pt.set_xalign(0)
+    lab_pt.get_style_context().add_class("nxs-val")
+    row_pt.pack_start(lab_pt, False, False, 0)
+    row_pt.pack_start(pt_combo, True, True, 0)
+    body.pack_start(row_pt, False, False, 0)
+
+    pt_status = Gtk.Label(label=""); pt_status.set_xalign(0)
+    pt_status.get_style_context().add_class("nxs-val")
+    body.pack_start(pt_status, False, False, 0)
+
+    def pt_changed(_c=None):
+        if _pt is None:
+            return
+        i = pt_combo.get_active()
+        if i < 0 or i >= len(pt_ids):
+            return
+        tid = pt_ids[i]
+        _pt.set_theme(tid)                 # il pannello si ricolora a caldo;
+        try:                              # riavvio comunque per sicurezza.
+            panelcfg.restart_panel()
+        except Exception:                 # noqa: BLE001
+            pass
+        pt_status.set_text("Skin «%s» applicata alla barra." % tid)
+    # collega DOPO set_active cosi' l'apertura della finestra non riavvia la barra
+    pt_combo.connect("changed", pt_changed)
+
     # --- Prompt del terminale ------------------------------------------------
     h2 = Gtk.Label(label="Prompt del terminale"); h2.set_xalign(0)
     h2.get_style_context().add_class("nxs-section")
@@ -2992,7 +3053,7 @@ def open_security(_btn=None):
     b_fw.connect("clicked", lambda _b: open_firewall())
     b_us = icon_button("Gestione utenti", "system-users-symbolic")
     b_us.connect("clicked", lambda _b: open_users())
-    b_pe = icon_button("Persistenza cifrata", "drive-harddisk-symbolic")
+    b_pe = icon_button("Persistenza dati", "drive-harddisk-symbolic")
     b_pe.connect("clicked", lambda _b: _run_priv_term("nxs-persist", "Persistenza"))
     links.pack_start(b_fw, False, False, 0)
     links.pack_start(b_us, False, False, 0)

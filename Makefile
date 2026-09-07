@@ -6,7 +6,7 @@ OVERLAY := $(ROOT)/overlay
 PYLIB := $(OVERLAY)/usr/local/lib
 SHARE := $(OVERLAY)/usr/local/share/nexussec
 
-.PHONY: all help wallpaper browser-icon icons themes apkovl check iso clean
+.PHONY: all help wallpaper browser-icon icons themes panel-themes apkovl check iso clean
 
 all: help
 
@@ -17,6 +17,7 @@ help:
 	@echo "  make browser-icon  genera l'icona PNG di NexusSec Browser"
 	@echo "  make icons         genera i temi icone per profilo (PIL, accent)"
 	@echo "  make themes        genera i temi Openbox coordinati (Retro/Cards per profilo)"
+	@echo "  make panel-themes  genera le skin colore del pannello (barra + menu)"
 	@echo "  make check         sintassi Python + validazione JSON (host)"
 	@echo "  make apkovl        crea out/nexussec.apkovl.tar.gz dall'overlay"
 	@echo "  make iso           costruisce l'ISO (richiede Alpine + mkimage)"
@@ -35,6 +36,9 @@ icons:
 
 themes:
 	@python3 $(BUILD)/make-openbox-themes.py
+
+panel-themes:
+	@python3 $(BUILD)/make-panel-themes.py
 
 # Controlli eseguibili su qualsiasi host (CI): compila i moduli Python e
 # valida i JSON di profili/repo.

@@ -295,6 +295,13 @@ _accent_prov = None
 _accent_mon = None
 _accent_reloading = False
 
+# Skin colore del pannello (barra + menu + popup), indipendente dal profilo.
+# Vedi nxs_cc.paneltheme. Il file di scelta e' sorvegliato per il reload a caldo.
+PANEL_THEME_CONF = HOME / ".config" / "nxs" / "panel-theme"
+_paneltheme_prov = None
+_paneltheme_mon = None
+_paneltheme_reloading = False
+
 
 def apply_css() -> None:
     global _css_done
@@ -323,7 +330,80 @@ def apply_css() -> None:
     # (sopra l'accent), cosi' un cambio stile lo rimuove e rimpiazza in modo
     # pulito (prima il provider d'avvio restava e i cambi non si vedevano).
     apply_window_style_live()
+    # Skin del pannello: caricata SOPRA l'accent (APPLICATION+2), cosi' una skin
+    # a palette fissa vince sull'accent del profilo (barra indipendente). La
+    # skin "profile" non e' un file: niente provider -> resta base+accent.
+    apply_panel_theme_live()
+    _install_paneltheme_monitor()
     _css_done = True
+
+
+def apply_panel_theme_live() -> None:
+    """Applica/ricarica a caldo la skin del pannello scelta in ~/.config/nxs/
+    panel-theme. Sostituisce il provider precedente, cosi' un cambio skin si
+    vede subito su barra e menu gia' aperti."""
+    global _paneltheme_prov, _paneltheme_reloading
+    if _paneltheme_reloading:
+        return
+    _paneltheme_reloading = True
+    try:
+        from nxs_cc import paneltheme
+        scr = Gdk.Screen.get_default()
+        if scr is None:
+            return
+        if _paneltheme_prov is not None:
+            try:
+                Gtk.StyleContext.remove_provider_for_screen(scr, _paneltheme_prov)
+            except Exception:            # noqa: BLE001
+                pass
+            _paneltheme_prov = None
+        p = paneltheme.css_path(paneltheme.get_theme())
+        if p is not None:
+            try:
+                pv = Gtk.CssProvider()
+                pv.load_from_path(str(p))
+                Gtk.StyleContext.add_provider_for_screen(
+                    scr, pv, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION + 2)
+                _paneltheme_prov = pv
+            except Exception:            # noqa: BLE001
+                import sys
+                print("[nxs] skin pannello non applicata:", sys.exc_info()[1],
+                      file=sys.stderr)
+        _reset_widgets_kick()
+        try:
+            GLib.idle_add(_reset_widgets_kick)
+        except Exception:                # noqa: BLE001
+            pass
+    finally:
+        _paneltheme_reloading = False
+
+
+def _on_paneltheme_changed(mon, _file, _other, etype) -> None:
+    if etype in (Gio.FileMonitorEvent.CHANGED,
+                 Gio.FileMonitorEvent.CHANGES_DONE_HINT,
+                 Gio.FileMonitorEvent.CREATED,
+                 Gio.FileMonitorEvent.MOVED):
+        try:
+            GLib.idle_add(apply_panel_theme_live)
+        except Exception:                # noqa: BLE001
+            pass
+
+
+def _install_paneltheme_monitor() -> None:
+    """Sorveglia il file di scelta skin: ogni processo GTK NexusSec che ha
+    chiamato apply_css cambia skin da solo quando la scelta cambia."""
+    global _paneltheme_mon
+    if _paneltheme_mon is not None:
+        return
+    try:
+        f = Gio.File.new_for_path(str(PANEL_THEME_CONF))
+        mon = f.monitor_file(Gio.FileMonitorFlags.NONE, None)
+        if mon is None:
+            return
+        mon.connect("changed", _on_paneltheme_changed)
+        _paneltheme_mon = mon
+    except Exception:                    # noqa: BLE001
+        _paneltheme_mon = None
 
 
 def apply_accent_live() -> None:
