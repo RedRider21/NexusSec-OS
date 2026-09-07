@@ -113,4 +113,16 @@ if command -v nxs-firewall >/dev/null 2>&1; then
 	echo "firewall: $( [ -f /etc/nxs/firewall.disabled ] && echo disattivato || echo attivo )"
 fi
 
+# --- Pre-compila il bytecode Python del desktop (primi avvii piu' rapidi) -----
+# La live gira in RAM: i .pyc NON esistono al primo boot, quindi il pannello, il
+# Centro di Controllo, il selettore profili e i tool compilerebbero i moduli al
+# PRIMO lancio, aggiungendo latenza percepita. Li generiamo SUBITO in background
+# (tutti i core) cosi' i primi lanci trovano il bytecode gia' pronto. Non blocca
+# il boot; se c'e' persistenza i .pyc restano anche per i boot successivi.
+if command -v python3 >/dev/null 2>&1; then
+	( python3 -m compileall -q -j 0 \
+		/usr/local/lib/nxs_cc /usr/local/lib/nxs_profiles \
+		/usr/local/lib/nxs_i18n >/dev/null 2>&1 || true ) &
+fi
+
 echo "stato: openbox=$(command -v openbox) feh=$(command -v feh) podman=$(command -v podman)"
