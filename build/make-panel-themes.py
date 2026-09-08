@@ -81,6 +81,20 @@ THEMES = {
         "on_accent": "#000000",
         "strip": ("#000000", "#333300", "#ffff00"), "brand": "#ffff00",
     },
+    "black": {
+        "name": "Nero",
+        "bg": "#000000", "pop": "#0a0a0a", "border": "#2e2e2e",
+        "text": "#eaeaea", "dim": "#8a8a8a", "accent": "#ffffff",
+        "on_accent": "#000000",
+        "strip": ("#000000", "#0e0e0e", "#ffffff"), "brand": "#ffffff",
+    },
+    "white": {
+        "name": "Bianco",
+        "bg": "#ffffff", "pop": "#ffffff", "border": "#d4d4d4",
+        "text": "#1a1a1a", "dim": "#707070", "accent": "#111111",
+        "on_accent": "#ffffff",
+        "strip": ("#e8e8e8", "#f3f3f3", "#111111"), "brand": "#111111",
+    },
 }
 
 TEMPLATE = """\

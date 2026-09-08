@@ -1,0 +1,57 @@
+/* name: Bianco */
+/* NexusSec - skin colore pannello (auto-generato da build/make-panel-themes.py).
+   Palette FISSA: ignora l'accent del profilo. NON modificare a mano. */
+.nxs-panel { background-color:#ffffff; border-top:1px solid #d4d4d4; }
+.nxs-panel.nxs-panel-top { border-top:none; border-bottom:1px solid #d4d4d4; }
+.nxs-panel button { color:#1a1a1a; }
+.nxs-panel button:hover { background-color:rgba(17,17,17,0.14); border-color:#d4d4d4; }
+.nxs-panel button:active { background-color:rgba(17,17,17,0.24); }
+.nxs-panel button image { color:#111111; }
+.nxs-panel button.nxs-icon:hover image { color:#1a1a1a; }
+.nxs-panel button.nxs-menu { color:#111111; }
+.nxs-panel button.nxs-menu image { color:#111111; }
+.nxs-panel button.nxs-launcher image { color:#111111; }
+.nxs-panel button.nxs-task { color:#707070; }
+.nxs-panel button.nxs-task:hover { color:#1a1a1a; }
+.nxs-panel button.nxs-task-active { color:#111111; background-color:rgba(17,17,17,0.14); border-color:#d4d4d4; }
+.nxs-panel button.nxs-pager-btn { color:#707070; border-color:#d4d4d4; }
+.nxs-panel button.nxs-pager-btn:hover { color:#1a1a1a; }
+.nxs-panel button.nxs-pager-active { color:#ffffff; background-color:#111111; border-color:#111111; }
+.nxs-panel label.nxs-clock { color:#1a1a1a; }
+.nxs-panel label.nxs-clock-date { color:#707070; }
+.nxs-panel separator { background-color:#d4d4d4; }
+.nxs-popup, .nxs-popup.background { background-color:#ffffff; border:1px solid #d4d4d4; }
+menu, .menu, menu.background { background-color:#ffffff; color:#1a1a1a; border:1px solid #d4d4d4; }
+menu menuitem { color:#1a1a1a; }
+menu menuitem:hover { background-color:rgba(17,17,17,0.14); }
+popover.nxs-startmenu, popover.nxs-startmenu.background { background-color:#ffffff; border:1px solid #d4d4d4; }
+popover.nxs-startmenu > arrow { background-color:#f3f3f3; border:1px solid #d4d4d4; }
+.nxs-menu-strip { background-image: linear-gradient(to top, #e8e8e8, #f3f3f3 45%, #111111); border-right:1px solid #d4d4d4; }
+.nxs-menu-strip label.brand { color:#111111; }
+.nxs-menu-strip label.brand-sub { color:#111111; }
+.nxs-startmenu-list button.nxs-menu-item { color:#1a1a1a; }
+/* Colore del TESTO di TUTTE le voci menu (lista E footer esci/riavvia/spegni):
+   il CSS base forza le label a un colore chiaro (button.nxs-menu-item label),
+   che sulla skin "Chiaro" sparirebbe sul fondo bianco. Sovrascriviamo con lo
+   stesso selettore (stessa specificita', ma priorita' skin piu' alta). */
+button.nxs-menu-item label { color:#1a1a1a; }
+.nxs-startmenu-list button.nxs-menu-item:hover { background-color:rgba(17,17,17,0.14); }
+.nxs-startmenu-list button.nxs-menu-item:hover label { color:#111111; }
+/* TUTTE le icone del menu start seguono la skin (righe tool, categorie, app,
+   e il FOOTER esci/riavvia/spegni). NB: il menu e' una Gtk.Window (classe
+   .nxs-popup) col contenuto in .nxs-startmenu, NON un elemento <popover>:
+   quindi i selettori DEVONO essere per-CLASSE (element-agnostici), altrimenti
+   il footer e altre parti restano col colore dell'accent del profilo. */
+.nxs-startmenu button image,
+.nxs-startmenu-list button image,
+.nxs-startmenu-footer button image,
+.nxs-popup button image { color:#111111; }
+.nxs-startmenu-list label { color:#1a1a1a; }
+button.nxs-menu-cat, label.nxs-menu-cat { color:#707070; }
+button.nxs-menu-cat:hover { color:#111111; border-left-color:#111111; }
+button.nxs-tool-item { color:#1a1a1a; }
+button.nxs-tool-item:hover { background-color:rgba(17,17,17,0.14); }
+button.nxs-tool-item:hover label { color:#111111; }
+entry.nxs-menu-search { background-color:#ffffff; color:#1a1a1a; border:1px solid #d4d4d4; }
+entry.nxs-menu-search image { color:#707070; }
+entry.nxs-menu-search:focus { border-color:#111111; }

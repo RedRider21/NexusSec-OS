@@ -2619,6 +2619,12 @@ _THEME_FAMILIES = [
      "Pulsanti a sfera semaforo a sinistra (chiudi/minimizza/massimizza) con il "
      "simbolo dentro, angoli arrotondati (picom). Bordo e titolo seguono il "
      "colore del profilo. Attiva un compositor solo mentre e' selezionata."),
+    ("raw:NexusSec-Arc-Dark", "Arc scuro (macOS)",
+     "Variante scura stile Arc con semafori tondi (adattata da Lubuntu Arc-Round, "
+     "GPL-3). Tema fisso, non segue il profilo."),
+    ("raw:NexusSec-Arc-Light", "Arc chiaro (macOS)",
+     "Variante chiara stile Arc con semafori tondi (adattata da Lubuntu Arc-Round, "
+     "GPL-3). Tema fisso, non segue il profilo."),
 ]
 _PROMPT_STYLES = [
     ("default", "NexusSec (una riga)",
