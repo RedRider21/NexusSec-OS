@@ -1,0 +1,122 @@
+#!/bin/sh
+# nxs-fetch - riepilogo di sistema con il logo NexusSec (stile neofetch), in
+# shell PURA (busybox ash): nessun pacchetto extra, poche centinaia di byte.
+# Il logo (esagono + N a nodi, come il badge NexusSec) e' colorato con l'ACCENT
+# del profilo attivo (truecolor ANSI). Commutabile: nxs-fetch on|off.
+#
+#   nxs-fetch              stampa il riepilogo
+#   nxs-fetch on|off       mostra/nasconde il fetch all'apertura del terminale
+#   nxs-fetch toggle       inverte lo stato
+#   nxs-fetch status       stampa on/off
+#   nxs-fetch --if-enabled stampa SOLO se abilitato (lo usa ~/.config/nxs/shrc)
+#
+# Stato in ~/.config/nxs/fetch (assente = ON: si vede di default).
+CONF="${HOME:-/root}/.config/nxs/fetch"
+
+_enabled() { [ ! -f "$CONF" ] || [ "$(cat "$CONF" 2>/dev/null)" != "off" ]; }
+
+case "${1:-show}" in
+  on)     mkdir -p "$(dirname "$CONF")"; echo on  > "$CONF"; echo "fetch: attivo (apri un nuovo terminale)"; exit 0 ;;
+  off)    mkdir -p "$(dirname "$CONF")"; echo off > "$CONF"; echo "fetch: disattivato"; exit 0 ;;
+  toggle) if _enabled; then "$0" off; else "$0" on; fi; exit 0 ;;
+  status) _enabled && echo on || echo off; exit 0 ;;
+  --if-enabled) _enabled || exit 0 ;;
+  show|"") ;;
+  -h|--help) sed -n '2,14p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+esac
+
+# --- accent del profilo (primo #rrggbb in accent.css) -> truecolor -----------
+HEX=$(grep -oE '#[0-9a-fA-F]{6}' "${HOME}/.config/nxs/accent.css" 2>/dev/null | head -1)
+HEX=${HEX:-#00e5ff}; HEX=${HEX#\#}
+R=$(printf '%d' "0x${HEX%????}")
+G=$(printf '%d' "0x$(printf '%s' "$HEX" | cut -c3-4)")
+B=$(printf '%d' "0x$(printf '%s' "$HEX" | cut -c5-6)")
+if [ -t 1 ]; then
+  A="$(printf '\033')[38;2;${R};${G};${B}m"   # accent
+  W="$(printf '\033')[38;2;200;245;255m"       # testo chiaro
+  D="$(printf '\033')[38;2;90;138;154m"        # tenue
+  Z="$(printf '\033')[0m"; BD="$(printf '\033')[1m"
+else
+  A=""; W=""; D=""; Z=""; BD=""
+fi
+
+# --- dati di sistema (tutto busybox-friendly) --------------------------------
+os="NexusSec OS"
+[ -r /etc/os-release ] && . /etc/os-release 2>/dev/null && os="${PRETTY_NAME:-$os}"
+kern="$(uname -r 2>/dev/null)"
+host="$(hostname 2>/dev/null || cat /proc/sys/kernel/hostname 2>/dev/null)"
+user="${USER:-$(id -un 2>/dev/null)}"
+shell="$(basename "${SHELL:-sh}" 2>/dev/null)"
+# uptime da /proc/uptime -> Xh Ym
+up=$(cut -d. -f1 /proc/uptime 2>/dev/null)
+if [ -n "$up" ]; then uph=$((up/3600)); upm=$(((up%3600)/60)); uptime="${uph}h ${upm}m"; else uptime="?"; fi
+# pacchetti apk installati
+if command -v apk >/dev/null 2>&1; then pkgs="$(apk info 2>/dev/null | wc -l | tr -d ' ') (apk)"; else pkgs="?"; fi
+# profilo operativo NexusSec
+prof=""
+if [ -r /etc/sec_os/state.json ]; then
+  prof=$(grep -oE '"(name|profile|key)"[ ]*:[ ]*"[^"]*"' /etc/sec_os/state.json 2>/dev/null | head -1 | sed 's/.*"\([^"]*\)"$/\1/')
+fi
+[ -z "$prof" ] && [ -r "${HOME}/.config/nxs/profile" ] && prof="$(cat "${HOME}/.config/nxs/profile" 2>/dev/null)"
+[ -z "$prof" ] && prof="base"
+# CPU + RAM
+cpu="$(grep -m1 'model name' /proc/cpuinfo 2>/dev/null | sed 's/.*: //;s/  */ /g')"
+[ -z "$cpu" ] && cpu="$(grep -m1 'Model' /proc/cpuinfo 2>/dev/null | sed 's/.*: //')"
+cores="$(grep -c '^processor' /proc/cpuinfo 2>/dev/null)"
+[ -n "$cores" ] && [ -n "$cpu" ] && cpu="$cpu (${cores})"
+memt=$(awk '/MemTotal/{printf "%d", $2/1024}' /proc/meminfo 2>/dev/null)
+mema=$(awk '/MemAvailable/{printf "%d", $2/1024}' /proc/meminfo 2>/dev/null)
+if [ -n "$memt" ] && [ -n "$mema" ]; then mem="$((memt-mema)) / ${memt} MiB"; else mem="?"; fi
+
+# --- righe informative (etichetta in accent, valore in chiaro) ---------------
+# Accumulo in una variabile multiriga (ash non ha array; 'set --' dentro una
+# funzione toccherebbe i parametri della funzione, non dello script).
+nl='
+'
+INFO=""
+add() { INFO="${INFO}${A}${BD}${1}${Z}${W} ${2}${Z}${nl}"; }
+add "  " "${BD}${user:-nexus}${Z}${D}@${W}${BD}${host:-nexussec}${Z}"
+add "──" "${D}──────────────────${Z}"
+add "os     " "$os"
+add "kernel " "$kern"
+add "uptime " "$uptime"
+add "shell  " "$shell"
+add "wm     " "Openbox"
+add "profilo" "$prof"
+add "pkgs   " "$pkgs"
+[ -n "$cpu" ] && add "cpu    " "$cpu"
+add "ram    " "$mem"
+INFO="${INFO%$nl}"     # via l'ultima newline (evita una riga vuota in coda)
+
+# --- logo: silhouette dell'EMBLEMA NexusSec (esagono a nodi con la N), resa a
+# "mezzi blocchi" dall'emblema ufficiale (build/make-logo-emblem.py). Monocroma:
+# la coloriamo con l'accent. Ogni riga del file e' larga ESATTAMENTE 24 colonne
+# (spazi finali inclusi) -> le info a destra restano allineate senza calcoli di
+# larghezza (che su musl/locale C sarebbero inaffidabili). Fallback minimale.
+PAD="                        "
+LOGOFILE="${NXS_SHARE:-/usr/local/share/nexussec}/logo-emblem.txt"
+if [ -r "$LOGOFILE" ]; then
+  LOGO="$(cat "$LOGOFILE")"
+else
+  LOGO="        [ NexusSec ]        "
+fi
+
+# --- stampa affiancata: logo a sinistra (accent) + info a destra -------------
+# Le righe del logo arrivano da fd 3, le info dallo stdin del while: cosi'
+# scorrono in parallelo senza array (ash non li ha) e senza subshell.
+echo
+exec 3<<LOGOEOF
+$LOGO
+LOGOEOF
+while IFS= read -r info; do
+  if IFS= read -r logo <&3; then :; else logo="$PAD"; fi
+  printf '%s%s%s   %s\n' "$A" "$logo" "$Z" "$info"
+done <<INFOEOF
+$INFO
+INFOEOF
+# righe del logo eventualmente rimaste (logo piu' alto delle info)
+while IFS= read -r logo <&3; do
+  printf '%s%s%s\n' "$A" "$logo" "$Z"
+done
+exec 3<&-
+echo

@@ -421,26 +421,38 @@ class Saver(Gtk.Window):
             cr.fill()
 
     def _draw_aurora(self, cr, W, H, t):
-        # bande sinusoidali morbide che scorrono, con leggera sfumatura
-        cr.set_operator(1)  # OVER
+        # NASTRI sinusoidali distinti che scorrono (non riempimenti fino al fondo,
+        # che si fondevano in un'unica macchia). Blend ADDITIVO per farli
+        # risaltare/"brillare" sul fondo scuro. Colori dall'accent -> bianco.
+        cr.save()
+        cr.set_operator(12)  # CAIRO_OPERATOR_ADD (glow)
         bands = 5
+        step = max(4, W // 300)
         for b in range(bands):
-            phase = t * (0.25 + 0.05 * b) + b * 1.7
-            base = H * (0.30 + 0.10 * b)
-            amp = H * (0.05 + 0.015 * b)
-            alpha = 0.10 + 0.04 * (bands - b)
-            cr.move_to(0, H)
-            step = max(6, W // 220)
+            phase = t * (0.35 + 0.08 * b) + b * 1.4
+            base = H * (0.30 + 0.09 * b)
+            amp = H * (0.05 + 0.02 * b)
+            thick = H * (0.055 + 0.01 * b)     # spessore del nastro
+
+            def yof(x, ph=phase, bs=base, am=amp):
+                return (bs + am * math.sin(x * 0.0062 + ph)
+                        + am * 0.4 * math.sin(x * 0.013 - ph * 1.3))
+
+            # bordo superiore sx->dx, poi bordo inferiore dx->sx = nastro chiuso
+            cr.move_to(0, yof(0))
             for x in range(0, W + step, step):
-                y = base + amp * math.sin(x * 0.006 + phase) \
-                    + amp * 0.4 * math.sin(x * 0.013 - phase * 1.3)
-                cr.line_to(x, y)
-            cr.line_to(W, H)
+                cr.line_to(x, yof(x))
+            for x in range(W, -step, -step):
+                cr.line_to(x, yof(x) + thick)
             cr.close_path()
-            shade = 0.5 + 0.5 * (b / float(bands))
-            cr.set_source_rgba(self.ar * shade, self.ag * shade,
-                               self.ab * shade, alpha)
+            # colore: piu' chiaro (verso il bianco) per i nastri in alto
+            m = 0.35 + 0.5 * (b / float(bands - 1))   # 0.35..0.85 verso bianco
+            r = self.ar + (1.0 - self.ar) * m
+            g = self.ag + (1.0 - self.ag) * m
+            bl = self.ab + (1.0 - self.ab) * m
+            cr.set_source_rgba(r * 0.72, g * 0.72, bl * 0.72, 0.28)
             cr.fill()
+        cr.restore()
 
     def _draw_grid(self, cr, W, H, t):
         # synthwave: sole all'orizzonte + griglia prospettica in movimento

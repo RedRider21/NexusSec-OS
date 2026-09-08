@@ -30,6 +30,11 @@ popover.nxs-startmenu > arrow { background-color:#2a1e00; border:1px solid #4a36
 .nxs-menu-strip label.brand { color:#ffd27f; }
 .nxs-menu-strip label.brand-sub { color:#ffd27f; }
 .nxs-startmenu-list button.nxs-menu-item { color:#ffb000; }
+/* Colore del TESTO di TUTTE le voci menu (lista E footer esci/riavvia/spegni):
+   il CSS base forza le label a un colore chiaro (button.nxs-menu-item label),
+   che sulla skin "Chiaro" sparirebbe sul fondo bianco. Sovrascriviamo con lo
+   stesso selettore (stessa specificita', ma priorita' skin piu' alta). */
+button.nxs-menu-item label { color:#ffb000; }
 .nxs-startmenu-list button.nxs-menu-item:hover { background-color:rgba(255,176,0,0.14); }
 .nxs-startmenu-list button.nxs-menu-item:hover label { color:#ffb000; }
 /* TUTTE le icone del menu start seguono la skin (righe tool, categorie, app,

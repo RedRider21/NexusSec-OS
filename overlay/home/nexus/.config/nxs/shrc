@@ -39,3 +39,13 @@ case "$_nxs_pstyle" in
 esac
 unset _nxs_pstyle _nxs_u _nxs_h
 export PS1
+
+# Riepilogo di sistema col logo NexusSec all'apertura del terminale (stile
+# neofetch), COMMUTABILE con "nxs-fetch on|off". Solo in un terminale grafico
+# (non sulla console di testo TERM=linux) e una volta per shell. --if-enabled
+# rispetta lo stato salvato (assente = mostrato).
+if [ "$TERM" != "linux" ] && [ -z "${NXS_FETCH_SHOWN:-}" ] \
+   && command -v nxs-fetch >/dev/null 2>&1; then
+  NXS_FETCH_SHOWN=1
+  nxs-fetch --if-enabled 2>/dev/null
+fi

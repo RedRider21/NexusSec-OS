@@ -2677,6 +2677,34 @@ def open_appearance(_btn=None):
     # collega DOPO set_active cosi' l'apertura della finestra non riavvia la barra
     pt_combo.connect("changed", pt_changed)
 
+    # --- Riepilogo di sistema (fetch col logo NexusSec nel terminale) ---------
+    h_ft = Gtk.Label(label="Riepilogo di sistema (fetch)"); h_ft.set_xalign(0)
+    h_ft.get_style_context().add_class("nxs-section")
+    body.pack_start(h_ft, False, False, 0)
+    ft_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+    ft_row.get_style_context().add_class("nxs-card")
+    ft_lab = Gtk.Label(label="Mostra il logo e le info di sistema all'apertura "
+                             "del terminale")
+    ft_lab.set_xalign(0); ft_lab.set_line_wrap(True)
+    ft_lab.get_style_context().add_class("nxs-key")
+    ft_row.pack_start(ft_lab, True, True, 0)
+    ft_sw = Gtk.Switch(); ft_sw.set_valign(Gtk.Align.CENTER)
+    try:
+        _o = subprocess.run(["nxs-fetch", "status"], stdout=subprocess.PIPE,
+                            text=True).stdout.strip()
+        ft_sw.set_active(_o != "off")
+    except OSError:
+        ft_sw.set_active(True)
+
+    def ft_toggled(sw, _p):
+        try:
+            subprocess.run(["nxs-fetch", "on" if sw.get_active() else "off"])
+        except OSError:
+            pass
+    ft_sw.connect("notify::active", ft_toggled)   # connesso DOPO set_active
+    ft_row.pack_end(ft_sw, False, False, 0)
+    body.pack_start(ft_row, False, False, 0)
+
     # --- Prompt del terminale ------------------------------------------------
     h2 = Gtk.Label(label="Prompt del terminale"); h2.set_xalign(0)
     h2.get_style_context().add_class("nxs-section")
