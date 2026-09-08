@@ -362,8 +362,14 @@ def apply_panel_theme_live() -> None:
             try:
                 pv = Gtk.CssProvider()
                 pv.load_from_path(str(p))
+                # Priorita' +4: DEVE stare SOPRA lo stile finestre (window-style
+                # a +3). window-style imposta `window { background }` generico, che
+                # colpisce anche la FINESTRA del menu (una Gtk.Window .nxs-popup):
+                # a +2 lo sfondo scuro dello stile vinceva sullo sfondo della skin
+                # -> nella skin "Chiaro" il menu restava scuro col testo scuro
+                # (illeggibile). A +4 la skin del pannello/menu prevale come deve.
                 Gtk.StyleContext.add_provider_for_screen(
-                    scr, pv, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION + 2)
+                    scr, pv, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION + 4)
                 _paneltheme_prov = pv
             except Exception:            # noqa: BLE001
                 import sys
