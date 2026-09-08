@@ -52,12 +52,17 @@ def gen_button_masks(dest_dir):
     # (bordo-a-bordo), lo riduco con LANCZOS (antialias) e soglio -> scelta ottimale
     # dei pixel di contorno. Il GLIFO invece lo incido NITIDO alla dimensione
     # finale (linee crisp), cosi' - e + sono puliti e la X ben leggibile.
-    S = 16
+    # DIMENSIONE 14px: e' la dimensione STANDARD dei pulsanti Openbox. A 16px la
+    # maschera eccedeva il pulsante e Openbox la RITAGLIAVA -> il disco (che tocca
+    # i bordi) perdeva le calotte e sembrava "squadrato". A 14px combacia col
+    # pulsante e resta TONDO. Geometria/dimensione allineate al tema Arc-Round
+    # (the-zero885, GPL-3), la cui close.xbm e' un disco 14px con glifo scavato.
+    S = 14
     q = 8
     SS = S * q
-    C = (S - 1) / 2.0        # centro esatto (7.5): glifi SIMMETRICI
-    ARM = 4.2                # semi-lunghezza dei tratti del glifo
-    TH = 0.95               # semi-spessore dei tratti (~2px)
+    C = (S - 1) / 2.0        # centro esatto (6.5): glifi SIMMETRICI
+    ARM = 3.6                # semi-lunghezza dei tratti del glifo
+    TH = 0.9                # semi-spessore dei tratti (~2px)
 
     def _disc():
         big = Image.new("L", (SS, SS), 0)
