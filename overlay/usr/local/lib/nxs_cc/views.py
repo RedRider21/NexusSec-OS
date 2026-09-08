@@ -1713,7 +1713,8 @@ SS_STYLES = [("nebula", "Nebula (rete di particelle)"),
              ("aurora", "Aurora (bande fluide)"),
              ("grid", "Griglia synthwave (prospettica)"),
              ("hexpulse", "Nido d'ape pulsante (badge)"),
-             ("orbits", "Orbite (costellazione)")]
+             ("orbits", "Orbite (costellazione)"),
+             ("logo", "Logo NexusSec (emblema pulsante)")]
 
 
 def _ss_read():

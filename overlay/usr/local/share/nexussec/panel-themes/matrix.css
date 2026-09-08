@@ -32,12 +32,15 @@ popover.nxs-startmenu > arrow { background-color:#052905; border:1px solid #0f3f
 .nxs-startmenu-list button.nxs-menu-item { color:#33ff66; }
 .nxs-startmenu-list button.nxs-menu-item:hover { background-color:rgba(51,255,102,0.14); }
 .nxs-startmenu-list button.nxs-menu-item:hover label { color:#33ff66; }
-/* TUTTE le icone del menu start seguono la skin (righe tool, categorie, app):
-   un selettore ampio evita che qualche riga con classe diversa
-   (.nxs-tool-item, .nxs-menu-cat, ...) resti col colore dell'accent del
-   profilo. Vale sia dentro la lista sia nel popover in generale. */
+/* TUTTE le icone del menu start seguono la skin (righe tool, categorie, app,
+   e il FOOTER esci/riavvia/spegni). NB: il menu e' una Gtk.Window (classe
+   .nxs-popup) col contenuto in .nxs-startmenu, NON un elemento <popover>:
+   quindi i selettori DEVONO essere per-CLASSE (element-agnostici), altrimenti
+   il footer e altre parti restano col colore dell'accent del profilo. */
+.nxs-startmenu button image,
 .nxs-startmenu-list button image,
-popover.nxs-startmenu button image { color:#33ff66; }
+.nxs-startmenu-footer button image,
+.nxs-popup button image { color:#33ff66; }
 .nxs-startmenu-list label { color:#33ff66; }
 button.nxs-menu-cat, label.nxs-menu-cat { color:#1f8f3f; }
 button.nxs-menu-cat:hover { color:#33ff66; border-left-color:#33ff66; }

@@ -9,6 +9,10 @@ tinta con l'ACCENT del profilo attivo. Stili disponibili:
   - grid       : griglia prospettica synthwave con "sole" all'orizzonte
   - hexpulse   : nido d'ape (come il badge NexusSec) che pulsa a onde
   - orbits     : nodo centrale con particelle in orbita (costellazione)
+  - logo       : emblema NexusSec grande al centro, esagoni e nodi in orbita
+
+Il logo del brand (emblema + wordmark, gli asset dello splash) compare in TUTTI
+gli stili tramite il branding centrale.
 
 Blocco schermo: se abilitato (lock=1 in screensaver.conf) e c'e' una password
 impostata, al primo input compare la richiesta di sblocco; si esce solo con la
@@ -25,11 +29,17 @@ import time
 
 import gi
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk, Gdk, GLib  # noqa: E402
+gi.require_version("GdkPixbuf", "2.0")
+from gi.repository import Gtk, Gdk, GLib, GdkPixbuf  # noqa: E402
 
 from nxs_screensaver import secret  # noqa: E402
 
-STYLES = ("nebula", "matrix", "starfield", "aurora", "grid", "hexpulse", "orbits")
+# Asset del brand (gli stessi dello splash di avvio): l'emblema esagonale con la
+# N a nodi e il wordmark. Riusati qui per mostrare il logo nei salvaschermi.
+SPLASH_DIR = os.environ.get("NXS_SPLASH_DIR", "/usr/local/share/nexussec/splash")
+
+STYLES = ("nebula", "matrix", "starfield", "aurora", "grid", "hexpulse",
+          "orbits", "logo")
 
 
 def _accent():
@@ -77,6 +87,12 @@ class Saver(Gtk.Window):
         self._t0 = time.time()
         self._started = self._t0
         self.W, self.H = 1920, 1080
+
+        # logo del brand (emblema + wordmark) per il branding e lo stile "logo"
+        self._emblem = self._load_asset("emblem.png")
+        self._wordmark = self._load_asset("wordmark.png")
+        self._emblem_scaled = None       # cache (pixbuf scalato per dimensione)
+        self._emblem_scaled_h = 0
 
         # stage: DrawingArea (animazione) + overlay per la card di sblocco
         self.overlay = Gtk.Overlay()
@@ -320,6 +336,7 @@ class Saver(Gtk.Window):
             "grid": lambda c, w, h: self._draw_grid(c, w, h, t),
             "hexpulse": lambda c, w, h: self._draw_hexpulse(c, w, h, t),
             "orbits": lambda c, w, h: self._draw_orbits(c, w, h, t),
+            "logo": lambda c, w, h: self._draw_logo(c, w, h, t),
         }.get(self.style, self._draw_nebula)
         fn(cr, W, H)
 
@@ -522,10 +539,95 @@ class Saver(Gtk.Window):
             cr.arc(x, y, 2.2, 0, 2 * math.pi)
             cr.fill()
 
+    # ------------------------------------------------------ logo del brand
+    def _load_asset(self, name):
+        try:
+            return GdkPixbuf.Pixbuf.new_from_file(os.path.join(SPLASH_DIR, name))
+        except Exception:                    # noqa: BLE001
+            return None
+
+    def _emblem_pixbuf(self, target_h):
+        """Emblema scalato all'altezza richiesta, con cache (evita di riscalare
+        a ogni frame)."""
+        if self._emblem is None or target_h <= 0:
+            return None
+        if self._emblem_scaled is None or abs(self._emblem_scaled_h - target_h) > 1:
+            ow, oh = self._emblem.get_width(), self._emblem.get_height()
+            if oh <= 0:
+                return None
+            tw = max(1, int(ow * target_h / oh))
+            self._emblem_scaled = self._emblem.scale_simple(
+                tw, int(target_h), GdkPixbuf.InterpType.BILINEAR)
+            self._emblem_scaled_h = int(target_h)
+        return self._emblem_scaled
+
+    def _paint_emblem(self, cr, cx, cy, h, alpha):
+        pb = self._emblem_pixbuf(h)
+        if pb is None:
+            return False
+        x = cx - pb.get_width() / 2.0
+        y = cy - pb.get_height() / 2.0
+        cr.save()
+        Gdk.cairo_set_source_pixbuf(cr, pb, x, y)
+        cr.paint_with_alpha(max(0.0, min(1.0, alpha)))
+        cr.restore()
+        return True
+
+    def _draw_logo(self, cr, W, H, t):
+        """Stile dedicato: emblema NexusSec grande al centro, con esagoni
+        concentrici che pulsano e nodi in orbita (l'emblema lo mette il
+        branding, qui creiamo lo sfondo)."""
+        cr.set_source_rgb(0.02, 0.04, 0.08); cr.paint()
+        self._radial(W, H, t)
+        cx, cy = W / 2.0, H * 0.42
+        # esagoni concentrici pulsanti (come il badge)
+        for k in range(4):
+            rr = (0.10 + 0.06 * k) * min(W, H) + 8 * math.sin(t * 1.3 - k)
+            a = 0.16 - 0.03 * k
+            cr.set_source_rgba(self.ar, self.ag, self.ab, max(0.03, a))
+            cr.set_line_width(1.5)
+            self._hexpath(cr, cx, cy, rr)
+            cr.stroke()
+        # nodi in orbita
+        for i in range(6):
+            ang = t * 0.6 + i * math.pi / 3.0
+            rr = 0.30 * min(W, H)
+            px = cx + rr * math.cos(ang)
+            py = cy + rr * 0.6 * math.sin(ang)
+            cr.set_source_rgba(self.ar, self.ag, self.ab, 0.8)
+            cr.arc(px, py, 4, 0, 2 * math.pi); cr.fill()
+
     def _draw_branding(self, cr, W, H, t):
         if self._unlock_shown:
             return
         pulse = 0.75 + 0.25 * math.sin(t * 1.6)
+        # Emblema del brand (se disponibile): grande nello stile "logo",
+        # piu' discreto negli altri. Con un alone morbido dietro.
+        if self._emblem is not None:
+            big = self.style == "logo"
+            eh = H * (0.34 if big else 0.20)
+            ecy = H * (0.42 if big else 0.32)
+            self._paint_emblem(cr, W / 2.0, ecy, eh, (0.95 if big else 0.75) * (0.6 + 0.4 * pulse))
+            ty = ecy + eh * 0.75
+            # wordmark: immagine se c'e', altrimenti testo
+            if self._wordmark is not None:
+                ww = min(W * 0.42, self._wordmark.get_width())
+                wh = ww * self._wordmark.get_height() / max(1, self._wordmark.get_width())
+                pbw = self._wordmark.scale_simple(int(ww), int(wh), GdkPixbuf.InterpType.BILINEAR)
+                cr.save()
+                Gdk.cairo_set_source_pixbuf(cr, pbw, (W - ww) / 2.0, ty)
+                cr.paint_with_alpha(0.9 * pulse)
+                cr.restore()
+                ty += wh + 14
+            else:
+                cr.select_font_face("sans-serif", 0, 1); cr.set_font_size(48)
+                e = cr.text_extents("NexusSec")
+                cr.set_source_rgba(self.ar, self.ag, self.ab, 0.9 * pulse)
+                cr.move_to((W - e.width) / 2.0 - e.x_bearing, ty); cr.show_text("NexusSec")
+                ty += 40
+            self._branding_clock_hint(cr, W, H, ty)
+            return
+        # --- fallback storico (nessun asset): testo "NexusSec" ---------------
         cr.select_font_face("sans-serif", 0, 1)
         cr.set_font_size(64)
         text = "NexusSec"
@@ -536,11 +638,16 @@ class Saver(Gtk.Window):
         cr.move_to(tx, ty)
         cr.show_text(text)
         cr.select_font_face("sans-serif", 0, 0)
+        self._branding_clock_hint(cr, W, H, ty)
+
+    def _branding_clock_hint(self, cr, W, H, ty):
+        """Orologio (sotto il logo) + suggerimento per uscire (in basso)."""
+        cr.select_font_face("sans-serif", 0, 0)
         cr.set_font_size(30)
         clock = time.strftime("%H:%M")
         e2 = cr.text_extents(clock)
         cr.set_source_rgba(0.85, 0.96, 1.0, 0.85)
-        cr.move_to((W - e2.width) / 2.0 - e2.x_bearing, ty + 50)
+        cr.move_to((W - e2.width) / 2.0 - e2.x_bearing, ty + 40)
         cr.show_text(clock)
         cr.set_font_size(15)
         hint = ("Premi un tasto per sbloccare" if self.locked

@@ -45,32 +45,51 @@ def gen_button_masks(dest_dir):
     except Exception:
         print("  [i] PIL assente: uso le .xbm gia' presenti nel template")
         return
+    # DIMENSIONE = 16px: Openbox NON scala le maschere dei pulsanti, le disegna
+    # 1:1 e le RITAGLIA se piu' grandi del pulsante -> una maschera troppo grande
+    # (es. 22px) si vede come una "fetta". 16px entra nel pulsante. Per un cerchio
+    # 1-bit il piu' tondo possibile: disegno il DISCO in grigio ad alta risoluzione
+    # (bordo-a-bordo), lo riduco con LANCZOS (antialias) e soglio -> scelta ottimale
+    # dei pixel di contorno. Il GLIFO invece lo incido NITIDO alla dimensione
+    # finale (linee crisp), cosi' - e + sono puliti e la X ben leggibile.
     S = 16
+    q = 8
+    SS = S * q
+    C = (S - 1) / 2.0        # centro esatto (7.5): glifi SIMMETRICI
+    ARM = 4.2                # semi-lunghezza dei tratti del glifo
+    TH = 0.95               # semi-spessore dei tratti (~2px)
 
-    def base():
-        img = Image.new("1", (S, S), 0)          # sfondo trasparente (bit 0)
-        d = ImageDraw.Draw(img)
-        d.ellipse([1, 1, S - 2, S - 2], fill=1)  # disco pieno (bit 1)
-        return img, d
+    def _disc():
+        big = Image.new("L", (SS, SS), 0)
+        ImageDraw.Draw(big).ellipse([0, 0, SS - 1, SS - 1], fill=255)
+        return (big.resize((S, S), Image.LANCZOS)
+                   .point(lambda p: 255 if p >= 128 else 0).convert("1"))
 
-    def carve(d, segs, w=2):
-        for seg in segs:
-            d.line(seg, fill=0, width=w)         # scava il glifo (bit 0)
+    def _hole(glyph, dx, dy):
+        # dx,dy = distanza dal centro. Glifo = "foro" (bit 0) nel disco.
+        if glyph == "close":                    # X: le due diagonali
+            return (min(abs(dx - dy), abs(dx + dy)) <= TH
+                    and max(abs(dx), abs(dy)) <= ARM)
+        if glyph == "iconify":                  # - : barra orizzontale
+            return abs(dy) <= TH and abs(dx) <= ARM
+        # max / max_toggled -> + : barra orizzontale + verticale
+        return ((abs(dx) <= TH and abs(dy) <= ARM)
+                or (abs(dy) <= TH and abs(dx) <= ARM))
 
-    masks = {
-        # chiudi: X simmetrica
-        "close.xbm":       [[(5, 5), (10, 10)], [(10, 5), (5, 10)]],
-        # minimizza: barra orizzontale
-        "iconify.xbm":     [[(5, 8), (10, 8)]],
-        # massimizza: croce +
-        "max.xbm":         [[(8, 5), (8, 10)], [(5, 8), (10, 8)]],
-        "max_toggled.xbm": [[(8, 5), (8, 10)], [(5, 8), (10, 8)]],
-    }
-    for fname, segs in masks.items():
-        img, d = base()
-        carve(d, segs)
-        img.save(os.path.join(dest_dir, fname))
-    print("  + maschere pulsanti a sfera rigenerate (disco + glifo scavato)")
+    def render(glyph):
+        d = _disc()
+        px = d.load()
+        for y in range(S):
+            for x in range(S):
+                if px[x, y] and _hole(glyph, x - C, y - C):
+                    px[x, y] = 0
+        return d
+
+    masks = {"close.xbm": "close", "iconify.xbm": "iconify",
+             "max.xbm": "max", "max_toggled.xbm": "max"}
+    for fname, glyph in masks.items():
+        render(glyph).save(os.path.join(dest_dir, fname))
+    print("  + maschere pulsanti a sfera rigenerate (%dpx, disco antialias + glifo simmetrico)" % S)
 
 
 PROFILES_JSON = os.path.join(

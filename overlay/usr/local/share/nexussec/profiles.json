@@ -7,7 +7,7 @@
       "desc": "Desktop neutro senza specializzazione. Solo gli strumenti di sistema NexusSec.",
       "accent": "#00e5ff",
       "wallpaper": "nebula.png",
-      "icon": "system-users",
+      "icon": "system-users-symbolic",
       "meta": null,
       "tools": []
     },
@@ -16,7 +16,7 @@
       "desc": "Sicurezza offensiva: scansione, exploit, password, wireless, sniffing.",
       "accent": "#ff3b5c",
       "wallpaper": "pentest.png",
-      "icon": "security-high",
+      "icon": "security-high-symbolic",
       "meta": "sec-profile-pentest",
       "tools": [
         "2ping",
@@ -271,7 +271,7 @@
       "desc": "Acquisizione, carving, memoria, file system, anti-malware, stego.",
       "accent": "#ffb000",
       "wallpaper": "forensics.png",
-      "icon": "drive-harddisk",
+      "icon": "drive-harddisk-symbolic",
       "meta": "sec-profile-forensics",
       "tools": [
         "7zip",
@@ -373,7 +373,7 @@
       "desc": "Ricognizione passiva: domini, sottodomini, email, username, metadati.",
       "accent": "#23d18b",
       "wallpaper": "osint.png",
-      "icon": "system-search",
+      "icon": "system-search-symbolic",
       "meta": "sec-profile-osint",
       "tools": [
         "0trace",
@@ -428,7 +428,7 @@
       "desc": "Sicurezza web: scanner, fuzzing, enumerazione, SSL/TLS, XSS/SQLi.",
       "accent": "#a06bff",
       "wallpaper": "web.png",
-      "icon": "applications-internet",
+      "icon": "applications-internet-symbolic",
       "meta": "sec-profile-web",
       "tools": [
         "apache-users",

@@ -545,8 +545,10 @@ class Panel(Gtk.Window):
         left = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=0)
         root.pack_start(left, False, False, 0)
 
-        # Logo NexusSec in versione SYMBOLIC (esagono a nodi + N): GTK lo ricolora
-        # col colore della skin/profilo, come le altre icone del pannello.
+        # Logo NexusSec in versione SYMBOLIC (esagono a nodi + N): mantiene la
+        # forma del brand ma, essendo monocromo, GTK lo RICOLORA col colore della
+        # skin/profilo del pannello (come le altre icone). Vedi hicolor/.../
+        # nxs-logo-symbolic.svg.
         menu_btn = _icon_button("nxs-logo-symbolic", _t("menu.title"), "nxs-menu")
         menu_btn.connect("clicked", self._on_menu)
         left.pack_start(menu_btn, False, False, 0)
@@ -1139,7 +1141,7 @@ class Panel(Gtk.Window):
         prof = self._profile_data()
         if prof:
             lst.pack_start(
-                self._menu_item("menu", prof.get("icon", "system-users"),
+                self._menu_item("menu", prof.get("icon", "system-users-symbolic"),
                                 _t("menu.profile", name=prof.get("name", "")),
                                 ["nxs-profile"], None, None),
                 False, False, 0)
@@ -1170,9 +1172,9 @@ class Panel(Gtk.Window):
             (None, None, None, None, None),
             # Dischi e casi forensi: raggiungibili anche dal menu, non solo
             # dalle icone del desktop (che si coprono con le finestre aperte).
-            ("drive-harddisk", _t("app.disks"), ["nxs-disks"], None, None),
-            ("nxs-case", _t("app.cases"), ["nxs-case"], None, None),
-            ("nxs-horus", _t("app.horus"), ["nxs-horus"], None, None),
+            ("drive-harddisk-symbolic", _t("app.disks"), ["nxs-disks"], None, None),
+            ("folder-documents-symbolic", _t("app.cases"), ["nxs-case"], None, None),
+            ("find-location-symbolic", _t("app.horus"), ["nxs-horus"], None, None),
             (None, None, None, None, None),
             ("computer-symbolic", _t("app.sysinfo"),
              ["nxs-control-center", "sysinfo"], None, None),
