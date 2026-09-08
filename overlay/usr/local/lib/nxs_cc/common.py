@@ -24,6 +24,9 @@ COL_ALERT = "#ff5a8a"
 
 CSS = b"""
 window, .background, dialog { background-color: #050a14; color: #c8f5ff; }
+/* Viewport (dentro gli ScrolledWindow) trasparente: senza, userebbe il colore
+   "base" del tema (bianco) e le viste scrollabili apparirebbero bianche. */
+viewport { background-color: transparent; }
 /* Font dell'interfaccia (inclusi in /usr/share/fonts/nexussec): titoli ed
    etichette in Chakra Petch (look "tech" del mockup), meta in IBM Plex Mono. */
 .nxs-headerbar label.title, .nxs-section, .nxs-key, .nxs-card-title,

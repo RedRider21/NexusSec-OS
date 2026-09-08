@@ -6,7 +6,7 @@ OVERLAY := $(ROOT)/overlay
 PYLIB := $(OVERLAY)/usr/local/lib
 SHARE := $(OVERLAY)/usr/local/share/nexussec
 
-.PHONY: all help wallpaper browser-icon icons themes panel-themes logo-emblem apkovl check iso clean
+.PHONY: all help wallpaper panel-wallpapers browser-icon icons themes panel-themes logo-emblem apkovl check iso clean
 
 all: help
 
@@ -14,6 +14,7 @@ help:
 	@echo "NexusSec OS (base Alpine) - target Makefile"
 	@echo
 	@echo "  make wallpaper     genera gli sfondi per profilo (ImageMagick)"
+	@echo "  make panel-wallpapers  genera gli sfondi abbinati alle skin pannello"
 	@echo "  make browser-icon  genera l'icona PNG di NexusSec Browser"
 	@echo "  make icons         genera i temi icone per profilo (PIL, accent)"
 	@echo "  make themes        genera i temi Openbox coordinati (Retro/Cards per profilo)"
@@ -28,6 +29,9 @@ help:
 
 wallpaper:
 	@$(BUILD)/make-wallpaper.sh
+
+panel-wallpapers:
+	@python3 $(BUILD)/make-panel-wallpapers.py
 
 browser-icon:
 	@$(BUILD)/make-browser-icon.sh

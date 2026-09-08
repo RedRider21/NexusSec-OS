@@ -1609,22 +1609,101 @@ def open_gtk_theme(_btn=None):
 
 
 def open_wallpaper(_btn=None):
-    dlg = Gtk.FileChooserDialog(title="Scegli sfondo", action=Gtk.FileChooserAction.OPEN, modal=True)
-    dlg.add_button("Annulla", Gtk.ResponseType.CANCEL)
-    dlg.add_button("Imposta", Gtk.ResponseType.ACCEPT)
-    flt = Gtk.FileFilter(); flt.set_name("Immagini")
-    flt.add_mime_type("image/png"); flt.add_mime_type("image/jpeg")
-    dlg.add_filter(flt)
-    default = HOME / ".themes/NexusSec-Core/backgrounds"
-    if default.is_dir():
-        dlg.set_current_folder(str(default))
-    if dlg.run() == Gtk.ResponseType.ACCEPT:
-        path = dlg.get_filename()
-        if have("feh"):
-            run_bg(["feh", "--bg-fill", path])
-        else:
-            info_dialog("feh assente", "Eseguire: doas apk add feh", level="warn")
-    dlg.destroy()
+    """Selettore SFONDO con anteprime: sfondi abbinati alle skin del pannello +
+    sfondi dei profili + file personale. E' una scelta SEPARATA e indipendente
+    (voce a se': non cambia con profilo/skin) e persiste finche' non si preme
+    «Torna allo sfondo del profilo». Applica via `nxs-wallpaper` (override)."""
+    win, body = panel_window("Sfondo del desktop", 680, 600)
+    from gi.repository import GdkPixbuf
+
+    intro = Gtk.Label(label="Scegli lo sfondo. E' indipendente dal profilo e "
+                            "dalla skin del pannello: resta finche' non lo cambi "
+                            "o premi «Torna allo sfondo del profilo».")
+    intro.set_xalign(0); intro.set_line_wrap(True)
+    intro.get_style_context().add_class("nxs-val")
+    body.pack_start(intro, False, False, 0)
+
+    status = Gtk.Label(label=""); status.set_xalign(0)
+    status.get_style_context().add_class("nxs-val")
+
+    def apply_wp(path):
+        try:
+            subprocess.run(["nxs-wallpaper", "set", str(path)])
+            status.set_text("Sfondo impostato: %s" % os.path.basename(str(path)))
+        except OSError:
+            status.set_text("Impossibile impostare lo sfondo.")
+
+    scroll = Gtk.ScrolledWindow()
+    scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+    flow = Gtk.FlowBox()
+    flow.set_selection_mode(Gtk.SelectionMode.NONE)
+    flow.set_max_children_per_line(3)
+    flow.set_homogeneous(True)
+    flow.set_margin_top(6); flow.set_margin_bottom(6)
+    scroll.add(flow)
+    body.pack_start(scroll, True, True, 0)
+
+    def add_thumb(path, label):
+        card = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
+        try:
+            pb = GdkPixbuf.Pixbuf.new_from_file_at_scale(str(path), 192, 108, False)
+            img = Gtk.Image.new_from_pixbuf(pb)
+        except Exception:                       # noqa: BLE001
+            img = Gtk.Image.new_from_icon_name("image-x-generic", Gtk.IconSize.DIALOG)
+        btn = Gtk.Button(); btn.add(img)
+        btn.connect("clicked", lambda _b, p=path: apply_wp(p))
+        card.pack_start(btn, False, False, 0)
+        lab = Gtk.Label(label=label); lab.set_xalign(0.5)
+        lab.get_style_context().add_class("nxs-val")
+        card.pack_start(lab, False, False, 0)
+        flow.add(card)
+
+    from pathlib import Path as _P
+    skin_dir = _P("/usr/local/share/nexussec/wallpapers")
+    if skin_dir.is_dir():
+        for f in sorted(skin_dir.glob("skin-*.png")):
+            add_thumb(f, "Skin: " + f.stem[5:])
+    prof_dir = HOME / ".themes/NexusSec-Core/backgrounds"
+    if prof_dir.is_dir():
+        for f in sorted(prof_dir.glob("*.png")):
+            add_thumb(f, "Profilo: " + f.stem)
+
+    body.pack_start(status, False, False, 0)
+
+    btns = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+    b_reset = icon_button("Torna allo sfondo del profilo", "view-refresh-symbolic")
+
+    def do_reset(_b):
+        try:
+            subprocess.run(["nxs-wallpaper", "reset"])
+            status.set_text("Sfondo: quello del profilo.")
+        except OSError:
+            pass
+    b_reset.connect("clicked", do_reset)
+    b_file = icon_button("File personale...", "document-open")
+
+    def pick_file(_b):
+        dlg = Gtk.FileChooserDialog(title="Scegli sfondo",
+                                    action=Gtk.FileChooserAction.OPEN, modal=True)
+        dlg.add_button("Annulla", Gtk.ResponseType.CANCEL)
+        dlg.add_button("Imposta", Gtk.ResponseType.ACCEPT)
+        flt = Gtk.FileFilter(); flt.set_name("Immagini")
+        flt.add_mime_type("image/png"); flt.add_mime_type("image/jpeg")
+        dlg.add_filter(flt)
+        if prof_dir.is_dir():
+            dlg.set_current_folder(str(prof_dir))
+        if dlg.run() == Gtk.ResponseType.ACCEPT:
+            apply_wp(dlg.get_filename())
+        dlg.destroy()
+    b_file.connect("clicked", pick_file)
+    b_close = icon_button("Chiudi", "window-close")
+    b_close.connect("clicked", lambda _b: win.destroy())
+    btns.pack_start(b_reset, False, False, 0)
+    btns.pack_start(b_file, False, False, 0)
+    btns.pack_end(b_close, False, False, 0)
+    body.pack_end(btns, False, False, 0)
+
+    win.show_all()
 
 
 # ---------------------------------------------------------------------------

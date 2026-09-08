@@ -1,0 +1,73 @@
+#!/bin/sh
+# nxs-wallpaper - sceglie lo SFONDO del desktop (voce separata, indipendente dal
+# profilo e dalla skin del pannello). La scelta e' salvata in
+# ~/.config/nxs/wallpaper e sopravvive al cambio profilo; "reset" torna allo
+# sfondo del profilo.
+#
+#   nxs-wallpaper list           elenca gli sfondi disponibili (profilo + skin)
+#   nxs-wallpaper get            mostra lo sfondo scelto (o "profilo")
+#   nxs-wallpaper set <id|path>  imposta e applica (id es. "skin-hud", oppure un
+#                                percorso assoluto a un'immagine)
+#   nxs-wallpaper reset          torna allo sfondo del profilo
+exec env PYTHONPATH=/usr/local/lib python3 - "$@" <<'PY'
+import sys, os
+from pathlib import Path
+from nxs_profiles import model
+
+SKIN_DIR = Path("/usr/local/share/nexussec/wallpapers")
+
+
+def resolve(arg):
+    p = Path(arg)
+    if p.is_file():
+        return p
+    # id skin (con o senza prefisso "skin-" / estensione)
+    for cand in (arg, "skin-" + arg):
+        f = SKIN_DIR / (cand if cand.endswith(".png") else cand + ".png")
+        if f.is_file():
+            return f
+    return None
+
+
+def do_list():
+    print("Sfondi SKIN (abbinati ai temi pannello):")
+    for f in sorted(SKIN_DIR.glob("skin-*.png")):
+        print("  %-16s %s" % (f.stem, f))
+    print("Sfondi PROFILO:")
+    bg = model.BG_DIR
+    for f in sorted(Path(bg).glob("*.png")):
+        print("  %-16s %s" % (f.stem, f))
+
+
+def main(argv):
+    cmd = argv[0] if argv else "list"
+    if cmd == "list":
+        do_list(); return 0
+    if cmd == "get":
+        try:
+            v = model.WALLPAPER_CONF.read_text().strip()
+        except OSError:
+            v = ""
+        print(v or "profilo"); return 0
+    if cmd == "reset":
+        try:
+            model.WALLPAPER_CONF.unlink()
+        except OSError:
+            pass
+        model.set_wallpaper(model.wallpaper_path()); print("sfondo: profilo"); return 0
+    if cmd == "set":
+        if len(argv) < 2:
+            print("uso: nxs-wallpaper set <id|percorso>", file=sys.stderr); return 2
+        f = resolve(argv[1])
+        if f is None:
+            print("sfondo non trovato: %s (prova 'nxs-wallpaper list')" % argv[1],
+                  file=sys.stderr); return 1
+        model.WALLPAPER_CONF.parent.mkdir(parents=True, exist_ok=True)
+        model.WALLPAPER_CONF.write_text(str(f) + "\n")
+        model.set_wallpaper(f); print("sfondo impostato: %s" % f); return 0
+    print("uso: nxs-wallpaper [list|get|set <id|path>|reset]", file=sys.stderr)
+    return 2
+
+
+raise SystemExit(main(sys.argv[1:]))
+PY

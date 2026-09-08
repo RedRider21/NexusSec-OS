@@ -192,7 +192,22 @@ def set_current(key: str) -> None:
 
 
 # ---------------------------------------------------------------- aspetto
+# Sfondo SCELTO A MANO (voce separata, indipendente dal profilo): se presente e
+# valido ha la precedenza sullo sfondo del profilo e sopravvive al cambio
+# profilo (activate_profile/apply_current passano sempre da wallpaper_path()).
+# Vuoto/assente = si torna allo sfondo del profilo. Gestito da `nxs-wallpaper`.
+WALLPAPER_CONF = CONF_DIR / "wallpaper"
+
+
 def wallpaper_path(key: str | None = None) -> Path:
+    try:
+        ov = WALLPAPER_CONF.read_text().strip()
+        if ov:
+            p = Path(ov)
+            if p.is_file():
+                return p
+    except OSError:
+        pass
     return BG_DIR / profile_data(key).get("wallpaper", "nebula.png")
 
 
