@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="#bebebe">
+  <!-- NexusSec emblema (esagono a nodi con la N), SYMBOLIC monocromo. GTK
+       ricolora il FILL col colore del pannello/menu (segue skin e profilo):
+       tutto e' ad AREE PIENE (contorni = "anelli" fill-rule evenodd), nessuno
+       stroke (lo stroke non verrebbe ricolorato). NB: nessun commento PRIMA di
+       <svg>, altrimenti gdk-pixbuf non riconosce il file come SVG. -->
+  <!-- anello esagonale: esagono esterno meno esagono interno -->
+  <path fill-rule="evenodd" d="M5,2.4 11,2.4 13.6,8 11,13.6 5,13.6 2.4,8 Z
+                               M5.6,3.5 10.4,3.5 12.5,8 10.4,12.5 5.6,12.5 3.5,8 Z"/>
+  <!-- N: due montanti + diagonale (aree piene, netta) -->
+  <rect x="5.5" y="4.9" width="1.05" height="6.2"/>
+  <rect x="9.45" y="4.9" width="1.05" height="6.2"/>
+  <polygon points="5.5,4.9 6.55,4.9 10.5,11.1 9.45,11.1"/>
+  <!-- nodi ai vertici dell'esagono (il motivo "nexus") -->
+  <circle cx="5" cy="2.4" r="1"/><circle cx="11" cy="2.4" r="1"/>
+  <circle cx="13.6" cy="8" r="1"/><circle cx="11" cy="13.6" r="1"/>
+  <circle cx="5" cy="13.6" r="1"/><circle cx="2.4" cy="8" r="1"/>
+  <!-- piccoli nodi agli estremi della N -->
+  <circle cx="6.02" cy="4.9" r="0.75"/><circle cx="9.98" cy="4.9" r="0.75"/>
+  <circle cx="6.02" cy="11.1" r="0.75"/><circle cx="9.98" cy="11.1" r="0.75"/>
+</svg>

@@ -545,7 +545,9 @@ class Panel(Gtk.Window):
         left = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=0)
         root.pack_start(left, False, False, 0)
 
-        menu_btn = _icon_button("nxs-logo", _t("menu.title"), "nxs-menu")
+        # Logo NexusSec in versione SYMBOLIC (esagono a nodi + N): GTK lo ricolora
+        # col colore della skin/profilo, come le altre icone del pannello.
+        menu_btn = _icon_button("nxs-logo-symbolic", _t("menu.title"), "nxs-menu")
         menu_btn.connect("clicked", self._on_menu)
         left.pack_start(menu_btn, False, False, 0)
 
@@ -556,7 +558,7 @@ class Panel(Gtk.Window):
             ("utilities-terminal-symbolic", _t("app.terminal"), ["nxs-terminal"]),
             ("system-file-manager-symbolic", _t("app.files_short"), ["pcmanfm"]),
             ("accessories-text-editor-symbolic", _t("app.editor"), ["pluma"]),
-            ("nxs-browser", _t("app.browser"), ["nxs-browser"]),
+            ("nxs-browser-symbolic", _t("app.browser"), ["nxs-browser"]),
             ("preferences-system-symbolic", _t("app.control_center"),
              ["nxs-control-center"]),
         ):
@@ -1156,7 +1158,7 @@ class Panel(Gtk.Window):
             ("utilities-terminal-symbolic", _t("app.terminal"), ["nxs-terminal"], None, None),
             ("system-file-manager-symbolic", _t("app.files"), ["pcmanfm"], None, None),
             ("accessories-text-editor-symbolic", _t("app.editor"), ["pluma"], None, None),
-            ("nxs-browser", _t("app.browser"), ["nxs-browser"], None, None),
+            ("nxs-browser-symbolic", _t("app.browser"), ["nxs-browser"], None, None),
             ("system-run-symbolic", _t("app.wizard"), ["nxs-wizard"], None, None),
             (None, None, None, None, None),
             # Utilita' di sessione (stile MATE): blocco schermo/salvaschermo e
