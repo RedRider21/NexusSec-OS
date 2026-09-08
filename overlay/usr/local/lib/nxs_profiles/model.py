@@ -294,7 +294,12 @@ scale slider {{ background-color: {ac}; border-color: {ac}; }}
 # ---- Stile finestre (flat / vetro / telaio) commutabile -------------------
 WINDOW_STYLE_CONF = CONF_DIR / "window-style"
 WINDOW_STYLE_CSS = CONF_DIR / "window-style.css"
-WINDOW_STYLES = ("flat", "vetro", "telaio")
+#   aero = "Vetro reale": finestre semi-trasparenti + sfocatura del compositor
+#          (picom, blur dual_kawase) dietro, effetto acrilico/Aero stile Windows.
+#          A differenza di 'vetro' (che simula il vetro col solo CSS) questo
+#          rende le finestre DAVVERO traslucide, quindi ACCENDE picom anche senza
+#          la famiglia Cards (vedi _picom_wanted / set_window_style).
+WINDOW_STYLES = ("flat", "vetro", "telaio", "aero")
 DEFAULT_WINDOW_STYLE = "vetro"
 
 
@@ -317,6 +322,9 @@ def set_window_style(style: str, key: str | None = None) -> None:
     WINDOW_STYLE_CONF.write_text(style + "\n")
     write_window_style_css(style=style, key=key)
     write_openbox_theme(style=style, key=key)
+    # 'aero' richiede il compositor per la trasparenza/sfocatura reale; gli altri
+    # stili non lo pretendono, ma potrebbe servire ancora alla famiglia Cards.
+    _manage_picom(_picom_wanted())
 
 
 def write_window_style_css(style: str | None = None, key: str | None = None) -> None:
@@ -335,6 +343,45 @@ def write_window_style_css(style: str | None = None, key: str | None = None) -> 
             "   Caricato sopra accent.css (nxs_cc.common.apply_css). */\n" % style)
     if style == "flat":
         css = head + "/* Flat arrotondato: nessun override, usa il tema base + accent. */\n"
+    elif style == "aero":
+        # VETRO REALE (Aero/acrilico): lo SFONDO della finestra e' semi-trasparente
+        # (alpha < 1) cosi' picom, che sfoca lo sfondo dietro le finestre traslucide
+        # (blur dual_kawase in picom.conf), crea il tipico effetto "vetro smerigliato"
+        # di Windows. GTK3 usa il visual RGBA quando c'e' un compositor, quindi
+        # basta l'alpha nel background per rendere la finestra davvero traslucida.
+        # Testi e tessere restano su fondi piu' pieni per la leggibilita'.
+        css = head + f"""
+/* VETRO REALE (trasparenza + sfocatura del compositor). Serve picom acceso:
+   lo accende set_window_style quando questo stile e' attivo. */
+window, .background, dialog {{
+  background-color: rgba(10,18,32,0.68);
+}}
+.nxs-headerbar {{
+  background-color: rgba({rgb},0.12);
+  border-top: 2px solid {ac};
+  border-bottom: 1px solid rgba({rgb},0.22);
+}}
+.nxs-tile, .nxs-card, .nxs-profilo-card {{
+  background-color: rgba({rgb},0.10);
+  border: 1px solid rgba({rgb},0.20);
+  border-radius: 10px;
+}}
+.nxs-tile:hover, .nxs-card:hover, .nxs-profilo-card:hover {{
+  background-color: rgba({rgb},0.18); border-color: {ac};
+  box-shadow: inset 0 0 0 1px rgba({rgb},0.30); }}
+.nxs-profilo-card.sel {{ border-color: {ac}; background-color: rgba({rgb},0.22);
+  box-shadow: inset 0 0 0 1px rgba({rgb},0.40); }}
+button {{ background-color: rgba({rgb},0.10); border: 1px solid rgba({rgb},0.28);
+  border-radius: 9px; }}
+button:hover {{ border-color: {ac}; background-color: rgba({rgb},0.18); }}
+button.nxs-primary {{ background-color: {ac}; color: #04121a; border-color: {ac};
+  box-shadow: 0 0 18px rgba({rgb},0.55); }}
+entry {{ background-color: rgba(5,9,15,0.55); border: 1px solid rgba({rgb},0.24); }}
+textview, textview text {{ background-color: rgba(5,9,15,0.45); }}
+frame > border {{ border-color: rgba({rgb},0.18); }}
+progressbar > trough {{ background-color: rgba(26,45,58,0.6); border-radius: 999px; }}
+progressbar > trough > progress {{ border-radius: 999px; background-color: {ac}; }}
+"""
     elif style == "telaio":
         # Fedele al mockup "Telaio a contorno": fondo quasi nero (#05090f),
         # header con barretta laterale d'accento, tessere #070d14 col bordo
@@ -632,6 +679,16 @@ def _apply_rc(name: str, layout: str, reconfigure: bool = True) -> None:
             pass
 
 
+def _picom_wanted() -> bool:
+    """picom serve se: la famiglia tema e' 'cards' (angoli arrotondati) OPPURE
+    lo stile finestre e' 'aero' (trasparenza + sfocatura reale). Cosi' la scelta
+    del vetro reale e' INDIPENDENTE dal profilo/dalla famiglia di decorazione."""
+    try:
+        return theme_family() == "cards" or get_window_style() == "aero"
+    except Exception:                            # noqa: BLE001
+        return False
+
+
 def _manage_picom(enable: bool) -> None:
     """Compositor per gli angoli arrotondati dello stile Cards. Avvia picom se
     serve (e non gira gia'), lo ferma altrimenti. Best-effort: se picom non c'e'
@@ -672,7 +729,7 @@ def set_window_theme(key: str | None = None, reconfigure: bool = True) -> None:
     name = resolve_ob_theme(fam, key)
     layout = OB_TITLELAYOUT_LEFT if fam == "cards" else OB_TITLELAYOUT_DEFAULT
     _apply_rc(name, layout, reconfigure=reconfigure)
-    _manage_picom(fam == "cards")
+    _manage_picom(_picom_wanted())
 
 
 # ---------------------------------------------------------------- tema icone

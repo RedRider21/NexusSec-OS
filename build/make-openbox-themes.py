@@ -24,6 +24,55 @@ import shutil
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+def gen_button_masks(dest_dir):
+    """Genera le maschere .xbm dei pulsanti "a sfera" stile macOS/iOS.
+
+    CONVENZIONE OPENBOX: un bit ACCESO (1) e' disegnato in image.color (il
+    colore semaforo del pulsante); un bit SPENTO (0) e' trasparente e mostra lo
+    sfondo (parentrelative = barra graphite). Quindi la maschera corretta e':
+      - DISCO PIENO di bit accesi  -> la sfera colorata;
+      - SIMBOLO scavato a bit spenti dentro il disco -> il glifo appare nel
+        colore della barra (come inciso).
+    In PIL mode "1": bianco(1) -> bit 1 (sfera), nero(0) -> bit 0 (trasparente).
+    Le vecchie maschere erano INVERTITE (quadrato pieno con foro tondo): la
+    sfera si vedeva come "cerchietto scuro" dentro un quadrato colorato.
+    Se PIL non c'e', si tengono le .xbm gia' presenti nel template.
+    """
+    try:
+        from PIL import Image, ImageDraw
+    except Exception:
+        print("  [i] PIL assente: uso le .xbm gia' presenti nel template")
+        return
+    S = 16
+
+    def base():
+        img = Image.new("1", (S, S), 0)          # sfondo trasparente (bit 0)
+        d = ImageDraw.Draw(img)
+        d.ellipse([1, 1, S - 2, S - 2], fill=1)  # disco pieno (bit 1)
+        return img, d
+
+    def carve(d, segs, w=2):
+        for seg in segs:
+            d.line(seg, fill=0, width=w)         # scava il glifo (bit 0)
+
+    masks = {
+        # chiudi: X simmetrica
+        "close.xbm":       [[(5, 5), (10, 10)], [(10, 5), (5, 10)]],
+        # minimizza: barra orizzontale
+        "iconify.xbm":     [[(5, 8), (10, 8)]],
+        # massimizza: croce +
+        "max.xbm":         [[(8, 5), (8, 10)], [(5, 8), (10, 8)]],
+        "max_toggled.xbm": [[(8, 5), (8, 10)], [(5, 8), (10, 8)]],
+    }
+    for fname, segs in masks.items():
+        img, d = base()
+        carve(d, segs)
+        img.save(os.path.join(dest_dir, fname))
+    print("  + maschere pulsanti a sfera rigenerate (disco + glifo scavato)")
+
+
 PROFILES_JSON = os.path.join(
     ROOT, "overlay/usr/local/share/nexussec/profiles.json")
 TEMPLATES = os.path.join(ROOT, "build/openbox-templates")
@@ -69,6 +118,10 @@ def gen_family(fam_dir, suffix, accents):
         return 0
     with open(themerc_in, encoding="utf-8") as f:
         tpl = f.read()
+    # La famiglia Cards usa maschere .xbm "a sfera": le (ri)generiamo nel
+    # template stesso cosi' restano l'unica fonte di verita' (color-agnostiche).
+    if fam_dir == "cards":
+        gen_button_masks(src_ob)
     # glifi .xbm da copiare (color-agnostici); niente = pulsanti default Openbox
     xbms = [n for n in os.listdir(src_ob) if n.endswith(".xbm")]
     made = 0

@@ -207,12 +207,17 @@ scan() {
 				if (z+0 > best+0) { best=z; bs=s; be=e; bz=z } }
 			END { if (best+0 >= MIN) printf "%s %s %d\n", bs, be, bz }' MIN="$MINFREE_MIB")"
 		[ -n "$free" ] || continue
-		set -- $free; fs="$1"; fe="$2"; fz="$3"
+		# NB: usare nomi PROPRI (fst/fen/fsz). NON usare fs/e/s: is_system_dev
+		# e disk_is_system (chiamate qui sotto) impostano una variabile GLOBALE
+		# 'fs' (il filesystem type) e la sovrascriverebbero -> lo start dello
+		# spazio libero diventerebbe "iso9660" e la creazione partizione (proprio
+		# nel caso "spazio libero sulla stessa chiavetta") fallirebbe.
+		set -- $free; fst="$1"; fen="$2"; fsz="$3"
 		note=""; disk_is_system "$dd" && note=" (stessa chiavetta di avvio)"
 		tr_h="$(lsblk -rno TRAN "$dd" 2>/dev/null | head -1)"
 		mdl="$(dev_model "$dd")"; [ -n "$mdl" ] && mdl=" '$mdl'"
-		printf '%s|%s|%s %s|%s|%s\n' free "$dd" "$fs" "$fe" \
-			"spazio libero ~${fz} MiB su $(human_tran "$tr_h")$mdl$note -> partizione dati (scegli tu quanta)" 0 >> "$CANDF"
+		printf '%s|%s|%s %s|%s|%s\n' free "$dd" "$fst" "$fen" \
+			"spazio libero ~${fsz} MiB su $(human_tran "$tr_h")$mdl$note -> partizione dati (scegli tu quanta)" 0 >> "$CANDF"
 	done
 }
 LABEL_NXS="$LABEL"

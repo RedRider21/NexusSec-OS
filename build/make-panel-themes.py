@@ -116,8 +116,23 @@ popover.nxs-startmenu > arrow {{ background-color:{strip1}; border:1px solid {bo
 .nxs-menu-strip label.brand {{ color:{brand}; }}
 .nxs-menu-strip label.brand-sub {{ color:{brand}; }}
 .nxs-startmenu-list button.nxs-menu-item {{ color:{text}; }}
-.nxs-startmenu-list button.nxs-menu-item image {{ color:{accent}; }}
 .nxs-startmenu-list button.nxs-menu-item:hover {{ background-color:{hover}; }}
+.nxs-startmenu-list button.nxs-menu-item:hover label {{ color:{accent}; }}
+/* TUTTE le icone del menu start seguono la skin (righe tool, categorie, app):
+   un selettore ampio evita che qualche riga con classe diversa
+   (.nxs-tool-item, .nxs-menu-cat, ...) resti col colore dell'accent del
+   profilo. Vale sia dentro la lista sia nel popover in generale. */
+.nxs-startmenu-list button image,
+popover.nxs-startmenu button image {{ color:{accent}; }}
+.nxs-startmenu-list label {{ color:{text}; }}
+button.nxs-menu-cat, label.nxs-menu-cat {{ color:{dim}; }}
+button.nxs-menu-cat:hover {{ color:{accent}; border-left-color:{accent}; }}
+button.nxs-tool-item {{ color:{text}; }}
+button.nxs-tool-item:hover {{ background-color:{hover}; }}
+button.nxs-tool-item:hover label {{ color:{accent}; }}
+entry.nxs-menu-search {{ background-color:{pop}; color:{text}; border:1px solid {border}; }}
+entry.nxs-menu-search image {{ color:{dim}; }}
+entry.nxs-menu-search:focus {{ border-color:{accent}; }}
 """
 
 

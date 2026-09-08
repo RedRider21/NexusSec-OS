@@ -30,5 +30,20 @@ popover.nxs-startmenu > arrow { background-color:#00334a; border:1px solid #1a3a
 .nxs-menu-strip label.brand { color:#eafcff; }
 .nxs-menu-strip label.brand-sub { color:#eafcff; }
 .nxs-startmenu-list button.nxs-menu-item { color:#c8f5ff; }
-.nxs-startmenu-list button.nxs-menu-item image { color:#00e5ff; }
 .nxs-startmenu-list button.nxs-menu-item:hover { background-color:rgba(0,229,255,0.14); }
+.nxs-startmenu-list button.nxs-menu-item:hover label { color:#00e5ff; }
+/* TUTTE le icone del menu start seguono la skin (righe tool, categorie, app):
+   un selettore ampio evita che qualche riga con classe diversa
+   (.nxs-tool-item, .nxs-menu-cat, ...) resti col colore dell'accent del
+   profilo. Vale sia dentro la lista sia nel popover in generale. */
+.nxs-startmenu-list button image,
+popover.nxs-startmenu button image { color:#00e5ff; }
+.nxs-startmenu-list label { color:#c8f5ff; }
+button.nxs-menu-cat, label.nxs-menu-cat { color:#5a8a9a; }
+button.nxs-menu-cat:hover { color:#00e5ff; border-left-color:#00e5ff; }
+button.nxs-tool-item { color:#c8f5ff; }
+button.nxs-tool-item:hover { background-color:rgba(0,229,255,0.14); }
+button.nxs-tool-item:hover label { color:#00e5ff; }
+entry.nxs-menu-search { background-color:#0a1a26; color:#c8f5ff; border:1px solid #1a3a52; }
+entry.nxs-menu-search image { color:#5a8a9a; }
+entry.nxs-menu-search:focus { border-color:#00e5ff; }

@@ -2450,6 +2450,10 @@ _WSTYLES = [
     ("telaio", "Telaio a contorno",
      "Fondo quasi nero, elementi definiti dal bordo d'accento e da una "
      "barretta laterale. Estetica terminale/cyber, molto tecnica."),
+    ("aero",   "Vetro reale (trasparenza)",
+     "Finestre DAVVERO traslucide con sfocatura dello sfondo, come l'effetto "
+     "vetro/acrilico di Windows. Accende il compositore (picom): su VM con "
+     "grafica software puo' essere piu' pesante."),
 ]
 
 
