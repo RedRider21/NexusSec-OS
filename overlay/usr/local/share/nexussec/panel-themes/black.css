@@ -55,3 +55,20 @@ button.nxs-tool-item:hover label { color:#ffffff; }
 entry.nxs-menu-search { background-color:#0a0a0a; color:#eaeaea; border:1px solid #2e2e2e; }
 entry.nxs-menu-search image { color:#8a8a8a; }
 entry.nxs-menu-search:focus { border-color:#ffffff; }
+/* --- CONTENUTO dei POPUP dei widget del pannello (wifi/audio/batteria/
+   bluetooth/calendario/schermi/sicurezza) --- Questi popup sono finestre
+   .nxs-popup: il loro TESTO usa i colori del tema SCURO base (label chiare,
+   valori chiari, accenti ciano) che sulle skin CHIARE spariscono. Qui lo
+   adeguiamo alla palette della skin. NB: le voci del menu start (anch'esse in
+   .nxs-popup) hanno regole piu' specifiche che restano valide. */
+.nxs-popup { color:#eaeaea; }
+.nxs-popup label { color:#eaeaea; }
+.nxs-popup .nxs-val { color:#eaeaea; }
+.nxs-popup .nxs-key, .nxs-popup .nxs-card-title, .nxs-popup .nxs-eyebrow { color:#ffffff; }
+.nxs-popup .nxs-headerbar label.title { color:#ffffff; }
+.nxs-popup .nxs-headerbar label.subtitle { color:#8a8a8a; }
+.nxs-popup .nxs-dt-row label { color:#8a8a8a; }
+.nxs-popup calendar { color:#eaeaea; }
+.nxs-popup calendar.header, .nxs-popup calendar.button,
+.nxs-popup calendar.highlight { color:#ffffff; }
+.nxs-popup calendar:indeterminate { color:#8a8a8a; }
