@@ -9,6 +9,13 @@ LOG=/tmp/nxs-cc.log
 # un modulo input-method assente e crashare (segfault) su X minimale.
 IMENV="GTK_IM_MODULE=gtk-im-context-simple"
 
+# Avvio CALDO via demone (fork da GTK gia' importato): parte molto piu' in fretta.
+# Se il demone non c'e'/non risponde, nxs-launch esce !=0 e si prosegue con
+# l'avvio normale qui sotto.
+if command -v nxs-launch >/dev/null 2>&1 && nxs-launch cc "$@" 2>/dev/null; then
+  exit 0
+fi
+
 if command -v python3 >/dev/null 2>&1; then
   exec env $IMENV PYTHONPATH=/usr/local/lib python3 -m nxs_cc "$@" >>"$LOG" 2>&1
 fi

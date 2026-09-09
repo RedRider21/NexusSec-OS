@@ -54,6 +54,12 @@ command -v nxs-audio-unmute >/dev/null 2>&1 && (sleep 2; nxs-audio-unmute) &
 #    profilo va impostato via "pcmanfm --set-wallpaper", quindi deve gia' esserci.
 command -v pcmanfm >/dev/null 2>&1 && pcmanfm --desktop --profile=NexusSec &
 
+# 3b) Demone "launcher caldo": precarica gi/GTK + i moduli del desktop una volta
+#     e apre le app (Centro di Controllo, selettore profili) via fork, saltando
+#     il costo di import a ogni lancio. Gira dietro la splash. Best-effort: se
+#     non parte, nxs-launch ricade sull'avvio normale (nulla si rompe).
+command -v nxs-launcherd >/dev/null 2>&1 && (sleep 1; nxs-launcherd >/tmp/nxs-launcherd.log 2>&1) &
+
 # 4+5) Sfondo/accent/tema-icone del profilo, POI il pannello.
 #      ORDINE IMPORTANTE: "nxs-tool apply" riscrive gtk-3.0/settings.ini per
 #      impostare il tema icone del profilo. Prima il pannello partiva in

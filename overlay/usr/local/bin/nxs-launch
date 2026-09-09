@@ -1,0 +1,42 @@
+#!/usr/bin/env python3
+"""nxs-launch <app> [args] - chiede al demone nxs-launcherd di aprire un'app GTK
+NexusSec con avvio "caldo" (fork da un processo che ha gia' importato GTK).
+
+Client LEGGERO di proposito: importa solo socket/os/sys (niente gi/GTK), quindi
+parte in pochi ms. Esce 0 se il demone ha preso in carico la richiesta, 1 se il
+demone non c'e'/non risponde: in quel caso e' il launcher chiamante a ricadere
+sull'avvio normale (python3 -m ...), cosi' le app funzionano comunque.
+
+app: cc | profile | screensaver
+"""
+import os
+import socket
+import sys
+
+
+def _sock_path():
+    base = os.environ.get("XDG_RUNTIME_DIR") or "/tmp"
+    return os.environ.get("NXS_LAUNCHERD_SOCK") or os.path.join(base, "nxs-launcherd.sock")
+
+
+def main(argv):
+    if not argv:
+        sys.stderr.write("uso: nxs-launch <cc|profile|screensaver> [args]\n")
+        return 2
+    path = _sock_path()
+    if not os.path.exists(path):
+        return 1
+    try:
+        s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        s.settimeout(3.0)
+        s.connect(path)
+        s.sendall((" ".join(argv) + "\n").encode("utf-8"))
+        reply = s.recv(16)
+        s.close()
+    except OSError:
+        return 1
+    return 0 if reply.strip() == b"ok" else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main(sys.argv[1:]))

@@ -1,0 +1,7 @@
+#!/bin/sh
+# nxs-launcherd - avvia il demone "launcher caldo" (fork-zygote) delle app GTK
+# NexusSec. Precarica gi/GTK + i moduli nostri una volta e apre le finestre via
+# fork, saltando il costo di import a ogni lancio. Lanciato in autostart in
+# background; se non gira, il client nxs-launch ricade sull'avvio normale.
+exec env GTK_IM_MODULE=gtk-im-context-simple PYTHONPATH=/usr/local/lib \
+     python3 -m nxs_cc.launcherd "$@"
