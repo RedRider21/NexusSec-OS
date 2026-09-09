@@ -139,7 +139,10 @@ done
 # (Plymouth valutato e SCARTATO: non aggancia il display in questo stack e fa
 #  riemergere la VT col testo -> peggiora il boot pulito.)
 
-chmod +x "$tmp/etc/local.d/nexussec.start" 2>/dev/null || true
+# TUTTI gli script local.d devono essere eseguibili, altrimenti OpenRC ('local')
+# non li lancia (es. zram.start per lo swap compresso). Il tar dell'apkovl non
+# garantisce il bit exec, quindi lo forziamo qui.
+chmod +x "$tmp"/etc/local.d/*.start 2>/dev/null || true
 echo "$HOSTNAME" > "$tmp/etc/hostname"
 
 # /etc/hosts: l'hostname DEVE risolvere a 127.0.0.1, altrimenti startx/xauth

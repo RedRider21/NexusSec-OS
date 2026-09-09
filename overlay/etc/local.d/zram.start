@@ -1,0 +1,50 @@
+#!/bin/sh
+# NexusSec - swap COMPRESSO in RAM (zram) con zstd.
+#
+# La live gira in tmpfs (tutto in RAM): un dispositivo zram usato come swap da'
+# piu' RAM EFFETTIVA senza toccare il disco: il kernel sposta le pagine "fredde"
+# in un blocco RAM compresso (zstd ~2-3x), liberando RAM reale. Aiuta con app
+# pesanti, pull di container e sistemi con poca memoria. Tutto best-effort: se il
+# modulo zram non c'e' o qualcosa fallisce, si esce senza rompere il boot.
+LOG=/var/log/nxs-boot.log
+{ echo "=== zram $(date) ==="; } >>"$LOG" 2>&1
+
+# gia' attivo? niente da fare (idempotente)
+if [ -e /dev/zram0 ] && grep -q zram0 /proc/swaps 2>/dev/null; then
+	echo "zram: gia' attivo" >>"$LOG" 2>&1
+	exit 0
+fi
+
+modprobe zram num_devices=1 >>"$LOG" 2>&1 || { echo "zram: modulo assente" >>"$LOG" 2>&1; exit 0; }
+# aspetta che /sys/block/zram0 compaia
+i=0; while [ ! -d /sys/block/zram0 ] && [ "$i" -lt 20 ]; do i=$((i+1)); sleep 0.1; done
+[ -d /sys/block/zram0 ] || { echo "zram: /sys/block/zram0 assente" >>"$LOG" 2>&1; exit 0; }
+
+# algoritmo di compressione: zstd se disponibile (miglior rapporto), poi lz4/lzo
+for algo in zstd lz4 lzo-rle lzo; do
+	if grep -qw "$algo" /sys/block/zram0/comp_algorithm 2>/dev/null; then
+		echo "$algo" > /sys/block/zram0/comp_algorithm 2>/dev/null && break
+	fi
+done
+
+# dimensione = 50% della RAM totale (i dati compressi ne occupano una frazione);
+# scelta prudente per una live gia' in RAM (non sovra-impegna la memoria).
+MEMKB=$(awk '/MemTotal/{print $2; exit}' /proc/meminfo 2>/dev/null)
+case "$MEMKB" in ''|*[!0-9]*) MEMKB=0 ;; esac
+[ "$MEMKB" -gt 0 ] || { echo "zram: MemTotal ignoto" >>"$LOG" 2>&1; exit 0; }
+DISK=$(( MEMKB * 1024 / 2 ))
+echo "$DISK" > /sys/block/zram0/disksize 2>/dev/null
+
+mkswap /dev/zram0 >>"$LOG" 2>&1 || { echo "zram: mkswap fallito" >>"$LOG" 2>&1; exit 0; }
+# priorita' alta: usa PRIMA lo swap compresso in RAM (nessun disco coinvolto)
+swapon -p 100 /dev/zram0 >>"$LOG" 2>&1 || { echo "zram: swapon fallito" >>"$LOG" 2>&1; exit 0; }
+# preferisci comprimere in RAM piuttosto che tenere pagine fredde / uccidere app
+if command -v sysctl >/dev/null 2>&1; then
+	sysctl -w vm.swappiness=100 >/dev/null 2>&1 || true
+else
+	echo 100 > /proc/sys/vm/swappiness 2>/dev/null || true
+fi
+# l'algoritmo attivo e' quello tra [parentesi] nella lista di comp_algorithm
+algo_used="$(cat /sys/block/zram0/comp_algorithm 2>/dev/null | grep -oE '\[[a-z0-9-]+\]' | tr -d '[]')"
+echo "zram: ATTIVO ($(( DISK/1024/1024 )) MiB, algoritmo ${algo_used:-?})" >>"$LOG" 2>&1
+exit 0
