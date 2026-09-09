@@ -140,6 +140,17 @@ footer{border-top:1px solid var(--line);padding:24px 0 60px;color:var(--muted);f
   (gruppo wheel, <code>doas</code> per i privilegi) e avvia X con Openbox. Xorg
   gira con diritti di root per funzionare su qualsiasi driver (VirtualBox, VMware,
   QEMU, hardware reale) senza logind/seatd.</div>
+  <div class="note"><strong>Gestione RAM — zram (zstd).</strong> La live gira
+  interamente in <code>tmpfs</code> (tutto in RAM). Al boot NexusSec attiva uno
+  <strong>swap compresso in RAM</strong> (dispositivo <code>zram</code>, algoritmo
+  <strong>zstd</strong> con fallback lz4/lzo, dimensione ~50% della RAM,
+  <code>vm.swappiness=100</code>): il kernel comprime in RAM le pagine "fredde"
+  (~2–3×) invece di scrivere su disco o far scattare l'OOM killer. Il risultato è
+  <strong>più RAM effettiva</strong> e un sistema reattivo anche sotto pressione
+  (molti tool aperti, pull di container), senza toccare il disco. Con RAM
+  abbondante resta quasi inattivo. È <em>best-effort</em>: se il kernel non
+  dispone del modulo <code>zram</code> il boot prosegue senza conseguenze
+  (script <code>/etc/local.d/zram.start</code>).</div>
 </section>
 
 <section id="profili">

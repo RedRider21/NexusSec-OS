@@ -329,7 +329,9 @@ footer a{color:var(--dim)}footer a:hover{color:var(--ink)}
       <em>beta da validare su hardware reale</em>. VM Linux 64-bit, 2&ndash;4 GB di
       RAM, boot dall'ISO. Splashscreen flat con barra di caricamento, poi il
       desktop e' pronto. Su portatile, <b>WiFi interno</b> (incluse le schede
-      Intel) e cablato pronti all'uso.</p>
+      Intel) e cablato pronti all'uso. La live gira in RAM (tmpfs) e attiva al
+      boot uno <b>swap compresso in RAM (zram, zstd)</b>: piu' memoria effettiva
+      e sistema reattivo sotto pressione, senza toccare il disco.</p>
     <div class="cta" style="justify-content:center">
       <a class="btn" href="https://github.com/RedRider21/NexusSec-OS/releases">&darr; Release &amp; ISO</a>
       <a class="btn ghost" href="manuale.html">Manuale utente</a>
