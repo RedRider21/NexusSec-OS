@@ -629,6 +629,15 @@ Legenda metodo: `apk` nativo Alpine · `pip` (pipx) · `ctr` container Podman ·
 | Base | Debian (glibc) | Debian (glibc) | **Alpine** (musl) |
 | Isolamento tool | nessuno (root) | nessuno (root) | **sandbox di default** (bwrap/Podman) |
 
+**Gestione RAM — zram (zstd).** La live gira in `tmpfs` (tutto in RAM). All'avvio
+NexusSec attiva uno **swap compresso in RAM** (`zram`, algoritmo **zstd** con
+fallback lz4/lzo, dimensione ~50% della RAM, `vm.swappiness=100`): il kernel
+comprime in RAM le pagine "fredde" (~2-3×) invece di scrivere su disco o far
+scattare l'OOM killer. Risultato: **più RAM effettiva** e sistema reattivo anche
+sotto pressione (molti tool aperti, pull di container), senza toccare il disco.
+Con RAM abbondante resta quasi inattivo. Configurato in `/etc/local.d/zram.start`
+(best-effort: se il kernel non ha `zram` si esce senza conseguenze).
+
 ## Desktop
 
 - **Openbox** + tema finestre *NexusSec-Core*; avvio via `~/.xinitrc` ->
