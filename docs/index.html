@@ -31,7 +31,7 @@
   --ground:#050a14; --panel:#0a1a26; --panel2:#0d2130; --line:#173247;
   --ink:#d4f3ff; --dim:#6f97a8; --accent:#00e5ff;
   --pen:#ff3b5c; --for:#ffb000; --osi:#23d18b; --web:#a06bff;
-  --navbg:rgba(5,10,20,.72); --on-accent:var(--ground); --lead:#a9cdda;
+  --navbg:rgba(5,10,20,.72); --on-accent:var(--ground); --lead:#a9cdda; --logo:#00e5ff;
   --mono:ui-monospace,"JetBrains Mono","SFMono-Regular",Menlo,Consolas,monospace;
   --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
 }
@@ -41,8 +41,15 @@ html[data-theme="light"]{
   --ground:#eef4f8; --panel:#ffffff; --panel2:#e6eff5; --line:#cadeea;
   --ink:#0a2230; --dim:#4a6b7a; --accent:#0088b3;
   --pen:#d81f43; --for:#b06a00; --osi:#0f9d63; --web:#7b3fe4;
-  --navbg:rgba(255,255,255,.82); --on-accent:#ffffff; --lead:#39586a;
+  --navbg:rgba(255,255,255,.82); --on-accent:#ffffff; --lead:#39586a; --logo:#07728f;
 }
+/* Logo/emblema seguono il tema (in chiaro il ciano diventa un teal leggibile) */
+.brand svg polygon{stroke:var(--logo)}
+.brand svg text{fill:var(--logo)}
+.emblem svg>g{stroke:var(--logo)}
+.emblem svg text{fill:var(--logo)}
+.eco .phone svg g{stroke:var(--logo)}
+.eco .phone svg text{fill:var(--logo)}
 /* Bilingue: mostra solo la lingua attiva */
 [data-sitelang="it"] [data-lang="en"]{display:none!important}
 [data-sitelang="en"] [data-lang="it"]{display:none!important}
