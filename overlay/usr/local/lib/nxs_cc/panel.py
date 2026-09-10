@@ -2357,20 +2357,26 @@ class Panel(Gtk.Window):
                 hdr.set_markup("<b>%s</b>%s  <small>%s</small>" % (
                     name, "  (principale)" if prim == "primary" else "", res))
                 oc.pack_start(hdr, False, False, 0)
-                r = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=4)
-                combo = Gtk.ComboBoxText()
+                # Risoluzioni come LISTA scrollabile (clic = applica). Prima era
+                # una Gtk.ComboBoxText, ma dentro il popup del pannello la sua
+                # tendina nativa si posizionava male lasciando molto spazio vuoto
+                # in cima. La lista e' coerente con gli altri elenchi (uscite/mic).
                 modes = self._run_out(["nxs-screens", "modes", name]).split()
-                for m in modes:
-                    combo.append_text(m)
                 if modes:
-                    combo.set_active(0)
-                r.pack_start(combo, True, True, 0)
-                ba = Gtk.Button(label="Applica")
-                ba.get_style_context().add_class("nxs-menu-item")
-                ba.connect("clicked", lambda _w, n=name, c=combo:
-                           self._screens_apply(["mode", n, c.get_active_text() or ""]))
-                r.pack_start(ba, False, False, 0)
-                oc.pack_start(r, False, False, 0)
+                    sw = Gtk.ScrolledWindow()
+                    sw.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+                    sw.set_max_content_height(180)
+                    sw.set_propagate_natural_height(True)
+                    mlist = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=1)
+                    for m in modes:
+                        mb = Gtk.Button(); mb.set_relief(Gtk.ReliefStyle.NONE)
+                        mb.get_style_context().add_class("nxs-menu-item")
+                        ml = Gtk.Label(label=m); ml.set_xalign(0); mb.add(ml)
+                        mb.connect("clicked", lambda _w, n=name, mm=m:
+                                   self._screens_apply(["mode", n, mm]))
+                        mlist.pack_start(mb, False, False, 0)
+                    sw.add(mlist)
+                    oc.pack_start(sw, False, False, 0)
                 if len(outs) >= 2:
                     bo = Gtk.Button(label="Usa solo questo")
                     bo.get_style_context().add_class("nxs-menu-item")
