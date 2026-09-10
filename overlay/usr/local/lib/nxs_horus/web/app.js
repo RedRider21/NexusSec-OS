@@ -1444,6 +1444,9 @@ const autoOn = document.getElementById("auto-on");
 const autoInt = document.getElementById("auto-int");
 const autoCount = document.getElementById("auto-count");
 let areaDue = 0;
+// activeArea: dichiarata QUI (prima di paintAuto, che la referenzia) per evitare
+// la temporal-dead-zone del 'let'. Impostata solo disegnando una nuova area.
+let activeArea = null;
 
 function paintAuto() {
   if (!autoOn.checked) { autoCount.textContent = "in pausa"; return; }
@@ -1453,6 +1456,11 @@ function paintAuto() {
     if (active[id] && STREAM[id] && STREAM[id].live && dueAt[id] != null)
       next = Math.min(next, dueAt[id] - now);
   });
+  // Anche un'AREA appena disegnata e' soggetta al refresh (areaDue): includila
+  // nel countdown, altrimenti resterebbe un fuorviante "in ascolto" mentre in
+  // realta' l'area viene ri-aggiornata. (I fascicoli riaperti NON impostano
+  // activeArea: restano statici, quindi non compaiono qui.)
+  if (activeArea) next = Math.min(next, areaDue - now);
   autoCount.textContent = (next === Infinity)
     ? "in ascolto" : ("prossimo tra " + Math.max(0, Math.ceil(next / 1000)) + "s");
 }
@@ -2124,7 +2132,7 @@ document.getElementById("geoint-run").addEventListener("click", async () => {
 // Ricerca per area: disegna un riquadro -> voli e terremoti in quell'area.
 // ---------------------------------------------------------------------------
 const areaLayer = L.layerGroup().addTo(map);
-let drawing = false, drawStart = null, rubber = null, activeArea = null;
+let drawing = false, drawStart = null, rubber = null;   // activeArea dichiarata sopra
 const areaNote = document.getElementById("area-note");
 document.getElementById("area-draw").addEventListener("click", () => {
   drawing = true;
