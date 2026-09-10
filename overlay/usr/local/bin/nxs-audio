@@ -50,6 +50,18 @@ case "${1:-get}" in
   mic-mute) _have && wpctl set-mute "$SOURCE" toggle 2>/dev/null ;;
   sources)  _list "Sources:" ;;
   mic-default) [ -n "${2:-}" ] && _have && wpctl set-default "$2" 2>/dev/null ;;
+  mic-inuse)
+    # Stampa 1 se un'app sta CATTURANDO dal microfono, 0 altrimenti. Best-effort
+    # e senza dipendenze: i PCM di CATTURA in /proc/asound hanno il suffisso 'c'
+    # e passano a "state: RUNNING" quando aperti. PipeWire apre il device solo
+    # all'uso e lo sospende da fermo, quindi RUNNING ~ microfono in uso. Serve
+    # all'applet del pannello per comparire ON-DEMAND (solo quando adoperato).
+    inuse=0
+    for st in /proc/asound/card*/pcm*c/sub*/status; do
+      [ -f "$st" ] || continue
+      if grep -q "state: RUNNING" "$st" 2>/dev/null; then inuse=1; break; fi
+    done
+    echo "$inuse" ;;
 
   *) echo "uso: nxs-audio {get|set PCT|up|down|mute|sinks|default ID| \\
              mic-get|mic-set PCT|mic-up|mic-down|mic-mute|sources|mic-default ID}" >&2

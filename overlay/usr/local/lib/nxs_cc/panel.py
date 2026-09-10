@@ -1456,17 +1456,19 @@ class Panel(Gtk.Window):
                 batt = self._run_out(["nxs-battery", "status"]).strip()
             except Exception:                       # noqa: BLE001
                 batt = "nobattery"
-            # Microfono: presente se c'e' almeno una source; muto da mic-get.
-            mic_present = False; mic_muted = False
+            # Microfono ON-DEMAND: l'applet compare SOLO quando un'app sta
+            # catturando (mic-inuse), non sempre. Lo stato muto/livello serve
+            # per l'icona quando e' visibile.
+            mic_inuse = False; mic_muted = False
             try:
-                if self._run_out(["nxs-audio", "sources"]).strip():
-                    mic_present = True
+                if self._run_out(["nxs-audio", "mic-inuse"]).strip() == "1":
+                    mic_inuse = True
                     mo = self._run_out(["nxs-audio", "mic-get"]).split()
                     mic_muted = (len(mo) > 1 and mo[1] == "1")
             except Exception:                       # noqa: BLE001
                 pass
             GLib.idle_add(self._apply_media_icons, pct, muted, bt, wifi, batt, eth,
-                          mic_present, mic_muted)
+                          mic_inuse, mic_muted)
         threading.Thread(target=worker, daemon=True).start()
         return True
 
@@ -2357,26 +2359,41 @@ class Panel(Gtk.Window):
                 hdr.set_markup("<b>%s</b>%s  <small>%s</small>" % (
                     name, "  (principale)" if prim == "primary" else "", res))
                 oc.pack_start(hdr, False, False, 0)
-                # Risoluzioni come LISTA scrollabile (clic = applica). Prima era
-                # una Gtk.ComboBoxText, ma dentro il popup del pannello la sua
-                # tendina nativa si posizionava male lasciando molto spazio vuoto
-                # in cima. La lista e' coerente con gli altri elenchi (uscite/mic).
+                # Risoluzioni: tendina a discesa (come prima) ma con un MenuButton
+                # + Popover che contiene una lista SCROLLABILE. Cosi' si ha la
+                # barretta di scorrimento su/giu' e si apre compatta SOTTO il
+                # pulsante, senza lo spazio vuoto in cima che dava la ComboBox
+                # nativa dentro il popup del pannello. Clic sulla voce = applica.
                 modes = self._run_out(["nxs-screens", "modes", name]).split()
                 if modes:
+                    r = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=4)
+                    mbtn = Gtk.MenuButton()
+                    mbtn.set_label(res or modes[0])       # risoluzione corrente
+                    mbtn.set_hexpand(True)
+                    pop = Gtk.Popover(); pop.set_relative_to(mbtn)
                     sw = Gtk.ScrolledWindow()
                     sw.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
-                    sw.set_max_content_height(180)
+                    sw.set_max_content_height(220)
+                    sw.set_min_content_width(150)
                     sw.set_propagate_natural_height(True)
-                    mlist = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=1)
+                    lbx = Gtk.ListBox()
+                    lbx.get_style_context().add_class("nxs-startmenu-list")
                     for m in modes:
-                        mb = Gtk.Button(); mb.set_relief(Gtk.ReliefStyle.NONE)
-                        mb.get_style_context().add_class("nxs-menu-item")
-                        ml = Gtk.Label(label=m); ml.set_xalign(0); mb.add(ml)
-                        mb.connect("clicked", lambda _w, n=name, mm=m:
-                                   self._screens_apply(["mode", n, mm]))
-                        mlist.pack_start(mb, False, False, 0)
-                    sw.add(mlist)
-                    oc.pack_start(sw, False, False, 0)
+                        rowm = Gtk.ListBoxRow()
+                        lab = Gtk.Label(label=m); lab.set_xalign(0)
+                        lab.set_margin_start(12); lab.set_margin_end(12)
+                        lab.set_margin_top(5); lab.set_margin_bottom(5)
+                        rowm.add(lab); lbx.add(rowm)
+
+                    def on_row(_lb, rr, n=name, b=mbtn, p=pop):
+                        m = rr.get_child().get_text()
+                        b.set_label(m); p.popdown()
+                        self._screens_apply(["mode", n, m])
+                    lbx.connect("row-activated", on_row)
+                    sw.add(lbx); pop.add(sw); sw.show_all()
+                    mbtn.set_popover(pop)
+                    r.pack_start(mbtn, True, True, 0)
+                    oc.pack_start(r, False, False, 0)
                 if len(outs) >= 2:
                     bo = Gtk.Button(label="Usa solo questo")
                     bo.get_style_context().add_class("nxs-menu-item")

@@ -148,9 +148,14 @@ class Recorder(Gtk.Window):
             else:
                 peak = 0.0
             self.peak = peak
-            self.levels.append(peak)
-            if len(self.levels) > NBARS:
-                self.levels.pop(0)
+            # La forma d'onda avanza SOLO se c'e' segnale o durante la
+            # registrazione: da fermo (silenzio, non in registrazione) resta
+            # statica invece di scorrere all'infinito. Il livello istantaneo
+            # (LevelBar) continua comunque ad aggiornarsi da self.peak.
+            if self.recording or peak > 0.02:
+                self.levels.append(peak)
+                if len(self.levels) > NBARS:
+                    self.levels.pop(0)
             if self.recording and self.wav is not None:
                 try:
                     self.wav.writeframes(data)
