@@ -630,6 +630,16 @@ class Panel(Gtk.Window):
         self.vol_btn.connect("scroll-event", self._vol_scroll)
         right.pack_start(self.vol_btn, False, False, 0)
 
+        # Microfono (source PipeWire): applet a sé nella barra (stile MATE).
+        # Compare SOLO se un mic e' presente (visibilita' decisa dal poll):
+        # clic = popup (livello/muta/ingresso), rotella = +/- diretto sul volume.
+        self.mic_btn = _icon_button("audio-input-microphone-symbolic", "Microfono")
+        self.mic_btn.connect("clicked", self._toggle_mic)
+        self.mic_btn.add_events(Gdk.EventMask.SCROLL_MASK)
+        self.mic_btn.connect("scroll-event", self._mic_scroll)
+        self.mic_btn.set_no_show_all(True)          # la visibilita' la decide il poll
+        right.pack_start(self.mic_btn, False, False, 0)
+
         # Bluetooth (bluetoothctl-BlueZ): clic = popup accensione/scan/connetti.
         self.bt_btn = _icon_button("bluetooth-active-symbolic", _t("tray.bluetooth"))
         self.bt_btn.connect("clicked", self._toggle_bluetooth)
@@ -1173,6 +1183,8 @@ class Panel(Gtk.Window):
              ["nxs-screensaver"], None, None),
             ("applets-screenshooter-symbolic", _t("menu.screenshot"),
              ["nxs-screenshot", "full", "1"], None, None),
+            ("audio-input-microphone-symbolic", "Registratore vocale",
+             ["nxs-recorder"], None, None),
             (None, None, None, None, None),
             # Dischi e casi forensi: raggiungibili anche dal menu, non solo
             # dalle icone del desktop (che si coprono con le finestre aperte).
@@ -1444,7 +1456,17 @@ class Panel(Gtk.Window):
                 batt = self._run_out(["nxs-battery", "status"]).strip()
             except Exception:                       # noqa: BLE001
                 batt = "nobattery"
-            GLib.idle_add(self._apply_media_icons, pct, muted, bt, wifi, batt, eth)
+            # Microfono: presente se c'e' almeno una source; muto da mic-get.
+            mic_present = False; mic_muted = False
+            try:
+                if self._run_out(["nxs-audio", "sources"]).strip():
+                    mic_present = True
+                    mo = self._run_out(["nxs-audio", "mic-get"]).split()
+                    mic_muted = (len(mo) > 1 and mo[1] == "1")
+            except Exception:                       # noqa: BLE001
+                pass
+            GLib.idle_add(self._apply_media_icons, pct, muted, bt, wifi, batt, eth,
+                          mic_present, mic_muted)
         threading.Thread(target=worker, daemon=True).start()
         return True
 
@@ -1496,7 +1518,18 @@ class Panel(Gtk.Window):
         return "battery-%s-symbolic" % lvl
 
     def _apply_media_icons(self, pct, muted, bt, wifi="no-wifi", batt="nobattery",
-                           eth=""):
+                           eth="", mic_present=False, mic_muted=False):
+        # Microfono: applet visibile SOLO se un mic e' presente (stile MATE).
+        if mic_present:
+            self.mic_btn.set_image(_tray_img(
+                "microphone-sensitivity-muted-symbolic" if mic_muted
+                else "audio-input-microphone-symbolic"))
+            self.mic_btn.set_tooltip_text(
+                "Microfono muto (rotella: volume)" if mic_muted
+                else "Microfono (rotella: volume, clic: opzioni)")
+            self.mic_btn.show()
+        else:
+            self.mic_btn.hide()
         if pct is None or muted or pct <= 0:
             ai = "audio-volume-muted-symbolic"
         elif pct < 34:
@@ -1584,6 +1617,91 @@ class Panel(Gtk.Window):
         GLib.timeout_add(200, self._refresh_media_once)
         return True
 
+    def _mic_scroll(self, _w, ev):
+        up = down = False
+        if ev.direction == Gdk.ScrollDirection.UP:
+            up = True
+        elif ev.direction == Gdk.ScrollDirection.DOWN:
+            down = True
+        elif ev.direction == Gdk.ScrollDirection.SMOOTH:
+            _ok, _dx, dy = ev.get_scroll_deltas()
+            up = dy < 0; down = dy > 0
+        if up:
+            self._bg(["nxs-audio", "mic-up"])
+        elif down:
+            self._bg(["nxs-audio", "mic-down"])
+        GLib.timeout_add(200, self._refresh_media_once)
+        return True
+
+    def _toggle_mic(self, _btn):
+        """Popup dell'applet Microfono (source PipeWire): livello, muta e scelta
+        dell'ingresso. Speculare al popup Audio, ma solo per l'input."""
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
+        box.get_style_context().add_class("nxs-calbox")
+        box.set_size_request(300, -1)
+        title = Gtk.Label(); title.set_markup("<b>Microfono</b>"); title.set_xalign(0)
+        box.pack_start(title, False, False, 0)
+
+        row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        mute_b = Gtk.Button(); mute_b.set_relief(Gtk.ReliefStyle.NONE)
+        mute_b.get_style_context().add_class("nxs-icon")
+        mute_b.set_image(Gtk.Image.new_from_icon_name(
+            "audio-input-microphone-symbolic", Gtk.IconSize.MENU))
+        row.pack_start(mute_b, False, False, 0)
+        scale = Gtk.Scale.new_with_range(Gtk.Orientation.HORIZONTAL, 0, 100, 1)
+        scale.set_draw_value(True); scale.set_value_pos(Gtk.PositionType.RIGHT)
+        scale.set_hexpand(True)
+        row.pack_start(scale, True, True, 0)
+        box.pack_start(row, False, False, 0)
+
+        status = Gtk.Label(label="..."); status.set_xalign(0)
+        status.get_style_context().add_class("nxs-clock-date")
+        box.pack_start(status, False, False, 0)
+        ins = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
+        box.pack_start(ins, False, False, 0)
+        self._spawn_popup("mic", box, align="right")
+
+        def on_scale(s):
+            self._bg(["nxs-audio", "mic-set", str(int(s.get_value()))])
+            GLib.timeout_add(150, self._refresh_media_once)
+
+        def fill(pct, muted, sources):
+            if "mic" not in self._popups:
+                return False
+            scale.set_value(pct if pct is not None else 0)
+            scale.connect("value-changed", on_scale)
+            mute_b.connect("clicked", lambda _w: (
+                self._bg(["nxs-audio", "mic-mute"]),
+                GLib.timeout_add(150, self._refresh_media_once)))
+            status.set_text("Microfono muto." if muted
+                            else ("Ingresso:" if sources else "Nessun ingresso."))
+            for sid, name, is_def in sources:
+                b = Gtk.Button(); b.set_relief(Gtk.ReliefStyle.NONE)
+                b.get_style_context().add_class("nxs-menu-item")
+                lab = Gtk.Label(label=("● " if is_def else "○ ") + name)
+                lab.set_xalign(0); b.add(lab)
+                b.connect("clicked", lambda _w, i=sid: (
+                    self._bg(["nxs-audio", "mic-default", i]),
+                    self._close_popup("mic")))
+                ins.pack_start(b, False, False, 0)
+            ins.show_all()
+            return False
+
+        def worker():
+            pct = None; muted = False
+            try:
+                o = self._run_out(["nxs-audio", "mic-get"]).split()
+                pct = int(o[0]); muted = (o[1] == "1")
+            except Exception:                       # noqa: BLE001
+                pass
+            sources = []
+            for line in self._run_out(["nxs-audio", "sources"]).splitlines():
+                p = line.split("\t")
+                if len(p) >= 2 and p[0].strip():
+                    sources.append((p[0], p[1], len(p) > 2 and p[2] == "*"))
+            GLib.idle_add(fill, pct, muted, sources)
+        threading.Thread(target=worker, daemon=True).start()
+
     def _toggle_volume(self, _btn):
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
         box.get_style_context().add_class("nxs-calbox")
@@ -1618,34 +1736,6 @@ class Panel(Gtk.Window):
         box.pack_start(unmute_b, False, False, 0)
         outs = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
         box.pack_start(outs, False, False, 0)
-
-        # --- Microfono (source PipeWire): slider + muta + scelta ingresso ---
-        # Compare SOLO se un microfono e' effettivamente presente: micbox parte
-        # nascosto (no_show_all) e viene rivelato da fill_mic quando c'e' un input.
-        micbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
-        micbox.set_no_show_all(True)
-        micbox.pack_start(Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL),
-                          False, False, 2)
-        mtitle = Gtk.Label(); mtitle.set_markup("<b>Microfono</b>"); mtitle.set_xalign(0)
-        micbox.pack_start(mtitle, False, False, 0)
-        mrow = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
-        mmute_b = Gtk.Button(); mmute_b.set_relief(Gtk.ReliefStyle.NONE)
-        mmute_b.get_style_context().add_class("nxs-icon")
-        mmute_b.set_image(Gtk.Image.new_from_icon_name(
-            "audio-input-microphone-symbolic", Gtk.IconSize.MENU))
-        mrow.pack_start(mmute_b, False, False, 0)
-        mscale = Gtk.Scale.new_with_range(Gtk.Orientation.HORIZONTAL, 0, 100, 1)
-        mscale.set_draw_value(True); mscale.set_value_pos(Gtk.PositionType.RIGHT)
-        mscale.set_hexpand(True)
-        mrow.pack_start(mscale, True, True, 0)
-        micbox.pack_start(mrow, False, False, 0)
-        mstatus = Gtk.Label(label=""); mstatus.set_xalign(0)
-        mstatus.get_style_context().add_class("nxs-clock-date")
-        micbox.pack_start(mstatus, False, False, 0)
-        mins = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
-        micbox.pack_start(mins, False, False, 0)
-        box.pack_start(micbox, False, False, 0)
-
         self._spawn_popup("audio", box, align="right")
 
         def on_scale(s):
@@ -1676,35 +1766,6 @@ class Panel(Gtk.Window):
             outs.show_all()
             return False
 
-        def on_mic_scale(s):
-            self._bg(["nxs-audio", "mic-set", str(int(s.get_value()))])
-
-        def fill_mic(pct, muted, sources):
-            if "audio" not in self._popups:
-                return False
-            # Nessun microfono presente: la sezione resta nascosta.
-            if pct is None and not sources:
-                return False
-            micbox.set_no_show_all(False)
-            micbox.show_all()
-            mscale.set_value(pct if pct is not None else 0)
-            mscale.connect("value-changed", on_mic_scale)
-            mmute_b.connect("clicked", lambda _w: (
-                self._bg(["nxs-audio", "mic-mute"]),
-                GLib.timeout_add(150, lambda: (self._close_popup("audio"), False)[1])))
-            mstatus.set_text("Microfono muto." if muted else "Ingresso:")
-            for sid, name, is_def in sources:
-                b = Gtk.Button(); b.set_relief(Gtk.ReliefStyle.NONE)
-                b.get_style_context().add_class("nxs-menu-item")
-                lab = Gtk.Label(label=("● " if is_def else "○ ") + name)
-                lab.set_xalign(0); b.add(lab)
-                b.connect("clicked", lambda _w, i=sid: (
-                    self._bg(["nxs-audio", "mic-default", i]),
-                    self._close_popup("audio")))
-                mins.pack_start(b, False, False, 0)
-            mins.show_all()
-            return False
-
         def worker():
             pct = None; muted = False
             try:
@@ -1718,19 +1779,6 @@ class Panel(Gtk.Window):
                 if len(p) >= 2 and p[0].strip():
                     sinks.append((p[0], p[1], len(p) > 2 and p[2] == "*"))
             GLib.idle_add(fill, pct, muted, sinks)
-            # microfono (source): stessa logica, sezione separata del popup
-            mpct = None; mmuted = False
-            try:
-                mo = self._run_out(["nxs-audio", "mic-get"]).split()
-                mpct = int(mo[0]); mmuted = (mo[1] == "1")
-            except Exception:                       # noqa: BLE001
-                pass
-            sources = []
-            for line in self._run_out(["nxs-audio", "sources"]).splitlines():
-                p = line.split("\t")
-                if len(p) >= 2 and p[0].strip():
-                    sources.append((p[0], p[1], len(p) > 2 and p[2] == "*"))
-            GLib.idle_add(fill_mic, mpct, mmuted, sources)
         threading.Thread(target=worker, daemon=True).start()
 
     def _toggle_battery(self, _btn):
