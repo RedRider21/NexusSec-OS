@@ -3048,8 +3048,8 @@
     },
     "mitm6": {
       "category": "sniffing",
-      "method": "pip",
-      "pip": "mitm6",
+      "method": "kali",
+      "apt": "mitm6",
       "bin": "mitm6",
       "privileged": true,
       "description": "Takeover DNS via IPv6 (WPAD) per il relay NTLM."
