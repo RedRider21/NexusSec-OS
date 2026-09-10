@@ -3018,13 +3018,6 @@
       "bin": "nfc-list",
       "description": "Strumenti per leggere e scrivere tag NFC."
     },
-    "pupy": {
-      "category": "exploit",
-      "method": "pip",
-      "pip": "git+https://github.com/n1nj4sec/pupy.git",
-      "bin": "pupysh",
-      "description": "RAT/C2 multipiattaforma post-exploitation (Python)."
-    },
     "certipy": {
       "category": "exploit",
       "method": "pip",
