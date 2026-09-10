@@ -553,6 +553,59 @@ class Browser(Gtk.Window):
         except Exception:
             pass
 
+    def _enable_media(self, view):
+        """Modalita' NORMALE (non-stealth): abilita microfono/fotocamera
+        (getUserMedia/WebRTC) per le videochiamate (Google Meet, Jitsi...). La
+        richiesta del sito viene comunque CONFERMATA dall'utente con un dialogo;
+        in modalita' stealth resta tutto negato (vedi _harden). NB: WebKitGTK ha
+        un supporto WebRTC parziale: per Meet/Zoom pienamente affidabili conviene
+        Chromium (apk add chromium)."""
+        s = view.get_settings()
+        for prop, val in (("enable-media-stream", True),
+                          ("enable-webrtc", True),
+                          ("enable-mediasource", True)):
+            try:
+                s.set_property(prop, val)
+            except Exception:
+                pass
+
+        def _on_perm(_v, req):
+            try:
+                is_media = isinstance(req, WebKit2.UserMediaPermissionRequest)
+            except Exception:
+                is_media = False
+            if not is_media:
+                try:
+                    req.deny()
+                except Exception:
+                    pass
+                return True
+            host = ""
+            try:
+                host = urlparse(_v.get_uri() or "").netloc or ""
+            except Exception:
+                pass
+            d = Gtk.MessageDialog(
+                transient_for=(self if isinstance(self, Gtk.Window) else None),
+                modal=True, message_type=Gtk.MessageType.QUESTION,
+                buttons=Gtk.ButtonsType.YES_NO,
+                text="Consentire l'accesso a microfono/fotocamera?")
+            d.format_secondary_text(
+                ("Il sito %s chiede di usare il microfono/la fotocamera." % host)
+                if host else "Il sito chiede di usare il microfono/la fotocamera.")
+            resp = d.run()
+            d.destroy()
+            try:
+                req.allow() if resp == Gtk.ResponseType.YES else req.deny()
+            except Exception:
+                pass
+            return True
+
+        try:
+            view.connect("permission-request", _on_perm)
+        except Exception:
+            pass
+
     # --------------------------------------------------------------- tabs
     def new_tab(self, url=None, switch=True, view=None, stealth=None):
         # Se `view` e' gia' fornito, e' stato creato da WebKit per un popup /
@@ -573,6 +626,8 @@ class Browser(Gtk.Window):
             pass
         if mode:
             self._harden(view)
+        else:
+            self._enable_media(view)
         view.connect("notify::title", self._on_title)
         view.connect("notify::uri", self._on_uri)
         view.connect("notify::favicon", self._on_favicon)
