@@ -160,6 +160,28 @@ def profile_tools(key: str | None = None) -> list[str]:
     return tools
 
 
+def menu_tools(key: str | None = None) -> list[str]:
+    """Tool da mostrare nel menu start.
+
+    Per i profili operativi = profile_tools() (il set del profilo + i Kali
+    installati che gli appartengono). Per il profilo BASE, invece, si ritorna
+    l'INTERO catalogo (repo.json) + i Kali installati non elencati: cosi' dal
+    profilo base la ricerca del menu trova e lancia QUALSIASI programma della
+    distro (installazione on-demand al primo avvio), non solo quelli del profilo.
+    """
+    key = key or current_profile()
+    if key == default_profile():
+        names = list(repo().keys())
+        have = set(names)
+        cat = kali_catalog()
+        for pkg in kali_installed():
+            if pkg not in have and pkg in cat:
+                names.append(pkg)
+                have.add(pkg)
+        return names
+    return profile_tools(key)
+
+
 def accent(key: str | None = None) -> str:
     return profile_data(key).get("accent", "#00e5ff")
 

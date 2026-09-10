@@ -441,10 +441,36 @@ def _make_cli_shim(tool: str, log=print) -> None:
 
 
 # ---------------------------------------------------------------- installazione
+def _ensure_apk_deps(tool: str, log=print) -> None:
+    """Installa i pacchetti apk RUNTIME dichiarati in 'apk_deps': binari host di
+    cui il tool ha bisogno ma che NON arrivano col pip/git install. Esempio:
+    enum4linux(-ng) chiama smbclient/rpcclient/nmblookup/net -> apk 'samba-client'.
+    Best-effort: un fallimento qui NON annulla l'installazione del tool (il tool
+    parte, degradando le funzioni che richiedono i binari mancanti)."""
+    deps = list(model.tool_data(tool).get("apk_deps", []))
+    if not deps:
+        return
+    if not have("apk"):
+        log(f"[!] apk non disponibile: dipendenze non installate ({' '.join(deps)}).")
+        return
+    if _persist_active():
+        # come per apk_extra: niente --no-cache, cosi' restano in cache per la
+        # reinstallazione OFFLINE al boot, e le registriamo per la persistenza.
+        log(f"[*] apk add (dipendenze runtime) {' '.join(deps)}")
+        if subprocess.run(priv(["apk", "add"] + deps)).returncode == 0:
+            _persist_record_apk(deps)
+    else:
+        log(f"[*] apk add --no-cache (dipendenze runtime) {' '.join(deps)}")
+        subprocess.run(priv(["apk", "add", "--no-cache"] + deps))
+
+
 def install(tool: str, log=print) -> bool:
     m = _method(tool)
     if m == "git":
-        return _install_git(tool, log)
+        ok = _install_git(tool, log)
+        if ok:
+            _ensure_apk_deps(tool, log)
+        return ok
     if m == "kali":
         ok = _install_kali(tool, log)
         if ok:
@@ -472,14 +498,18 @@ def install(tool: str, log=print) -> bool:
             # prima pipx install fallisce, _retry_with_build_deps riprova coi
             # compilatori temporanei e poi li rimuove (live snella).
             log(f"[*] pipx install {ref}")
-            return _retry_with_build_deps(
+            ok = _retry_with_build_deps(
                 lambda: subprocess.run(["pipx", "install", ref]).returncode == 0,
                 log)
-        if have("pip3") or have("pip"):
+        elif have("pip3") or have("pip"):
             log(f"[*] pip install --user {ref}")
-            return _pip_user([ref], log)
-        log("[!] ne' pipx ne' pip disponibili (apk add pipx).")
-        return False
+            ok = _pip_user([ref], log)
+        else:
+            log("[!] ne' pipx ne' pip disponibili (apk add pipx).")
+            return False
+        if ok:
+            _ensure_apk_deps(tool, log)     # binari host runtime (es. samba-client)
+        return ok
 
     pkg = _apk_name(tool)
     if not pkg:
@@ -490,7 +520,10 @@ def install(tool: str, log=print) -> bool:
         return False
     # apk_extra: pacchetti companion necessari al pieno funzionamento (es. nmap
     # -> nmap-scripts per gli script NSE / rilevamento debolezze).
-    pkgs = [pkg] + list(model.tool_data(tool).get("apk_extra", []))
+    # apk_deps: dipendenze runtime aggiuntive (stesso trattamento; separate solo
+    # per chiarezza semantica e riuso col meccanismo pip/git).
+    td = model.tool_data(tool)
+    pkgs = [pkg] + list(td.get("apk_extra", [])) + list(td.get("apk_deps", []))
     if _persist_active():
         # Persistenza attiva: NON --no-cache, cosi' il pacchetto resta nella cache
         # (su NXSDATA) per la reinstallazione OFFLINE al boot; poi lo registriamo.

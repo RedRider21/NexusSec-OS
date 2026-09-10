@@ -63,6 +63,7 @@
       "method": "pip",
       "pip": "git+https://github.com/cddmp/enum4linux-ng.git",
       "bin": "enum4linux-ng",
+      "apk_deps": ["samba-client", "samba-common-tools"],
       "description": "Enumerazione SMB/Windows."
     },
     "smbmap": {
@@ -377,6 +378,7 @@
       "method": "pip",
       "pip": "git+https://github.com/derv82/wifite2.git",
       "bin": "wifite",
+      "apk_deps": ["aircrack-ng", "pixiewps", "wireless-tools", "iw", "macchanger", "tcpdump"],
       "description": "Automazione attacchi wireless (WEP/WPA/WPS).",
       "privileged": true
     },
@@ -602,8 +604,8 @@
     },
     "ghidra": {
       "category": "reverse",
-      "method": "apk",
-      "apk": "ghidra",
+      "method": "kali",
+      "apt": "ghidra",
       "bin": "ghidra",
       "description": "Suite di reverse engineering (NSA)."
     },
@@ -883,6 +885,7 @@
       "method": "pip",
       "pip": "autorecon",
       "bin": "autorecon",
+      "apk_deps": ["nmap", "curl", "samba-client", "samba-common-tools", "bind-tools"],
       "description": "Ricognizione multi-thread automatica (orchestratore)."
     },
     "flare-floss": {

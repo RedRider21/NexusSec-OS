@@ -947,6 +947,10 @@ class Panel(Gtk.Window):
         if profiles_model is None:
             return []
         try:
+            # menu_tools(): nel profilo BASE ritorna l'intero catalogo (cosi' la
+            # ricerca trova tutto), negli altri profili solo i tool del profilo.
+            if hasattr(profiles_model, "menu_tools"):
+                return profiles_model.menu_tools()
             return profiles_model.profile_tools()
         except Exception:                # noqa: BLE001
             return []
@@ -1317,19 +1321,32 @@ class Panel(Gtk.Window):
                 cat_sections.append((header, section_rows, state))
             sep()
 
-        # --- Filtro live: nasconde righe-tool non corrispondenti e le
-        #     intestazioni di categoria rimaste senza voci visibili ---
+        # --- Filtro live ---
+        # Durante la ricerca il menu diventa una LISTA PIATTA dei soli programmi
+        # trovati: si nasconde TUTTO il resto (voce profilo, separatori, utilita',
+        # lingua, wizard e le intestazioni di categoria) e si mostrano solo le
+        # righe-tool che combaciano. A campo svuotato si ripristina il menu
+        # completo con le categorie richiuse a fisarmonica.
+        row_hay = {row: hay for row, hay in tool_rows}
+        tool_row_set = set(row_hay.keys())
+
         def on_search(entry):
             q = entry.get_text().strip().lower()
             if q:
-                # ricerca: mostra le righe che combaciano (ignora il collasso) e
-                # le sole intestazioni con risultati. reveal mostra anche i figli.
-                for row, hay in tool_rows:
-                    _reveal_row(row) if q in hay else row.hide()
-                for header, rows, _st in cat_sections:
-                    header.set_visible(any(r.get_visible() for r in rows))
+                for ch in lst.get_children():
+                    if ch in tool_row_set:
+                        _reveal_row(ch) if q in row_hay[ch] else ch.hide()
+                    else:
+                        ch.hide()          # nasconde tutto cio' che non e' un tool
             else:
-                # ricerca vuota: ripristina lo stato a fisarmonica (collassato).
+                # ripristino: rimostra tutte le voci non-tool, poi riapplica lo
+                # stato a fisarmonica (intestazioni visibili, righe collassate).
+                for ch in lst.get_children():
+                    if ch in tool_row_set:
+                        ch.hide()
+                    else:
+                        ch.set_no_show_all(False)
+                        ch.show_all()
                 for header, rows, st in cat_sections:
                     header.set_visible(True)
                     for r in rows:

@@ -72,7 +72,7 @@ CSS_LIGHT = b"""
 /* Striscia schede (piu' chiara della navbar, come Firefox) */
 .nxs-tabstrip { background: #f0f0f4; box-shadow: inset 0 -1px #e1e1e6; }
 .nxs-tab { background: transparent; color: #5b5b66; border-radius: 10px 10px 0 0;
-  margin: 5px 2px 0 2px; padding: 0 4px; min-height: 34px; }
+  margin: 3px 2px 0 2px; padding: 0 4px; min-height: 28px; }
 .nxs-tab:hover { background: #e0e0e6; color: #15141a; }
 .nxs-tab-active, .nxs-tab-active:hover { background: #f9f9fb; color: #15141a;
   box-shadow: inset 0 1px 0 #ffffff; }
@@ -80,7 +80,7 @@ CSS_LIGHT = b"""
   padding: 0; min-width: 18px; min-height: 18px; color: #737380; }
 .nxs-tab button:hover { background: #d6d6de; color: #15141a; }
 .nxs-tab-new { background: transparent; border: none; border-radius: 8px;
-  padding: 6px 8px; color: #5b5b66; margin: 5px 4px 0 0; }
+  padding: 6px 8px; color: #5b5b66; margin: 3px 4px 0 0; }
 .nxs-tab-new:hover { background: #e0e0e6; color: #15141a; }
 /* Barra navigazione con URL pill */
 .nxs-navbar { background: #f9f9fb; padding: 6px 8px; border-bottom: 1px solid #e1e1e6; }
@@ -131,7 +131,7 @@ CSS_DARK = b"""
 /* Striscia schede: piu' scura della navbar (Firefox dark) */
 .nxs-tabstrip { background: #1c1b22; box-shadow: inset 0 -1px #1a191f; }
 .nxs-tab { background: transparent; color: #cfcfd8; border-radius: 10px 10px 0 0;
-  margin: 5px 2px 0 2px; padding: 0 4px; min-height: 34px; }
+  margin: 3px 2px 0 2px; padding: 0 4px; min-height: 28px; }
 .nxs-tab:hover { background: #23222b; color: #fbfbfe; }
 .nxs-tab-active, .nxs-tab-active:hover { background: #2b2a33; color: #fbfbfe;
   box-shadow: inset 0 1px 0 #5b5b66; }
@@ -139,7 +139,7 @@ CSS_DARK = b"""
   padding: 0; min-width: 18px; min-height: 18px; color: #9d9da6; }
 .nxs-tab button:hover { background: #3a3944; color: #fbfbfe; }
 .nxs-tab-new { background: transparent; border: none; border-radius: 8px;
-  padding: 6px 8px; color: #cfcfd8; margin: 5px 4px 0 0; }
+  padding: 6px 8px; color: #cfcfd8; margin: 3px 4px 0 0; }
 .nxs-tab-new:hover { background: #23222b; color: #fbfbfe; }
 /* Barra navigazione con URL pill */
 .nxs-navbar { background: #2b2a33; padding: 6px 8px; border-bottom: 1px solid #1c1b22; }
