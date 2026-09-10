@@ -124,6 +124,7 @@ depends="
 	brightnessctl
 	alsa-utils
 	alsa-ucm-conf
+	pulseaudio-utils
 	gstreamer
 	gst-plugins-base
 	gst-plugins-good

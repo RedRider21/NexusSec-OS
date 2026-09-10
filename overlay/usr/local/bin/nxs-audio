@@ -51,16 +51,23 @@ case "${1:-get}" in
   sources)  _list "Sources:" ;;
   mic-default) [ -n "${2:-}" ] && _have && wpctl set-default "$2" 2>/dev/null ;;
   mic-inuse)
-    # Stampa 1 se un'app sta CATTURANDO dal microfono, 0 altrimenti. Best-effort
-    # e senza dipendenze: i PCM di CATTURA in /proc/asound hanno il suffisso 'c'
-    # e passano a "state: RUNNING" quando aperti. PipeWire apre il device solo
-    # all'uso e lo sospende da fermo, quindi RUNNING ~ microfono in uso. Serve
+    # Stampa 1 se un'app sta CATTURANDO dal microfono, 0 altrimenti. Serve
     # all'applet del pannello per comparire ON-DEMAND (solo quando adoperato).
+    # Metodo preferito: pactl (via pipewire-pulse) elenca i "source-outputs",
+    # cioe' gli stream che stanno registrando -> segnale netto e affidabile.
+    # Fallback senza pactl: stato dei PCM di CATTURA in /proc/asound (suffisso
+    # 'c'), che passano a "state: RUNNING" quando il device e' aperto in lettura.
     inuse=0
-    for st in /proc/asound/card*/pcm*c/sub*/status; do
-      [ -f "$st" ] || continue
-      if grep -q "state: RUNNING" "$st" 2>/dev/null; then inuse=1; break; fi
-    done
+    if command -v pactl >/dev/null 2>&1; then
+      n=$(pactl list short source-outputs 2>/dev/null | grep -c .)
+      case "$n" in ''|0) : ;; *) inuse=1 ;; esac
+    fi
+    if [ "$inuse" = 0 ]; then
+      for st in /proc/asound/card*/pcm*c/sub*/status; do
+        [ -f "$st" ] || continue
+        if grep -q "state: RUNNING" "$st" 2>/dev/null; then inuse=1; break; fi
+      done
+    fi
     echo "$inuse" ;;
 
   *) echo "uso: nxs-audio {get|set PCT|up|down|mute|sinks|default ID| \\

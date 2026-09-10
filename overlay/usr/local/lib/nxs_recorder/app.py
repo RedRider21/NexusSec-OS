@@ -113,7 +113,7 @@ class Recorder(Gtk.Window):
         ctr.pack_end(open_btn, False, False, 0)
         root.pack_start(ctr, False, False, 0)
 
-        self.status = Gtk.Label(label="Microfono: in ascolto (parla per vedere il livello).")
+        self.status = Gtk.Label(label="Premi Registra per iniziare.")
         self.status.set_xalign(0)
         self.status.get_style_context().add_class("rec-sub")
         root.pack_start(self.status, False, False, 0)
@@ -121,8 +121,10 @@ class Recorder(Gtk.Window):
         self.connect("destroy", self._on_destroy)
         self.show_all()
 
-        # Avvia cattura (monitor livello) + ridisegno periodico
-        threading.Thread(target=self._cap_loop, daemon=True).start()
+        # Ridisegno periodico. La cattura dal microfono parte SOLO durante la
+        # registrazione: cosi' l'onda si ferma allo Stop (non scorre col rumore
+        # ambientale), il mic e' usato solo quando serve (privacy) e l'applet
+        # microfono della barra compare on-demand mentre registri.
         GLib.timeout_add(33, self._tick)          # ~30 fps
         GLib.timeout_add(250, self._tick_time)
 
@@ -137,7 +139,9 @@ class Recorder(Gtk.Window):
             GLib.idle_add(self._no_mic)
             return
         nbytes = CHUNK * BYTES
-        while not self._stop:
+        # Gira SOLO durante la registrazione: quando recording diventa False (o
+        # alla chiusura) il loop esce, chiude il WAV e ferma arecord.
+        while not self._stop and self.recording:
             data = self.proc.stdout.read(nbytes)
             if not data:
                 break
@@ -148,24 +152,44 @@ class Recorder(Gtk.Window):
             else:
                 peak = 0.0
             self.peak = peak
-            # La forma d'onda avanza SOLO se c'e' segnale o durante la
-            # registrazione: da fermo (silenzio, non in registrazione) resta
-            # statica invece di scorrere all'infinito. Il livello istantaneo
-            # (LevelBar) continua comunque ad aggiornarsi da self.peak.
-            if self.recording or peak > 0.02:
-                self.levels.append(peak)
-                if len(self.levels) > NBARS:
-                    self.levels.pop(0)
-            if self.recording and self.wav is not None:
+            self.levels.append(peak)
+            if len(self.levels) > NBARS:
+                self.levels.pop(0)
+            if self.wav is not None:
                 try:
                     self.wav.writeframes(data)
                     self.frames += cnt
                 except Exception:          # noqa: BLE001
                     pass
+        # Fine cattura: livello a zero (l'onda resta ferma sull'ultimo tracciato),
+        # WAV finalizzato e arecord terminato.
+        self.peak = 0.0
+        try:
+            if self.wav:
+                self.wav.close()
+        except Exception:                  # noqa: BLE001
+            pass
+        self.wav = None
+        try:
+            if self.proc:
+                self.proc.terminate()
+        except Exception:                  # noqa: BLE001
+            pass
+        self.proc = None
 
     def _no_mic(self):
+        # arecord non parte: ripristina lo stato "non in registrazione".
+        self.recording = False
+        self.rec_btn.set_label("●  Registra")
+        self.rec_btn.get_style_context().remove_class("rec-stop")
+        self.rec_btn.get_style_context().add_class("rec-go")
         self.status.set_text("Nessun microfono disponibile (arecord non parte).")
-        self.rec_btn.set_sensitive(False)
+        try:
+            if self.wav:
+                self.wav.close()
+        except Exception:                  # noqa: BLE001
+            pass
+        self.wav = None
         return False
 
     # -------------------------------------------------- disegno
@@ -205,13 +229,9 @@ class Recorder(Gtk.Window):
     # -------------------------------------------------- record / play
     def _toggle_record(self, _b):
         if self.recording:
+            # Stop: basta azzerare recording -> _cap_loop esce, chiude il WAV e
+            # ferma arecord; l'onda resta ferma sull'ultimo tracciato.
             self.recording = False
-            try:
-                if self.wav:
-                    self.wav.close()
-            except Exception:              # noqa: BLE001
-                pass
-            self.wav = None
             self.rec_btn.set_label("●  Registra")
             self.rec_btn.get_style_context().remove_class("rec-stop")
             self.rec_btn.get_style_context().add_class("rec-go")
@@ -229,6 +249,9 @@ class Recorder(Gtk.Window):
             self.wav = w
             self.last_file = path
             self.frames = 0
+            self.levels = [0.0] * NBARS            # onda pulita per la nuova sessione
+            self.peak = 0.0
+            self._stop = False
             self._start_mono = GLib.get_monotonic_time() / 1e6
             self.recording = True
             self.time_lbl.set_text("00:00")
@@ -236,6 +259,7 @@ class Recorder(Gtk.Window):
             self.rec_btn.get_style_context().remove_class("rec-go")
             self.rec_btn.get_style_context().add_class("rec-stop")
             self.status.set_text("Registrazione in corso...")
+            threading.Thread(target=self._cap_loop, daemon=True).start()
         except Exception as e:             # noqa: BLE001
             self.status.set_text("Impossibile registrare: %s" % e)
 
@@ -258,6 +282,7 @@ class Recorder(Gtk.Window):
 
     def _on_destroy(self, _w):
         self._stop = True
+        self.recording = False
         try:
             if self.recording and self.wav:
                 self.wav.close()
