@@ -1259,6 +1259,10 @@ async function refreshStatus() {
   } catch (e) {
     dot.className = "dot err";
     txt.textContent = "backend non raggiungibile";
+    // All'avvio il server locale (thread) puo' non essere ancora in ascolto:
+    // NON restare rossi per sempre, riprova a breve (poi ci pensa l'intervallo).
+    clearTimeout(refreshStatus._retry);
+    refreshStatus._retry = setTimeout(refreshStatus, 1500);
   }
 }
 
@@ -2826,4 +2830,7 @@ makeDraggable("correlate", "corr-head");
 // Avvio
 loadTools();
 refreshStatus();
+// Aggiornamento periodico dello stato (rete/Tor): tiene il widget veritiero e,
+// se la prima chiamata avviene prima che il server sia in ascolto, si auto-corregge.
+setInterval(refreshStatus, 15000);
 restoreActive();   // riattiva i layer che erano accesi (persistono al refresh)

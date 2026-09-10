@@ -1,0 +1,74 @@
+{
+  "tool": "HORUS",
+  "format": "horus-dossier",
+  "version": 1,
+  "generated_utc": "2026-09-01T07:25:54Z",
+  "title": "DEMO — Acme Logistics & porto di Palermo",
+  "operator": "HORUS demo",
+  "objective": "Dossier dimostrativo: mostra correlazioni fra dominio/IP/ASN, identita' social+email condivise e attivita' geolocalizzata nel porto di Palermo. Serve a testare mappa, timeline e grafo.",
+  "scan_via": "Tor",
+  "entries": [
+    {
+      "type": "geoint",
+      "title": "acme-logistics.example -> 203.0.113.24",
+      "detail": "IP 203.0.113.24\nOrg Acme Cloud\nASN AS64500\nhost mail.acme-logistics.example\nPorte 22,80,443",
+      "time": "01/09/2026, 08:00",
+      "iso": "2026-09-01T08:00:00Z",
+      "via": "Tor",
+      "target": "acme-logistics.example",
+      "lat": 38.115,
+      "lon": 13.361,
+      "tags": [
+        "IT",
+        "cloud"
+      ]
+    },
+    {
+      "type": "recon",
+      "title": "whois acme-logistics.example",
+      "detail": "Registrar: BigReg\nName Server: ns1.acme-logistics.example\nRegistrant email: ops@acme-logistics.example",
+      "time": "01/09/2026, 08:03",
+      "iso": "2026-09-01T08:03:00Z",
+      "via": "Tor",
+      "target": "acme-logistics.example"
+    },
+    {
+      "type": "socmint",
+      "title": "Username capitanorossi (6 profili)",
+      "detail": "github.com/capitanorossi\nreddit.com/u/capitanorossi\ntelegram: capitanorossi",
+      "time": "01/09/2026, 08:11",
+      "iso": "2026-09-01T08:11:00Z",
+      "via": "IP diretto",
+      "target": "capitanorossi"
+    },
+    {
+      "type": "email",
+      "title": "Email ops@acme-logistics.example",
+      "detail": "Gravatar presente.\nUsername collegato: capitanorossi\nViolazioni note: 1",
+      "time": "01/09/2026, 08:14",
+      "iso": "2026-09-01T08:14:00Z",
+      "via": "IP diretto",
+      "target": "ops@acme-logistics.example"
+    },
+    {
+      "type": "correlazione",
+      "title": "Punto porto di Palermo",
+      "detail": "navi: 4 (2 cargo, 1 tanker, 1 tug)\nvoli: 1\nsatelliti in transito: 2",
+      "time": "01/09/2026, 08:22",
+      "iso": "2026-09-01T08:22:00Z",
+      "via": "Tor",
+      "lat": 38.121,
+      "lon": 13.365
+    },
+    {
+      "type": "area",
+      "title": "Ricerca area Tirreno",
+      "detail": "Area: 12 voli, 0 terremoti (24h)\nbbox lamin=37.8 lomin=12.9 lamax=38.4 lomax=13.9",
+      "time": "01/09/2026, 08:28",
+      "iso": "2026-09-01T08:28:00Z",
+      "via": "Tor",
+      "lat": 38.1,
+      "lon": 13.4
+    }
+  ]
+}
