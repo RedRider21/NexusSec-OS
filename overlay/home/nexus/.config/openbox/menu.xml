@@ -24,6 +24,10 @@
     <separator/>
     <item label="Firewall: ATTIVA"><action name="Execute"><command>nxs-firewall on</command></action></item>
     <item label="Firewall: DISATTIVA"><action name="Execute"><command>nxs-firewall off</command></action></item>
+    <separator/>
+    <item label="MAC casuale ora"><action name="Execute"><command>nxs-macspoof now</command></action></item>
+    <separator/>
+    <item label="PANICO: cancella e spegni"><action name="Execute"><command>nxs-panic wipe</command></action></item>
   </menu>
 
   <menu id="root-menu" label="NexusSec">

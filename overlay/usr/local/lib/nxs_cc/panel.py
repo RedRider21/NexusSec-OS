@@ -2236,6 +2236,14 @@ class Panel(Gtk.Window):
         """Stato Modalita' Anonima globale: 'on' | 'off' (nxs-anon status)."""
         return "on" if self._run_out(["nxs-anon", "status"], timeout=6).strip() == "on" else "off"
 
+    def _sec_macspoof_state(self):
+        """Stato spoof MAC automatico al boot: 'on' | 'off' (nxs-macspoof status)."""
+        return "on" if self._run_out(["nxs-macspoof", "status"], timeout=6).strip() == "on" else "off"
+
+    def _sec_panic_state(self):
+        """Stato watcher panico su rimozione chiavetta: 'on' | 'off' (nxs-panic status)."""
+        return "on" if self._run_out(["nxs-panic", "status"], timeout=6).strip() == "on" else "off"
+
     def _sec_icon_for(self, fw):
         return {"on": "security-high-symbolic",
                 "off": "security-low-symbolic"}.get(fw, "security-medium-symbolic")
@@ -2294,6 +2302,19 @@ class Panel(Gtk.Window):
                       "(kill-switch: niente leak). UDP e IPv6 disattivati.</small>")
         box.pack_start(ah, False, False, 0)
 
+        # MAC casuale a ogni avvio (privacy: hardware non tracciabile fra reti)
+        mac = self._sec_macspoof_state()
+        sw_row("MAC casuale a ogni avvio", mac == "on", mac == "unknown",
+               self._sec_macspoof_toggle)
+        # Panico se rimuovono la chiavetta di boot
+        pan = self._sec_panic_state()
+        sw_row("Panico se rimuovi la chiavetta", pan == "on", pan == "unknown",
+               self._sec_panic_toggle)
+        ph = Gtk.Label(); ph.set_xalign(0); ph.set_line_wrap(True)
+        ph.set_markup("<small>Se estrai la chiavetta di boot, il PC si spegne "
+                      "mettendo al sicuro i dati (chiave LUKS fuori dalla RAM).</small>")
+        box.pack_start(ph, False, False, 0)
+
         if fw == "unknown":
             h = Gtk.Label(); h.set_xalign(0); h.set_line_wrap(True)
             h.set_markup("<small>%s</small>" % _t("sec.fw_unknown"))
@@ -2318,6 +2339,11 @@ class Panel(Gtk.Window):
         block.connect("clicked", self._sec_lock)
         box.pack_start(block, False, False, 0)
 
+        panic = Gtk.Button(label="Panico: cancella e spegni")
+        panic.get_style_context().add_class("nxs-menu-item")
+        panic.connect("clicked", self._sec_panic_now)
+        box.pack_start(panic, False, False, 0)
+
         self._spawn_popup("security", box, align="right")
 
     def _sec_fw_toggle(self, _sw, active):
@@ -2337,6 +2363,42 @@ class Panel(Gtk.Window):
         run_bg(["nxs-anon", "on" if active else "off"])
         GLib.timeout_add(1500, self._refresh_sec_icon)
         return False
+
+    def _sec_macspoof_toggle(self, _sw, active):
+        # Abilita/disabilita lo spoof MAC automatico al boot. Con 'on' applica
+        # anche subito un MAC casuale (best-effort); con 'off' solo il flag.
+        if active:
+            run_bg(["sh", "-c", "nxs-macspoof on; nxs-macspoof now"])
+        else:
+            run_bg(["nxs-macspoof", "off"])
+        return False
+
+    def _sec_panic_toggle(self, _sw, active):
+        # Arma/disarma il panico su rimozione della chiavetta di boot.
+        run_bg(["nxs-panic", "arm" if active else "disarm"])
+        return False
+
+    def _sec_panic_now(self, _w):
+        # Panico immediato CON conferma (dal pannello): a differenza del tasto
+        # rapido e della rimozione-chiavetta, qui chiediamo conferma.
+        self._close_popup("security")
+        dlg = Gtk.MessageDialog(
+            transient_for=None, modal=True,
+            message_type=Gtk.MessageType.WARNING,
+            buttons=Gtk.ButtonsType.NONE,
+            text="Panico: spegnere subito?")
+        dlg.format_secondary_text(
+            "Il PC si spegne immediatamente mettendo al sicuro i dati "
+            "(chiave di cifratura fuori dalla RAM, cache svuotate). "
+            "Le finestre aperte NON verranno salvate.")
+        dlg.add_button("Annulla", Gtk.ResponseType.CANCEL)
+        b = dlg.add_button("Spegni ora", Gtk.ResponseType.OK)
+        b.get_style_context().add_class("destructive-action")
+        dlg.set_keep_above(True)
+        resp = dlg.run()
+        dlg.destroy()
+        if resp == Gtk.ResponseType.OK:
+            run_bg(["nxs-panic", "wipe"])
 
     def _sec_screenshot(self, mode):
         self._close_popup("security")

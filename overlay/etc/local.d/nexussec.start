@@ -113,6 +113,22 @@ if command -v nxs-firewall >/dev/null 2>&1; then
 	echo "firewall: $( [ -f /etc/nxs/firewall.disabled ] && echo disattivato || echo attivo )"
 fi
 
+# --- MAC spoofing automatico (opzionale) ------------------------------------
+# Se l'utente ha abilitato lo spoof (flag /etc/nxs/macspoof.on, da pannello o
+# `nxs-macspoof on`), assegna un MAC casuale a ogni scheda reale ad ogni avvio
+# (privacy: l'hardware non è tracciabile fra reti). Idempotente e best-effort.
+if [ -f /etc/nxs/macspoof.on ] && command -v nxs-macspoof >/dev/null 2>&1; then
+	nxs-macspoof now 2>/dev/null && echo "MAC spoofing: applicato" || true
+fi
+
+# --- Watcher PANICO su rimozione chiavetta (opzionale) ----------------------
+# Se armato (flag /etc/nxs/panic-usb.on), avvia il sorvegliante: se la chiavetta
+# di boot viene estratta, spegne il PC mettendo al sicuro i dati (nxs-panic).
+if [ -f /etc/nxs/panic-usb.on ] && command -v nxs-panic >/dev/null 2>&1; then
+	setsid nxs-panic watch >/dev/null 2>&1 &
+	echo "panico su rimozione chiavetta: armato (watcher avviato)"
+fi
+
 # --- Pre-compila il bytecode Python del desktop (primi avvii piu' rapidi) -----
 # La live gira in RAM: i .pyc NON esistono al primo boot, quindi il pannello, il
 # Centro di Controllo, il selettore profili e i tool compilerebbero i moduli al

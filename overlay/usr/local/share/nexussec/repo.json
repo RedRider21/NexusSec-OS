@@ -3097,6 +3097,145 @@
       "pip": "h8mail",
       "bin": "h8mail",
       "description": "Caccia a un indirizzo email nei data-breach e in sorgenti di ricognizione (locali o servizi premium); ricostruisce anche gli account collegati."
+    },
+    "mobsf": {
+      "category": "reverse",
+      "method": "container",
+      "image": "docker.io/opensecurity/mobile-security-framework-mobsf:latest",
+      "net": "host",
+      "description": "Mobile Security Framework: analisi statica/dinamica di APK/IPA (server web su http://127.0.0.1:8000). Colma la categoria mobile (assente da Kali on-demand)."
+    },
+    "cameradar": {
+      "category": "recon",
+      "method": "container",
+      "image": "docker.io/ullaakut/cameradar:latest",
+      "net": "host",
+      "description": "Scoperta e attacco a stream RTSP di telecamere IP (percorsi/credenziali deboli). Sinergia con HORUS."
+    },
+    "bbot": {
+      "category": "osint",
+      "method": "pip",
+      "pip": "bbot",
+      "bin": "bbot",
+      "description": "Framework OSINT/recon automatizzato multi-modulo (sottodomini, e-mail, web, cloud). Non presente in Kali."
+    },
+    "ghunt": {
+      "category": "osint",
+      "method": "pip",
+      "pip": "ghunt",
+      "bin": "ghunt",
+      "description": "OSINT su account Google (Gmail/GAIA): mappa servizi collegati, foto, recensioni. Non presente in Kali."
+    },
+    "snscrape": {
+      "category": "osint",
+      "method": "pip",
+      "pip": "snscrape",
+      "bin": "snscrape",
+      "description": "Scraper di social network (X/Twitter, Telegram, Reddit, ...) senza API. Non presente in Kali."
+    },
+    "scoutsuite": {
+      "category": "vuln",
+      "method": "pip",
+      "pip": "scoutsuite",
+      "bin": "scout",
+      "description": "Audit di sicurezza multi-cloud (AWS/Azure/GCP): report delle misconfigurazioni. Categoria cloud, assente da Kali."
+    },
+    "prowler": {
+      "category": "vuln",
+      "method": "pip",
+      "pip": "prowler",
+      "bin": "prowler",
+      "description": "Assessment di sicurezza e compliance per AWS/Azure/GCP/Kubernetes (centinaia di controlli). Categoria cloud, assente da Kali."
+    },
+    "kube-hunter": {
+      "category": "vuln",
+      "method": "pip",
+      "pip": "kube-hunter",
+      "bin": "kube-hunter",
+      "description": "Ricerca di vulnerabilita' in cluster Kubernetes (scansione remota o dal pod). Non presente in Kali."
+    },
+    "adidnsdump": {
+      "category": "recon",
+      "method": "pip",
+      "pip": "adidnsdump",
+      "bin": "adidnsdump",
+      "description": "Dump delle zone DNS integrate in Active Directory via LDAP (recon interno AD). Non presente in Kali."
+    },
+    "certsync": {
+      "category": "recon",
+      "method": "pip",
+      "pip": "certsync",
+      "bin": "certsync",
+      "description": "Dump degli hash NTDS via PKINIT/AD-CS senza toccare DRSUAPI (piu' silenzioso). Non presente in Kali."
+    },
+    "donpapi": {
+      "category": "password",
+      "method": "pip",
+      "pip": "donpapi",
+      "bin": "donpapi",
+      "description": "Raccolta massiva di segreti DPAPI (credenziali, certificati, cookie) su parco Windows. Non presente in Kali."
+    },
+    "trevorspray": {
+      "category": "password",
+      "method": "pip",
+      "pip": "trevorspray",
+      "bin": "trevorspray",
+      "description": "Password spraying avanzato (O365/OWA/SSO) con routing multi-proxy/SSH. Non presente in Kali."
+    },
+    "graphw00f": {
+      "category": "web",
+      "method": "pip",
+      "pip": "graphw00f",
+      "bin": "graphw00f",
+      "description": "Fingerprint dei motori GraphQL e rilevamento endpoint. Non presente in Kali."
+    },
+    "androwarn": {
+      "category": "reverse",
+      "method": "git",
+      "git": "https://github.com/maaaaz/androwarn.git",
+      "entry": "androwarn.py",
+      "bin": "androwarn",
+      "description": "Analisi statica di APK Android: comportamenti sospetti (telefonia, rete, dati personali). Colma la categoria mobile."
+    },
+    "jwt-tool": {
+      "category": "web",
+      "method": "git",
+      "git": "https://github.com/ticarpi/jwt_tool.git",
+      "entry": "jwt_tool.py",
+      "bin": "jwt_tool",
+      "description": "Test e attacco ai JSON Web Token (alg=none, key confusion, brute-force firma). Non presente in Kali."
+    },
+    "ssrfmap": {
+      "category": "web",
+      "method": "git",
+      "git": "https://github.com/swisskyrepo/SSRFmap.git",
+      "entry": "ssrfmap.py",
+      "bin": "ssrfmap",
+      "description": "Sfruttamento automatico di SSRF (moduli: port scan, cloud metadata, file read, ...). Non presente in Kali."
+    },
+    "corsy": {
+      "category": "web",
+      "method": "git",
+      "git": "https://github.com/s0md3v/Corsy.git",
+      "entry": "corsy.py",
+      "bin": "corsy",
+      "description": "Scanner di misconfigurazioni CORS. Non presente in Kali."
+    },
+    "linkfinder": {
+      "category": "web",
+      "method": "git",
+      "git": "https://github.com/GerbenJavado/LinkFinder.git",
+      "entry": "linkfinder.py",
+      "bin": "linkfinder",
+      "description": "Estrae endpoint e URL dai file JavaScript. Non presente in Kali."
+    },
+    "secretfinder": {
+      "category": "web",
+      "method": "git",
+      "git": "https://github.com/m4ll0k/SecretFinder.git",
+      "entry": "SecretFinder.py",
+      "bin": "secretfinder",
+      "description": "Cerca API key, token e segreti nei file JavaScript. Non presente in Kali."
     }
   }
 }

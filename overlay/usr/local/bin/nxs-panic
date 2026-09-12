@@ -1,0 +1,137 @@
+#!/bin/sh
+# nxs-panic - Panico / spegnimento d'emergenza (stile Tails).
+#
+# Azione immediata (`wipe`): mette al sicuro i dati e spegne il PC il più in
+# fretta possibile. In ordine:
+#   1. SOSPENDE tutte le mappature LUKS aperte (`cryptsetup luksSuspend`): la
+#      chiave di cifratura viene RIMOSSA dalla RAM del kernel -> la persistenza
+#      cifrata NXSDATA torna illeggibile all'istante.
+#   2. Uccide le app che tengono segreti in memoria (browser, terminali, HORUS).
+#   3. Svuota le cache (drop_caches) così i contenuti dei file non restano in RAM.
+#   4. Spegne forzatamente (`poweroff -nf`). Contro gli attacchi cold-boot il
+#      kernel è avviato con `page_poison=1` (sovrascrive le pagine liberate).
+#
+# Watcher (`watch`/`arm`/`disarm`): se abilitato, sorveglia la CHIAVETTA DI BOOT;
+# appena viene ESTRATTA, esegue `wipe`. Utile se devi separarti dal PC in fretta.
+# Si arma SOLO per supporti rimovibili (USB): mai su un disco installato.
+#
+# Uso:
+#   nxs-panic wipe        # PANICO ORA: spegni e metti al sicuro (immediato)
+#   nxs-panic arm         # arma: spegni se rimuovono la chiavetta di boot
+#   nxs-panic disarm      # disarma
+#   nxs-panic status      # on|off (watcher rimozione-USB)
+#   nxs-panic watch       # (interno) loop di sorveglianza, avviato da arm/boot
+#
+# ATTENZIONE: `wipe` NON chiede conferma (è un panico). Il pulsante nel pannello
+# chiede conferma; il tasto rapido e la rimozione della chiavetta NO.
+set -u
+
+FLAG=/etc/nxs/panic-usb.on
+BOOTDEV_CACHE=/run/nxs-panic.bootdev
+PIDFILE=/run/nxs-panic-watch.pid
+# Percorso ASSOLUTO di questo script: sotto doas il PATH può non includere
+# /usr/local/bin, quindi la ri-esecuzione con privilegi deve usare il path pieno.
+SELF=/usr/local/bin/nxs-panic
+
+priv() {
+  if [ "$(id -u)" = 0 ]; then "$@"
+  elif command -v doas >/dev/null 2>&1; then doas "$@"
+  elif command -v sudo >/dev/null 2>&1; then sudo "$@"
+  else echo "nxs-panic: servono privilegi di root." >&2; return 1; fi
+}
+
+# --- individua la partizione della chiavetta/supporto di boot della live ------
+# La live monta la propria squashfs (modloop) da un loop il cui file di backing
+# sta sul supporto di avvio: da lì risaliamo al device (es. /dev/sda1).
+_bootdev() {
+  bp=""
+  if command -v losetup >/dev/null 2>&1; then
+    # Estrae il percorso del file di backing del loop (funziona sia col formato
+    # util-linux "(/path)" sia con quello busybox "/path"): cerca un percorso che
+    # contenga modloop o /media/ (dove la live monta il supporto di avvio).
+    bp="$(losetup -a 2>/dev/null \
+          | grep -oE '/[^ )]*(modloop|/media/|\.apkovl)[^ )]*' | head -1)"
+  fi
+  [ -z "$bp" ] && for d in /media/*/boot /media/*; do
+    [ -e "$d/modloop-lts" ] || [ -e "$d/modloop-rpi" ] || [ -d "$d/apks" ] || continue
+    bp="$d"; break
+  done
+  [ -n "$bp" ] || return 1
+  findmnt -no SOURCE --target "$bp" 2>/dev/null
+}
+
+# device rimovibile? (evita di armare su un disco fisso installato)
+_is_removable() {  # $1=/dev/sdX1
+  base="$(basename "$1")"
+  # risali alla disco padre (sda1 -> sda, nvme0n1p1 -> nvme0n1, mmcblk0p1 -> mmcblk0)
+  disk="$(lsblk -no PKNAME "$1" 2>/dev/null | head -1)"
+  [ -n "$disk" ] || disk="$(echo "$base" | sed -E 's/p?[0-9]+$//')"
+  [ "$(cat /sys/block/"$disk"/removable 2>/dev/null)" = "1" ]
+}
+
+do_wipe() {
+  # richiede root: se non lo siamo, ri-eseguiamo con priv (immediato sul live)
+  if [ "$(id -u)" != 0 ]; then exec priv "$SELF" wipe; fi
+  # 1) chiavi di cifratura fuori dalla RAM: sospendi ogni mappatura in /dev/mapper.
+  #    luksSuspend rimuove la chiave dal kernel; su una mappatura non-LUKS fallisce
+  #    innocuamente. Non dipende da 'dmsetup' (non sempre nella base).
+  if command -v cryptsetup >/dev/null 2>&1; then
+    for node in /dev/mapper/*; do
+      [ -e "$node" ] || continue
+      name="$(basename "$node")"
+      [ "$name" = "control" ] && continue
+      cryptsetup luksSuspend "$name" 2>/dev/null || true
+    done
+  fi
+  # 2) uccidi le app che tengono segreti in memoria
+  pkill -9 -f 'WebKit|webkit|nxs-browser|lxterminal|nxs-horus|nxs-term|nxs-recorder' 2>/dev/null || true
+  # 3) svuota le cache (contenuti file fuori dalla RAM)
+  sync
+  echo 3 > /proc/sys/vm/drop_caches 2>/dev/null || true
+  # 4) spegnimento forzato immediato (niente attese di sync dei servizi)
+  poweroff -nf 2>/dev/null || halt -f 2>/dev/null || \
+    { echo o > /proc/sysrq-trigger 2>/dev/null; }
+}
+
+do_watch() {
+  if [ "$(id -u)" != 0 ]; then exec priv "$SELF" watch; fi
+  dev="$(_bootdev || true)"
+  if [ -z "$dev" ] || [ ! -e "$dev" ]; then
+    echo "nxs-panic watch: supporto di boot non individuato (sistema installato?): non sorveglio." >&2
+    exit 0
+  fi
+  if ! _is_removable "$dev"; then
+    echo "nxs-panic watch: $dev non è rimovibile: non armo (evito il disco fisso)." >&2
+    exit 0
+  fi
+  echo "$dev" > "$BOOTDEV_CACHE" 2>/dev/null || true
+  echo $$ > "$PIDFILE" 2>/dev/null || true
+  # sorveglia l'esistenza del device: appena sparisce (chiavetta estratta) -> wipe
+  while [ -f "$FLAG" ]; do
+    if [ ! -e "$dev" ]; then do_wipe; exit 0; fi
+    sleep 1
+  done
+  rm -f "$PIDFILE" 2>/dev/null || true
+}
+
+do_arm() {
+  priv sh -c "mkdir -p /etc/nxs && : > '$FLAG'"
+  # avvia subito il watcher in background (idempotente: uccidi un eventuale vecchio)
+  priv sh -c "[ -f '$PIDFILE' ] && kill \$(cat '$PIDFILE') 2>/dev/null; setsid $SELF watch >/dev/null 2>&1 &" || true
+  echo "panico su rimozione chiavetta: ARMATO"
+}
+
+do_disarm() {
+  priv rm -f "$FLAG" 2>/dev/null || true
+  priv sh -c "[ -f '$PIDFILE' ] && kill \$(cat '$PIDFILE') 2>/dev/null; rm -f '$PIDFILE'" 2>/dev/null || true
+  echo "panico su rimozione chiavetta: DISARMATO"
+}
+
+case "${1:-status}" in
+  wipe)   do_wipe ;;
+  watch)  do_watch ;;
+  arm)    do_arm ;;
+  disarm) do_disarm ;;
+  status) [ -f "$FLAG" ] && echo on || echo off ;;
+  *) echo "uso: nxs-panic {wipe|arm|disarm|status|watch}" >&2; exit 2 ;;
+esac

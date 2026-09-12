@@ -1,0 +1,91 @@
+#!/bin/sh
+# nxs-macspoof - MAC spoofing opzionale (manuale o automatico al boot).
+#
+# Assegna a ogni interfaccia di rete reale (Ethernet/Wi-Fi) un indirizzo MAC
+# casuale "locally administered" (bit L=1) e unicast (bit I/G=0), così l'hardware
+# non è tracciabile fra reti diverse (privacy, come Tails/Parrot). NON usa
+# `macchanger` (non nella base): basta `ip link` (iproute2, già presente).
+#
+# Uso:
+#   nxs-macspoof now        # cambia SUBITO il MAC di tutte le interfacce
+#   nxs-macspoof restore    # ripristina i MAC hardware originali (permaddr)
+#   nxs-macspoof on         # abilita lo spoof AUTOMATICO a ogni avvio
+#   nxs-macspoof off        # disabilita lo spoof automatico
+#   nxs-macspoof status     # on|off (stato dello spoof automatico al boot)
+#
+# Lo spoof automatico al boot è applicato da nexussec.start (prima che la rete
+# vada su) quando esiste il flag /etc/nxs/macspoof.on.
+#
+# NB: cambiare MAC richiede di abbassare/rialzare l'interfaccia -> una eventuale
+# connessione attiva si interrompe brevemente. Su alcune schede Wi-Fi il driver
+# non consente il cambio a interfaccia su: in quel caso si salta con avviso.
+set -eu
+
+FLAG=/etc/nxs/macspoof.on
+
+priv() {
+  if [ "$(id -u)" = 0 ]; then "$@"
+  elif command -v doas >/dev/null 2>&1; then doas "$@"
+  elif command -v sudo >/dev/null 2>&1; then sudo "$@"
+  else echo "nxs-macspoof: servono privilegi di root." >&2; return 1; fi
+}
+
+# Interfacce reali: escludi lo e i tipi non-ethernet; includi eth*/en*/wl*/wlan*.
+_ifaces() {
+  for d in /sys/class/net/*; do
+    [ -e "$d" ] || continue
+    i="$(basename "$d")"
+    [ "$i" = "lo" ] && continue
+    # ARPHRD_ETHER = 1 (Ethernet e Wi-Fi). Salta tun/bridge virtuali senza device.
+    [ "$(cat "$d/type" 2>/dev/null)" = "1" ] || continue
+    echo "$i"
+  done
+}
+
+# MAC casuale: primo ottetto con L=1 (0x02) e I/G=0 (unicast).
+# NB: solo aritmetica di shell POSIX (busybox ash) -> niente strtonum/or/and,
+# che sono estensioni gawk assenti nell'awk di BusyBox su Alpine.
+_rand_mac() {
+  set -- $(od -An -N6 -tx1 /dev/urandom)
+  o1=$(( (0x$1 & 0xfe) | 0x02 ))
+  printf '%02x:%s:%s:%s:%s:%s' "$o1" "$2" "$3" "$4" "$5" "$6"
+}
+
+_set_mac() {  # $1=iface $2=mac
+  ip link set dev "$1" down 2>/dev/null || true
+  if ip link set dev "$1" address "$2" 2>/dev/null; then
+    ip link set dev "$1" up 2>/dev/null || true
+    echo "  $1 -> $2"
+  else
+    ip link set dev "$1" up 2>/dev/null || true
+    echo "  $1: il driver non consente il cambio MAC (saltata)" >&2
+  fi
+}
+
+do_now() {
+  ran=0
+  for i in $(_ifaces); do _set_mac "$i" "$(_rand_mac)"; ran=1; done
+  [ "$ran" = 1 ] || echo "nessuna interfaccia idonea."
+}
+
+do_restore() {
+  for i in $(_ifaces); do
+    # MAC hardware permanente: via ethtool se disponibile (in base non c'è
+    # sempre); altrimenti il ripristino richiede un riavvio.
+    hw=""
+    if command -v ethtool >/dev/null 2>&1; then
+      hw="$(ethtool -P "$i" 2>/dev/null | awk '{print $3}')"
+    fi
+    case "$hw" in ""|"00:00:00:00:00:00") echo "  $i: MAC permanente non noto (riavvia per ripristino)"; continue;; esac
+    _set_mac "$i" "$hw"
+  done
+}
+
+case "${1:-status}" in
+  now)     if [ "$(id -u)" = 0 ]; then do_now; else priv "$0" now; fi ;;
+  restore) if [ "$(id -u)" = 0 ]; then do_restore; else priv "$0" restore; fi ;;
+  on)      priv sh -c "mkdir -p /etc/nxs && : > '$FLAG'"; echo "spoof MAC automatico: ON (attivo dal prossimo avvio; 'nxs-macspoof now' per subito)" ;;
+  off)     priv rm -f "$FLAG" 2>/dev/null || true; echo "spoof MAC automatico: OFF" ;;
+  status)  [ -f "$FLAG" ] && echo on || echo off ;;
+  *) echo "uso: nxs-macspoof {now|restore|on|off|status}" >&2; exit 2 ;;
+esac

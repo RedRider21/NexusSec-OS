@@ -82,6 +82,11 @@ profile_nexussec() {
 	# container (anche rootless) partono. NB: v2-only e' pienamente supportato
 	# da Podman/crun e dai container Kali.
 	kernel_cmdline="${kernel_cmdline:+$kernel_cmdline }cgroup_no_v1=all"
+	# --- Mitigazione cold-boot (panico/wipe): page_poison=1 --------------------
+	# Il kernel SOVRASCRIVE le pagine di memoria appena vengono liberate: riduce i
+	# residui di segreti in RAM (a supporto di `nxs-panic`, che al panico sospende
+	# la chiave LUKS e spegne). Costo prestazionale trascurabile per questo uso.
+	kernel_cmdline="${kernel_cmdline:+$kernel_cmdline }page_poison=1"
 	# Pacchetti installati nella live. nexussec-base tira tutto il desktop;
 	# i sec-profile-* sono disponibili nel repo ma installati on-demand.
 	apks="$apks

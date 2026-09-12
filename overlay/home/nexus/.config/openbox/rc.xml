@@ -201,6 +201,9 @@
   <keybind key="W-p"><action name="Execute"><command>nxs-profile</command></action></keybind>
   <keybind key="W-d"><action name="ToggleShowDesktop"/></keybind>
   <keybind key="Print"><action name="Execute"><command>nxs-screenshot</command></action></keybind>
+  <!-- PANICO: Super+Alt+Canc = spegni subito mettendo al sicuro i dati.
+       Combinazione volutamente difficile da premere per sbaglio; nessuna conferma. -->
+  <keybind key="W-A-Delete"><action name="Execute"><command>nxs-panic wipe</command></action></keybind>
 
   <!-- Tasti Fn del portatile: luminosita' schermo (backlight hw o gamma sw) -->
   <keybind key="XF86MonBrightnessUp"><action name="Execute"><command>nxs-brightness up</command></action></keybind>
