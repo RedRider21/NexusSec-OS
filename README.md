@@ -116,15 +116,54 @@ Stessa **copertura di strumenti** delle due distro di riferimento, ma con un
 modello opposto: **niente preinstallato**, tutto **on-demand** col metodo piu'
 adatto. Risultato: ISO molto piu' piccola e sistema piu' flessibile.
 
-Il catalogo conta **443 strumenti** distribuiti su 16 categorie (incluse le nuove
-**Crypto/Stego** e **Hardware/SDR**). Rispetto ai metapacchetti
-`kali-linux-everything` / `parrot-tools-full`, la copertura sugli strumenti reali
-e' **153/154**: le uniche voci non incluse sono librerie Python o CLI di base
-(`aadict`, `aardwolf`, `aio*`, `libfuzzer`, `openssl`...), non programmi da menu.
+Il catalogo conta **465 strumenti** distribuiti su 16 categorie (incluse le nuove
+**Crypto/Stego** e **Hardware/SDR**) **piu' l'intero arsenale Kali raggiungibile
+on-demand** (`nxs-tool kali <pkg>`, decine di migliaia di pacchetti). Rispetto ai
+metapacchetti `kali-linux-everything` / `parrot-tools-full`, la copertura sugli
+strumenti reali e' **153/154**: le uniche voci non incluse sono librerie Python o
+CLI di base (`aadict`, `aardwolf`, `aio*`, `libfuzzer`, `openssl`...), non
+programmi da menu. Le ultime **19 aggiunte** nascono da un confronto serio con
+**BlackArch** (vedi sotto) e colmano **mobile** (MobSF, objection, Androwarn) e
+**cloud/Kubernetes** (Prowler, ScoutSuite, kube-hunter), oltre a OSINT/AD/web.
 
 Legenda metodo NexusSec: `apk` nativo Alpine · `kali` container Kali condiviso
 on-demand · `pip` (pipx) · `ctr` container Podman · `git` clone + venv.
 Vista completa navigabile (HTML): [`docs/copertura-arsenale.html`](docs/copertura-arsenale.html).
+
+### Tabella comparativa delle feature
+
+Confronto onesto con le distro di riferimento. Legenda: ✅ integrato/nativo ·
+✅✅ punto di forza (predefinito) · ➖ assente o non nativo (add-on di terze parti).
+
+| Caratteristica | **NexusSec** | Kali | Parrot | Tails | CAINE | BlackArch |
+|---|---|---|---|---|---|---|
+| Base / init | Alpine · OpenRC | Debian · systemd | Debian · systemd | Debian · systemd | Ubuntu · systemd | Arch · systemd |
+| Dimensione ISO | **~0,7 GB** | ~4 GB | ~2–5,5 GB | ~1,5 GB | ~4 GB | ~14–20 GB (full) |
+| Modello strumenti | on-demand curato **+ Kali completo** | preinstallati | preinstallati | minimale | forensic | ~2800 preinstallabili |
+| N. strumenti | 465 curati + arsenale Kali | ~600 | ~600 | pochi (mirati) | forensic | ~2800 |
+| Desktop | Openbox + pannello **Python nativo** | Xfce/GNOME/KDE | MATE/KDE | GNOME | MATE | vari |
+| Isolamento tool (sandbox/container) | ✅✅ Podman + bubblewrap | ➖ (root) | ➖ (root) | ➖ | ➖ | ➖ |
+| Proxy Tor SOCKS | ✅ `nxs-tor` | ✅ | ✅ | ✅ | ➖ | ✅ |
+| Anonimato **globale** Tor + kill-switch | ✅ `nxs-anon` | ➖ (add-on) | ✅ AnonSurf | ✅✅ (forzato) | ➖ | ➖ |
+| MAC spoofing | ✅ auto al boot `nxs-macspoof` | manuale | ✅ | ✅ | ➖ | manuale |
+| Rimozione metadati (MAT2) | ✅ integrato `nxs-metadata` | pacchetto | ✅ | ✅ | ➖ | pacchetto |
+| Panico / anti cold-boot | ✅ `nxs-panic` + `page_poison` | ➖ | ➖ | ✅✅ | ➖ | ➖ |
+| Anti-forensics (no automount, write-block) | ✅✅ | ➖ | ➖ | N/A | ✅✅ | ➖ |
+| Live amnesica (RAM) | ✅ | ✅ | ✅ | ✅✅ | ✅ | ✅ |
+| Persistenza cifrata LUKS | ✅ NXSDATA | ✅ | ✅ | ✅ | ➖ | ✅ |
+| Firewall inbound default-deny | ✅ `nxs-firewall` | ➖ | ✅ | ✅ | ➖ | ➖ |
+| Dashboard OSINT/GEOINT integrata | ✅✅ HORUS | ➖ | ➖ | ➖ | ➖ | ➖ |
+| App Android compagna | ✅ Termux-NexusSEC-OS | ➖ | ➖ | ➖ | ➖ | ➖ |
+| RAM a riposo (live) | ~0,3–0,4 GB | ~1 GB | ~0,5 GB | ~0,5 GB | ~0,5 GB | ~0,5 GB |
+
+> **Sul confronto con BlackArch (~2800 tool).** La differenza "2800 contro 465" e'
+> in gran parte di misura: BlackArch e' un repo **Arch** (non installabile su
+> Alpine) e conta *ogni script* come un tool, inclusi molti PoC abbandonati e
+> doppioni. Un'analisi seria (2857 tool BlackArch confrontati con il nostro
+> catalogo **piu' l'intero archivio Kali** raggiungibile on-demand, ~71.000
+> pacchetti) mostra che i gap **realmente utili e mantenuti** sono ~60: ne abbiamo
+> integrati subito 19 (mobile, cloud/K8s, OSINT/AD/web). La nostra scelta resta
+> **curata, non un limite**.
 
 ### Software per categoria (sintesi)
 
@@ -647,8 +686,11 @@ Con RAM abbondante resta quasi inattivo. Configurato in `/etc/local.d/zram.start
   (`wmctrl`), orologio/calendario, spostabile alto/basso. La sotto-etichetta
   mostra il profilo attivo, l'accent segue il colore del profilo.
 - **Autoprotezione** (applet "scudo", un solo slot sulla barra): interruttori
-  **Firewall** e **Tor** (`nxs-tor`, SOCKS 9050), **Screenshot** (intero/area) e
-  **Blocco schermo**; l'icona riflette lo stato del firewall.
+  **Firewall**, **Tor** (`nxs-tor`, SOCKS 9050), **Anonimo — tutto via Tor**
+  (`nxs-anon`, routing trasparente + kill-switch), **MAC casuale a ogni avvio**
+  (`nxs-macspoof`) e **Panico se rimuovi la chiavetta** (`nxs-panic`), piu' i
+  pulsanti **Screenshot** (intero/area), **Blocco schermo** e **Panico: cancella e
+  spegni** (con conferma); l'icona riflette lo stato del firewall.
 - **Multilingua** (it / en / fr / es / de): layer i18n condiviso (`nxs_i18n`) con
   selettore nel menu (voce **Lingua**) e CLI `nxs-lang`; l'italiano e' la lingua
   sorgente, con fallback lingua->inglese->italiano.
@@ -658,6 +700,46 @@ Con RAM abbondante resta quasi inattivo. Configurato in `/etc/local.d/zram.start
 - **NexusSec Browser** (GTK3 + WebKit2): motore `webkit2gtk` installato
   on-demand via apk.
 - Lanciatori sul desktop (pcmanfm) + menu tasto destro Openbox.
+
+## Sicurezza, anonimato e anti-forensics
+
+Tutto è **opt-in** e reversibile: la live resta comoda, ma con un clic diventa
+riservata. Ogni funzione ha un comando `nxs-*` (usabile anche da terminale/menu)
+e un interruttore nell'applet **Autoprotezione** del pannello.
+
+- **Tor come proxy SOCKS** — `nxs-tor` (porta `127.0.0.1:9050`). Passano da Tor le
+  app *proxy-aware* (HORUS, browser stealth, `torsocks`/`proxychains`). Il `torrc`
+  è ottimizzato per la reattività (timeout di stream/circuito più svelti,
+  `MaxCircuitDirtiness`, keep-alive) **senza** pinning di nodi/paesi, che
+  peggiorerebbe l'anonimato.
+- **Modalità Anonima globale** — `nxs-anon on|off` (switch "Anonimo — tutto via
+  Tor"). Instrada **tutto** il traffico TCP e le richieste DNS del sistema dentro
+  Tor in modo **trasparente** (TransPort 9040 + DNSPort 5353, Tor come utente
+  `tor`) e attiva un **kill-switch** nftables: ciò che non passa da Tor viene
+  **bloccato** (niente leak se Tor cade); UDP e IPv6 disattivati. Fail-safe: il
+  kill-switch si applica **solo** dopo che Tor è confermato attivo; `nft -f` è
+  atomico. Stile AnonSurf/Tails.
+- **Rimozione metadati (MAT2)** — `nxs-metadata show|clean|gui`: ripulisce EXIF e
+  metadati da immagini/PDF/documenti creando copie `*.cleaned` (gli originali non
+  si toccano). Anche come azione **tasto destro** nel file manager e voce di menu.
+- **Panico / spegnimento d'emergenza** — `nxs-panic wipe`: **sospende le mappature
+  LUKS** (la chiave di cifratura esce dalla RAM del kernel → la persistenza cifrata
+  torna illeggibile all'istante), chiude le app che tengono segreti in memoria,
+  svuota le cache e **spegne forzatamente**. Tasto rapido **Super+Alt+Canc**, voce
+  di menu e pulsante nel pannello (con conferma). In più, `nxs-panic arm` sorveglia
+  la **chiavetta di boot**: se la estrai, il PC si spegne mettendo al sicuro i dati
+  (solo su supporti rimovibili, mai su disco fisso). Contro gli attacchi cold-boot
+  il kernel parte con `page_poison=1` (sovrascrive le pagine di RAM liberate).
+- **MAC spoofing** — `nxs-macspoof now|on|off`: assegna a ogni scheda un MAC
+  casuale *locally-administered* (via `ip link`, niente `macchanger`). Con lo switch
+  "MAC casuale a ogni avvio" l'hardware non è tracciabile fra reti diverse.
+- **Firewall** — `nxs-firewall` (nftables): inbound *default-deny*, outbound libero,
+  attivo al boot; per mettersi in ascolto: `nxs-firewall allow`/`off`.
+- **Hardening del sistema installato** — `nxs-harden`: password, disattiva
+  autologin e `doas` senza password, blocca i cambi VT.
+- **Forensics** — i dischi sono **visibili ma mai montati/scritti in automatico**
+  (montaggio in sola lettura di default; write-blocking): niente alterazione delle
+  prove.
 
 ## HORUS — Occhio OSINT globale
 
