@@ -1,0 +1,167 @@
+#!/bin/sh
+# nxs-anon - Modalita' ANONIMA GLOBALE (Tor trasparente + kill-switch).
+#
+# A differenza di `nxs-tor` (che offre solo un proxy SOCKS 9050 usato dalle app
+# proxy-aware, HORUS/browser), qui TUTTO il traffico TCP e le richieste DNS del
+# sistema vengono instradati DENTRO Tor in modo trasparente, e ogni altro
+# traffico viene BLOCCATO (kill-switch): se Tor cade, la rete si chiude invece di
+# uscire in chiaro. Stile AnonSurf/Tails.
+#
+# Come funziona:
+#  - avvia un Tor dedicato come utente 'tor' con TransPort 9040 + DNSPort 5353
+#    (+ SocksPort 9050 per le app proxy-aware) e AutomapHostsOnResolve;
+#  - nftables: DNAT del DNS -> 5353 e del TCP nuovo -> 9040 (tranne loopback e il
+#    traffico dello STESSO utente 'tor', che deve poter uscire verso i relay);
+#    l'OUTPUT che non e' loopback / gia' stabilito / di Tor viene DROPPATO.
+#  - IPv6 e UDP (tranne il DNS dirottato) vengono bloccati: Tor non li instrada,
+#    quindi bloccarli evita leak (comportamento voluto).
+#
+# Fail-safe: il kill-switch si applica SOLO dopo che Tor risulta attivo; se Tor
+# non parte, si lascia il firewall normale e si esce con errore (niente rete
+# "murata" senza anonimato).
+#
+# Uso: nxs-anon on|off|status|toggle     (default: status)
+#
+# NB: richiede root (nftables + Tor come utente 'tor'). Sul live e' immediato
+# (doas nopass); su sistema hardenizzato doas chiede la password.
+set -eu
+
+TRANS_PORT=9040
+DNS_PORT=5353
+SOCKS_PORT=9050
+VIRTNET=10.192.0.0/10
+TOR_USER=tor
+DATADIR=/var/lib/tor-anon
+TORRC=/run/nxs-anon-torrc
+PIDFILE=/run/nxs-anon-tor.pid
+STATE=/run/nxs-anon.on
+
+priv() {
+  if [ "$(id -u)" = 0 ]; then "$@"
+  elif command -v doas >/dev/null 2>&1; then doas "$@"
+  elif command -v sudo >/dev/null 2>&1; then sudo "$@"
+  else echo "nxs-anon: servono privilegi di root." >&2; return 1; fi
+}
+
+have() { command -v "$1" >/dev/null 2>&1; }
+
+port_up() { netstat -ltn 2>/dev/null | grep -q "127\.0\.0\.1:$1[[:space:]]"; }
+
+is_on() { [ -e "$STATE" ] && port_up "$TRANS_PORT"; }
+
+# --- genera lo script eseguito come root (unico salto di privilegi) ----------
+_root_on() {
+  cat <<ROOT
+set -eu
+command -v nft >/dev/null 2>&1 || { echo "nftables assente"; exit 1; }
+# 1) pacchetto tor + utente tor
+if ! command -v tor >/dev/null 2>&1; then apk add --no-cache tor >/dev/null 2>&1 || { echo "tor non installabile"; exit 1; }; fi
+id "$TOR_USER" >/dev/null 2>&1 || { echo "utente '$TOR_USER' assente"; exit 1; }
+TORUID=\$(id -u "$TOR_USER")
+mkdir -p "$DATADIR"; chown "$TOR_USER":"$TOR_USER" "$DATADIR"; chmod 700 "$DATADIR"
+# 2) torrc trasparente + timeout ottimizzati (come nxs-tor)
+cat > "$TORRC" <<TORRC_EOF
+User $TOR_USER
+DataDirectory $DATADIR
+PidFile $PIDFILE
+RunAsDaemon 1
+SocksPort 127.0.0.1:$SOCKS_PORT
+TransPort 127.0.0.1:$TRANS_PORT
+DNSPort 127.0.0.1:$DNS_PORT
+AutomapHostsOnResolve 1
+VirtualAddrNetworkIPv4 $VIRTNET
+AvoidDiskWrites 1
+CircuitStreamTimeout 15
+SocksTimeout 30
+CircuitBuildTimeout 12
+LearnCircuitBuildTimeout 1
+MaxCircuitDirtiness 600
+KeepalivePeriod 60
+TORRC_EOF
+# 3) avvia Tor (se non gia' su) e attendi il TransPort
+if ! (netstat -ltn 2>/dev/null | grep -q "127\.0\.0\.1:$TRANS_PORT[[:space:]]"); then
+  tor -f "$TORRC" >/dev/null 2>&1 || true
+fi
+i=0
+while [ \$i -lt 30 ]; do
+  netstat -ltn 2>/dev/null | grep -q "127\.0\.0\.1:$TRANS_PORT[[:space:]]" && break
+  sleep 1; i=\$((i+1))
+done
+if ! (netstat -ltn 2>/dev/null | grep -q "127\.0\.0\.1:$TRANS_PORT[[:space:]]"); then
+  echo "Tor non ha aperto il TransPort $TRANS_PORT: NON applico il kill-switch."; exit 2
+fi
+# 4) kill-switch nftables (solo ORA che Tor e' confermato attivo)
+nft -f - <<NFT_EOF
+flush ruleset
+table ip nxsanon_nat {
+  chain output {
+    type nat hook output priority -100; policy accept;
+    meta skuid \$TORUID return
+    oif "lo" return
+    ip daddr 127.0.0.0/8 return
+    udp dport 53 redirect to :$DNS_PORT
+    tcp dport 53 redirect to :$DNS_PORT
+    tcp flags syn redirect to :$TRANS_PORT
+  }
+}
+table inet nxsanon {
+  chain input {
+    type filter hook input priority 0; policy drop;
+    iif "lo" accept
+    ct state established,related accept
+    ct state invalid drop
+    ip protocol icmp accept
+    ip6 nexthdr ipv6-icmp accept
+  }
+  chain forward { type filter hook forward priority 0; policy drop; }
+  chain output {
+    type filter hook output priority 0; policy drop;
+    oif "lo" accept
+    ct state established,related accept
+    meta skuid \$TORUID accept
+    ip daddr 127.0.0.0/8 accept
+  }
+}
+NFT_EOF
+: > "$STATE"
+echo "ANON ON"
+ROOT
+}
+
+_root_off() {
+  cat <<ROOT
+set -u
+# ferma il nostro Tor anon
+if [ -f "$PIDFILE" ]; then kill "\$(cat "$PIDFILE" 2>/dev/null)" 2>/dev/null || true; rm -f "$PIDFILE"; fi
+pkill -f "DataDirectory $DATADIR" 2>/dev/null || true
+# rimuovi le tabelle del kill-switch e ripristina il firewall normale
+command -v nft >/dev/null 2>&1 && nft flush ruleset 2>/dev/null || true
+rm -f "$STATE" 2>/dev/null || true
+echo "ANON OFF"
+ROOT
+}
+
+do_on() {
+  if is_on; then echo "on"; return 0; fi
+  out="$(priv sh -c "$(_root_on)" 2>&1)" || { echo "$out" >&2; echo "off"; return 1; }
+  echo "$out" | grep -q "ANON ON" || { echo "$out" >&2; echo "off"; return 1; }
+  # ripristina il firewall inbound quando riaccenderai: e' gestito da nxs-firewall
+  echo "on"
+}
+
+do_off() {
+  priv sh -c "$(_root_off)" >/dev/null 2>&1 || true
+  # ripristina il firewall standard NexusSec (a meno che sia stato disattivato)
+  if [ ! -f /etc/nxs/firewall.disabled ] && command -v nxs-firewall >/dev/null 2>&1; then
+    nxs-firewall boot >/dev/null 2>&1 || true
+  fi
+  echo "off"
+}
+
+case "${1:-status}" in
+  on)     do_on ;;
+  off)    do_off ;;
+  toggle) if is_on; then do_off; else do_on; fi ;;
+  status) if is_on; then echo "on"; else echo "off"; fi ;;
+  *) echo "uso: nxs-anon {on|off|status|toggle}" >&2; exit 2 ;;
+esac

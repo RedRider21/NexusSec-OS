@@ -2230,6 +2230,10 @@ class Panel(Gtk.Window):
         """Stato Tor: 'on' | 'off' (nxs-tor status)."""
         return "on" if self._run_out(["nxs-tor", "status"], timeout=6).strip() == "on" else "off"
 
+    def _sec_anon_state(self):
+        """Stato Modalita' Anonima globale: 'on' | 'off' (nxs-anon status)."""
+        return "on" if self._run_out(["nxs-anon", "status"], timeout=6).strip() == "on" else "off"
+
     def _sec_icon_for(self, fw):
         return {"on": "security-high-symbolic",
                 "off": "security-low-symbolic"}.get(fw, "security-medium-symbolic")
@@ -2279,6 +2283,14 @@ class Panel(Gtk.Window):
         sw_row(_t("sec.firewall"), fw == "on", fw == "unknown",
                self._sec_fw_toggle)
         sw_row(_t("sec.tor"), tor == "on", False, self._sec_tor_toggle)
+        # Modalita' ANONIMA globale (Tor trasparente + kill-switch)
+        anon = self._sec_anon_state()
+        sw_row("Anonimo — tutto via Tor", anon == "on", anon == "unknown",
+               self._sec_anon_toggle)
+        ah = Gtk.Label(); ah.set_xalign(0); ah.set_line_wrap(True)
+        ah.set_markup("<small>Instrada TUTTO il traffico via Tor e blocca il resto "
+                      "(kill-switch: niente leak). UDP e IPv6 disattivati.</small>")
+        box.pack_start(ah, False, False, 0)
 
         if fw == "unknown":
             h = Gtk.Label(); h.set_xalign(0); h.set_line_wrap(True)
@@ -2315,6 +2327,13 @@ class Panel(Gtk.Window):
 
     def _sec_tor_toggle(self, _sw, active):
         run_bg(["nxs-tor", "on" if active else "off"])
+        return False
+
+    def _sec_anon_toggle(self, _sw, active):
+        # Modalita' anonima globale (Tor trasparente + kill-switch). Richiede
+        # root: sul live e' immediato (doas nopass); best-effort, poi rinfresca.
+        run_bg(["nxs-anon", "on" if active else "off"])
+        GLib.timeout_add(1500, self._refresh_sec_icon)
         return False
 
     def _sec_screenshot(self, mode):
