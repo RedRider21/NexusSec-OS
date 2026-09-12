@@ -605,6 +605,7 @@
     <mousebind button="Right" action="Press">
       <action name="Focus"/>
       <action name="Raise"/>
+      <action name="ShowMenu"><menu>root-menu</menu></action>
     </mousebind>
   </context>
 
