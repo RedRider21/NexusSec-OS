@@ -49,11 +49,17 @@ do_on() {
   # NIENTE pinning di nodi/paesi (EntryNodes/ExitNodes/ExcludeNodes/StrictNodes),
   # NIENTE disattivazione del padding -> quelli velocizzerebbero ma renderebbero
   # il percorso prevedibile/fingerprintabile. Qui agiamo solo su timeout e riuso:
-  #  - CircuitStreamTimeout 20 : se un sito non "aggancia" in 20s, prova un altro
-  #    circuito invece di restare bloccato su un exit lento (grosso guadagno
-  #    percepito in navigazione).
-  #  - CircuitBuildTimeout 15 + LearnCircuitBuildTimeout 1 : valore iniziale piu'
-  #    basso, poi Tor impara da solo e scarta prima le guardie lente.
+  # "Tempi prima di cambiare nodo" = timeout dei circuiti/stream (valori
+  # MODERATI: troppo bassi generano churn di circuiti e rallentano invece di
+  # velocizzare).
+  #  - CircuitStreamTimeout 15 : se una richiesta non "aggancia" in 15s, Tor la
+  #    sposta su un NUOVO circuito/exit (cambio nodo) invece di restare bloccata
+  #    su un exit lento -> maggior guadagno percepito.
+  #  - SocksTimeout 30 : una richiesta SOCKS non agganciata fallisce in 30s (l'app
+  #    riprova) invece dei 120s di default.
+  #  - CircuitBuildTimeout 12 + LearnCircuitBuildTimeout 1 : tempo di COSTRUZIONE
+  #    del circuito piu' basso; poi Tor impara dalla tua rete e scarta prima le
+  #    guardie/percorsi lenti (l'adattivo di solito batte un valore fisso).
   #  - MaxCircuitDirtiness 600 : riusa lo stesso circuito per 10 min -> meno
   #    ricostruzioni e meno attese.
   #  - AvoidDiskWrites 1 : su live/tmpfs riduce l'I/O.
@@ -65,8 +71,9 @@ Log notice file $LOG
 RunAsDaemon 1
 ClientOnly 1
 AvoidDiskWrites 1
-CircuitStreamTimeout 20
-CircuitBuildTimeout 15
+CircuitStreamTimeout 15
+SocksTimeout 30
+CircuitBuildTimeout 12
 LearnCircuitBuildTimeout 1
 MaxCircuitDirtiness 600
 KeepalivePeriod 60
