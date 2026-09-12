@@ -125,6 +125,7 @@ depends="
 	alsa-utils
 	alsa-ucm-conf
 	pulseaudio-utils
+	mat2
 	gstreamer
 	gst-plugins-base
 	gst-plugins-good

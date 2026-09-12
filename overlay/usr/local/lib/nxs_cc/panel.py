@@ -1185,6 +1185,8 @@ class Panel(Gtk.Window):
              ["nxs-screenshot", "full", "1"], None, None),
             ("audio-input-microphone-symbolic", "Registratore vocale",
              ["nxs-recorder"], None, None),
+            ("edit-clear-all-symbolic", "Pulisci metadati (MAT2)",
+             ["nxs-metadata", "gui"], None, None),
             (None, None, None, None, None),
             # Dischi e casi forensi: raggiungibili anche dal menu, non solo
             # dalle icone del desktop (che si coprono con le finestre aperte).

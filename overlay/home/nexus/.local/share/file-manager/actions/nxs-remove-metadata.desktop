@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Action
+Name=Rimuovi metadati (MAT2)
+Name[en]=Remove metadata (MAT2)
+Icon=security-high-symbolic
+Profiles=p_clean;
+
+[X-Action-Profile p_clean]
+Name=Rimuovi metadati (MAT2)
+Exec=nxs-metadata gui %F
