@@ -45,11 +45,33 @@ do_on() {
   fi
   mkdir -p "$DATADIR"; chmod 700 "$DATADIR" 2>/dev/null || true
   # Demone user-space: solo SOCKS su loopback, nessun servizio in ascolto.
-  tor --RunAsDaemon 1 \
-      --SocksPort "127.0.0.1:$PORT" \
-      --DataDirectory "$DATADIR" \
-      --PidFile "$PIDFILE" \
-      --Log "notice file $LOG" >/dev/null 2>&1 || true
+  # torrc OTTIMIZZATO per la reattivita' con SOLO tweak sicuri per l'anonimato:
+  # NIENTE pinning di nodi/paesi (EntryNodes/ExitNodes/ExcludeNodes/StrictNodes),
+  # NIENTE disattivazione del padding -> quelli velocizzerebbero ma renderebbero
+  # il percorso prevedibile/fingerprintabile. Qui agiamo solo su timeout e riuso:
+  #  - CircuitStreamTimeout 20 : se un sito non "aggancia" in 20s, prova un altro
+  #    circuito invece di restare bloccato su un exit lento (grosso guadagno
+  #    percepito in navigazione).
+  #  - CircuitBuildTimeout 15 + LearnCircuitBuildTimeout 1 : valore iniziale piu'
+  #    basso, poi Tor impara da solo e scarta prima le guardie lente.
+  #  - MaxCircuitDirtiness 600 : riusa lo stesso circuito per 10 min -> meno
+  #    ricostruzioni e meno attese.
+  #  - AvoidDiskWrites 1 : su live/tmpfs riduce l'I/O.
+  cat > "$DATADIR/torrc" <<EOF
+SocksPort 127.0.0.1:$PORT
+DataDirectory $DATADIR
+PidFile $PIDFILE
+Log notice file $LOG
+RunAsDaemon 1
+ClientOnly 1
+AvoidDiskWrites 1
+CircuitStreamTimeout 20
+CircuitBuildTimeout 15
+LearnCircuitBuildTimeout 1
+MaxCircuitDirtiness 600
+KeepalivePeriod 60
+EOF
+  tor -f "$DATADIR/torrc" >/dev/null 2>&1 || true
   # attesa bootstrap: la 9050 apre in fretta anche prima del 100%
   i=0
   while [ "$i" -lt 30 ]; do
