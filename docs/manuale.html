@@ -120,7 +120,8 @@ footer{border-top:1px solid var(--line);padding:24px 0 60px;color:var(--muted);f
     <li><a href="#persistenza">8 · <span data-lang="it">Persistenza e disco</span><span data-lang="en">Persistence and disk</span></a></li>
     <li><a href="#arsenal">9 · <span data-lang="it">Repository Arsenal</span><span data-lang="en">Arsenal repository</span></a></li>
     <li><a href="#horus">10 · <span data-lang="it">HORUS — Occhio OSINT globale</span><span data-lang="en">HORUS — Global OSINT eye</span></a></li>
-    <li><a href="#cli">11 · <span data-lang="it">Comandi da terminale</span><span data-lang="en">Terminal commands</span></a></li>
+    <li><a href="#sicurezza">11 · <span data-lang="it">Sicurezza e anonimato</span><span data-lang="en">Security and anonymity</span></a></li>
+    <li><a href="#cli">12 · <span data-lang="it">Comandi da terminale</span><span data-lang="en">Terminal commands</span></a></li>
   </ol>
 </nav>
 
@@ -129,14 +130,14 @@ footer{border-top:1px solid var(--line);padding:24px 0 60px;color:var(--muted);f
   <h2><span class="n">01</span> <span data-lang="it">Cos'è NexusSec OS</span><span data-lang="en">What NexusSec OS is</span></h2>
   <p data-lang="it">NexusSec adotta la <strong>copertura di strumenti</strong> di Kali/Parrot ma
   con un modello opposto: <strong>niente preinstallato</strong>. Il catalogo conta
-  <strong>442 strumenti</strong> su 16 categorie; ognuno compare nel menu e viene
+  <strong>465 strumenti</strong> su 16 categorie; ognuno compare nel menu e viene
   scaricato ed eseguito <strong>al primo utilizzo</strong>, col metodo più adatto
   (pacchetto nativo, container Kali, pip, container Podman). Risultato: una ISO di
   <strong>~0,7 GB</strong> invece dei 4–8,5 GB delle distro di riferimento, con ogni
   tool eseguito in <strong>sandbox</strong>.</p>
   <p data-lang="en">NexusSec adopts the <strong>tool coverage</strong> of Kali/Parrot but
   with the opposite model: <strong>nothing preinstalled</strong>. The catalog counts
-  <strong>442 tools</strong> across 16 categories; each appears in the menu and is
+  <strong>465 tools</strong> across 16 categories; each appears in the menu and is
   downloaded and run <strong>on first use</strong>, with the most suitable method
   (native package, Kali container, pip, Podman container). Result: a <strong>~0.7 GB</strong>
   ISO instead of the 4–8.5 GB of the reference distros, with every tool run in a
@@ -148,10 +149,56 @@ footer{border-top:1px solid var(--line);padding:24px 0 60px;color:var(--muted);f
     <div class="card"><span class="tag"><span data-lang="it">dinamico</span><span data-lang="en">dynamic</span></span><p data-lang="it">Quattro profili operativi
       che ridisegnano sfondo, accent e menu in base al lavoro da svolgere.</p><p data-lang="en">Four operational profiles
       that reshape wallpaper, accent and menu based on the job at hand.</p></div>
-    <div class="card"><span class="tag">on-demand</span><p data-lang="it">442 tool a catalogo,
-      installati solo quando li apri. La live resta minimale.</p><p data-lang="en">442 tools in the catalog,
+    <div class="card"><span class="tag">on-demand</span><p data-lang="it">465 tool a catalogo,
+      installati solo quando li apri. La live resta minimale.</p><p data-lang="en">465 tools in the catalog,
       installed only when you open them. The live stays minimal.</p></div>
   </div>
+
+  <h3><span data-lang="it">Confronto con altre distro</span><span data-lang="en">Comparison with other distros</span></h3>
+  <p data-lang="it">Confronto onesto con le distro di riferimento. Legenda:
+    <strong>✅</strong> integrato/nativo · <strong>✅✅</strong> punto di forza (predefinito) ·
+    <strong>➖</strong> assente o non nativo (add-on di terze parti).</p>
+  <p data-lang="en">An honest comparison with the reference distros. Legend:
+    <strong>✅</strong> built-in/native · <strong>✅✅</strong> key strength (default) ·
+    <strong>➖</strong> absent or not native (third-party add-on).</p>
+  <div style="overflow-x:auto">
+  <table>
+    <thead><tr>
+      <th><span data-lang="it">Caratteristica</span><span data-lang="en">Feature</span></th>
+      <th>NexusSec</th><th>Kali</th><th>Parrot</th><th>Tails</th><th>CAINE</th><th>BlackArch</th>
+    </tr></thead>
+    <tbody>
+      <tr><td><span data-lang="it">Base / init</span><span data-lang="en">Base / init</span></td><td>Alpine · OpenRC</td><td>Debian · systemd</td><td>Debian · systemd</td><td>Debian · systemd</td><td>Ubuntu · systemd</td><td>Arch · systemd</td></tr>
+      <tr><td><span data-lang="it">Dimensione ISO</span><span data-lang="en">ISO size</span></td><td><strong>~0,7 GB</strong></td><td>~4 GB</td><td>~2–5,5 GB</td><td>~1,5 GB</td><td>~4 GB</td><td>~14–20 GB</td></tr>
+      <tr><td><span data-lang="it">Modello strumenti</span><span data-lang="en">Tool model</span></td><td><span data-lang="it">on-demand curato + Kali completo</span><span data-lang="en">curated on-demand + full Kali</span></td><td><span data-lang="it">preinstallati</span><span data-lang="en">preinstalled</span></td><td><span data-lang="it">preinstallati</span><span data-lang="en">preinstalled</span></td><td><span data-lang="it">minimale</span><span data-lang="en">minimal</span></td><td>forensic</td><td>~2800</td></tr>
+      <tr><td><span data-lang="it">N. strumenti</span><span data-lang="en"># tools</span></td><td>465 + Kali</td><td>~600</td><td>~600</td><td><span data-lang="it">pochi</span><span data-lang="en">few</span></td><td>forensic</td><td>~2800</td></tr>
+      <tr><td><span data-lang="it">Isolamento tool (sandbox)</span><span data-lang="en">Tool isolation (sandbox)</span></td><td>✅✅ Podman/bwrap</td><td>➖</td><td>➖</td><td>➖</td><td>➖</td><td>➖</td></tr>
+      <tr><td><span data-lang="it">Proxy Tor SOCKS</span><span data-lang="en">Tor SOCKS proxy</span></td><td>✅</td><td>✅</td><td>✅</td><td>✅</td><td>➖</td><td>✅</td></tr>
+      <tr><td><span data-lang="it">Anonimato globale Tor + kill-switch</span><span data-lang="en">Global Tor anonymity + kill-switch</span></td><td>✅</td><td>➖</td><td>✅</td><td>✅✅</td><td>➖</td><td>➖</td></tr>
+      <tr><td><span data-lang="it">MAC spoofing</span><span data-lang="en">MAC spoofing</span></td><td><span data-lang="it">✅ auto al boot</span><span data-lang="en">✅ auto at boot</span></td><td><span data-lang="it">manuale</span><span data-lang="en">manual</span></td><td>✅</td><td>✅</td><td>➖</td><td><span data-lang="it">manuale</span><span data-lang="en">manual</span></td></tr>
+      <tr><td><span data-lang="it">Rimozione metadati (MAT2)</span><span data-lang="en">Metadata removal (MAT2)</span></td><td>✅</td><td><span data-lang="it">pacchetto</span><span data-lang="en">package</span></td><td>✅</td><td>✅</td><td>➖</td><td><span data-lang="it">pacchetto</span><span data-lang="en">package</span></td></tr>
+      <tr><td><span data-lang="it">Panico / anti cold-boot</span><span data-lang="en">Panic / anti cold-boot</span></td><td>✅</td><td>➖</td><td>➖</td><td>✅✅</td><td>➖</td><td>➖</td></tr>
+      <tr><td><span data-lang="it">Anti-forensics (no automount / write-block)</span><span data-lang="en">Anti-forensics (no automount / write-block)</span></td><td>✅✅</td><td>➖</td><td>➖</td><td>N/A</td><td>✅✅</td><td>➖</td></tr>
+      <tr><td><span data-lang="it">Live amnesica (RAM)</span><span data-lang="en">Amnesic live (RAM)</span></td><td>✅</td><td>✅</td><td>✅</td><td>✅✅</td><td>✅</td><td>✅</td></tr>
+      <tr><td><span data-lang="it">Persistenza cifrata LUKS</span><span data-lang="en">LUKS encrypted persistence</span></td><td>✅</td><td>✅</td><td>✅</td><td>✅</td><td>➖</td><td>✅</td></tr>
+      <tr><td><span data-lang="it">Firewall inbound default-deny</span><span data-lang="en">Inbound default-deny firewall</span></td><td>✅</td><td>➖</td><td>✅</td><td>✅</td><td>➖</td><td>➖</td></tr>
+      <tr><td><span data-lang="it">Dashboard OSINT/GEOINT integrata</span><span data-lang="en">Built-in OSINT/GEOINT dashboard</span></td><td>✅✅ HORUS</td><td>➖</td><td>➖</td><td>➖</td><td>➖</td><td>➖</td></tr>
+      <tr><td><span data-lang="it">App Android compagna</span><span data-lang="en">Companion Android app</span></td><td>✅</td><td>➖</td><td>➖</td><td>➖</td><td>➖</td><td>➖</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p style="color:var(--muted);font-size:13px" data-lang="it"><strong>Sul confronto con BlackArch (~2800 tool):</strong> è in gran parte una
+    differenza di misura. BlackArch è un repo <strong>Arch</strong> (non installabile su Alpine) e conta <em>ogni
+    script</em> come un tool, inclusi molti PoC abbandonati e doppioni. Confrontando i 2857 tool BlackArch con il
+    nostro catalogo <strong>più l'intero archivio Kali</strong> on-demand (~71.000 pacchetti), i gap realmente utili
+    e mantenuti sono ~60: ne abbiamo integrati subito 19 (mobile, cloud/Kubernetes, OSINT/AD/web). La nostra scelta
+    resta <strong>curata, non un limite</strong>.</p>
+  <p style="color:var(--muted);font-size:13px" data-lang="en"><strong>On the comparison with BlackArch (~2800 tools):</strong> it is largely a
+    matter of counting. BlackArch is an <strong>Arch</strong> repo (not installable on Alpine) and counts <em>every
+    script</em> as a tool, including many abandoned PoCs and duplicates. Comparing BlackArch's 2857 tools with our
+    catalog <strong>plus the entire Kali archive</strong> on-demand (~71,000 packages), the genuinely useful and
+    maintained gaps are ~60: we integrated 19 right away (mobile, cloud/Kubernetes, OSINT/AD/web). Our selection
+    stays <strong>curated, not a limit</strong>.</p>
 </section>
 
 <section id="avvio">
@@ -360,14 +407,14 @@ footer{border-top:1px solid var(--line);padding:24px 0 60px;color:var(--muted);f
   <code>kali-linux-everything</code>/<code>parrot-tools-full</code> metapackages is
   <strong>153/154</strong> on real tools. Full comparison:
   <a href="copertura-arsenale.html">arsenal coverage</a>.</p>
-  <div class="note"><strong><span data-lang="it">442 = selezione curata, non un limite.</span><span data-lang="en">442 = a curated selection, not a limit.</span></strong>
-  <span data-lang="it">I 442 strumenti a catalogo sono il set <strong>curato e
+  <div class="note"><strong><span data-lang="it">465 = selezione curata, non un limite.</span><span data-lang="en">465 = a curated selection, not a limit.</span></strong>
+  <span data-lang="it">I 465 strumenti a catalogo sono il set <strong>curato e
   categorizzato</strong> (con voce di menu, icona, descrizione e metodo). L'<strong>intero
   arsenale Kali</strong> (oltre 600 pacchetti) resta installabile ed eseguibile
   <strong>on-demand</strong> nell'ambiente Kali condiviso: <code>nxs-tool kali &lt;pacchetto&gt;</code>
   esegue qualunque strumento di <code>kali-rolling</code> (anche non elencato), e
   <code>nxs-tool kali-list</code> mostra quelli gia' presenti. Dal profilo <strong>base</strong>,
-  inoltre, la ricerca del menu spazia sull'intero catalogo.</span><span data-lang="en">The 442 catalog tools are the <strong>curated,
+  inoltre, la ricerca del menu spazia sull'intero catalogo.</span><span data-lang="en">The 465 catalog tools are the <strong>curated,
   categorized</strong> set (with a menu entry, icon, description and method). The <strong>entire
   Kali arsenal</strong> (600+ packages) remains installable and runnable
   <strong>on-demand</strong> in the shared Kali environment: <code>nxs-tool kali &lt;package&gt;</code>
@@ -623,8 +670,73 @@ apk add foremost medusa bulk-extractor</code></pre>
   <code>~/.config/nxs</code>: they don't enter the distro and aren't shared.</span></p>
 </section>
 
+<section id="sicurezza">
+  <h2><span class="n">11</span> <span data-lang="it">Sicurezza e anonimato</span><span data-lang="en">Security and anonymity</span></h2>
+  <p data-lang="it">Tutto è <strong>opt-in</strong> e reversibile: la live resta comoda, ma con un clic
+    diventa riservata. Ogni funzione ha un comando <code>nxs-*</code> e un interruttore nell'applet
+    <strong>Autoprotezione</strong> del pannello (lo scudo).</p>
+  <p data-lang="en">Everything is <strong>opt-in</strong> and reversible: the live stays convenient, but one click
+    makes it private. Each function has an <code>nxs-*</code> command and a switch in the panel's
+    <strong>Self-protection</strong> applet (the shield).</p>
+  <ul>
+    <li data-lang="it"><strong>Tor come proxy SOCKS</strong> (<code>nxs-tor</code>, <code>127.0.0.1:9050</code>):
+      passano da Tor le app <em>proxy-aware</em> (HORUS, browser stealth, <code>torsocks</code>). Il <code>torrc</code>
+      è ottimizzato per la reattività (timeout di stream/circuito più svelti) <strong>senza</strong> pinning di
+      nodi/paesi, che ridurrebbe l'anonimato.</li>
+    <li data-lang="en"><strong>Tor as a SOCKS proxy</strong> (<code>nxs-tor</code>, <code>127.0.0.1:9050</code>):
+      <em>proxy-aware</em> apps go through Tor (HORUS, stealth browser, <code>torsocks</code>). The <code>torrc</code>
+      is tuned for responsiveness (faster stream/circuit timeouts) <strong>without</strong> node/country pinning,
+      which would reduce anonymity.</li>
+    <li data-lang="it"><strong>Modalità Anonima globale</strong> (<code>nxs-anon on|off</code>, switch
+      "Anonimo — tutto via Tor"): instrada <strong>tutto</strong> il traffico TCP e il DNS di sistema dentro Tor in
+      modo <strong>trasparente</strong> (TransPort 9040 + DNSPort 5353) e attiva un <strong>kill-switch</strong>
+      nftables: ciò che non passa da Tor viene <strong>bloccato</strong> (niente leak se Tor cade); UDP e IPv6
+      disattivati. Il kill-switch si applica solo dopo che Tor è attivo (fail-safe). Stile AnonSurf/Tails.</li>
+    <li data-lang="en"><strong>Global Anonymous mode</strong> (<code>nxs-anon on|off</code>, "Anonymous — all via Tor"
+      switch): routes <strong>all</strong> system TCP traffic and DNS through Tor <strong>transparently</strong>
+      (TransPort 9040 + DNSPort 5353) and enables an nftables <strong>kill-switch</strong>: anything not going through
+      Tor is <strong>blocked</strong> (no leak if Tor drops); UDP and IPv6 disabled. The kill-switch applies only after
+      Tor is up (fail-safe). AnonSurf/Tails style.</li>
+    <li data-lang="it"><strong>Rimozione metadati (MAT2)</strong> (<code>nxs-metadata show|clean|gui</code>): ripulisce
+      EXIF e metadati da immagini/PDF/documenti creando copie <code>*.cleaned</code> (gli originali non si toccano).
+      Anche come azione <strong>tasto destro</strong> nel file manager.</li>
+    <li data-lang="en"><strong>Metadata removal (MAT2)</strong> (<code>nxs-metadata show|clean|gui</code>): strips EXIF
+      and metadata from images/PDFs/documents by creating <code>*.cleaned</code> copies (originals untouched). Also a
+      <strong>right-click</strong> action in the file manager.</li>
+    <li data-lang="it"><strong>Panico / spegnimento d'emergenza</strong> (<code>nxs-panic wipe</code>): sospende le
+      mappature <strong>LUKS</strong> (la chiave di cifratura esce dalla RAM → la persistenza cifrata torna illeggibile
+      all'istante), chiude le app con segreti in memoria, svuota le cache e spegne forzatamente. Tasto rapido
+      <strong>Super+Alt+Canc</strong>, voce di menu e pulsante nel pannello (con conferma). <code>nxs-panic arm</code>
+      sorveglia la <strong>chiavetta di boot</strong>: se la estrai, il PC si spegne (solo supporti rimovibili). Contro
+      il cold-boot il kernel parte con <code>page_poison=1</code>.</li>
+    <li data-lang="en"><strong>Panic / emergency shutdown</strong> (<code>nxs-panic wipe</code>): suspends
+      <strong>LUKS</strong> mappings (the encryption key leaves RAM → encrypted persistence becomes unreadable at
+      once), kills apps holding secrets, drops caches and powers off forcibly. Hotkey <strong>Super+Alt+Delete</strong>,
+      a menu entry and a panel button (with confirmation). <code>nxs-panic arm</code> watches the <strong>boot USB
+      stick</strong>: if you pull it, the PC shuts down (removable media only). Against cold-boot the kernel boots with
+      <code>page_poison=1</code>.</li>
+    <li data-lang="it"><strong>MAC spoofing</strong> (<code>nxs-macspoof now|on|off</code>): assegna a ogni scheda un
+      MAC casuale <em>locally-administered</em>. Con lo switch "MAC casuale a ogni avvio" l'hardware non è tracciabile
+      fra reti diverse.</li>
+    <li data-lang="en"><strong>MAC spoofing</strong> (<code>nxs-macspoof now|on|off</code>): assigns each NIC a random
+      <em>locally-administered</em> MAC. With the "Random MAC at every boot" switch the hardware is not trackable
+      across different networks.</li>
+    <li data-lang="it"><strong>Firewall</strong> (<code>nxs-firewall</code>): inbound <em>default-deny</em>, outbound
+      libero, attivo al boot. <strong>Forensics</strong>: i dischi sono visibili ma <strong>mai montati/scritti in
+      automatico</strong> (sola lettura di default, write-blocking).</li>
+    <li data-lang="en"><strong>Firewall</strong> (<code>nxs-firewall</code>): inbound <em>default-deny</em>, outbound
+      free, active at boot. <strong>Forensics</strong>: disks are visible but <strong>never auto-mounted/written</strong>
+      (read-only by default, write-blocking).</li>
+  </ul>
+  <div class="note warn"><span data-lang="it"><strong>Attenzione:</strong> <code>nxs-panic wipe</code> spegne
+    <strong>senza chiedere conferma</strong> (il tasto rapido e la rimozione della chiavetta sono immediati; solo il
+    pulsante del pannello conferma). Le finestre aperte non vengono salvate.</span><span data-lang="en"><strong>Warning:</strong>
+    <code>nxs-panic wipe</code> shuts down <strong>without asking</strong> (the hotkey and USB removal are immediate;
+    only the panel button confirms). Open windows are not saved.</span></div>
+</section>
+
 <section id="cli">
-  <h2><span class="n">11</span> <span data-lang="it">Comandi da terminale</span><span data-lang="en">Terminal commands</span></h2>
+  <h2><span class="n">12</span> <span data-lang="it">Comandi da terminale</span><span data-lang="en">Terminal commands</span></h2>
   <p data-lang="it">Tutto il sistema profili/tool è pilotabile anche da CLI con <code>nxs-tool</code>:</p>
   <p data-lang="en">The whole profiles/tools system is also drivable from the CLI with <code>nxs-tool</code>:</p>
   <pre data-lang="it"><code>nxs-tool profiles           # elenca i profili
@@ -696,6 +808,10 @@ nxs-persist status          # disk persistence status</code></pre>
       <tr><td class="k">nxs-netinfo</td><td><span data-lang="it">Stato della rete (interfacce, IP, gateway, DNS) per menu e Centro di Controllo.</span><span data-lang="en">Network state (interfaces, IP, gateway, DNS) for menu and Control Center.</span></td></tr>
       <tr><td class="k">nxs-firewall</td><td><span data-lang="it">Firewall <code>nftables</code>: in ingresso tutto chiuso, in uscita libero.<br><code>on</code> · <code>off</code> · <code>status</code> · <code>state</code> (on|off|unknown, per il pannello) · <code>allow PORTA[/tcp|/udp]</code> · <code>deny PORTA</code> · <code>boot</code><br><em>Per pentest:</em> per mettersi in <strong>ascolto</strong> serve un <code>allow</code> della porta, oppure <code>off</code>.</span><span data-lang="en"><code>nftables</code> firewall: inbound all closed, outbound free.<br><code>on</code> · <code>off</code> · <code>status</code> · <code>state</code> (on|off|unknown, for the panel) · <code>allow PORT[/tcp|/udp]</code> · <code>deny PORT</code> · <code>boot</code><br><em>For pentesting:</em> to <strong>listen</strong> you need an <code>allow</code> for the port, or <code>off</code>.</span></td></tr>
       <tr><td class="k">nxs-tor</td><td><span data-lang="it">Interruttore <strong>Tor di sistema</strong> in user-space (SOCKS <code>127.0.0.1:9050</code>): instrada verso Tor i tool che rispettano il proxy (HORUS, ecc.). Sorgente unica di verità del toggle Tor del pannello.<br><code>on</code> · <code>off</code> · <code>status</code> · <code>toggle</code>. Senza root (root solo per installare <code>tor</code> se manca).</span><span data-lang="en">User-space <strong>system Tor</strong> switch (SOCKS <code>127.0.0.1:9050</code>): routes to Tor the tools that respect the proxy (HORUS, etc.). Single source of truth for the panel's Tor toggle.<br><code>on</code> · <code>off</code> · <code>status</code> · <code>toggle</code>. No root needed (root only to install <code>tor</code> if missing).</span></td></tr>
+      <tr><td class="k">nxs-anon</td><td><span data-lang="it"><strong>Modalità Anonima globale</strong>: instrada TUTTO il traffico via Tor in modo trasparente (TransPort 9040 + DNSPort 5353) con <strong>kill-switch</strong> nftables (blocca ciò che non passa da Tor; UDP/IPv6 off). Fail-safe: il kill-switch scatta solo a Tor attivo.<br><code>on</code> · <code>off</code> · <code>status</code> · <code>toggle</code>. Richiede root (sul live è immediato).</span><span data-lang="en"><strong>Global Anonymous mode</strong>: routes ALL traffic through Tor transparently (TransPort 9040 + DNSPort 5353) with an nftables <strong>kill-switch</strong> (blocks anything not via Tor; UDP/IPv6 off). Fail-safe: the kill-switch engages only when Tor is up.<br><code>on</code> · <code>off</code> · <code>status</code> · <code>toggle</code>. Needs root (immediate on the live).</span></td></tr>
+      <tr><td class="k">nxs-metadata</td><td><span data-lang="it">Rimozione metadati con <strong>MAT2</strong>: crea copie <code>*.cleaned</code> senza toccare gli originali. Anche come azione tasto destro nel file manager.<br><code>show FILE</code> · <code>clean FILE…</code> · <code>gui [FILE…]</code></span><span data-lang="en">Metadata removal with <strong>MAT2</strong>: creates <code>*.cleaned</code> copies without touching the originals. Also a right-click file-manager action.<br><code>show FILE</code> · <code>clean FILE…</code> · <code>gui [FILE…]</code></span></td></tr>
+      <tr><td class="k">nxs-macspoof</td><td><span data-lang="it"><strong>MAC spoofing</strong>: MAC casuale <em>locally-administered</em> via <code>ip link</code>.<br><code>now</code> (subito) · <code>restore</code> · <code>on</code>/<code>off</code> (automatico a ogni avvio) · <code>status</code></span><span data-lang="en"><strong>MAC spoofing</strong>: random <em>locally-administered</em> MAC via <code>ip link</code>.<br><code>now</code> · <code>restore</code> · <code>on</code>/<code>off</code> (auto at every boot) · <code>status</code></span></td></tr>
+      <tr><td class="k">nxs-panic</td><td><span data-lang="it"><strong>Panico</strong>: sospende LUKS (chiave fuori dalla RAM), chiude le app con segreti, svuota le cache e spegne forzato. Tasto rapido Super+Alt+Canc.<br><code>wipe</code> (subito, senza conferma) · <code>arm</code>/<code>disarm</code> (spegni se rimuovi la chiavetta) · <code>status</code></span><span data-lang="en"><strong>Panic</strong>: suspends LUKS (key out of RAM), kills apps holding secrets, drops caches and powers off forcibly. Hotkey Super+Alt+Delete.<br><code>wipe</code> (immediate, no confirm) · <code>arm</code>/<code>disarm</code> (shut down if the USB stick is removed) · <code>status</code></span></td></tr>
     </tbody>
   </table>
 
