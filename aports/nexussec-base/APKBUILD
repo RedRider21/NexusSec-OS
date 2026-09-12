@@ -102,6 +102,7 @@ depends="
 	git
 	doas
 	imagemagick
+	curl
 	wpa_supplicant
 	dhcpcd
 	iw
