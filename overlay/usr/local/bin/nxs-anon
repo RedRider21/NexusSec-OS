@@ -33,7 +33,10 @@ VIRTNET=10.192.0.0/10
 TOR_USER=tor
 DATADIR=/var/lib/tor-anon
 TORRC=/run/nxs-anon-torrc
-PIDFILE=/run/nxs-anon-tor.pid
+# PidFile e Log DENTRO la DataDirectory (di proprieta' dell'utente 'tor'):
+# Tor droppa i privilegi a 'tor' e deve poterci scrivere, altrimenti NON parte.
+PIDFILE="$DATADIR/tor.pid"
+LOG="$DATADIR/tor.log"
 STATE=/run/nxs-anon.on
 
 priv() {
@@ -64,6 +67,7 @@ cat > "$TORRC" <<TORRC_EOF
 User $TOR_USER
 DataDirectory $DATADIR
 PidFile $PIDFILE
+Log notice file $LOG
 RunAsDaemon 1
 SocksPort 127.0.0.1:$SOCKS_PORT
 TransPort 127.0.0.1:$TRANS_PORT
