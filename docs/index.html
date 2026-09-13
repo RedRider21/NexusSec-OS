@@ -510,31 +510,28 @@ footer a{color:var(--dim)}footer a:hover{color:var(--ink)}
     <p class="eyebrow" style="justify-self:center">x86_64 (BIOS + UEFI) &middot; ARM64 aarch64 (UEFI) &middot; microSD Raspberry Pi</p>
     <h2 data-lang="it">Provala adesso.</h2>
     <h2 data-lang="en">Try it now.</h2>
-    <p data-lang="it"><b>Tre immagini</b>, tutte allegate alla release più recente su GitHub:
-      <b>1)</b> ISO <b>x86_64</b> ~0.7 GB (PC Intel/AMD, BIOS + UEFI, VirtualBox/QEMU);
-      <b>2)</b> ISO <b>ARM64 aarch64</b> ~0.7 GB (VM ARM con firmware UEFI &mdash; QEMU/EDK2,
-      UTM su Mac Apple Silicon, Parallels &mdash; e hardware ARM con UEFI conforme; boot solo
-      UEFI); <b>3)</b> immagine per <b>scheda microSD Raspberry Pi 4/5</b>
-      (<code>nexussec-rpi-*.img.gz</code>, boot proprietario Raspberry Pi &mdash; le ISO NON
-      fanno boot sugli SBC), da scrivere con <code>dd</code>, Raspberry Pi Imager o
-      balenaEtcher &mdash; <em>beta da validare su hardware reale</em>. VM Linux 64-bit, 2&ndash;4 GB di
-      RAM, boot dall'ISO. Splashscreen flat con barra di caricamento, poi il
-      desktop e' pronto. Su portatile, <b>WiFi interno</b> (incluse le schede
-      Intel) e cablato pronti all'uso. La live gira in RAM (tmpfs) e attiva al
-      boot uno <b>swap compresso in RAM (zram, zstd)</b>: piu' memoria effettiva
-      e sistema reattivo sotto pressione, senza toccare il disco.</p>
-    <p data-lang="en">Two ISO images ~0.7 GB: <b>x86_64</b> (Intel/AMD PCs, VirtualBox/QEMU) and
-      <b>ARM64 aarch64</b> (ARM VM with UEFI firmware &mdash; QEMU/EDK2, UTM on Apple
-      Silicon Macs, Parallels &mdash; and ARM hardware with conformant UEFI; UEFI
-      boot only). For single-board computers (<b>Raspberry Pi 4/5</b>) there's now
-      a dedicated <b>microSD image</b> (<code>nexussec-rpi-*.img.gz</code>),
-      to write with <code>dd</code>, Raspberry Pi Imager or balenaEtcher &mdash;
-      <em>beta, to validate on real hardware</em>. 64-bit Linux VM, 2&ndash;4 GB of
-      RAM, boot from the ISO. A flat splashscreen with a progress bar, then the
-      desktop is ready. On laptops, <b>internal WiFi</b> (Intel cards included) and
-      wired networking work out of the box. The live runs in RAM (tmpfs) and enables
-      a <b>compressed RAM swap (zram, zstd)</b> at boot: more effective memory and a
-      responsive system under pressure, without touching the disk.</p>
+    <p data-lang="it" style="max-width:660px;margin:0 auto 4px"><b>Tre immagini</b>, allegate all'ultima release su GitHub:</p>
+    <ul data-lang="it" style="text-align:left;max-width:660px;margin:0 auto 14px;line-height:1.55">
+      <li><b>ISO x86_64</b> (~0,7 GB) — PC/notebook Intel/AMD, boot <b>BIOS + UEFI</b> (VirtualBox/QEMU).</li>
+      <li><b>ISO ARM64 (aarch64)</b> (~0,7 GB) — VM e hardware ARM con <b>UEFI</b> (QEMU/EDK2, UTM su Mac Apple Silicon, Parallels); <b>solo UEFI</b>. Non fa boot sugli SBC.</li>
+      <li><b>microSD Raspberry Pi 4/5</b> (<code>nexussec-rpi-*.img.gz</code>) — immagine <b>dedicata</b> agli SBC, da scrivere con <code>dd</code> / Raspberry Pi Imager / balenaEtcher. <em>Beta: da validare su hardware reale.</em></li>
+    </ul>
+    <p data-lang="it" style="text-align:left;max-width:660px;margin:0 auto;line-height:1.55">
+      <b>Requisiti (x86_64):</b> VM Linux 64-bit, 2&ndash;4 GB di RAM, boot dall'immagine — splash flat con barra, poi desktop pronto.<br>
+      <b>Rete:</b> su portatile <b>WiFi interno</b> (incluse schede Intel) e cablato pronti all'uso.<br>
+      <b>Memoria:</b> la live gira in RAM (tmpfs) con <b>swap compresso zram (zstd)</b> — più memoria effettiva senza toccare il disco.
+    </p>
+    <p data-lang="en" style="max-width:660px;margin:0 auto 4px"><b>Three images</b>, attached to the latest GitHub release:</p>
+    <ul data-lang="en" style="text-align:left;max-width:660px;margin:0 auto 14px;line-height:1.55">
+      <li><b>x86_64 ISO</b> (~0.7 GB) — Intel/AMD PCs/laptops, <b>BIOS + UEFI</b> boot (VirtualBox/QEMU).</li>
+      <li><b>ARM64 (aarch64) ISO</b> (~0.7 GB) — ARM VMs and hardware with <b>UEFI</b> (QEMU/EDK2, UTM on Apple Silicon Macs, Parallels); <b>UEFI only</b>. Does not boot on SBCs.</li>
+      <li><b>Raspberry Pi 4/5 microSD</b> (<code>nexussec-rpi-*.img.gz</code>) — a <b>dedicated</b> image for SBCs, written with <code>dd</code> / Raspberry Pi Imager / balenaEtcher. <em>Beta: validate on real hardware.</em></li>
+    </ul>
+    <p data-lang="en" style="text-align:left;max-width:660px;margin:0 auto;line-height:1.55">
+      <b>Requirements (x86_64):</b> 64-bit Linux VM, 2&ndash;4 GB RAM, boot from the image — flat splash with a progress bar, then the desktop is ready.<br>
+      <b>Network:</b> on laptops, <b>internal WiFi</b> (Intel cards included) and wired networking work out of the box.<br>
+      <b>Memory:</b> the live runs in RAM (tmpfs) with a <b>compressed zram (zstd) swap</b> — more effective memory without touching the disk.
+    </p>
     <div class="cta" style="justify-content:center">
       <a class="btn" href="https://github.com/RedRider21/NexusSec-OS/releases">&darr; Release &amp; ISO</a>
       <a class="btn ghost" href="manuale.html"><span data-lang="it">Manuale utente</span><span data-lang="en">User manual</span></a>
