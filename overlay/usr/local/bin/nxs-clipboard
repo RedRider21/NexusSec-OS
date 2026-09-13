@@ -65,31 +65,71 @@ def run_daemon():
 
 
 def run_menu():
+    # Finestra popup (NON Gtk.Menu.popup_at_pointer: senza un evento GDK corrente
+    # quello solleva GTK-CRITICAL e non si apre). Una piccola Gtk.Window con lista
+    # scrollabile e' affidabile lanciata da terminale, scorciatoia o menu.
     items = _load()
     cb = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
-    menu = Gtk.Menu()
+
+    win = Gtk.Window(type=Gtk.WindowType.TOPLEVEL)
+    win.set_title("Appunti")
+    win.set_decorated(True)
+    win.set_skip_taskbar_hint(True)
+    win.set_keep_above(True)
+    win.set_default_size(380, 340)
+    win.set_position(Gtk.WindowPosition.MOUSE)
+    win.connect("destroy", Gtk.main_quit)
+    win.connect("key-press-event",
+                lambda _w, ev: win.destroy() if ev.keyval == Gdk.KEY_Escape else None)
+
+    box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
+    box.set_border_width(8)
+    win.add(box)
+    head = Gtk.Label()
+    head.set_markup("<b>Appunti</b>  <small>(clic per ricopiare · Esc per chiudere)</small>")
+    head.set_xalign(0)
+    box.pack_start(head, False, False, 0)
+
+    scroll = Gtk.ScrolledWindow()
+    scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+    box.pack_start(scroll, True, True, 0)
+    lst = Gtk.ListBox()
+    scroll.add(lst)
 
     if not items:
-        mi = Gtk.MenuItem(label="(cronologia vuota)")
-        mi.set_sensitive(False)
-        menu.append(mi)
+        r = Gtk.Label(label="(cronologia vuota)"); r.set_xalign(0)
+        r.set_margin_top(8); r.set_margin_bottom(8)
+        lst.add(r)
     else:
         for text in items:
-            mi = Gtk.MenuItem(label=_preview(text))
+            row = Gtk.ListBoxRow()
+            lab = Gtk.Label(label=_preview(text)); lab.set_xalign(0)
+            lab.set_ellipsize(3)                       # PANGO_ELLIPSIZE_END
+            lab.set_margin_top(4); lab.set_margin_bottom(4)
+            lab.set_margin_start(6); lab.set_margin_end(6)
+            row.add(lab)
+            row._text = text
+            lst.add(row)
 
-            def _use(_w, t=text):
+        def _activated(_lst, row):
+            t = getattr(row, "_text", None)
+            if t is not None:
                 cb.set_text(t, -1)
                 cb.store()
-            mi.connect("activate", _use)
-            menu.append(mi)
-        menu.append(Gtk.SeparatorMenuItem())
-        clr = Gtk.MenuItem(label="Svuota cronologia")
-        clr.connect("activate", lambda _w: _save([]))
-        menu.append(clr)
+            win.destroy()
+        lst.connect("row-activated", _activated)
 
-    menu.connect("selection-done", lambda _w: GLib.timeout_add(50, Gtk.main_quit))
-    menu.show_all()
-    menu.popup_at_pointer(None)
+    footer = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+    clr = Gtk.Button(label="Svuota cronologia")
+    clr.connect("clicked", lambda _b: (_save([]), win.destroy()))
+    close = Gtk.Button(label="Chiudi")
+    close.connect("clicked", lambda _b: win.destroy())
+    footer.pack_start(clr, False, False, 0)
+    footer.pack_end(close, False, False, 0)
+    box.pack_start(footer, False, False, 0)
+
+    win.show_all()
+    win.present()
     Gtk.main()
 
 
