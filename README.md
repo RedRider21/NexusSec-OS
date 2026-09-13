@@ -743,11 +743,22 @@ Con RAM abbondante resta quasi inattivo. Configurato in `/etc/local.d/zram.start
 - **Gestione energetica** (portatili, via `acpid`): chiusura coperchio → **blocca
   schermo**; tasto accensione → **spegnimento pulito**; avviso di **batteria
   scarica** (≤10% in scarica).
-- **Filtro luce blu** (`nxs-nightlight`, tasto **Super+N**): gamma calda via
-  `xrandr`, stato persistente e riapplicato all'avvio.
-- **Gestore appunti** con cronologia (`nxs-clipboard`, tasto **Super+V**): popup
-  con gli ultimi testi copiati, riseleziona per ricopiare (Python/GTK, nessuna
-  dipendenza extra).
+- **Filtro luce blu** (`nxs-nightlight`, tasto **Super+N** o menu): overlay ambra
+  traslucido a schermo intero (composito da picom) che lascia passare i click —
+  **funziona anche in VM** (a differenza della gamma `xrandr`, ignorata dalle GPU
+  virtuali). Stato persistente, riapplicato all'avvio.
+- **Gestore appunti** con cronologia (`nxs-clipboard`, tasto **Super+V** o menu):
+  finestra con gli ultimi testi copiati, riseleziona per ricopiare (Python/GTK,
+  nessuna dipendenza extra).
+- **Editor delle scorciatoie** (Centro di Controllo → *Scorciatoie da tastiera*,
+  backend `nxs-keys`): modifica il comando, **cambia il tasto** (cattura la
+  combinazione), **aggiungi/rimuovi** scorciatoie; applicate al volo.
+- **Dialogo di sessione grafico** (`nxs-session`, menu → *Esci / Spegni…*):
+  Blocca / Esci / Riavvia / Spegni con conferma, brandizzato.
+- **Cambia sfondo** dal menu tasto-destro del desktop.
+
+> Nota (live): le modifiche a scorciatoie/sfondo/impostazioni valgono per la
+> sessione; persistono al riavvio solo con la **persistenza dati** (NXSDATA).
 
 ## Sicurezza, anonimato e anti-forensics
 
@@ -932,6 +943,8 @@ Centro di Controllo). Dettaglio completo con i sotto-comandi: manuale online.
 | | `nxs-lang` | lingua dell'interfaccia (it/en/fr/es/de) |
 | | `nxs-wallpaper` | sfondo (indipendente dal profilo) |
 | | `nxs-shutdown` | spegni / riavvia / esci (con salvataggio) |
+| | `nxs-session` | dialogo grafico di fine sessione (blocca/esci/riavvia/spegni) |
+| | `nxs-keys` | editor scorciatoie Openbox (list/add/set/remove) |
 | Arsenale | `nxs-tool` | installa/avvia i tool on-demand (`kali`/`list`/`launch`/…) |
 | | `nxs-wizard` | procedure guidate (catene di tool) |
 | | `nxs-horus` | dashboard OSINT/GEOINT |
