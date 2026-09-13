@@ -3165,6 +3165,77 @@ def open_security(_btn=None):
         b.connect("clicked", lambda _w, c=cmd: term_action(c, "Hardening"))
         grid2.attach(b, i % 2, i // 2, 1, 1)
 
+    # --- Privacy e anonimato (runtime) --------------------------------------
+    # Gli STESSI interruttori del popup Autoprotezione del pannello, qui replicati
+    # nel Centro di Controllo (leggono/scrivono lo stesso stato via i comandi
+    # nxs-*, quindi restano allineati). Il pannello NON viene toccato.
+    sep = Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL)
+    act.pack_start(sep, False, False, 4)
+    pv_title = Gtk.Label(); pv_title.set_xalign(0)
+    pv_title.set_markup("<b>Privacy e anonimato</b>")
+    act.pack_start(pv_title, False, False, 0)
+
+    def priv_switch(label_txt, status_cmd, on_action, off_action, help_txt=None):
+        row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        row.get_style_context().add_class("nxs-card")
+        lab = Gtk.Label(label=label_txt); lab.set_xalign(0)
+        lab.get_style_context().add_class("nxs-key")
+        row.pack_start(lab, True, True, 0)
+        sw = Gtk.Switch(); sw.set_valign(Gtk.Align.CENTER)
+        try:
+            cur = run_capture(status_cmd, timeout=6).strip() == "on"
+        except Exception:
+            cur = False
+        sw.set_active(cur)
+
+        def _toggled(s, state):
+            run_bg(on_action if state else off_action)
+            return False
+        sw._h = sw.connect("state-set", _toggled)
+        row.pack_end(sw, False, False, 0)
+        act.pack_start(row, False, False, 0)
+        if help_txt:
+            h = Gtk.Label(); h.set_xalign(0); h.set_line_wrap(True)
+            h.get_style_context().add_class("nxs-val")
+            h.set_markup("<small>%s</small>" % help_txt)
+            act.pack_start(h, False, False, 0)
+
+    priv_switch("Tor (proxy SOCKS 9050)",
+                ["nxs-tor", "status"], ["nxs-tor", "on"], ["nxs-tor", "off"],
+                "Instrada verso Tor le app che rispettano il proxy (HORUS, browser stealth).")
+    priv_switch("Anonimo — tutto via Tor",
+                ["nxs-anon", "status"], ["nxs-anon", "on"], ["nxs-anon", "off"],
+                "Tutto il traffico via Tor (trasparente) + kill-switch: niente leak. "
+                "UDP e IPv6 disattivati.")
+    priv_switch("MAC casuale a ogni avvio",
+                ["nxs-macspoof", "status"],
+                ["sh", "-c", "nxs-macspoof on; nxs-macspoof now"],
+                ["nxs-macspoof", "off"],
+                "MAC casuale locally-administered: l'hardware non e' tracciabile fra reti.")
+    priv_switch("Panico se rimuovi la chiavetta",
+                ["nxs-panic", "status"], ["nxs-panic", "arm"], ["nxs-panic", "disarm"],
+                "Se estrai la chiavetta di boot, il PC si spegne mettendo al sicuro i dati "
+                "(chiave LUKS fuori dalla RAM). Solo supporti rimovibili.")
+
+    def _panic_now(_b):
+        dlg = Gtk.MessageDialog(transient_for=win, modal=True,
+                                message_type=Gtk.MessageType.WARNING,
+                                buttons=Gtk.ButtonsType.NONE,
+                                text="Panico: spegnere subito?")
+        dlg.format_secondary_text(
+            "Il PC si spegne immediatamente mettendo al sicuro i dati "
+            "(chiave di cifratura fuori dalla RAM, cache svuotate). "
+            "Le finestre aperte NON verranno salvate.")
+        dlg.add_button("Annulla", Gtk.ResponseType.CANCEL)
+        bok = dlg.add_button("Spegni ora", Gtk.ResponseType.OK)
+        bok.get_style_context().add_class("destructive-action")
+        resp = dlg.run(); dlg.destroy()
+        if resp == Gtk.ResponseType.OK:
+            run_bg(["nxs-panic", "wipe"])
+    b_panic = icon_button("Panico: cancella e spegni", "system-shutdown-symbolic")
+    b_panic.connect("clicked", _panic_now)
+    act.pack_start(b_panic, False, False, 2)
+
     # scorciatoie ad altre viste
     links = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
     b_fw = icon_button("Firewall", "security-medium-symbolic")
