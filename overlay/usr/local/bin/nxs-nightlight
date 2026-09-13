@@ -1,43 +1,51 @@
 #!/bin/sh
-# nxs-nightlight - filtro luce blu (night-light) via xrandr.
+# nxs-nightlight - filtro luce blu (night-light) con overlay traslucido.
 #
-# Riduce le componenti blu/verde della gamma su TUTTE le uscite connesse, per
-# affaticare meno la vista nelle sessioni lunghe/serali. Nessuna dipendenza
-# extra: usa xrandr (gia' presente). Lo stato e' ricordato e riapplicato al
-# boot dall'autostart (nxs-nightlight restore).
+# Metodo: uno strato ambra semitrasparente a schermo intero (composito da picom),
+# che LASCIA PASSARE i click. A differenza di `xrandr --gamma`, funziona anche su
+# GPU VIRTUALI (VM), dove la gamma spesso viene ignorata dal driver.
 #
 # Uso: nxs-nightlight on|off|toggle|status|restore
-#   on      attiva il filtro caldo
-#   off     ripristina i colori naturali
+#   on      attiva il filtro (avvia l'overlay)
+#   off     disattiva (chiude l'overlay)
 #   toggle  inverte
 #   status  on|off
 #   restore riapplica lo stato salvato (usato in autostart)
 set -eu
 
-STATE="${XDG_CONFIG_HOME:-$HOME/.config}/nxs/nightlight"
-# Gamma "calda": meno blu, un po' meno verde. R:G:B (1.0 = neutro).
-WARM="1.0:0.82:0.66"
-NEUTRAL="1.0:1.0:1.0"
+CFG="${XDG_CONFIG_HOME:-$HOME/.config}/nxs"
+CACHE="${XDG_CACHE_HOME:-$HOME/.cache}/nxs"
+STATE="$CFG/nightlight"
+PIDF="$CACHE/nightlight.pid"
+OVERLAY=/usr/local/lib/nxs-nightlight-overlay
+STRENGTH=0.20
 
-_outputs() {  # uscite realmente connesse
-  xrandr --query 2>/dev/null | awk '/ connected/{print $1}'
+_running() {
+  [ -f "$PIDF" ] && kill -0 "$(cat "$PIDF" 2>/dev/null)" 2>/dev/null
 }
 
-_apply() {  # $1 = gamma
-  for o in $(_outputs); do
-    xrandr --output "$o" --gamma "$1" 2>/dev/null || true
-  done
+_start() {
+  _running && return 0
+  mkdir -p "$CACHE"
+  python3 "$OVERLAY" "$STRENGTH" >/dev/null 2>&1 &
+  echo $! > "$PIDF"
 }
 
+_stop() {
+  [ -f "$PIDF" ] && kill "$(cat "$PIDF" 2>/dev/null)" 2>/dev/null || true
+  rm -f "$PIDF" 2>/dev/null || true
+  # rete di sicurezza: elimina eventuali overlay orfani
+  pkill -f "$OVERLAY" 2>/dev/null || true
+}
+
+_save() { mkdir -p "$CFG"; printf '%s\n' "$1" > "$STATE"; }
 _is_on() { [ -f "$STATE" ] && [ "$(cat "$STATE" 2>/dev/null)" = "on" ]; }
 
-_save() { mkdir -p "$(dirname "$STATE")"; printf '%s\n' "$1" > "$STATE"; }
-
 case "${1:-status}" in
-  on)      _apply "$WARM";    _save on;  echo "night-light: ON" ;;
-  off)     _apply "$NEUTRAL"; _save off; echo "night-light: OFF" ;;
-  toggle)  if _is_on; then "$0" off; else "$0" on; fi ;;
-  status)  _is_on && echo on || echo off ;;
-  restore) _is_on && _apply "$WARM" || true ;;
+  on)      _start; _save on;  echo "night-light: ON" ;;
+  off)     _stop;  _save off; echo "night-light: OFF" ;;
+  toggle)  if _running; then "$0" off; else "$0" on; fi ;;
+  status)  _running && echo on || echo off ;;
+  restore) _is_on && _start || true ;;
   *) echo "uso: nxs-nightlight {on|off|toggle|status|restore}" >&2; exit 2 ;;
 esac
