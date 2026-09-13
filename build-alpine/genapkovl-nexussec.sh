@@ -129,7 +129,7 @@ EOF
 #            kernel vieta il v1, questo servizio monta cgroup2. Gira ben prima
 #            che l'utente lanci un tool dal menu del desktop.
 mkdir -p "$tmp/etc/runlevels/default"
-for s in local dbus udev udev-trigger networking cgroups bluetooth; do
+for s in local dbus udev udev-trigger networking cgroups bluetooth acpid; do
   ln -sf "/etc/init.d/$s" "$tmp/etc/runlevels/default/$s"
 done
 

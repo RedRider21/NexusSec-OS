@@ -78,6 +78,8 @@ depends="
 	xautolock
 	scrot
 	xmessage
+	dunst
+	libnotify
 	font-dejavu
 	adwaita-icon-theme
 	gtk+3.0
@@ -123,6 +125,7 @@ depends="
 	bluez-openrc
 	bluez-tools
 	brightnessctl
+	acpid
 	alsa-utils
 	alsa-ucm-conf
 	pulseaudio-utils

@@ -1,0 +1,3 @@
+# NexusSec: chiusura/apertura coperchio del portatile
+event=button/lid
+action=/etc/acpi/nxs-handler.sh lid %e

@@ -8,6 +8,8 @@
     <item label="Editor di testo"><action name="Execute"><command>pluma</command></action></item>
     <item label="Registratore vocale"><action name="Execute"><command>nxs-recorder</command></action></item>
     <item label="Pulisci metadati (MAT2)"><action name="Execute"><command>nxs-metadata gui</command></action></item>
+    <item label="Appunti (cronologia)"><action name="Execute"><command>nxs-clipboard menu</command></action></item>
+    <item label="Filtro luce blu (on/off)"><action name="Execute"><command>nxs-nightlight toggle</command></action></item>
     <item label="Dischi"><action name="Execute"><command>nxs-disks</command></action></item>
     <item label="Casi forensi"><action name="Execute"><command>nxs-case</command></action></item>
     <item label="Procedure guidate (Wizard)"><action name="Execute"><command>nxs-wizard</command></action></item>

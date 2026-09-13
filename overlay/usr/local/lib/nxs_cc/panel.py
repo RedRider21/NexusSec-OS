@@ -1458,6 +1458,7 @@ class Panel(Gtk.Window):
                 batt = self._run_out(["nxs-battery", "status"]).strip()
             except Exception:                       # noqa: BLE001
                 batt = "nobattery"
+            self._check_low_battery()               # avviso batteria scarica
             # Microfono ON-DEMAND: l'applet compare SOLO quando un'app sta
             # catturando (mic-inuse), non sempre. Lo stato muto/livello serve
             # per l'icona quando e' visibile.
@@ -1473,6 +1474,31 @@ class Panel(Gtk.Window):
                           mic_inuse, mic_muted)
         threading.Thread(target=worker, daemon=True).start()
         return True
+
+    def _check_low_battery(self):
+        """Avviso desktop UNA-TANTUM quando la batteria scende sotto il 10% ed e'
+        in scarica. Legge direttamente sysfs (nessun subprocess extra). Il flag
+        si azzera quando torni in carica o risali sopra il 15%."""
+        try:
+            import glob
+            for base in glob.glob("/sys/class/power_supply/BAT*"):
+                try:
+                    cap = int(open(base + "/capacity").read().strip())
+                    st = open(base + "/status").read().strip().lower()
+                except OSError:
+                    continue
+                disch = "discharg" in st
+                if disch and cap <= 10:
+                    if not getattr(self, "_lowbatt_warned", False):
+                        self._lowbatt_warned = True
+                        run_bg(["notify-send", "-a", "NexusSec", "-u", "critical",
+                                "Batteria quasi scarica",
+                                f"{cap}% residuo — collega l'alimentatore"])
+                elif (not disch) or cap > 15:
+                    self._lowbatt_warned = False
+                return
+        except Exception:                           # noqa: BLE001
+            pass
 
     @staticmethod
     def _read_ethernet():
@@ -2249,16 +2275,23 @@ class Panel(Gtk.Window):
                 "off": "security-low-symbolic"}.get(fw, "security-medium-symbolic")
 
     def _refresh_sec_icon(self):
-        """Aggiorna (in thread) l'icona scudo secondo lo stato del firewall."""
+        """Aggiorna (in thread) l'icona scudo. Priorita' alla PRIVACY: se la
+        Modalita' Anonima globale (tutto via Tor) e' attiva, lo scudo lo mostra
+        (icona VPN/tunnel) a colpo d'occhio; altrimenti riflette il firewall."""
         def work():
             fw = self._sec_fw_state()
+            anon = self._sec_anon_state()
 
             def apply():
-                self.sec_btn.set_image(_tray_img(self._sec_icon_for(fw)))
+                if anon == "on":
+                    self.sec_btn.set_image(_tray_img("network-vpn-symbolic"))
+                    tip = "Anonimo attivo: tutto il traffico via Tor (kill-switch)"
+                else:
+                    self.sec_btn.set_image(_tray_img(self._sec_icon_for(fw)))
+                    tip = {"on": _t("sec.tip_fw_on"),
+                           "off": _t("sec.tip_fw_off")}.get(fw, _t("sec.tip"))
                 self.sec_btn.show_all()
-                self.sec_btn.set_tooltip_text(
-                    {"on": _t("sec.tip_fw_on"),
-                     "off": _t("sec.tip_fw_off")}.get(fw, _t("sec.tip")))
+                self.sec_btn.set_tooltip_text(tip)
                 return False
             GLib.idle_add(apply)
         threading.Thread(target=work, daemon=True).start()

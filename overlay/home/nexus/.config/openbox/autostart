@@ -50,6 +50,20 @@ fi
 #     battere l'inizializzazione tardiva del codec. Parte dopo PipeWire.
 command -v nxs-audio-unmute >/dev/null 2>&1 && (sleep 2; nxs-audio-unmute) &
 
+# 2c) Demone NOTIFICHE (dunst): usa il D-Bus di SESSIONE (esportato da
+#     dbus-run-session in .xinitrc). Senza di lui 'notify-send' e' un no-op.
+#     Serve per il feedback delle installazioni on-demand, dei cambi di stato
+#     sicurezza (Anonimo/Tor/MAC/Panico) e degli esiti dei wizard.
+command -v dunst >/dev/null 2>&1 && dunst &
+
+# 2d) Gestore APPUNTI (clipboard) con cronologia: demone leggero in Python
+#     (nessuna dipendenza extra), popup richiamabile da menu/scorciatoia.
+command -v nxs-clipboard >/dev/null 2>&1 && (sleep 1; nxs-clipboard daemon) &
+
+# 2e) Filtro luce blu (night-light): riapplica lo stato salvato (se attivo) dopo
+#     che gli schermi sono stati normalizzati. Best-effort.
+command -v nxs-nightlight >/dev/null 2>&1 && (sleep 2; nxs-nightlight restore) &
+
 # 3) Desktop manager pcmanfm (icone + SFONDO), DIETRO la splash. Lo sfondo del
 #    profilo va impostato via "pcmanfm --set-wallpaper", quindi deve gia' esserci.
 command -v pcmanfm >/dev/null 2>&1 && pcmanfm --desktop --profile=NexusSec &

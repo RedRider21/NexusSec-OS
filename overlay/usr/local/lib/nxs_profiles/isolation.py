@@ -464,7 +464,38 @@ def _ensure_apk_deps(tool: str, log=print) -> None:
         subprocess.run(priv(["apk", "add", "--no-cache"] + deps))
 
 
+def _notify(summary: str, body: str = "", urgency: str = "normal") -> None:
+    """Notifica desktop best-effort (dunst via notify-send). Solo se c'e' una
+    sessione grafica (DISPLAY) e notify-send e' presente; non blocca e non alza
+    eccezioni. Usata per dare feedback sulle installazioni on-demand (spesso
+    lente al primo avvio, soprattutto i container)."""
+    if not os.environ.get("DISPLAY") or not have("notify-send"):
+        return
+    try:
+        subprocess.Popen(["notify-send", "-a", "NexusSec", "-u", urgency,
+                          summary, body],
+                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except Exception:
+        pass
+
+
 def install(tool: str, log=print) -> bool:
+    """Installa il tool (se non gia' presente) dando anche un feedback grafico
+    via notifica desktop. La logica vera e' in _install_impl."""
+    already = is_installed(tool)
+    if not already:
+        _notify(f"Installo {tool}...", f"metodo: {_method(tool)}", "low")
+    ok = _install_impl(tool, log)
+    if not already:
+        if ok:
+            _notify(f"{tool} pronto", "installazione completata", "low")
+        else:
+            _notify(f"{tool}: installazione fallita",
+                    "controlla il terminale", "critical")
+    return ok
+
+
+def _install_impl(tool: str, log=print) -> bool:
     m = _method(tool)
     if m == "git":
         ok = _install_git(tool, log)

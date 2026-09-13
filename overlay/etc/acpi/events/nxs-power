@@ -1,0 +1,3 @@
+# NexusSec: tasto di accensione
+event=button/power
+action=/etc/acpi/nxs-handler.sh power %e

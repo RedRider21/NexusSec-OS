@@ -1,0 +1,43 @@
+#!/bin/sh
+# nxs-nightlight - filtro luce blu (night-light) via xrandr.
+#
+# Riduce le componenti blu/verde della gamma su TUTTE le uscite connesse, per
+# affaticare meno la vista nelle sessioni lunghe/serali. Nessuna dipendenza
+# extra: usa xrandr (gia' presente). Lo stato e' ricordato e riapplicato al
+# boot dall'autostart (nxs-nightlight restore).
+#
+# Uso: nxs-nightlight on|off|toggle|status|restore
+#   on      attiva il filtro caldo
+#   off     ripristina i colori naturali
+#   toggle  inverte
+#   status  on|off
+#   restore riapplica lo stato salvato (usato in autostart)
+set -eu
+
+STATE="${XDG_CONFIG_HOME:-$HOME/.config}/nxs/nightlight"
+# Gamma "calda": meno blu, un po' meno verde. R:G:B (1.0 = neutro).
+WARM="1.0:0.82:0.66"
+NEUTRAL="1.0:1.0:1.0"
+
+_outputs() {  # uscite realmente connesse
+  xrandr --query 2>/dev/null | awk '/ connected/{print $1}'
+}
+
+_apply() {  # $1 = gamma
+  for o in $(_outputs); do
+    xrandr --output "$o" --gamma "$1" 2>/dev/null || true
+  done
+}
+
+_is_on() { [ -f "$STATE" ] && [ "$(cat "$STATE" 2>/dev/null)" = "on" ]; }
+
+_save() { mkdir -p "$(dirname "$STATE")"; printf '%s\n' "$1" > "$STATE"; }
+
+case "${1:-status}" in
+  on)      _apply "$WARM";    _save on;  echo "night-light: ON" ;;
+  off)     _apply "$NEUTRAL"; _save off; echo "night-light: OFF" ;;
+  toggle)  if _is_on; then "$0" off; else "$0" on; fi ;;
+  status)  _is_on && echo on || echo off ;;
+  restore) _is_on && _apply "$WARM" || true ;;
+  *) echo "uso: nxs-nightlight {on|off|toggle|status|restore}" >&2; exit 2 ;;
+esac

@@ -1,0 +1,110 @@
+#!/usr/bin/env python3
+# nxs-clipboard - gestore appunti con cronologia (Python/GTK3, zero dipendenze
+# extra oltre a quelle del desktop). Due modi:
+#   nxs-clipboard daemon   sorveglia la clipboard e memorizza la cronologia
+#   nxs-clipboard menu      mostra un popup con la cronologia (seleziona = ricopia)
+#   nxs-clipboard clear     svuota la cronologia
+# La cronologia sta in ~/.cache/nxs/clipboard.json (solo testo; niente immagini).
+import json
+import os
+import sys
+
+import gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk, Gdk, GLib  # noqa: E402
+
+HIST = os.path.join(os.environ.get("XDG_CACHE_HOME",
+                    os.path.expanduser("~/.cache")), "nxs", "clipboard.json")
+MAX_ITEMS = 30
+MAX_LEN = 20000          # non memorizzare testi enormi
+POLL_MS = 1200
+
+
+def _load():
+    try:
+        with open(HIST, encoding="utf-8") as f:
+            d = json.load(f)
+            return d if isinstance(d, list) else []
+    except Exception:
+        return []
+
+
+def _save(items):
+    try:
+        os.makedirs(os.path.dirname(HIST), exist_ok=True)
+        with open(HIST, "w", encoding="utf-8") as f:
+            json.dump(items[:MAX_ITEMS], f, ensure_ascii=False)
+    except Exception:
+        pass
+
+
+def _preview(text):
+    line = text.strip().splitlines()[0] if text.strip() else "(vuoto)"
+    return (line[:60] + "…") if len(line) > 60 else line
+
+
+def run_daemon():
+    cb = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
+    state = {"last": None}
+
+    def tick():
+        try:
+            text = cb.wait_for_text()
+        except Exception:
+            text = None
+        if text and text != state["last"] and len(text) <= MAX_LEN:
+            state["last"] = text
+            items = _load()
+            items = [x for x in items if x != text]
+            items.insert(0, text)
+            _save(items)
+        return True
+
+    GLib.timeout_add(POLL_MS, tick)
+    Gtk.main()
+
+
+def run_menu():
+    items = _load()
+    cb = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
+    menu = Gtk.Menu()
+
+    if not items:
+        mi = Gtk.MenuItem(label="(cronologia vuota)")
+        mi.set_sensitive(False)
+        menu.append(mi)
+    else:
+        for text in items:
+            mi = Gtk.MenuItem(label=_preview(text))
+
+            def _use(_w, t=text):
+                cb.set_text(t, -1)
+                cb.store()
+            mi.connect("activate", _use)
+            menu.append(mi)
+        menu.append(Gtk.SeparatorMenuItem())
+        clr = Gtk.MenuItem(label="Svuota cronologia")
+        clr.connect("activate", lambda _w: _save([]))
+        menu.append(clr)
+
+    menu.connect("selection-done", lambda _w: GLib.timeout_add(50, Gtk.main_quit))
+    menu.show_all()
+    menu.popup_at_pointer(None)
+    Gtk.main()
+
+
+def main():
+    cmd = sys.argv[1] if len(sys.argv) > 1 else "menu"
+    if cmd == "daemon":
+        run_daemon()
+    elif cmd == "menu":
+        run_menu()
+    elif cmd == "clear":
+        _save([])
+    else:
+        sys.stderr.write("uso: nxs-clipboard {daemon|menu|clear}\n")
+        sys.exit(2)
+
+
+if __name__ == "__main__":
+    main()
