@@ -97,11 +97,11 @@ footer{border-top:1px solid var(--line);padding:24px 0 60px;color:var(--muted);f
 <header class="hero">
   <p class="eyebrow"><span data-lang="it">NexusSec OS · Manuale utente · edition 2026.08</span><span data-lang="en">NexusSec OS · User manual · edition 2026.08</span></p>
   <h1><span data-lang="it">Manuale di NexusSec OS</span><span data-lang="en">NexusSec OS manual</span></h1>
-  <p data-lang="it">Distro Linux live x86_64 e ARM64 (aarch64) per la cybersecurity, basata su Alpine (musl · apk ·
+  <p data-lang="it">Distro Linux live per x86_64, ARM64 (aarch64) e Raspberry Pi 4/5 (microSD), per la cybersecurity, basata su Alpine (musl · apk ·
   OpenRC). Desktop Openbox con pannello e Centro di Controllo nativi in Python
   (GTK3), profili operativi dinamici e arsenale <strong>on-demand</strong>: gli
   strumenti sono già nei menu e si installano al volo solo quando servono.</p>
-  <p data-lang="en">A live x86_64 and ARM64 (aarch64) Linux distro for cybersecurity, based on Alpine (musl · apk ·
+  <p data-lang="en">A live Linux distro for x86_64, ARM64 (aarch64) and Raspberry Pi 4/5 (microSD), for cybersecurity, based on Alpine (musl · apk ·
   OpenRC). Openbox desktop with a panel and Control Center written natively in Python
   (GTK3), dynamic operational profiles and an <strong>on-demand</strong> arsenal:
   the tools are already in the menus and install on the fly only when needed.</p>
@@ -203,7 +203,7 @@ footer{border-top:1px solid var(--line);padding:24px 0 60px;color:var(--muted);f
 
 <section id="avvio">
   <h2><span class="n">02</span> <span data-lang="it">Avvio e splashscreen</span><span data-lang="en">Boot and splashscreen</span></h2>
-  <p data-lang="it">Sono disponibili due immagini. La ISO <strong>x86_64</strong> è avviabile sia
+  <p data-lang="it">Sono disponibili <strong>tre immagini</strong> (due ISO + una per <strong>microSD Raspberry Pi</strong>, vedi sotto). La ISO <strong>x86_64</strong> è avviabile sia
   in <strong>BIOS</strong> (isolinux) sia in <strong>UEFI</strong> (grub-efi); in
   VirtualBox: VM Linux 64-bit, ≥ 2 GB di RAM (3–4 GB se userai i container
   Forensics/Web), boot dall'immagine. La ISO <strong>ARM64 (aarch64)</strong> è
@@ -212,7 +212,7 @@ footer{border-top:1px solid var(--line);padding:24px 0 60px;color:var(--muted);f
   <strong>UTM/Parallels su Mac Apple Silicon</strong>, o hardware ARM con UEFI
   conforme (SBSA). Sul Mac Apple Silicon gira <strong>in VM</strong>, non sul
   bare-metal.</p>
-  <p data-lang="en">Two images are available. The <strong>x86_64</strong> ISO boots both in
+  <p data-lang="en">There are <strong>three images</strong> (two ISOs + a <strong>Raspberry Pi microSD</strong> one, see below). The <strong>x86_64</strong> ISO boots both in
   <strong>BIOS</strong> (isolinux) and <strong>UEFI</strong> (grub-efi); in
   VirtualBox: a 64-bit Linux VM, ≥ 2 GB of RAM (3–4 GB if you use the
   Forensics/Web containers), boot from the image. The <strong>ARM64 (aarch64)</strong> ISO is
@@ -984,6 +984,22 @@ nxs-persist status          # disk persistence status</code></pre>
     try{localStorage.setItem("nx_site_theme",t);}catch(e){}
   });
 })();
+</script>
+<button id="nxs-totop" aria-label="Torna in cima" title="Torna in cima">↑</button>
+<style>
+#nxs-totop{position:fixed;right:18px;bottom:18px;width:44px;height:44px;border:none;border-radius:50%;
+  background:var(--accent,#00e5ff);color:#04121a;font-size:22px;line-height:44px;padding:0;cursor:pointer;
+  box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:0;visibility:hidden;transform:translateY(8px);
+  transition:opacity .2s,transform .2s,visibility .2s;z-index:9999}
+#nxs-totop.show{opacity:.92;visibility:visible;transform:none}
+#nxs-totop:hover{opacity:1}
+@media print{#nxs-totop{display:none}}
+</style>
+<script>
+(function(){var b=document.getElementById("nxs-totop");if(!b)return;
+function t(){(window.scrollY>400)?b.classList.add("show"):b.classList.remove("show");}
+window.addEventListener("scroll",t,{passive:true});t();
+b.addEventListener("click",function(){window.scrollTo({top:0,behavior:"smooth"});});})();
 </script>
 </body>
 </html>

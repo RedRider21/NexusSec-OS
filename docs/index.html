@@ -592,5 +592,21 @@ footer a{color:var(--dim)}footer a:hover{color:var(--ink)}
   });
 })();
 </script>
+<button id="nxs-totop" aria-label="Torna in cima" title="Torna in cima">↑</button>
+<style>
+#nxs-totop{position:fixed;right:18px;bottom:18px;width:44px;height:44px;border:none;border-radius:50%;
+  background:var(--accent,#00e5ff);color:#04121a;font-size:22px;line-height:44px;padding:0;cursor:pointer;
+  box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:0;visibility:hidden;transform:translateY(8px);
+  transition:opacity .2s,transform .2s,visibility .2s;z-index:9999}
+#nxs-totop.show{opacity:.92;visibility:visible;transform:none}
+#nxs-totop:hover{opacity:1}
+@media print{#nxs-totop{display:none}}
+</style>
+<script>
+(function(){var b=document.getElementById("nxs-totop");if(!b)return;
+function t(){(window.scrollY>400)?b.classList.add("show"):b.classList.remove("show");}
+window.addEventListener("scroll",t,{passive:true});t();
+b.addEventListener("click",function(){window.scrollTo({top:0,behavior:"smooth"});});})();
+</script>
 </body>
 </html>
