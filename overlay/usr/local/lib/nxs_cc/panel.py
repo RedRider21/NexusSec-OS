@@ -1187,6 +1187,10 @@ class Panel(Gtk.Window):
              ["nxs-recorder"], None, None),
             ("edit-clear-all-symbolic", "Pulisci metadati (MAT2)",
              ["nxs-metadata", "gui"], None, None),
+            ("weather-clear-night-symbolic", "Filtro luce blu (Super+N)",
+             ["nxs-nightlight", "toggle"], None, None),
+            ("edit-paste-symbolic", "Appunti - cronologia (Super+V)",
+             ["nxs-clipboard", "menu"], None, None),
             (None, None, None, None, None),
             # Dischi e casi forensi: raggiungibili anche dal menu, non solo
             # dalle icone del desktop (che si coprono con le finestre aperte).

@@ -684,7 +684,14 @@ def panel_window(title: str, width: int = 640, height: int = 460):
     body.set_margin_bottom(12)
     body.set_margin_start(14)
     body.set_margin_end(14)
-    outer.pack_start(body, True, True, 0)
+    # SCORRIMENTO VERTICALE: se il contenuto e' piu' alto della finestra (schermi
+    # piccoli/bassa risoluzione) comparirebbe tagliato. Avvolgiamo il corpo in
+    # uno ScrolledWindow (mai orizzontale, verticale automatico) cosi' TUTTE le
+    # finestre del Centro di Controllo scorrono senza dover cambiare risoluzione.
+    scroller = Gtk.ScrolledWindow()
+    scroller.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+    scroller.add(body)                     # GTK3 crea da solo il viewport per un Box
+    outer.pack_start(scroller, True, True, 0)
 
     # Dopo un cambio schermi la vista si ricentra sul monitor attivo da sola.
     install_screens_refresh_monitor(center_toplevel_windows)

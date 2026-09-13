@@ -3175,6 +3175,11 @@ def open_security(_btn=None):
     pv_title.set_markup("<b>Privacy e anonimato</b>")
     act.pack_start(pv_title, False, False, 0)
 
+    # Elenco (switch, comando-stato) per il refresh periodico: cosi' se cambi
+    # Tor/Anonimo/... DAL PANNELLO mentre questa finestra e' aperta, gli switch
+    # qui si aggiornano DA SOLI (prima serviva chiudere e riaprire).
+    _priv_switches = []
+
     def priv_switch(label_txt, status_cmd, on_action, off_action, help_txt=None):
         row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
         row.get_style_context().add_class("nxs-card")
@@ -3192,6 +3197,7 @@ def open_security(_btn=None):
             run_bg(on_action if state else off_action)
             return False
         sw._h = sw.connect("state-set", _toggled)
+        _priv_switches.append((sw, status_cmd))
         row.pack_end(sw, False, False, 0)
         act.pack_start(row, False, False, 0)
         if help_txt:
@@ -3216,6 +3222,39 @@ def open_security(_btn=None):
                 ["nxs-panic", "status"], ["nxs-panic", "arm"], ["nxs-panic", "disarm"],
                 "Se estrai la chiavetta di boot, il PC si spegne mettendo al sicuro i dati "
                 "(chiave LUKS fuori dalla RAM). Solo supporti rimovibili.")
+
+    # Refresh periodico degli switch privacy (allineamento live col pannello).
+    # I comandi di stato girano in un thread per non bloccare la UI; l'update
+    # dello switch avviene con handler bloccato (niente azioni spurie).
+    import threading
+    _priv_alive = {"on": True}
+
+    def _refresh_priv():
+        if not _priv_alive["on"]:
+            return False
+
+        def work():
+            states = []
+            for sw, cmd in _priv_switches:
+                try:
+                    on = run_capture(cmd, timeout=4).strip() == "on"
+                except Exception:
+                    on = None
+                states.append((sw, on))
+
+            def apply():
+                for sw, on in states:
+                    if on is not None and sw.get_active() != on:
+                        sw.handler_block(sw._h)
+                        sw.set_active(on)
+                        sw.handler_unblock(sw._h)
+                return False
+            GLib.idle_add(apply)
+        threading.Thread(target=work, daemon=True).start()
+        return True
+    _priv_tid = GLib.timeout_add_seconds(3, _refresh_priv)
+    win.connect("destroy", lambda *_: (_priv_alive.__setitem__("on", False),
+                                       GLib.source_remove(_priv_tid)))
 
     def _panic_now(_b):
         dlg = Gtk.MessageDialog(transient_for=win, modal=True,
