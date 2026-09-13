@@ -690,7 +690,11 @@ Con RAM abbondante resta quasi inattivo. Configurato in `/etc/local.d/zram.start
   (`nxs-anon`, routing trasparente + kill-switch), **MAC casuale a ogni avvio**
   (`nxs-macspoof`) e **Panico se rimuovi la chiavetta** (`nxs-panic`), piu' i
   pulsanti **Screenshot** (intero/area), **Blocco schermo** e **Panico: cancella e
-  spegni** (con conferma); l'icona riflette lo stato del firewall.
+  spegni** (con conferma); l'icona dello scudo riflette lo stato del firewall e,
+  con priorità, quello della **Modalità Anonima** (quando è attiva lo mostra a
+  colpo d'occhio). **Gli stessi interruttori sono anche nel Centro di Controllo →
+  Sicurezza** (blocco "Privacy e anonimato"), così pannello e Centro di Controllo
+  restano allineati.
 - **Multilingua** (it / en / fr / es / de): layer i18n condiviso (`nxs_i18n`) con
   selettore nel menu (voce **Lingua**) e CLI `nxs-lang`; l'italiano e' la lingua
   sorgente, con fallback lingua->inglese->italiano.
@@ -700,6 +704,17 @@ Con RAM abbondante resta quasi inattivo. Configurato in `/etc/local.d/zram.start
 - **NexusSec Browser** (GTK3 + WebKit2): motore `webkit2gtk` installato
   on-demand via apk.
 - Lanciatori sul desktop (pcmanfm) + menu tasto destro Openbox.
+- **Notifiche desktop** (`dunst`, a tema): feedback delle **installazioni
+  on-demand** ("Installo *tool*… / pronto"), dei cambi di stato sicurezza
+  (Anonimo/Tor/MAC/Panico) e degli esiti dei wizard.
+- **Gestione energetica** (portatili, via `acpid`): chiusura coperchio → **blocca
+  schermo**; tasto accensione → **spegnimento pulito**; avviso di **batteria
+  scarica** (≤10% in scarica).
+- **Filtro luce blu** (`nxs-nightlight`, tasto **Super+N**): gamma calda via
+  `xrandr`, stato persistente e riapplicato all'avvio.
+- **Gestore appunti** con cronologia (`nxs-clipboard`, tasto **Super+V**): popup
+  con gli ultimi testi copiati, riseleziona per ricopiare (Python/GTK, nessuna
+  dipendenza extra).
 
 ## Sicurezza, anonimato e anti-forensics
 
