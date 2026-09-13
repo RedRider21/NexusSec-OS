@@ -727,6 +727,18 @@ apk add foremost medusa bulk-extractor</code></pre>
     <li data-lang="en"><strong>Firewall</strong> (<code>nxs-firewall</code>): inbound <em>default-deny</em>, outbound
       free, active at boot. <strong>Forensics</strong>: disks are visible but <strong>never auto-mounted/written</strong>
       (read-only by default, write-blocking).</li>
+    <li data-lang="it"><strong>Gli stessi interruttori sono nel Centro di Controllo → Sicurezza</strong>
+      (blocco "Privacy e anonimato"): pannello e Centro di Controllo restano allineati. Lo <strong>scudo</strong>
+      del pannello, inoltre, quando la Modalità Anonima è attiva lo mostra a colpo d'occhio.</li>
+    <li data-lang="en"><strong>The same switches are in Control Center → Security</strong>
+      ("Privacy and anonymity" block): panel and Control Center stay in sync. The panel <strong>shield</strong>
+      also shows at a glance when the global Anonymous mode is active.</li>
+    <li data-lang="it"><strong>Notifiche desktop</strong> (dunst): avvisi per installazioni on-demand, cambi di
+      stato sicurezza ed esiti dei wizard. <strong>Gestione energetica</strong> (acpid): coperchio → blocca schermo,
+      accensione → spegnimento pulito, avviso batteria scarica.</li>
+    <li data-lang="en"><strong>Desktop notifications</strong> (dunst): alerts for on-demand installs, security
+      state changes and wizard results. <strong>Power management</strong> (acpid): lid → lock screen, power button →
+      clean shutdown, low-battery warning.</li>
   </ul>
   <div class="note warn"><span data-lang="it"><strong>Attenzione:</strong> <code>nxs-panic wipe</code> spegne
     <strong>senza chiedere conferma</strong> (il tasto rapido e la rimozione della chiavetta sono immediati; solo il
@@ -812,6 +824,8 @@ nxs-persist status          # disk persistence status</code></pre>
       <tr><td class="k">nxs-metadata</td><td><span data-lang="it">Rimozione metadati con <strong>MAT2</strong>: crea copie <code>*.cleaned</code> senza toccare gli originali. Anche come azione tasto destro nel file manager.<br><code>show FILE</code> · <code>clean FILE…</code> · <code>gui [FILE…]</code></span><span data-lang="en">Metadata removal with <strong>MAT2</strong>: creates <code>*.cleaned</code> copies without touching the originals. Also a right-click file-manager action.<br><code>show FILE</code> · <code>clean FILE…</code> · <code>gui [FILE…]</code></span></td></tr>
       <tr><td class="k">nxs-macspoof</td><td><span data-lang="it"><strong>MAC spoofing</strong>: MAC casuale <em>locally-administered</em> via <code>ip link</code>.<br><code>now</code> (subito) · <code>restore</code> · <code>on</code>/<code>off</code> (automatico a ogni avvio) · <code>status</code></span><span data-lang="en"><strong>MAC spoofing</strong>: random <em>locally-administered</em> MAC via <code>ip link</code>.<br><code>now</code> · <code>restore</code> · <code>on</code>/<code>off</code> (auto at every boot) · <code>status</code></span></td></tr>
       <tr><td class="k">nxs-panic</td><td><span data-lang="it"><strong>Panico</strong>: sospende LUKS (chiave fuori dalla RAM), chiude le app con segreti, svuota le cache e spegne forzato. Tasto rapido Super+Alt+Canc.<br><code>wipe</code> (subito, senza conferma) · <code>arm</code>/<code>disarm</code> (spegni se rimuovi la chiavetta) · <code>status</code></span><span data-lang="en"><strong>Panic</strong>: suspends LUKS (key out of RAM), kills apps holding secrets, drops caches and powers off forcibly. Hotkey Super+Alt+Delete.<br><code>wipe</code> (immediate, no confirm) · <code>arm</code>/<code>disarm</code> (shut down if the USB stick is removed) · <code>status</code></span></td></tr>
+      <tr><td class="k">nxs-nightlight</td><td><span data-lang="it"><strong>Filtro luce blu</strong>: gamma calda via <code>xrandr</code> (stato persistente, riapplicato all'avvio). Scorciatoia <strong>Super+N</strong>.<br><code>on</code> · <code>off</code> · <code>toggle</code> · <code>status</code> · <code>restore</code></span><span data-lang="en"><strong>Blue-light filter</strong>: warm gamma via <code>xrandr</code> (persistent, reapplied at boot). Shortcut <strong>Super+N</strong>.<br><code>on</code> · <code>off</code> · <code>toggle</code> · <code>status</code> · <code>restore</code></span></td></tr>
+      <tr><td class="k">nxs-clipboard</td><td><span data-lang="it"><strong>Gestore appunti</strong> con cronologia (Python/GTK). Popup con gli ultimi testi copiati; selezionane uno per ricopiarlo. Scorciatoia <strong>Super+V</strong>.<br><code>daemon</code> (in autostart) · <code>menu</code> · <code>clear</code></span><span data-lang="en"><strong>Clipboard manager</strong> with history (Python/GTK). Popup of recent copied texts; pick one to re-copy. Shortcut <strong>Super+V</strong>.<br><code>daemon</code> (autostart) · <code>menu</code> · <code>clear</code></span></td></tr>
     </tbody>
   </table>
 
