@@ -16,6 +16,39 @@ Dimensioni: **ISO ~0.7 GB** (kernel linux-lts + desktop GTK + Podman + browser
 webkit2gtk preinstallato); a regime con un profilo attivo ~400-600 MB in RAM
 (contro i ~4 GB di Kali, ~2.2 GB di Parrot).
 
+## Funzionalità in breve
+
+Tutto ciò che offre NexusSec, a colpo d'occhio (dettagli nelle sezioni seguenti):
+
+- **Profili operativi dinamici** — Pen Testing / Forensics / OSINT / Web: cambiano
+  menu, sfondo e accent in un clic (`nxs-profile`).
+- **Arsenale on-demand** — **465 tool curati** su 16 categorie **+ l'intero
+  arsenale Kali** raggiungibile a richiesta (`nxs-tool kali <pkg>`), ciascuno in
+  **sandbox** (Podman/bubblewrap). Niente preinstallato, ISO piccola.
+- **Procedure guidate (wizard)** — catene di tool con installazione al volo ed
+  eventuale instradamento via Tor (`nxs-wizard`).
+- **HORUS** — dashboard **OSINT/GEOINT** locale: mappa + feed mondiali, recon,
+  correlazioni, grafo relazioni, fascicoli d'indagine, news 360° (`nxs-horus`).
+- **Sicurezza & privacy** — firewall default-deny (`nxs-firewall`), **Tor SOCKS**
+  (`nxs-tor`), **Modalità Anonima globale + kill-switch** (`nxs-anon`), **MAC
+  spoofing** (`nxs-macspoof`), **rimozione metadati MAT2** (`nxs-metadata`),
+  **panico/wipe** con anti cold-boot (`nxs-panic`), **hardening** del sistema
+  installato (`nxs-harden`). Stessi interruttori nel pannello **e** nel Centro di
+  Controllo.
+- **Anti-forensics** — dischi **mai montati/scritti in automatico** (sola lettura,
+  write-blocking); persistenza opzionale anche **cifrata LUKS** (NXSDATA).
+- **Desktop curato (Python/GTK3 su Openbox)** — pannello con applet (audio,
+  **microfono on-demand**, batteria, Bluetooth, Wi-Fi, schermi, orologio+fuso,
+  **monitor risorse**, scudo sicurezza), **notifiche** (dunst), **registratore
+  vocale** (`nxs-recorder`), **filtro luce blu** (`nxs-nightlight`), **gestore
+  appunti** (`nxs-clipboard`), **gestione energetica** (coperchio/accensione/
+  batteria via acpid), screenshot, blocco schermo, browser WebKit.
+- **Aspetto coordinato** — temi finestre (Core/Retro/Cards) e prompt del terminale
+  che seguono il profilo; **multilingua** it/en/fr/es/de.
+- **Efficienza** — `zram` (swap compresso in RAM zstd), avvio rapido delle app
+  (launcher caldo), OpenRC senza daemon systemd.
+- **Immagini** — **x86_64** e **aarch64** (ISO) + **microSD Raspberry Pi 4/5**.
+
 ## Profili operativi (il cuore)
 
 | Profilo | Colore/sfondo | Esempi di tool |
@@ -885,6 +918,41 @@ possibilità di aprire comunque il link **in un tab esterno**.
   i feed esterni sono **sempre HTTPS**.
 - Librerie vendorizzate nell'overlay (offline-ready): Leaflet, `satellite.js`,
   PySocks (Tor). Nessuna CDN a runtime.
+
+## Comandi principali (`nxs-*`)
+
+Riferimento rapido dei comandi da terminale (tutti richiamabili anche da menu /
+Centro di Controllo). Dettaglio completo con i sotto-comandi: manuale online.
+
+| Area | Comando | Cosa fa |
+|---|---|---|
+| Sistema | `nxs-profile` | selettore dei profili operativi (GTK) |
+| | `nxs-control-center` | Centro di Controllo (impostazioni) |
+| | `nxs-theme` / `nxs-prompt` | tema finestre / prompt del terminale |
+| | `nxs-lang` | lingua dell'interfaccia (it/en/fr/es/de) |
+| | `nxs-wallpaper` | sfondo (indipendente dal profilo) |
+| | `nxs-shutdown` | spegni / riavvia / esci (con salvataggio) |
+| Arsenale | `nxs-tool` | installa/avvia i tool on-demand (`kali`/`list`/`launch`/…) |
+| | `nxs-wizard` | procedure guidate (catene di tool) |
+| | `nxs-horus` | dashboard OSINT/GEOINT |
+| | `nxs-browser` | browser stealth (WebKit) |
+| Sicurezza | `nxs-firewall` | firewall nftables (`on`/`off`/`allow`/…) |
+| e privacy | `nxs-tor` | Tor come proxy SOCKS 9050 (`on`/`off`/`status`) |
+| | `nxs-anon` | Modalità Anonima globale + kill-switch |
+| | `nxs-macspoof` | MAC casuale (`now`/`on`/`off`) |
+| | `nxs-metadata` | rimozione metadati MAT2 (`show`/`clean`/`gui`) |
+| | `nxs-panic` | panico/wipe + watcher chiavetta (`wipe`/`arm`/…) |
+| | `nxs-harden` | hardening del sistema installato |
+| | `nxs-users` | gestione utenti (password via stdin) |
+| | `nxs-persist` / `nxs-unlock-data` | persistenza dati (anche LUKS) |
+| Desktop | `nxs-recorder` | registratore vocale (spettro/onda) |
+| e media | `nxs-clipboard` | gestore appunti con cronologia (Super+V) |
+| | `nxs-nightlight` | filtro luce blu (Super+N) |
+| | `nxs-audio` / `nxs-brightness` | volume-microfono / luminosità |
+| | `nxs-screenshot` / `nxs-screensaver` | schermata / blocco schermo |
+| | `nxs-screens` / `nxs-wifi` / `nxs-bluetooth` | schermi / Wi-Fi / Bluetooth |
+| Sistema/dati | `nxs-sysinfo` / `nxs-monitor` / `nxs-netinfo` | info / monitor risorse / rete |
+| | `nxs-disks` / `nxs-case` | dischi (ro, no automount) / casi forensi |
 
 ## Build (richiede Alpine)
 
