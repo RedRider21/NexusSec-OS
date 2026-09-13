@@ -1381,13 +1381,11 @@ class Panel(Gtk.Window):
         footer.get_style_context().add_class("nxs-startmenu-footer")
         footer.pack_start(Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL),
                           False, False, 0)
+        # Un'unica voce che apre il DIALOGO GRAFICO di sessione (nxs-session:
+        # Blocca/Esci/Riavvia/Spegni), coerente col menu tasto-destro del desktop.
         power_items = [
-            ("system-log-out-symbolic", _t("power.logout"),
-             ["openbox", "--exit"], None, _t("power.confirm_logout")),
-            ("system-reboot-symbolic", _t("power.reboot"),
-             ["nxs-shutdown", "reboot"], None, _t("power.confirm_reboot")),
-            ("system-shutdown-symbolic", _t("power.poweroff"),
-             ["nxs-shutdown", "poweroff"], None, _t("power.confirm_poweroff")),
+            ("system-shutdown-symbolic", "Esci / Spegni…",
+             ["nxs-session"], None, None),
         ]
         for icon, label, cmd, mv, conf in power_items:
             footer.pack_start(self._menu_item("menu", icon, label, cmd, mv, conf),

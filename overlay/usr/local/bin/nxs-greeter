@@ -34,10 +34,14 @@ WINDOWED = "--windowed" in sys.argv or bool(os.environ.get("NXS_GREETER_TEST"))
 AUTH_USER_DEFAULT = os.environ.get("NXS_GREETER_USER", "nexus")
 
 
+AUTHCHECK = "/usr/local/bin/nxs-authcheck"   # path ASSOLUTO: sotto doas il PATH
+                                             # non include /usr/local/bin
+
+
 def authenticate(user, password):
     """True se la password e' corretta. Usa nxs-authcheck (root: diretto; utente:
     via doas, per poter leggere /etc/shadow). Password via stdin, mai in argv."""
-    base = ["nxs-authcheck", user]
+    base = [AUTHCHECK, user]
     cmd = base if os.geteuid() == 0 else (["doas"] + base)
     try:
         p = subprocess.run(cmd, input=(password + "\n").encode(),
