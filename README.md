@@ -738,8 +738,8 @@ Con RAM abbondante resta quasi inattivo. Configurato in `/etc/local.d/zram.start
   on-demand via apk.
 - Lanciatori sul desktop (pcmanfm) + menu tasto destro Openbox.
 - **Notifiche desktop** (`dunst`, a tema): feedback delle **installazioni
-  on-demand** ("Installo *tool*… / pronto"), dei cambi di stato sicurezza
-  (Anonimo/Tor/MAC/Panico) e degli esiti dei wizard.
+  on-demand** ("Installo *tool*… / pronto / fallita", anche durante i wizard) e
+  avviso di **batteria scarica**.
 - **Gestione energetica** (portatili, via `acpid`): chiusura coperchio → **blocca
   schermo**; tasto accensione → **spegnimento pulito**; avviso di **batteria
   scarica** (≤10% in scarica).
