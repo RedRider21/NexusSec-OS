@@ -920,30 +920,170 @@ HOTKEYS = [
 ]
 
 
+_OB_MOD_SKIP = {"Control_L", "Control_R", "Alt_L", "Alt_R", "Shift_L",
+                "Shift_R", "Super_L", "Super_R", "Meta_L", "Meta_R",
+                "ISO_Level3_Shift", None}
+
+
+def _ob_key_from_event(ev):
+    """Costruisce la stringa tasto in sintassi Openbox (es. 'W-n', 'C-A-t') da un
+    evento tastiera GDK. Ritorna None se e' premuto solo un modificatore."""
+    name = Gdk.keyval_name(ev.keyval)
+    if name in _OB_MOD_SKIP:
+        return None
+    m = ev.state
+    parts = []
+    if m & Gdk.ModifierType.CONTROL_MASK:
+        parts.append("C")
+    if m & Gdk.ModifierType.MOD1_MASK:                 # Alt
+        parts.append("A")
+    if m & Gdk.ModifierType.SHIFT_MASK:
+        parts.append("S")
+    if (m & Gdk.ModifierType.SUPER_MASK) or (m & Gdk.ModifierType.MOD4_MASK):
+        parts.append("W")                              # Super / tasto Windows
+    if len(name) == 1 and name.isalpha():
+        name = name.lower()                            # 'S-n', non 'S-N'
+    return "-".join(parts + [name])
+
+
+def _capture_key(parent):
+    """Dialogo 'premi la combinazione' -> ritorna la stringa Openbox o None."""
+    dlg = Gtk.Dialog(title="Nuova combinazione", transient_for=parent, modal=True)
+    dlg.add_button("Annulla", Gtk.ResponseType.CANCEL)
+    lab = Gtk.Label(label="Premi la combinazione desiderata…\n(Esc per annullare)")
+    lab.set_margin_top(24); lab.set_margin_bottom(24)
+    lab.set_margin_start(28); lab.set_margin_end(28)
+    dlg.get_content_area().add(lab)
+    res = {"key": None}
+
+    def on_key(_w, ev):
+        if ev.keyval == Gdk.KEY_Escape:
+            dlg.response(Gtk.ResponseType.CANCEL)
+            return True
+        k = _ob_key_from_event(ev)
+        if k:
+            res["key"] = k
+            dlg.response(Gtk.ResponseType.OK)
+        return True
+    dlg.connect("key-press-event", on_key)
+    dlg.show_all()
+    dlg.run()
+    dlg.destroy()
+    return res["key"]
+
+
+def _ask_text(parent, title, initial=""):
+    """Piccolo dialogo con una Entry -> ritorna il testo o None (annulla)."""
+    dlg = Gtk.Dialog(title=title, transient_for=parent, modal=True)
+    dlg.add_button("Annulla", Gtk.ResponseType.CANCEL)
+    dlg.add_button("OK", Gtk.ResponseType.OK)
+    ent = Gtk.Entry(); ent.set_text(initial); ent.set_activates_default(True)
+    ent.set_width_chars(40)
+    ent.set_margin_top(14); ent.set_margin_bottom(14)
+    ent.set_margin_start(16); ent.set_margin_end(16)
+    dlg.get_content_area().add(ent)
+    dlg.set_default_response(Gtk.ResponseType.OK)
+    dlg.show_all()
+    resp = dlg.run()
+    txt = ent.get_text().strip()
+    dlg.destroy()
+    return txt if resp == Gtk.ResponseType.OK and txt else None
+
+
 def open_hotkeys(_btn=None):
-    win, body = panel_window("Tasti rapidi", 560, 560)
-    store = Gtk.ListStore(str, str)
-    for k, v in HOTKEYS:
-        store.append([k, v])
+    win, body = panel_window("Scorciatoie da tastiera", 620, 560)
+
+    intro = Gtk.Label(label="Scorciatoie 'esegui comando' di Openbox. Modifica il "
+                            "comando con un doppio clic; usa i pulsanti per "
+                            "cambiare il tasto, aggiungere o rimuovere. Le modifiche "
+                            "si applicano subito (openbox --reconfigure).")
+    intro.set_xalign(0); intro.set_line_wrap(True)
+    intro.get_style_context().add_class("nxs-val")
+    body.pack_start(intro, False, False, 0)
+
+    store = Gtk.ListStore(str, str)                    # tasto, comando
     tree = Gtk.TreeView(model=store)
     tree.set_headers_visible(True)
     c0 = Gtk.TreeViewColumn("Tasto", Gtk.CellRendererText(), text=0)
-    c0.set_min_width(220)
-    rend = Gtk.CellRendererText()
-    c1 = Gtk.TreeViewColumn("Azione", rend, text=1)
-    c1.set_expand(True)
+    c0.set_min_width(180)
     tree.append_column(c0)
+    rend = Gtk.CellRendererText(); rend.set_property("editable", True)
+    c1 = Gtk.TreeViewColumn("Comando", rend, text=1)
+    c1.set_expand(True)
     tree.append_column(c1)
     sw = Gtk.ScrolledWindow()
     sw.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
     sw.add(tree)
     body.pack_start(sw, True, True, 0)
 
-    btn = Gtk.Button(label="Chiudi")
-    btn.connect("clicked", lambda _b: win.destroy())
-    box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-    box.pack_end(btn, False, False, 0)
-    body.pack_end(box, False, False, 0)
+    def keys(*args):
+        subprocess.run(["nxs-keys", *args],
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+    def refresh():
+        store.clear()
+        for line in run_capture(["nxs-keys", "list"], timeout=8).splitlines():
+            if "\t" in line:
+                k, c = line.split("\t", 1)
+                store.append([k, c])
+
+    def _selected():
+        model, it = tree.get_selection().get_selected()
+        return (model, it) if it else (None, None)
+
+    def on_cmd_edited(_r, path, new_text):
+        new_text = new_text.strip()
+        if not new_text:
+            return
+        k = store[path][0]
+        keys("set", k, k, new_text)
+        refresh()
+    rend.connect("edited", on_cmd_edited)
+
+    def on_add(_b):
+        k = _capture_key(win)
+        if not k:
+            return
+        cmd = _ask_text(win, "Comando da eseguire per %s" % k)
+        if not cmd:
+            return
+        keys("add", k, cmd)
+        refresh()
+
+    def on_rekey(_b):
+        model, it = _selected()
+        if not it:
+            return
+        oldk = model[it][0]; cmd = model[it][1]
+        newk = _capture_key(win)
+        if not newk or newk == oldk:
+            return
+        keys("set", oldk, newk, cmd)
+        refresh()
+
+    def on_remove(_b):
+        model, it = _selected()
+        if not it:
+            return
+        keys("remove", model[it][0])
+        refresh()
+
+    bar = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+    b_add = icon_button("Aggiungi", "list-add-symbolic", primary=True)
+    b_add.connect("clicked", on_add)
+    b_re = icon_button("Cambia tasto", "input-keyboard-symbolic")
+    b_re.connect("clicked", on_rekey)
+    b_rm = icon_button("Rimuovi", "list-remove-symbolic")
+    b_rm.connect("clicked", on_remove)
+    b_close = icon_button("Chiudi", "window-close")
+    b_close.connect("clicked", lambda _b: win.destroy())
+    bar.pack_start(b_add, False, False, 0)
+    bar.pack_start(b_re, False, False, 0)
+    bar.pack_start(b_rm, False, False, 0)
+    bar.pack_end(b_close, False, False, 0)
+    body.pack_end(bar, False, False, 0)
+
+    refresh()
     win.show_all()
 
 

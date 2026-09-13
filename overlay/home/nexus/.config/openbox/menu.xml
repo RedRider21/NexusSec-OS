@@ -10,6 +10,7 @@
     <item label="Pulisci metadati (MAT2)"><action name="Execute"><command>nxs-metadata gui</command></action></item>
     <item label="Appunti (cronologia)"><action name="Execute"><command>nxs-clipboard menu</command></action></item>
     <item label="Filtro luce blu (on/off)"><action name="Execute"><command>nxs-nightlight toggle</command></action></item>
+    <item label="Scorciatoie da tastiera"><action name="Execute"><command>nxs-control-center hotkey</command></action></item>
     <item label="Dischi"><action name="Execute"><command>nxs-disks</command></action></item>
     <item label="Casi forensi"><action name="Execute"><command>nxs-case</command></action></item>
     <item label="Procedure guidate (Wizard)"><action name="Execute"><command>nxs-wizard</command></action></item>
@@ -34,6 +35,7 @@
 
   <menu id="root-menu" label="NexusSec">
     <item label="Profilo operativo"><action name="Execute"><command>nxs-profile</command></action></item>
+    <item label="Cambia sfondo"><action name="Execute"><command>nxs-control-center sfondo</command></action></item>
     <separator/>
     <item label="Terminale"><action name="Execute"><command>nxs-terminal</command></action></item>
     <item label="NexusSec Browser"><action name="Execute"><command>nxs-browser</command></action></item>
@@ -44,9 +46,7 @@
     <menu id="nxs-security"/>
     <separator/>
     <item label="Riavvia Openbox"><action name="Reconfigure"/></item>
-    <item label="Esci (logout)"><action name="Exit"/></item>
-    <item label="Riavvia il sistema"><action name="Execute"><command>nxs-shutdown reboot</command></action></item>
-    <item label="Spegni"><action name="Execute"><command>nxs-shutdown poweroff</command></action></item>
+    <item label="Esci / Spegni…"><action name="Execute"><command>nxs-session</command></action></item>
   </menu>
 
 </openbox_menu>

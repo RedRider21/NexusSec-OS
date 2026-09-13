@@ -1,0 +1,90 @@
+#!/usr/bin/env python3
+# nxs-session - dialogo grafico di fine sessione (blocca / esci / riavvia / spegni).
+#
+# Alternativa "bella" alle voci di menu: finestra centrata, brandizzata NexusSec,
+# con quattro azioni a icona grande. Esc o "Annulla" per chiudere.
+#   Blocca  -> nxs-screensaver
+#   Esci    -> openbox --exit (chiude la sessione X)
+#   Riavvia -> nxs-shutdown reboot   (salva la config: lbu)
+#   Spegni  -> nxs-shutdown poweroff (salva la config: lbu)
+import subprocess
+import sys
+
+import gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk, Gdk  # noqa: E402
+
+# CSS/tema NexusSec (se disponibile): dialogo coerente col desktop.
+sys.path.insert(0, "/usr/local/lib")
+try:
+    from nxs_cc.common import apply_css
+    apply_css()
+except Exception:
+    pass
+
+ACTIONS = [
+    ("system-lock-screen-symbolic", "Blocca", ["nxs-screensaver"]),
+    ("system-log-out-symbolic", "Esci", ["openbox", "--exit"]),
+    ("system-reboot-symbolic", "Riavvia", ["nxs-shutdown", "reboot"]),
+    ("system-shutdown-symbolic", "Spegni", ["nxs-shutdown", "poweroff"]),
+]
+
+
+def _run(cmd, win):
+    win.destroy()
+    subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    Gtk.main_quit()
+
+
+def main():
+    win = Gtk.Window(type=Gtk.WindowType.TOPLEVEL)
+    win.set_title("Sessione NexusSec")
+    win.set_decorated(False)
+    win.set_position(Gtk.WindowPosition.CENTER_ALWAYS)
+    win.set_keep_above(True)
+    win.set_skip_taskbar_hint(True)
+    win.set_resizable(False)
+    win.get_style_context().add_class("nxs-calbox")
+    win.connect("destroy", Gtk.main_quit)
+    win.connect("key-press-event",
+                lambda _w, ev: win.destroy() if ev.keyval == Gdk.KEY_Escape else None)
+
+    outer = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=14)
+    outer.set_border_width(22)
+    win.add(outer)
+
+    title = Gtk.Label()
+    title.set_markup("<b>Termina sessione</b>")
+    title.set_xalign(0.5)
+    outer.pack_start(title, False, False, 0)
+
+    row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=14)
+    row.set_halign(Gtk.Align.CENTER)
+    outer.pack_start(row, True, True, 0)
+
+    for icon, label, cmd in ACTIONS:
+        b = Gtk.Button()
+        b.get_style_context().add_class("nxs-menu-item")
+        bb = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
+        bb.set_margin_top(10); bb.set_margin_bottom(10)
+        bb.set_margin_start(14); bb.set_margin_end(14)
+        img = Gtk.Image.new_from_icon_name(icon, Gtk.IconSize.DIALOG)
+        lab = Gtk.Label(label=label)
+        bb.pack_start(img, False, False, 0)
+        bb.pack_start(lab, False, False, 0)
+        b.add(bb)
+        b.connect("clicked", lambda _w, c=cmd: _run(c, win))
+        row.pack_start(b, False, False, 0)
+
+    cancel = Gtk.Button(label="Annulla (Esc)")
+    cancel.get_style_context().add_class("nxs-menu-item")
+    cancel.connect("clicked", lambda _w: win.destroy())
+    outer.pack_end(cancel, False, False, 0)
+
+    win.show_all()
+    win.present()
+    Gtk.main()
+
+
+if __name__ == "__main__":
+    main()
