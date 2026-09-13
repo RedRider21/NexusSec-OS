@@ -1,9 +1,10 @@
 # NexusSecOS-Arsenal
 
 Vetrina, download e **repository pacchetti** di **NexusSec OS** — distro Linux
-live **x86_64 e ARM64 (aarch64)** per la **cybersecurity**, basata su Alpine (musl · apk · OpenRC),
-desktop Openbox con pannello e Centro di Controllo nativi in Python (GTK3) e
-**profili operativi dinamici** (Pen Testing · Digital Forensics · OSINT · Web).
+live per **x86_64**, **ARM64 (aarch64)** e **Raspberry Pi 4/5 (immagine microSD)**,
+per la **cybersecurity**, basata su Alpine (musl · apk · OpenRC), desktop Openbox
+con pannello e Centro di Controllo nativi in Python (GTK3) e **profili operativi
+dinamici** (Pen Testing · Digital Forensics · OSINT · Web).
 
 L'idea: la copertura di strumenti di Kali/Parrot, ma con ISO molto più piccola e
 tool **on-demand** (apk · container Podman · pip), ciascuno **isolato**:
@@ -53,19 +54,25 @@ che si aggiungono all'elenco **senza scrivere codice**.
 - **[Copertura dell'arsenale](docs/copertura-arsenale.html)** — confronto riga per
   riga con `kali-linux-everything` / `parrot-tools-full`.
 
-## Download ISO
+## Download (immagini)
 
-Due immagini ISO (~0.7 GB l'una) nella sezione **[Releases](../../releases)** (i
-file ISO superano il limite del repository git, quindi sono allegati come
-*release asset*):
+Tre immagini nella sezione **[Releases](../../releases)** (superano il limite del
+repository git, quindi sono allegate come *release asset*):
 
-- **x86_64** — PC/notebook Intel/AMD, boot **BIOS + UEFI**.
-- **ARM64 (aarch64)** — Apple Silicon (UTM/QEMU), single-board ARM e VM ARM, boot
-  **solo UEFI** (su ARM non esiste il boot BIOS/isolinux).
+- **ISO x86_64** (~0.7 GB) — PC/notebook Intel/AMD, boot **BIOS + UEFI**.
+- **ISO ARM64 (aarch64)** (~0.7 GB) — VM ARM e hardware ARM con **UEFI** (Apple
+  Silicon via UTM/QEMU, `qemu-system-aarch64 -M virt`, SBSA), boot **solo UEFI**
+  (su ARM non esiste il boot BIOS/isolinux). **Non** fa boot sugli SBC (Raspberry
+  Pi & co.), che usano un boot proprietario.
+- **microSD Raspberry Pi 4/5** (`nexussec-rpi-*.img.gz`) — immagine **dedicata**
+  per gli SBC (boot Raspberry Pi: kernel `linux-rpi` + firmware; le ISO non ci
+  fanno boot), da scrivere con `dd` / Raspberry Pi Imager / balenaEtcher. ⚠️ *Beta:
+  da validare su hardware reale.*
 
 In VirtualBox (x86_64): VM Linux 64-bit, ≥ 2 GB RAM (3–4 GB se usi i container
 Forensics/Web), boot dall'ISO. Su **ARM64** si avvia con QEMU
-(`qemu-system-aarch64 -M virt`) o UTM con firmware **UEFI** (edk2/AAVMF).
+(`qemu-system-aarch64 -M virt`) o UTM con firmware **UEFI** (edk2/AAVMF). La
+**microSD RPi** si scrive e si inserisce nel Raspberry Pi 4/5.
 
 ## Desktop e pannello
 
