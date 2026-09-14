@@ -755,6 +755,13 @@ Con RAM abbondante resta quasi inattivo. Configurato in `/etc/local.d/zram.start
   combinazione), **aggiungi/rimuovi** scorciatoie; applicate al volo.
 - **Dialogo di sessione grafico** (`nxs-session`, menu → *Esci / Spegni…*):
   Blocca / Esci / Riavvia / Spegni con conferma, brandizzato.
+- **Login grafico (greeter)** — `nxs-greeter`: schermata di login in Python/GTK
+  (logo esagonale, sfondo *honeycomb* nel colore del tema, mostra/nascondi
+  password, Riavvia/Spegni). **Opzionale**, per il sistema installato: si abilita
+  con `nxs-harden greeter on` e compare **dopo la splash**; al logout si ritorna al
+  greeter. La **live resta con autologin** (nessun rischio di restare chiusi fuori:
+  fallback su tty2). Autentica contro `/etc/shadow` (Alpine non usa PAM) tramite
+  l'helper setuid **`nxs-chkpwd`**, così funziona anche con `doas` protetto.
 - **Cambia sfondo** dal menu tasto-destro del desktop.
 
 > Nota (live): le modifiche a scorciatoie/sfondo/impostazioni valgono per la
@@ -795,7 +802,8 @@ e un interruttore nell'applet **Autoprotezione** del pannello.
 - **Firewall** — `nxs-firewall` (nftables): inbound *default-deny*, outbound libero,
   attivo al boot; per mettersi in ascolto: `nxs-firewall allow`/`off`.
 - **Hardening del sistema installato** — `nxs-harden`: password, disattiva
-  autologin e `doas` senza password, blocca i cambi VT.
+  autologin e `doas` senza password, blocca i cambi VT, e abilita il **login
+  grafico** (`greeter on|off`).
 - **Forensics** — i dischi sono **visibili ma mai montati/scritti in automatico**
   (montaggio in sola lettura di default; write-blocking): niente alterazione delle
   prove.
@@ -944,6 +952,7 @@ Centro di Controllo). Dettaglio completo con i sotto-comandi: manuale online.
 | | `nxs-wallpaper` | sfondo (indipendente dal profilo) |
 | | `nxs-shutdown` | spegni / riavvia / esci (con salvataggio) |
 | | `nxs-session` | dialogo grafico di fine sessione (blocca/esci/riavvia/spegni) |
+| | `nxs-greeter` | login grafico opzionale (abilita con `nxs-harden greeter on`) |
 | | `nxs-keys` | editor scorciatoie Openbox (list/add/set/remove) |
 | Arsenale | `nxs-tool` | installa/avvia i tool on-demand (`kali`/`list`/`launch`/…) |
 | | `nxs-wizard` | procedure guidate (catene di tool) |
