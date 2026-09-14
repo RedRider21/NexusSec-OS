@@ -739,6 +739,14 @@ apk add foremost medusa bulk-extractor</code></pre>
     <li data-lang="en"><strong>Desktop notifications</strong> (dunst): alerts for on-demand installs (also during
       wizards) and low battery. <strong>Power management</strong> (acpid): lid → lock screen, power button →
       clean shutdown, low-battery warning.</li>
+    <li data-lang="it"><strong>Login grafico (greeter)</strong> — <code>nxs-greeter</code>: opzionale per il
+      sistema installato (<code>nxs-harden greeter on</code>), compare DOPO la splash; al logout si torna al greeter.
+      La live resta con autologin (fallback tty2, nessun lockout). Autentica shadow via l'helper setuid
+      <code>nxs-chkpwd</code> (Alpine non usa PAM), quindi funziona anche con <code>doas</code> protetto.</li>
+    <li data-lang="en"><strong>Graphical login (greeter)</strong> — <code>nxs-greeter</code>: optional for the
+      installed system (<code>nxs-harden greeter on</code>), shown AFTER the splash; logout returns to the greeter.
+      The live keeps autologin (tty2 fallback, no lockout). Authenticates shadow via the setuid helper
+      <code>nxs-chkpwd</code> (Alpine has no PAM), so it works even with a password-protected <code>doas</code>.</li>
   </ul>
   <div class="note warn"><span data-lang="it"><strong>Attenzione:</strong> <code>nxs-panic wipe</code> spegne
     <strong>senza chiedere conferma</strong> (il tasto rapido e la rimozione della chiavetta sono immediati; solo il
@@ -828,6 +836,7 @@ nxs-persist status          # disk persistence status</code></pre>
       <tr><td class="k">nxs-clipboard</td><td><span data-lang="it"><strong>Gestore appunti</strong> con cronologia (Python/GTK). Popup con gli ultimi testi copiati; selezionane uno per ricopiarlo. Scorciatoia <strong>Super+V</strong>.<br><code>daemon</code> (in autostart) · <code>menu</code> · <code>clear</code></span><span data-lang="en"><strong>Clipboard manager</strong> with history (Python/GTK). Popup of recent copied texts; pick one to re-copy. Shortcut <strong>Super+V</strong>.<br><code>daemon</code> (autostart) · <code>menu</code> · <code>clear</code></span></td></tr>
       <tr><td class="k">nxs-keys</td><td><span data-lang="it"><strong>Editor scorciatoie</strong> di Openbox (rc.xml): modifica solo le scorciatoie "esegui comando", applica al volo. GUI in Centro di Controllo → Scorciatoie da tastiera (cattura la combinazione, aggiungi/rimuovi).<br><code>list</code> · <code>add &lt;tasto&gt; &lt;comando&gt;</code> · <code>set &lt;vecchio&gt; &lt;nuovo&gt; &lt;comando&gt;</code> · <code>remove &lt;tasto&gt;</code></span><span data-lang="en"><strong>Shortcut editor</strong> for Openbox (rc.xml): edits only the "run command" shortcuts, applied live. GUI in Control Center → Keyboard shortcuts (capture the combo, add/remove).<br><code>list</code> · <code>add &lt;key&gt; &lt;cmd&gt;</code> · <code>set &lt;old&gt; &lt;new&gt; &lt;cmd&gt;</code> · <code>remove &lt;key&gt;</code></span></td></tr>
       <tr><td class="k">nxs-session</td><td><span data-lang="it"><strong>Dialogo grafico di fine sessione</strong>: Blocca / Esci / Riavvia / Spegni (menu → "Esci / Spegni…").</span><span data-lang="en"><strong>Graphical session dialog</strong>: Lock / Log out / Reboot / Shut down (menu → "Log out / Shut down…").</span></td></tr>
+      <tr><td class="k">nxs-greeter</td><td><span data-lang="it"><strong>Login grafico</strong> (GTK): logo esagonale, sfondo honeycomb nel colore del tema, mostra/nascondi password, Riavvia/Spegni. Opzionale, per il sistema installato: si abilita con <code>nxs-harden greeter on</code> e compare DOPO la splash; autentica shadow via l'helper setuid <code>nxs-chkpwd</code> (Alpine non usa PAM). La live resta con autologin (fallback tty2).</span><span data-lang="en"><strong>Graphical login</strong> (GTK): hexagon logo, honeycomb background in the theme color, show/hide password, Reboot/Shutdown. Optional, for the installed system: enable with <code>nxs-harden greeter on</code>, shown AFTER the splash; authenticates shadow via the setuid helper <code>nxs-chkpwd</code> (Alpine has no PAM). The live keeps autologin (tty2 fallback).</span></td></tr>
     </tbody>
   </table>
 
