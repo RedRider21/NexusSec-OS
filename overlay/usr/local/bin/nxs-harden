@@ -34,6 +34,7 @@ st_autologin() { grep -q 'agetty --autologin nexus' "$INITTAB" 2>/dev/null \
 st_doas() { grep -q 'permit nopass :wheel' "$DOASCONF" 2>/dev/null \
             && echo nopass || echo pass; }
 st_lockvt() { [ -f "$XCONF" ] && echo on || echo off; }
+st_greeter() { [ -f /etc/nxs/greeter.on ] && echo on || echo off; }
 st_pass() { # nexus ha una password valida?
   p="$(priv sh -c "getent shadow nexus 2>/dev/null | cut -d: -f2")"
   case "$p" in ""|"!"|"*"|"!*") echo no ;; *) echo si ;; esac
@@ -84,6 +85,19 @@ EOF
   esac
 }
 
+do_greeter() {
+  case "$1" in
+    on)  priv sh -c "mkdir -p /etc/nxs && : > /etc/nxs/greeter.on"
+         echo "Login grafico (greeter) ATTIVO al prossimo avvio della sessione."
+         echo "Consigliato con: autologin ON + password impostata + blocco VT ON"
+         echo "(cosi' il greeter e' l'UNICO accesso; con autologin OFF avresti"
+         echo " prima il login testuale e poi il greeter)." ;;
+    off) priv rm -f /etc/nxs/greeter.on 2>/dev/null || true
+         echo "Login grafico (greeter) disattivato." ;;
+    *) echo "uso: nxs-harden greeter on|off"; return 1 ;;
+  esac
+}
+
 status() {
   echo "Stato hardening NexusSec:"
   echo "  ambiente:        $(is_live && echo 'LIVE (effimera)' || echo 'installato su disco')"
@@ -91,6 +105,7 @@ status() {
   echo "  autologin tty1:  $(st_autologin)"
   echo "  doas:            $(st_doas)"
   echo "  blocco VT (X):   $(st_lockvt)"
+  echo "  login grafico:   $(st_greeter)"
   echo "  firewall:        $( [ -f /etc/nxs/firewall.disabled ] && echo disattivato || echo attivo )"
   if is_live; then
     echo
@@ -119,6 +134,7 @@ case "${1:-status}" in
   autologin) do_autologin "${2:-}" ;;
   doas) do_doas "${2:-}" ;;
   lockvt) do_lockvt "${2:-}" ;;
-  *) echo "uso: nxs-harden {status|apply|password|autologin off|on|doas pass|nopass|lockvt on|off}" >&2; exit 2 ;;
+  greeter) do_greeter "${2:-}" ;;
+  *) echo "uso: nxs-harden {status|apply|password|autologin off|on|doas pass|nopass|lockvt on|off|greeter on|off}" >&2; exit 2 ;;
 esac
 exit 0

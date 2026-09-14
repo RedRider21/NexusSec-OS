@@ -12,6 +12,19 @@ echo "=== autostart $(date) ==="
 #    NB: un output "connected" ma senza CRTC non viene MAI disegnato da X.
 command -v nxs-screens >/dev/null 2>&1 && nxs-screens autostart
 
+# 0b) LOGIN GRAFICO (greeter) - solo se abilitato: nxs-harden greeter on.
+#     Mostra nxs-greeter a schermo intero PRIMA del desktop e BLOCCA finche' non
+#     ci si autentica (o si sceglie Riavvia/Spegni). Default assente -> nessun
+#     gate (la live con autologin resta invariata).
+#     Anti-lockout: l'autologin resta attivo e tty2 ha un login normale; se il
+#     greeter facesse i capricci, da tty2: rm /etc/nxs/greeter.on. Fail-open
+#     (|| true): se il greeter esce in errore si prosegue col desktop invece di
+#     restare bloccati su schermo nero.
+if [ -f /etc/nxs/greeter.on ] && command -v nxs-greeter >/dev/null 2>&1; then
+  echo "greeter: gate di login attivo"
+  nxs-greeter || true
+fi
+
 # SEQUENZA splash -> desktop, SENZA "sbirciata" del desktop prima della splash.
 # Ordine che risolve entrambe le cose (glimpse + sovrapposizione):
 #   1) la SPLASH parte per PRIMA (background) e ha un attimo di vantaggio per
