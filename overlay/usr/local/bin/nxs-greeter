@@ -54,10 +54,30 @@ window { background-color: #050a14; }
 """
 
 
+def _wallpaper_path():
+    """Sfondo del greeter: lo stesso del desktop, se risolvibile; altrimenti la
+    nebula base della distro."""
+    try:
+        from nxs_profiles import model
+        p = str(model.wallpaper_path())
+        if p and os.path.isfile(p):
+            return p
+    except Exception:
+        pass
+    neb = os.path.expanduser("~/.themes/NexusSec-Core/backgrounds/nebula.png")
+    return neb if os.path.isfile(neb) else None
+
+
 def _install_css():
     try:
+        css = _CSS
+        wp = _wallpaper_path()
+        if wp:
+            css = css + (
+                'window { background-image: url("%s"); background-size: cover; '
+                'background-position: center; }' % wp).encode()
         prov = Gtk.CssProvider()
-        prov.load_from_data(_CSS)
+        prov.load_from_data(css)
         Gtk.StyleContext.add_provider_for_screen(
             Gdk.Screen.get_default(), prov,
             Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
