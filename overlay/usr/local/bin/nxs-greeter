@@ -18,8 +18,7 @@ import sys
 
 import gi
 gi.require_version("Gtk", "3.0")
-gi.require_version("GdkPixbuf", "2.0")
-from gi.repository import Gtk, Gdk, GLib, GdkPixbuf  # noqa: E402
+from gi.repository import Gtk, Gdk, GLib  # noqa: E402
 import cairo  # noqa: E402
 
 # Tema NexusSec (accent/CSS di base), se disponibile.
@@ -55,18 +54,24 @@ window { background-color: #050a14; }
 """
 
 
-def _wallpaper_path():
-    """Sfondo del greeter: lo stesso del desktop, se risolvibile; altrimenti la
-    nebula base della distro."""
+def _hex_rgb(h):
+    h = h.lstrip("#")
+    if len(h) != 6:
+        return (0.0, 0.898, 1.0)
+    return (int(h[0:2], 16) / 255.0, int(h[2:4], 16) / 255.0,
+            int(h[4:6], 16) / 255.0)
+
+
+def _accent():
+    """Colore accent del TEMA CORRENTE (segue il profilo). Fallback: cyan."""
     try:
         from nxs_profiles import model
-        p = str(model.wallpaper_path())
-        if p and os.path.isfile(p):
-            return p
+        a = model.accent()
+        if a and a.startswith("#") and len(a) == 7:
+            return a
     except Exception:
         pass
-    neb = os.path.expanduser("~/.themes/NexusSec-Core/backgrounds/nebula.png")
-    return neb if os.path.isfile(neb) else None
+    return ACCENT
 
 
 def _install_css():
@@ -143,20 +148,20 @@ class Greeter(Gtk.Window):
         # Sfondo (wallpaper) disegnato con Cairo dietro la card, via Overlay:
         # affidabile a schermo intero (il background-image CSS su window in GTK3
         # spesso non dipinge).
-        self._bg = None
-        wp = _wallpaper_path()
-        if wp:
-            try:
-                self._bg = GdkPixbuf.Pixbuf.new_from_file(wp)
-            except Exception:
-                self._bg = None
+        self._acc = _hex_rgb(_accent())          # colore del tema corrente
         overlay = Gtk.Overlay()
         self.add(overlay)
         bgarea = Gtk.DrawingArea()
         bgarea.connect("draw", self._draw_bg)
-        overlay.add(bgarea)                       # base a tutto schermo
+        overlay.add(bgarea)                       # sfondo honeycomb a tutto schermo
+        # card di login spostata a SINISTRA (verticalmente centrata): lo sfondo
+        # pulito resta ben visibile a destra.
         center = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        center.set_halign(Gtk.Align.CENTER)
+        if WINDOWED:
+            center.set_halign(Gtk.Align.CENTER)
+        else:
+            center.set_halign(Gtk.Align.START)
+            center.set_margin_start(70)
         center.set_valign(Gtk.Align.CENTER)
         overlay.add_overlay(center)               # card sopra lo sfondo
 
@@ -222,24 +227,49 @@ class Greeter(Gtk.Window):
 
         GLib.idle_add(self.pw.grab_focus)
 
+    @staticmethod
+    def _hexagon(cr, cx, cy, R):
+        for i in range(6):
+            ang = math.pi / 3.0 * i               # flat-top
+            px = cx + R * math.cos(ang)
+            py = cy + R * math.sin(ang)
+            (cr.line_to if i else cr.move_to)(px, py)
+        cr.close_path()
+
     def _draw_bg(self, area, cr):
+        """Sfondo PULITO: fondo scuro + glow morbido + honeycomb ("vespaio"),
+        nel colore accent del tema corrente. Niente logo/scritte."""
         w = area.get_allocated_width()
         h = area.get_allocated_height()
-        cr.set_source_rgb(0.02, 0.04, 0.08)          # #050a14 (fallback scuro)
+        r, g, b = self._acc
+        # fondo scuro
+        cr.set_source_rgb(0.020, 0.039, 0.078)        # #050a14
         cr.paint()
-        if not self._bg:
-            return False
-        pw = self._bg.get_width()
-        ph = self._bg.get_height()
-        if pw <= 0 or ph <= 0:
-            return False
-        scale = max(w / pw, h / ph)                   # "cover"
-        cr.save()
-        cr.translate((w - pw * scale) / 2.0, (h - ph * scale) / 2.0)
-        cr.scale(scale, scale)
-        Gdk.cairo_set_source_pixbuf(cr, self._bg, 0, 0)
+        # glow morbido (accent) in alto-centro
+        cx, cy = w / 2.0, h * 0.40
+        rad = max(w, h) * 0.62
+        grad = cairo.RadialGradient(cx, cy, 0, cx, cy, rad)
+        grad.add_color_stop_rgba(0, r, g, b, 0.10)
+        grad.add_color_stop_rgba(1, r, g, b, 0.0)
+        cr.set_source(grad)
         cr.paint()
-        cr.restore()
+        # honeycomb (vespaio) tenue
+        R = 46.0
+        dx = 1.5 * R
+        dy = math.sqrt(3.0) * R
+        cr.set_line_width(1.2)
+        cr.set_source_rgba(r, g, b, 0.12)
+        col = 0
+        x = -R
+        while x < w + R:
+            yoff = (dy / 2.0) if (col % 2) else 0.0
+            y = -R + yoff
+            while y < h + R:
+                self._hexagon(cr, x, y, R)
+                y += dy
+            x += dx
+            col += 1
+        cr.stroke()
         return False
 
     def _toggle_pw(self, entry, _pos, _ev):
