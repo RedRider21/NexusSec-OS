@@ -1,0 +1,25 @@
+# Maintainer: NexusSec <deplano.d@gmail.com>
+# Piccolo helper setuid-root che verifica una password contro /etc/shadow.
+# Usato dal greeter di login (nxs-greeter) su sistema hardenizzato, dove doas
+# richiede la password e non e' utilizzabile in modo non interattivo.
+pkgname=nxs-chkpwd
+pkgver=1.0.0
+pkgrel=0
+pkgdesc="NexusSec: verifica password shadow per il greeter (helper setuid)"
+url="https://github.com/thecloners21"
+arch="all"
+license="MIT"
+# 'suid' autorizza il file setuid in fase di packaging; '!check' niente test.
+options="!check suid"
+source="nxs-chkpwd.c"
+
+build() {
+	# musl: crypt() e getspnam() sono in libc, nessun -lcrypt necessario.
+	${CC:-cc} ${CFLAGS} ${LDFLAGS} -O2 -o nxs-chkpwd "$srcdir/nxs-chkpwd.c"
+}
+
+package() {
+	# setuid root (4755): il greeter, girando come utente, puo' leggere shadow.
+	install -Dm4755 -o root -g root nxs-chkpwd \
+		"$pkgdir"/usr/local/bin/nxs-chkpwd
+}

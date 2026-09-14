@@ -104,7 +104,7 @@ REPOS
   # Essendo un guasto aleatorio dell emulatore, il rimedio giusto e RIPROVARE:
   # osservato su bulk-extractor (ICE su scan_ntfsusn, poi scan_ntfsmft) e su
   # chkrootkit (segfault su chkutmp).
-  for p in dmitry foremost medusa chkrootkit rkhunter bulk-extractor; do
+  for p in nxs-chkpwd dmitry foremost medusa chkrootkit rkhunter bulk-extractor; do
     [ -d /root/nexussec/$p ] || continue
     fatto=
     for tentativo in 1 2 3; do
