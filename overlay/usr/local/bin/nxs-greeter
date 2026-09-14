@@ -1,19 +1,17 @@
 #!/usr/bin/env python3
-# nxs-greeter - schermata di login grafica di NexusSec (in Python/GTK3).
+# nxs-greeter - schermata di login grafica di NexusSec (Python/GTK3).
 #
-# Autentica contro /etc/shadow tramite `nxs-authcheck` (Alpine non usa PAM di
-# default). NON e' ancora agganciato al boot: qui e' l'INTERFACCIA + la verifica
-# password, testabile nel desktop in esecuzione senza rischi:
+# Autentica contro /etc/shadow tramite l'helper privilegiato:
+#   - nxs-chkpwd (setuid root) se presente -> funziona anche su sistema
+#     hardenizzato (doas con password);
+#   - altrimenti nxs-authcheck via doas (live: doas nopass).
+# La password NON passa mai da argv: va all'helper via STDIN.
 #
-#   nxs-greeter --windowed      finestra normale, per provare look e login
-#   nxs-greeter                 a schermo intero (uso previsto dal boot, step 2)
+#   nxs-greeter --windowed    finestra normale (test in-sessione)
+#   nxs-greeter               a schermo intero (uso dal boot, dietro flag)
 #
-# Codici d'uscita (per il futuro wrapper di boot che avviera' la sessione):
-#   0 = autenticazione RIUSCITA (procedi con la sessione dell'utente)
-#   1 = uscita senza login
-# I pulsanti Riavvia/Spegni eseguono l'azione ed escono.
-#
-# La password NON passa mai da argv: viene inviata a nxs-authcheck via stdin.
+# Uscita: 0 = autenticazione riuscita · 1 = uscita senza login.
+import math
 import os
 import subprocess
 import sys
@@ -21,8 +19,9 @@ import sys
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk, GLib  # noqa: E402
+import cairo  # noqa: E402
 
-# Tema NexusSec, se disponibile.
+# Tema NexusSec (accent/CSS di base), se disponibile.
 sys.path.insert(0, "/usr/local/lib")
 try:
     from nxs_cc.common import apply_css
@@ -32,23 +31,84 @@ except Exception:
 
 WINDOWED = "--windowed" in sys.argv or bool(os.environ.get("NXS_GREETER_TEST"))
 AUTH_USER_DEFAULT = os.environ.get("NXS_GREETER_USER", "nexus")
+CHKPWD = "/usr/local/bin/nxs-chkpwd"       # helper setuid (se presente)
+AUTHCHECK = "/usr/local/bin/nxs-authcheck"  # fallback via doas
+
+ACCENT = "#00e5ff"
+
+_CSS = b"""
+window { background-color: #050a14; }
+.nxs-gr-card { background-color: rgba(10,26,38,0.94);
+  border: 1px solid #1a3a52; border-radius: 16px; }
+.nxs-gr-title { color: #eaffff; }
+.nxs-gr-sub { color: #5a8a9a; }
+.nxs-gr-err { color: #ff5a8a; }
+.nxs-gr entry { min-height: 34px; background-color: #08131d; color: #c8f5ff;
+  border: 1px solid #1a3a52; border-radius: 9px; padding: 4px 10px; }
+.nxs-gr entry:focus { border-color: #00e5ff; }
+.nxs-gr-login { background-color: #00334a; color: #00e5ff;
+  border: 1px solid #17475f; border-radius: 10px; padding: 8px 0; }
+.nxs-gr-login:hover { background-color: #0a4a63; }
+.nxs-gr-pw { background: none; border: none; color: #5a8a9a; padding: 6px 10px; }
+.nxs-gr-pw:hover { color: #00e5ff; }
+"""
 
 
-AUTHCHECK = "/usr/local/bin/nxs-authcheck"   # path ASSOLUTO: sotto doas il PATH
-                                             # non include /usr/local/bin
+def _install_css():
+    try:
+        prov = Gtk.CssProvider()
+        prov.load_from_data(_CSS)
+        Gtk.StyleContext.add_provider_for_screen(
+            Gdk.Screen.get_default(), prov,
+            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+    except Exception:
+        pass
 
 
 def authenticate(user, password):
-    """True se la password e' corretta. Usa nxs-authcheck (root: diretto; utente:
-    via doas, per poter leggere /etc/shadow). Password via stdin, mai in argv."""
-    base = [AUTHCHECK, user]
-    cmd = base if os.geteuid() == 0 else (["doas"] + base)
-    try:
-        p = subprocess.run(cmd, input=(password + "\n").encode(),
-                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        return p.returncode == 0
-    except Exception:
-        return False
+    """True se la password e' corretta. Prova prima l'helper setuid nxs-chkpwd,
+    poi nxs-authcheck via doas (live). Password via STDIN, mai in argv."""
+    attempts = []
+    if os.path.exists(CHKPWD):
+        attempts.append([CHKPWD, user])
+    if os.geteuid() == 0:
+        attempts.append([AUTHCHECK, user])
+    else:
+        attempts.append(["doas", AUTHCHECK, user])
+    for cmd in attempts:
+        try:
+            p = subprocess.run(cmd, input=(password + "\n").encode(),
+                               stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            if p.returncode == 0:
+                return True
+        except Exception:
+            continue
+    return False
+
+
+def _draw_logo(_area, cr):
+    # Esagono cyan con "N" al centro (identita' NexusSec).
+    w = _area.get_allocated_width()
+    h = _area.get_allocated_height()
+    cx, cy = w / 2.0, h / 2.0
+    r = min(w, h) / 2.0 - 6
+    cr.set_line_width(5)
+    cr.set_source_rgb(0.0, 0.898, 1.0)          # #00e5ff
+    for i in range(6):
+        ang = math.pi / 180 * (60 * i - 90)
+        x = cx + r * math.cos(ang)
+        y = cy + r * math.sin(ang)
+        cr.line_to(x, y) if i else cr.move_to(x, y)
+    cr.close_path()
+    cr.stroke()
+    cr.select_font_face("sans-serif", cairo.FONT_SLANT_NORMAL,
+                        cairo.FONT_WEIGHT_BOLD)
+    cr.set_font_size(r * 1.05)
+    ext = cr.text_extents("N")
+    cr.move_to(cx - ext.width / 2 - ext.x_bearing,
+               cy - ext.height / 2 - ext.y_bearing)
+    cr.show_text("N")
+    return False
 
 
 class Greeter(Gtk.Window):
@@ -56,71 +116,92 @@ class Greeter(Gtk.Window):
         super().__init__(type=Gtk.WindowType.TOPLEVEL)
         self.set_title("NexusSec OS")
         self.result = 1
-        self.get_style_context().add_class("nxs-calbox")
         self.connect("destroy", Gtk.main_quit)
         if WINDOWED:
-            self.set_default_size(420, 360)
+            self.set_default_size(460, 480)
             self.set_position(Gtk.WindowPosition.CENTER)
             self.connect("key-press-event", self._on_key)
         else:
             self.fullscreen()
             self.set_keep_above(True)
 
-        outer = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=16)
-        outer.set_halign(Gtk.Align.CENTER)
-        outer.set_valign(Gtk.Align.CENTER)
-        outer.set_margin_top(40); outer.set_margin_bottom(40)
-        outer.set_margin_start(40); outer.set_margin_end(40)
-        self.add(outer)
+        # centratura della card
+        center = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        center.set_halign(Gtk.Align.CENTER)
+        center.set_valign(Gtk.Align.CENTER)
+        self.add(center)
+
+        card = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=14)
+        card.get_style_context().add_class("nxs-gr-card")
+        card.get_style_context().add_class("nxs-gr")
+        card.set_size_request(360, -1)
+        card.set_margin_top(28); card.set_margin_bottom(28)
+        card.set_margin_start(34); card.set_margin_end(34)
+        center.pack_start(card, False, False, 0)
+
+        logo = Gtk.DrawingArea()
+        logo.set_size_request(96, 104)
+        logo.set_halign(Gtk.Align.CENTER)
+        logo.connect("draw", _draw_logo)
+        card.pack_start(logo, False, False, 0)
 
         title = Gtk.Label()
+        title.get_style_context().add_class("nxs-gr-title")
         title.set_markup("<span size='xx-large'><b>NexusSec OS</b></span>")
-        outer.pack_start(title, False, False, 0)
+        card.pack_start(title, False, False, 0)
         sub = Gtk.Label()
+        sub.get_style_context().add_class("nxs-gr-sub")
         sub.set_markup("<small>Accedi per continuare</small>")
-        outer.pack_start(sub, False, False, 0)
-
-        form = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
-        form.set_size_request(300, -1)
-        outer.pack_start(form, False, False, 0)
+        card.pack_start(sub, False, False, 0)
 
         self.user = Gtk.Entry()
         self.user.set_placeholder_text("Utente")
         self.user.set_text(AUTH_USER_DEFAULT)
-        form.pack_start(self.user, False, False, 0)
+        card.pack_start(self.user, False, False, 0)
 
         self.pw = Gtk.Entry()
         self.pw.set_placeholder_text("Password")
         self.pw.set_visibility(False)
         self.pw.set_input_purpose(Gtk.InputPurpose.PASSWORD)
-        self.pw.connect("activate", self._on_login)   # Invio = accedi
-        form.pack_start(self.pw, False, False, 0)
+        self.pw.set_icon_from_icon_name(Gtk.EntryIconPosition.SECONDARY,
+                                        "view-reveal-symbolic")
+        self.pw.connect("icon-press", self._toggle_pw)
+        self.pw.connect("activate", self._on_login)
+        card.pack_start(self.pw, False, False, 0)
 
         self.err = Gtk.Label(); self.err.set_xalign(0.5)
-        self.err.get_style_context().add_class("nxs-val")
-        form.pack_start(self.err, False, False, 0)
+        self.err.get_style_context().add_class("nxs-gr-err")
+        card.pack_start(self.err, False, False, 0)
 
         btn = Gtk.Button(label="Accedi")
-        btn.get_style_context().add_class("nxs-menu-item")
+        btn.get_style_context().add_class("nxs-gr-login")
         btn.connect("clicked", self._on_login)
-        form.pack_start(btn, False, False, 0)
+        card.pack_start(btn, False, False, 0)
 
-        power = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        power = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=18)
         power.set_halign(Gtk.Align.CENTER)
-        b_r = Gtk.Button(label="Riavvia")
-        b_r.get_style_context().add_class("nxs-menu-item")
-        b_r.connect("clicked", lambda _w: self._power(["nxs-shutdown", "reboot"]))
-        b_s = Gtk.Button(label="Spegni")
-        b_s.get_style_context().add_class("nxs-menu-item")
-        b_s.connect("clicked", lambda _w: self._power(["nxs-shutdown", "poweroff"]))
-        power.pack_start(b_r, False, False, 0)
-        power.pack_start(b_s, False, False, 0)
-        outer.pack_start(power, False, False, 0)
+        power.set_margin_top(6)
+        for icon, cmd in (("system-reboot-symbolic", ["nxs-shutdown", "reboot"]),
+                          ("system-shutdown-symbolic", ["nxs-shutdown", "poweroff"])):
+            b = Gtk.Button()
+            b.get_style_context().add_class("nxs-gr-pw")
+            b.set_image(Gtk.Image.new_from_icon_name(icon, Gtk.IconSize.LARGE_TOOLBAR))
+            b.set_relief(Gtk.ReliefStyle.NONE)
+            b.connect("clicked", lambda _w, c=cmd: self._power(c))
+            power.pack_start(b, False, False, 0)
+        card.pack_start(power, False, False, 0)
 
         GLib.idle_add(self.pw.grab_focus)
 
+    def _toggle_pw(self, entry, _pos, _ev):
+        vis = not entry.get_visibility()
+        entry.set_visibility(vis)
+        entry.set_icon_from_icon_name(
+            Gtk.EntryIconPosition.SECONDARY,
+            "view-conceal-symbolic" if vis else "view-reveal-symbolic")
+
     def _on_key(self, _w, ev):
-        if ev.keyval == Gdk.KEY_Escape:      # solo in modalita' finestra (test)
+        if ev.keyval == Gdk.KEY_Escape:
             self.destroy()
 
     def _power(self, cmd):
@@ -136,12 +217,13 @@ class Greeter(Gtk.Window):
                 print("AUTH-OK")
             self.destroy()
         else:
-            self.err.set_markup("<span foreground='#ff5a8a'>Password errata</span>")
+            self.err.set_text("Password errata")
             self.pw.set_text("")
             self.pw.grab_focus()
 
 
 def main():
+    _install_css()
     g = Greeter()
     g.show_all()
     Gtk.main()
