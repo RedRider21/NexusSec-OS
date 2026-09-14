@@ -24,10 +24,20 @@ if [ -z "$DISPLAY" ] && [ "$(tty)" = "/dev/tty1" ]; then
   # Persistenza CIFRATA (LUKS): se presente e non ancora sbloccata, chiedi la
   # passphrase QUI (tty interattiva) prima di startx. Se assente, non fa nulla.
   command -v nxs-unlock-data >/dev/null 2>&1 && nxs-unlock-data login
-  startx
-  ec=$?
-  # X uscito pulito (logout): torna alla shell senza allarmi.
-  [ "$ec" = "0" ] && exec /bin/sh
+  # Sessione grafica in LOOP: se al logout (uscita pulita di startx) il LOGIN
+  # GRAFICO e' attivo (/etc/nxs/greeter.on), riavviamo la sessione X -> si
+  # ritorna al GREETER (come un display manager), invece di cadere sulla shell.
+  # Senza greeter: comportamento classico della live (shell dopo il logout).
+  while :; do
+    startx
+    ec=$?
+    [ "$ec" = "0" ] || break                 # X fallito -> diagnostica sotto
+    if [ -f /etc/nxs/greeter.on ]; then
+      sleep 1                                 # anti-spin, poi torna al greeter
+      continue
+    fi
+    exec /bin/sh                              # logout senza greeter -> shell
+  done
   clear
   echo "=================================================================="
   echo " NexusSec: avvio grafico (startx) FALLITO  [codice $ec]"
