@@ -1,51 +1,37 @@
 #!/bin/sh
-# nxs-nightlight - filtro luce blu (night-light) con overlay traslucido.
+# nxs-nightlight - filtro luce blu (night-light) via gamma xrandr.
 #
-# Metodo: uno strato ambra semitrasparente a schermo intero (composito da picom),
-# che LASCIA PASSARE i click. A differenza di `xrandr --gamma`, funziona anche su
-# GPU VIRTUALI (VM), dove la gamma spesso viene ignorata dal driver.
+# Riduce le componenti blu/verde della gamma su TUTTE le uscite connesse, per
+# affaticare meno la vista. Nessuna dipendenza extra (xrandr gia' presente).
+#
+# NB onesto: la correzione gamma e' applicata dal DRIVER. Su hardware reale
+# funziona; su alcune GPU VIRTUALI (VM) il driver la ignora -> il filtro "non fa
+# nulla" (nessun danno). NON usiamo un overlay traslucido perche' senza
+# compositore attivo (frequente in VM) diventerebbe OPACO e coprirebbe lo schermo.
 #
 # Uso: nxs-nightlight on|off|toggle|status|restore
-#   on      attiva il filtro (avvia l'overlay)
-#   off     disattiva (chiude l'overlay)
-#   toggle  inverte
-#   status  on|off
-#   restore riapplica lo stato salvato (usato in autostart)
 set -eu
 
-CFG="${XDG_CONFIG_HOME:-$HOME/.config}/nxs"
-CACHE="${XDG_CACHE_HOME:-$HOME/.cache}/nxs"
-STATE="$CFG/nightlight"
-PIDF="$CACHE/nightlight.pid"
-OVERLAY=/usr/local/lib/nxs-nightlight-overlay
-STRENGTH=0.20
+STATE="${XDG_CONFIG_HOME:-$HOME/.config}/nxs/nightlight"
+WARM="1.0:0.85:0.70"     # gamma calda (meno blu/verde)
+NEUTRAL="1.0:1.0:1.0"
 
-_running() {
-  [ -f "$PIDF" ] && kill -0 "$(cat "$PIDF" 2>/dev/null)" 2>/dev/null
+_outputs() { xrandr --query 2>/dev/null | awk '/ connected/{print $1}'; }
+
+_apply() {  # $1 = gamma
+  for o in $(_outputs); do
+    xrandr --output "$o" --gamma "$1" 2>/dev/null || true
+  done
 }
 
-_start() {
-  _running && return 0
-  mkdir -p "$CACHE"
-  python3 "$OVERLAY" "$STRENGTH" >/dev/null 2>&1 &
-  echo $! > "$PIDF"
-}
-
-_stop() {
-  [ -f "$PIDF" ] && kill "$(cat "$PIDF" 2>/dev/null)" 2>/dev/null || true
-  rm -f "$PIDF" 2>/dev/null || true
-  # rete di sicurezza: elimina eventuali overlay orfani
-  pkill -f "$OVERLAY" 2>/dev/null || true
-}
-
-_save() { mkdir -p "$CFG"; printf '%s\n' "$1" > "$STATE"; }
 _is_on() { [ -f "$STATE" ] && [ "$(cat "$STATE" 2>/dev/null)" = "on" ]; }
+_save() { mkdir -p "$(dirname "$STATE")"; printf '%s\n' "$1" > "$STATE"; }
 
 case "${1:-status}" in
-  on)      _start; _save on;  echo "night-light: ON" ;;
-  off)     _stop;  _save off; echo "night-light: OFF" ;;
-  toggle)  if _running; then "$0" off; else "$0" on; fi ;;
-  status)  _running && echo on || echo off ;;
-  restore) _is_on && _start || true ;;
+  on)      _apply "$WARM";    _save on;  echo "night-light: ON" ;;
+  off)     _apply "$NEUTRAL"; _save off; echo "night-light: OFF" ;;
+  toggle)  if _is_on; then "$0" off; else "$0" on; fi ;;
+  status)  _is_on && echo on || echo off ;;
+  restore) _is_on && _apply "$WARM" || true ;;
   *) echo "uso: nxs-nightlight {on|off|toggle|status|restore}" >&2; exit 2 ;;
 esac

@@ -96,28 +96,49 @@ def run_menu():
     lst = Gtk.ListBox()
     scroll.add(lst)
 
-    if not items:
-        r = Gtk.Label(label="(cronologia vuota)"); r.set_xalign(0)
-        r.set_margin_top(8); r.set_margin_bottom(8)
-        lst.add(r)
-    else:
-        for text in items:
-            row = Gtk.ListBoxRow()
-            lab = Gtk.Label(label=_preview(text)); lab.set_xalign(0)
-            lab.set_ellipsize(3)                       # PANGO_ELLIPSIZE_END
-            lab.set_margin_top(4); lab.set_margin_bottom(4)
-            lab.set_margin_start(6); lab.set_margin_end(6)
-            row.add(lab)
-            row._text = text
-            lst.add(row)
+    def _activated(_lst, row):
+        t = getattr(row, "_text", None)
+        if t is None:
+            return                                     # riga "vuota": ignora
+        cb.set_text(t, -1)
+        cb.store()
+        win.destroy()
+    lst.connect("row-activated", _activated)
 
-        def _activated(_lst, row):
-            t = getattr(row, "_text", None)
-            if t is not None:
-                cb.set_text(t, -1)
-                cb.store()
-            win.destroy()
-        lst.connect("row-activated", _activated)
+    def populate(entries):
+        for c in lst.get_children():
+            lst.remove(c)
+        if not entries:
+            row = Gtk.ListBoxRow(); row.set_selectable(False)
+            lab = Gtk.Label(label="(cronologia vuota)"); lab.set_xalign(0)
+            lab.set_margin_top(8); lab.set_margin_bottom(8)
+            row.add(lab)
+            lst.add(row)
+        else:
+            for text in entries:
+                row = Gtk.ListBoxRow()
+                lab = Gtk.Label(label=_preview(text)); lab.set_xalign(0)
+                lab.set_ellipsize(3)                   # PANGO_ELLIPSIZE_END
+                lab.set_margin_top(4); lab.set_margin_bottom(4)
+                lab.set_margin_start(6); lab.set_margin_end(6)
+                row.add(lab)
+                row._text = text
+                lst.add(row)
+        lst.show_all()
+
+    # refresh LIVE: se copi altrove mentre la finestra e' aperta, l'elenco si
+    # aggiorna da solo (prima serviva chiudere e riaprire).
+    state = {"items": items}
+    populate(items)
+
+    def _refresh():
+        cur = _load()
+        if cur != state["items"]:
+            state["items"] = cur
+            populate(cur)
+        return True
+    _tid = GLib.timeout_add(1200, _refresh)
+    win.connect("destroy", lambda *_: GLib.source_remove(_tid))
 
     footer = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
     clr = Gtk.Button(label="Svuota cronologia")

@@ -743,10 +743,10 @@ Con RAM abbondante resta quasi inattivo. Configurato in `/etc/local.d/zram.start
 - **Gestione energetica** (portatili, via `acpid`): chiusura coperchio → **blocca
   schermo**; tasto accensione → **spegnimento pulito**; avviso di **batteria
   scarica** (≤10% in scarica).
-- **Filtro luce blu** (`nxs-nightlight`, tasto **Super+N** o menu): overlay ambra
-  traslucido a schermo intero (composito da picom) che lascia passare i click —
-  **funziona anche in VM** (a differenza della gamma `xrandr`, ignorata dalle GPU
-  virtuali). Stato persistente, riapplicato all'avvio.
+- **Filtro luce blu** (`nxs-nightlight`, tasto **Super+N** o menu): gamma calda via
+  `xrandr`, stato persistente e riapplicato all'avvio. Su **hardware reale** attenua
+  il blu; su alcune **GPU virtuali** (VM) il driver la ignora (nessun effetto, ma
+  senza coprire lo schermo).
 - **Gestore appunti** con cronologia (`nxs-clipboard`, tasto **Super+V** o menu):
   finestra con gli ultimi testi copiati, riseleziona per ricopiare (Python/GTK,
   nessuna dipendenza extra).
