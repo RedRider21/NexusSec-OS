@@ -71,6 +71,11 @@ REPOS
            sec-profile-forensics sec-profile-osint sec-profile-web; do
     ( cd /root/nexussec/$p && abuild -F -d ) || { echo "[ctr] BUILD FALLITA: $p"; exit 1; }
   done
+  # nxs-chkpwd: helper C setuid, DIPENDENZA di nexussec-base (login grafico) ->
+  # va compilato anche qui, altrimenti mkimage non risolve la dipendenza. Ha una
+  # source locale, quindi serve 'checksum' prima di -r (a differenza dei meta).
+  ( cd /root/nexussec/nxs-chkpwd && abuild -F checksum && abuild -F -r ) \
+    || { echo "[ctr] BUILD FALLITA: nxs-chkpwd"; exit 1; }
   echo "[ctr] pacchetti pronti:"; find /root/packages -name "*.apk" | head
 
   echo "[ctr] clono aports ufficiali (per mkimage + profilo rpi)..."
