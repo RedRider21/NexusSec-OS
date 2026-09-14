@@ -31,7 +31,7 @@ except Exception:
 
 WINDOWED = "--windowed" in sys.argv or bool(os.environ.get("NXS_GREETER_TEST"))
 AUTH_USER_DEFAULT = os.environ.get("NXS_GREETER_USER", "nexus")
-CHKPWD = "/usr/local/bin/nxs-chkpwd"       # helper setuid (se presente)
+CHKPWD = "/usr/bin/nxs-chkpwd"             # helper setuid (pacchetto apk)
 AUTHCHECK = "/usr/local/bin/nxs-authcheck"  # fallback via doas
 
 ACCENT = "#00e5ff"

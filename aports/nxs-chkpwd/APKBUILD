@@ -19,7 +19,8 @@ build() {
 }
 
 package() {
+	# NB: abuild VIETA /usr/local ai pacchetti -> installiamo in /usr/bin.
 	# setuid root (4755): il greeter, girando come utente, puo' leggere shadow.
 	install -Dm4755 -o root -g root nxs-chkpwd \
-		"$pkgdir"/usr/local/bin/nxs-chkpwd
+		"$pkgdir"/usr/bin/nxs-chkpwd
 }
