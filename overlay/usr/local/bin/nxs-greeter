@@ -223,6 +223,14 @@ class Greeter(Gtk.Window):
 
 
 def main():
+    # Serve una sessione grafica: se lanciato dalla console testuale (es. dopo il
+    # logout, quando X non e' attivo) niente traceback GTK, ma un messaggio chiaro.
+    if not os.environ.get("DISPLAY") and not os.environ.get("WAYLAND_DISPLAY"):
+        sys.stderr.write(
+            "nxs-greeter: nessuna sessione grafica (X non attivo).\n"
+            "Avvialo da un TERMINALE DENTRO il desktop, non dalla console dopo "
+            "il logout. Per il login grafico al boot: doas nxs-harden greeter on.\n")
+        return 2
     _install_css()
     g = Greeter()
     g.show_all()
