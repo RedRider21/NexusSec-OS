@@ -154,14 +154,9 @@ class Greeter(Gtk.Window):
         bgarea = Gtk.DrawingArea()
         bgarea.connect("draw", self._draw_bg)
         overlay.add(bgarea)                       # sfondo honeycomb a tutto schermo
-        # card di login spostata a SINISTRA (verticalmente centrata): lo sfondo
-        # pulito resta ben visibile a destra.
+        # card di login CENTRATA (scelta utente), sopra lo sfondo pulito honeycomb.
         center = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        if WINDOWED:
-            center.set_halign(Gtk.Align.CENTER)
-        else:
-            center.set_halign(Gtk.Align.START)
-            center.set_margin_start(70)
+        center.set_halign(Gtk.Align.CENTER)
         center.set_valign(Gtk.Align.CENTER)
         overlay.add_overlay(center)               # card sopra lo sfondo
 
