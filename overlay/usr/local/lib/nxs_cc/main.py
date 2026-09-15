@@ -129,6 +129,9 @@ VIEW_MAP = {
     "case": _apri_casi,
     "mouse": views.open_mouse,
     "touchpad": views.open_mouse,
+    "ia": views.open_ai,
+    "ai": views.open_ai,
+    "assistente": views.open_ai,
 }
 
 
@@ -242,6 +245,8 @@ def build_window() -> Gtk.Window:
              "CPU, RAM, disco, kernel, uptime", launch("sysinfo")),
         Tile("utilities-system-monitor", "Monitor",
              "CPU, RAM, rete e disco in tempo reale", launch("monitor")),
+        Tile("applications-science", "Assistente IA",
+             "Consulente IA: backend locale (ollama) o cloud", launch("ia")),
         Tile("system-software-install", "Pacchetti",
              "Cerca e installa pacchetti Alpine (apk)", launch("pacchetti")),
         Tile("utilities-terminal", "Log di sistema",

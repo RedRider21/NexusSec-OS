@@ -3538,3 +3538,161 @@ def open_screens(_btn=None):
     _rebuild()
     win.show_all()
     return win
+
+
+# ----- Assistente IA -------------------------------------------------------
+def open_ai(_btn=None):
+    """Pannello dell'assistente IA: sceglie il backend (locale ollama / cloud
+    compatibile OpenAI), gestisce il modello locale e il consenso al cloud.
+    NIENTE si scarica in automatico: runtime e modello si installano solo da qui,
+    con azione esplicita dell'admin."""
+    import sys as _sys
+    _sys.path.insert(0, "/usr/local/lib")
+    from nxs_ai import config as ai_cfg, backend as ai_be
+
+    win, body = panel_window("Assistente IA", 620, 680)
+    cfg = ai_cfg.load()
+
+    intro = Gtk.Label(label="Assistente consulente di NexusSec: risponde e "
+                            "PROPONE i comandi, non li esegue (Fase 1). Scegli "
+                            "dove gira il modello. Nulla viene scaricato senza "
+                            "una tua azione esplicita.")
+    intro.set_xalign(0); intro.set_line_wrap(True)
+    intro.get_style_context().add_class("nxs-val")
+    body.pack_start(intro, False, False, 0)
+
+    # --- scelta backend ---
+    r_off = Gtk.RadioButton.new_with_label_from_widget(None, "Disattivato")
+    r_local = Gtk.RadioButton.new_with_label_from_widget(r_off, "Locale (ollama, offline)")
+    r_cloud = Gtk.RadioButton.new_with_label_from_widget(r_off, "Cloud (compatibile OpenAI / AIos)")
+    {"off": r_off, "local": r_local, "cloud": r_cloud}.get(
+        cfg.get("backend", "off"), r_off).set_active(True)
+    bkbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
+    bkbox.get_style_context().add_class("nxs-card")
+    hdr = Gtk.Label(label="Backend"); hdr.set_xalign(0)
+    hdr.get_style_context().add_class("nxs-key")
+    bkbox.pack_start(hdr, False, False, 0)
+    for r in (r_off, r_local, r_cloud):
+        bkbox.pack_start(r, False, False, 0)
+    body.pack_start(bkbox, False, False, 0)
+
+    # --- sezione LOCALE ---
+    loc = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
+    loc.get_style_context().add_class("nxs-card")
+    lhdr = Gtk.Label(label="Modello locale (ollama)"); lhdr.set_xalign(0)
+    lhdr.get_style_context().add_class("nxs-key")
+    loc.pack_start(lhdr, False, False, 0)
+    lstat = Gtk.Label(); lstat.set_xalign(0); lstat.set_line_wrap(True)
+    lstat.get_style_context().add_class("nxs-val")
+    loc.pack_start(lstat, False, False, 0)
+
+    b_inst = icon_button("Installa runtime IA (ollama)", "system-software-install-symbolic")
+    loc.pack_start(b_inst, False, False, 0)
+
+    combo = Gtk.ComboBoxText()
+    for mid, desc in ai_cfg.LOCAL_MODELS:
+        combo.append(mid, desc)
+    combo.set_active_id(cfg["local"].get("model") or ai_cfg.DEFAULT_LOCAL_MODEL)
+    loc.pack_start(combo, False, False, 0)
+    b_pull = icon_button("Scarica il modello selezionato", "folder-download-symbolic")
+    loc.pack_start(b_pull, False, False, 0)
+    body.pack_start(loc, False, False, 0)
+
+    def _refresh_local():
+        inst = ai_be.ollama_installed()
+        if not inst:
+            lstat.set_markup("<b>Runtime non installato.</b> Premi il pulsante per "
+                             "installarlo (apk add ollama).")
+        else:
+            models = ai_be.ollama_models()
+            srv = "attivo" if ai_be.server_running() else "spento (si avvia al bisogno)"
+            got = ", ".join(models) if models else "nessuno"
+            lstat.set_markup(f"Runtime installato. Server: {srv}.\n"
+                             f"Modelli scaricati: <b>{got}</b>")
+        b_inst.set_sensitive(not inst)
+    _refresh_local()
+
+    def _install_ollama(_b):
+        _run_priv_term("doas apk add --no-cache ollama && "
+                       "rc-service ollama start 2>/dev/null; "
+                       "echo; echo 'Runtime IA installato.'", "Installa IA locale")
+        GLib.timeout_add(1500, lambda: (_refresh_local(), False)[1])
+    b_inst.connect("clicked", _install_ollama)
+
+    def _pull_model(_b):
+        mid = combo.get_active_id()
+        if not mid:
+            return
+        if not ai_be.ollama_installed():
+            info_dialog(win, "Runtime assente",
+                        "Installa prima il runtime IA (ollama).")
+            return
+        # pull esplicito, con output visibile nel terminale (puo' essere lungo)
+        run_bg(["lxterminal", "--title=Scarico modello IA", "-e",
+                "sh -c \"ollama serve >/dev/null 2>&1 & sleep 2; "
+                "ollama pull %s; echo; printf 'Premi Invio per chiudere...'; read x\"" % mid])
+        GLib.timeout_add(2000, lambda: (_refresh_local(), False)[1])
+    b_pull.connect("clicked", _pull_model)
+
+    # --- sezione CLOUD ---
+    cl = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
+    cl.get_style_context().add_class("nxs-card")
+    chdr = Gtk.Label(label="Backend cloud"); chdr.set_xalign(0)
+    chdr.get_style_context().add_class("nxs-key")
+    cl.pack_start(chdr, False, False, 0)
+    warn = Gtk.Label(label="Attenzione: con il cloud il contesto (domande, output "
+                           "incollati) esce verso un servizio esterno. Usa un "
+                           "endpoint di cui ti fidi. La chiave resta solo in "
+                           "~/.config/nxs/ai.json (permessi 600).")
+    warn.set_xalign(0); warn.set_line_wrap(True)
+    warn.get_style_context().add_class("nxs-val")
+    cl.pack_start(warn, False, False, 0)
+    ep = Gtk.Entry(); ep.set_hexpand(True)
+    ep.set_placeholder_text("Endpoint, es. https://api.openai.com  o  http://mio-aios:8080")
+    ep.set_text(cfg["cloud"].get("endpoint", ""))
+    cl.pack_start(ep, False, False, 0)
+    cm = Gtk.Entry(); cm.set_hexpand(True)
+    cm.set_placeholder_text("Modello cloud, es. gpt-4o-mini / il nome del tuo AIos")
+    cm.set_text(cfg["cloud"].get("model", ""))
+    cl.pack_start(cm, False, False, 0)
+    ak = _eye_entry("Chiave API (se richiesta)")
+    ak.set_text(cfg["cloud"].get("api_key", ""))
+    cl.pack_start(ak, False, False, 0)
+    consent = Gtk.CheckButton(label="Autorizzo l'invio del contesto al servizio cloud")
+    consent.set_active(bool(cfg.get("consent_cloud")))
+    cl.pack_start(consent, False, False, 0)
+    body.pack_start(cl, False, False, 0)
+
+    def _sync_sections(*_a):
+        loc.set_sensitive(r_local.get_active())
+        cl.set_sensitive(r_cloud.get_active())
+    for r in (r_off, r_local, r_cloud):
+        r.connect("toggled", _sync_sections)
+    _sync_sections()
+
+    # --- footer ---
+    foot = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+    b_save = icon_button("Salva", "document-save-symbolic", primary=True)
+    b_chat = icon_button("Apri conversazione", "utilities-terminal-symbolic")
+    foot.pack_start(b_save, False, False, 0)
+    foot.pack_end(b_chat, False, False, 0)
+    body.pack_start(foot, False, False, 0)
+
+    def _save(_b):
+        be = "local" if r_local.get_active() else "cloud" if r_cloud.get_active() else "off"
+        ai_cfg.set_values(
+            backend=be,
+            consent_cloud=consent.get_active(),
+            local={"model": combo.get_active_id() or ai_cfg.DEFAULT_LOCAL_MODEL},
+            cloud={"endpoint": ep.get_text().strip(),
+                   "model": cm.get_text().strip(),
+                   "api_key": ak.get_text().strip()})
+        info_dialog(win, "Assistente IA",
+                    "Impostazioni salvate. Apri la conversazione con il pulsante "
+                    "in basso o dal terminale con: nxs-ai")
+    b_save.connect("clicked", _save)
+    b_chat.connect("clicked", lambda _b: run_bg(
+        ["lxterminal", "--title=Assistente IA", "-e", "nxs-ai"]))
+
+    win.show_all()
+    return win

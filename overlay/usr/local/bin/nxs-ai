@@ -1,0 +1,12 @@
+#!/bin/sh
+# NexusSec OS - Assistente IA (consulente read-only). Uso:
+#   nxs-ai "come acquisisco un'immagine E01 di /dev/sdb?"   # domanda singola
+#   nxs-ai                                                   # conversazione
+# Configurazione (backend locale/cloud, modello): Centro di Controllo -> Assistente IA.
+for c in python3 python3.9 python3.11 python3.7; do
+  if command -v "$c" >/dev/null 2>&1; then
+    exec env PYTHONPATH=/usr/local/lib "$c" -m nxs_ai.cli "$@"
+  fi
+done
+echo "nxs-ai: python3 non disponibile" >&2
+exit 1
