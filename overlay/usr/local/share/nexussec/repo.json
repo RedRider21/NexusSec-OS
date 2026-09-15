@@ -1,6 +1,61 @@
 {
   "_note": "Catalogo tool NexusSec (base Alpine), set allineato per categoria a Kali/Parrot. 'method': 'apk' = pacchetto nativo Alpine (apk add); 'container' = immagine Podman (tool pesanti/non in apk, es. Metasploit/ZAP; campi: image, opz. run/entrypoint/net/privileged); 'pip' = pipx; 'git' = clone + venv dedicato (campi: git, entry, bin; per tool che NON sono pacchetti PyPI es. metagoofil); 'kali' = eseguito dentro l'immagine kalilinux/kali-rolling con apt (campo opz. apt; canale Debian mantenuto e sempre aggiornato per qualunque tool dell'arsenale Kali non disponibile come apk su musl). PERCHE' non si usano direttamente i repo APT di Parrot/Kali: sono .deb costruiti per glibc/Debian, BINARIAMENTE incompatibili con Alpine (musl/apk); li si consuma quindi via container ('container'/'kali'), che portano dentro il proprio userland Debian. nxs-tool sceglie automaticamente.",
   "tools": {
+    "wcvs": {
+      "category": "web",
+      "method": "go",
+      "gh_repo": "Hackmanit/Web-Cache-Vulnerability-Scanner",
+      "bin": "wcvs",
+      "description": "Scanner di vulnerabilita' di web cache (cache poisoning)."
+    },
+    "veracrypt": {
+      "category": "crypto",
+      "method": "kali",
+      "bin": "veracrypt",
+      "description": "Cifratura on-the-fly di dischi e volumi (successore di TrueCrypt)."
+    },
+    "outguess": {
+      "category": "crypto",
+      "method": "kali",
+      "bin": "outguess",
+      "description": "Steganografia: nasconde ed estrae dati in immagini JPEG."
+    },
+    "honggfuzz": {
+      "category": "exploit",
+      "method": "kali",
+      "bin": "honggfuzz",
+      "description": "Fuzzer di sicurezza guidato da coverage (feedback-driven)."
+    },
+    "retdec": {
+      "category": "reverse",
+      "method": "kali",
+      "bin": "retdec-decompiler",
+      "description": "Decompilatore retargetable di eseguibili (Avast RetDec)."
+    },
+    "freemind": {
+      "category": "reporting",
+      "method": "kali",
+      "bin": "freemind",
+      "description": "Mind mapping per organizzare note, attacchi e attivita'."
+    },
+    "gpa": {
+      "category": "crypto",
+      "method": "kali",
+      "bin": "gpa",
+      "description": "GNU Privacy Assistant: interfaccia grafica per GnuPG."
+    },
+    "simtrace": {
+      "category": "hardware",
+      "method": "kali",
+      "bin": "simtrace",
+      "description": "Tracciamento del traffico tra SIM/smartcard e lettore."
+    },
+    "voiper": {
+      "category": "sniffing",
+      "method": "kali",
+      "bin": "voiper",
+      "description": "Fuzzer per sistemi VoIP/SIP."
+    },
     "nmap": {
       "category": "recon",
       "method": "apk",
