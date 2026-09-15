@@ -47,10 +47,30 @@ grafico** per creare **wizard personalizzati** (scegli i tool dal catalogo,
 definisci modalità, opzioni, comportamento stealth per step e la catena dati)
 che si aggiungono all'elenco **senza scrivere codice**.
 
+## Assistente IA
+
+NexusSec include un **assistente IA** consulente: risponde a domande su comandi e
+strumenti, spiega gli output e **propone i comandi** da copiare — **non li
+esegue** (human-in-the-loop, come si conviene a una distro di sicurezza). Rispetta
+il profilo attivo e tiene un registro locale delle interazioni. Il backend è
+**selezionabile** dal Centro di Controllo → *Assistente IA*:
+
+- **Locale** (`ollama`, offline): il modello gira sulla macchina, **nessun dato
+  esce**. Runtime e modello si installano **solo su scelta esplicita** dell'admin
+  — niente download automatici. Il modello può risiedere nella **persistenza**
+  (chiavetta NXSDATA) ed essere riusato **offline** senza occupare la RAM della
+  live: così anche una macchina con poca memoria può usare un modello più grande.
+- **Cloud** (endpoint **compatibile OpenAI**, anche un proprio backend AIos):
+  potente e leggero, attivo **solo dopo consenso esplicito**; la chiave API resta
+  in locale (`~/.config/nxs`, permessi `600`).
+
+Da terminale: `nxs-ai "domanda"` (risposta singola) oppure `nxs-ai`
+(conversazione).
+
 ## Documentazione
 
 - **[Manuale utente](docs/manuale.html)** — avvio, profili, menu, metodi dei tool,
-  procedure guidate, browser stealth, persistenza e comandi CLI.
+  procedure guidate, browser stealth, **assistente IA**, persistenza e comandi CLI.
 - **[Copertura dell'arsenale](docs/copertura-arsenale.html)** — confronto riga per
   riga con `kali-linux-everything` / `parrot-tools-full`.
 
