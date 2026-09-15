@@ -29,6 +29,11 @@ Tutto ciò che offre NexusSec, a colpo d'occhio (dettagli nelle sezioni seguenti
   eventuale instradamento via Tor (`nxs-wizard`).
 - **HORUS** — dashboard **OSINT/GEOINT** locale: mappa + feed mondiali, recon,
   correlazioni, grafo relazioni, fascicoli d'indagine, news 360° (`nxs-horus`).
+- **Assistente IA** — consulente che spiega comandi/output e **propone** i comandi
+  senza eseguirli (`nxs-ai`; Fase 1, human-in-the-loop). Backend **selezionabile**
+  dal Centro di Controllo: **locale** (`ollama`, offline) o **cloud** (endpoint
+  compatibile OpenAI, anche un proprio AIos, con consenso). Nessun download
+  automatico; il modello locale può risiedere nella **persistenza** (NXSDATA).
 - **Sicurezza & privacy** — firewall default-deny (`nxs-firewall`), **Tor SOCKS**
   (`nxs-tor`), **Modalità Anonima globale + kill-switch** (`nxs-anon`), **MAC
   spoofing** (`nxs-macspoof`), **rimozione metadati MAT2** (`nxs-metadata`),
@@ -139,6 +144,10 @@ attivo solo se `NXSDATA` e' montato):
 - **apk** (es. `nmap`) -> vengono **registrati** (`/var/nxs-data/tool-state/apk-tools`)
   e **reinstallati al boot, offline dalla cache**, in background (il desktop non
   aspetta). Gestione: `nxs-tool persisted` / `nxs-tool forget <pkg>`.
+- **modello IA locale** (`ollama`) -> scaricato una volta, risiede su `NXSDATA`
+  e viene **mmap-ato dal disco**: resta disponibile offline **senza occupare la
+  RAM** della live e senza riscaricarlo a ogni avvio. Ideale per usare un modello
+  3B+ anche su macchine con RAM limitata.
 
 Per una persistenza **totale** come un PC normale resta l'installazione su disco
 (`nxs-install` -> `setup-disk -m sys`).
@@ -1001,6 +1010,8 @@ Centro di Controllo). Dettaglio completo con i sotto-comandi: manuale online.
 | | `nxs-wizard` | procedure guidate (catene di tool) |
 | | `nxs-horus` | dashboard OSINT/GEOINT |
 | | `nxs-browser` | browser stealth (WebKit) |
+| IA | `nxs-ai` | assistente consulente (backend locale `ollama` o cloud OpenAI-compat); *propone* i comandi, non li esegue |
+| | `nxs-ai-sandbox` | sandbox bubblewrap per l'agente (esecuzione confermata, Fase 2) |
 | Sicurezza | `nxs-firewall` | firewall nftables (`on`/`off`/`allow`/…) |
 | e privacy | `nxs-tor` | Tor come proxy SOCKS 9050 (`on`/`off`/`status`) |
 | | `nxs-anon` | Modalità Anonima globale + kill-switch |
