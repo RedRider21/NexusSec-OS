@@ -3241,6 +3241,7 @@
       "category": "web",
       "method": "go",
       "go": "github.com/projectdiscovery/httpx/cmd/httpx",
+      "gh_repo": "projectdiscovery/httpx",
       "bin": "httpx",
       "description": "Probe HTTP veloce (ProjectDiscovery): stato, titoli, tech, TLS. Fascia-2 (binario Go)."
     },
@@ -3248,6 +3249,7 @@
       "category": "osint",
       "method": "go",
       "go": "github.com/lc/gau/v2/cmd/gau",
+      "gh_repo": "lc/gau",
       "bin": "gau",
       "description": "Recupera URL noti da Wayback/CommonCrawl/OTX (getallurls). Binario Go."
     },
@@ -3255,6 +3257,7 @@
       "category": "osint",
       "method": "go",
       "go": "github.com/tomnomnom/waybackurls",
+      "gh_repo": "tomnomnom/waybackurls",
       "bin": "waybackurls",
       "description": "Estrae gli URL storici di un dominio da Wayback Machine. Binario Go."
     },
@@ -3262,6 +3265,7 @@
       "category": "password",
       "method": "go",
       "go": "github.com/ropnop/kerbrute",
+      "gh_repo": "ropnop/kerbrute",
       "bin": "kerbrute",
       "description": "Enumerazione utenti e password spraying via Kerberos (Active Directory). Binario Go."
     },
@@ -3269,6 +3273,7 @@
       "category": "web",
       "method": "go",
       "go": "github.com/projectdiscovery/interactsh/cmd/interactsh-client",
+      "gh_repo": "projectdiscovery/interactsh",
       "bin": "interactsh-client",
       "description": "Rilevazione interazioni OOB (OAST) per SSRF/blind (ProjectDiscovery). Binario Go."
     },
@@ -3276,6 +3281,7 @@
       "category": "recon",
       "method": "go",
       "go": "github.com/projectdiscovery/uncover/cmd/uncover",
+      "gh_repo": "projectdiscovery/uncover",
       "bin": "uncover",
       "description": "Trova host esposti via Shodan/Censys/Fofa (ProjectDiscovery). Binario Go."
     },
@@ -3283,6 +3289,7 @@
       "category": "vuln",
       "method": "go",
       "go": "github.com/projectdiscovery/cvemap/cmd/cvemap",
+      "gh_repo": "projectdiscovery/cvemap",
       "bin": "cvemap",
       "description": "Navigazione strutturata dei CVE (ProjectDiscovery). Binario Go."
     },
@@ -3290,6 +3297,7 @@
       "category": "recon",
       "method": "go",
       "go": "github.com/projectdiscovery/tlsx/cmd/tlsx",
+      "gh_repo": "projectdiscovery/tlsx",
       "bin": "tlsx",
       "description": "Ricognizione TLS di massa (SAN, cifrari, scadenze). Binario Go."
     },
@@ -3297,6 +3305,7 @@
       "category": "web",
       "method": "go",
       "go": "github.com/edoardottt/cariddi/cmd/cariddi",
+      "gh_repo": "edoardottt/cariddi",
       "bin": "cariddi",
       "description": "Crawler per endpoint, segreti, token e file interessanti. Binario Go."
     },
@@ -3304,6 +3313,7 @@
       "category": "web",
       "method": "go",
       "go": "github.com/rverton/webanalyze/cmd/webanalyze",
+      "gh_repo": "rverton/webanalyze",
       "bin": "webanalyze",
       "description": "Fingerprint delle tecnologie web (Wappalyzer CLI). Binario Go."
     },
@@ -3311,6 +3321,7 @@
       "category": "osint",
       "method": "go",
       "go": "github.com/j3ssie/metabigor",
+      "gh_repo": "j3ssie/metabigor",
       "bin": "metabigor",
       "description": "OSINT su organizzazioni/IP/ASN senza API key. Binario Go."
     },
@@ -3318,6 +3329,7 @@
       "category": "recon",
       "method": "go",
       "go": "github.com/shadow1ng/fscan",
+      "gh_repo": "shadow1ng/fscan",
       "bin": "fscan",
       "description": "Scanner intranet all-in-one (porte, servizi, brute, PoC). Binario Go."
     },
@@ -3325,6 +3337,7 @@
       "category": "web",
       "method": "cargo",
       "cargo": "x8",
+      "gh_repo": "Sh1yo/x8",
       "bin": "x8",
       "description": "Scoperta di parametri HTTP nascosti. Fascia-2 (binario Rust)."
     },
@@ -3332,6 +3345,7 @@
       "category": "recon",
       "method": "cargo",
       "cargo": "rustscan",
+      "gh_repo": "RustScan/RustScan",
       "bin": "rustscan",
       "description": "Port scanner velocissimo (poi passa a nmap). Binario Rust."
     }

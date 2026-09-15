@@ -44,6 +44,21 @@ if command -v sysctl >/dev/null 2>&1; then
 else
 	echo 100 > /proc/sys/vm/swappiness 2>/dev/null || true
 fi
+
+# --- Amplia il root tmpfs (ora che c'e' la valvola zram) --------------------
+# La live gira in / su tmpfs, dimensionato al 50% della RAM dall'initramfs: con
+# la sola base occupa gia' quasi tutto -> "no space left" appena si installa un
+# tool (es. su una VM con 4GB). Lo swap zram appena attivato fa da valvola: le
+# pagine fredde del tmpfs vengono COMPRESSE in RAM, quindi possiamo dare a /
+# piu' spazio logico senza sprecare memoria reale. Lo facciamo SOLO se lo swap
+# zram e' attivo (altrimenti ampliare / senza valvola rischierebbe l'OOM).
+# Best-effort: un remount fallito non rompe il boot.
+if grep -q zram0 /proc/swaps 2>/dev/null && \
+   findmnt -no FSTYPE / 2>/dev/null | grep -q tmpfs; then
+	if mount -o remount,size=90% / 2>>"$LOG"; then
+		echo "root tmpfs: ampliato a 90% della RAM (spazio per i tool)" >>"$LOG" 2>&1
+	fi
+fi
 # l'algoritmo attivo e' quello tra [parentesi] nella lista di comp_algorithm
 algo_used="$(cat /sys/block/zram0/comp_algorithm 2>/dev/null | grep -oE '\[[a-z0-9-]+\]' | tr -d '[]')"
 echo "zram: ATTIVO ($(( DISK/1024/1024 )) MiB, algoritmo ${algo_used:-?})" >>"$LOG" 2>&1

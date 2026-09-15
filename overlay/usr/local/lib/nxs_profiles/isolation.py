@@ -308,10 +308,236 @@ def _install_git(tool: str, log=print) -> bool:
 
 
 # ---------------------------------------------------------------- go (compila binari Go)
+def _go_arch_tokens() -> tuple[list[str], list[str]]:
+    """(token che identificano QUESTA architettura, token da ESCLUDERE) per
+    riconoscere l'asset giusto nei release GitHub (evita di prendere un binario
+    arm o a 32-bit su una macchina amd64 e viceversa)."""
+    m = os.uname().machine
+    off32 = ["386", "i386", "i686", "x32", "armv5", "armv6", "armv7", "armhf",
+             "armel", "mips", "mipsle", "mips64", "ppc", "s390", "riscv"]
+    if m in ("x86_64", "amd64"):
+        return (["amd64", "x86_64", "x64", "64bit"],
+                ["arm64", "aarch64", "arm"] + off32)
+    if m in ("aarch64", "arm64"):
+        return (["arm64", "aarch64"],
+                ["amd64", "x86_64", "x64"] + off32)
+    return ([m], [])
+
+
+def _elf_interp(path: Path) -> str | None:
+    """Se il file e' un ELF *dinamico*, ritorna il path del suo interprete
+    (loader), es. '/lib64/ld-linux-x86-64.so.2'; None se statico o non-ELF."""
+    try:
+        blob = open(path, "rb").read(8192)
+    except Exception:                          # noqa: BLE001
+        return None
+    if blob[:4] != b"\x7fELF":
+        return None
+    import re
+    m = re.search(rb"/lib[0-9a-z/_-]*ld-[^\x00]*", blob)
+    return m.group(0).decode("latin1") if m else None
+
+
+def _runnable(path: Path, log=print) -> bool:
+    """Verifica che il binario possa essere ESEGUITO su questo sistema (musl).
+    I binari statici vanno sempre; per quelli dinamici-glibc serve il loader
+    (fornito da gcompat) -> se manca prova a installarlo on-demand."""
+    interp = _elf_interp(path)
+    if not interp:
+        return True                            # statico: gira sempre
+    if Path(interp).exists():
+        return True                            # loader gia' presente (gcompat)
+    if not have("apk"):
+        return False
+    log("[*] binario glibc: installo gcompat (loader di compatibilita')")
+    subprocess.run(priv(["apk", "add", "--no-cache", "gcompat"]),
+                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    return Path(interp).exists()
+
+
+def _extract_one(path: Path, dest: Path) -> None:
+    """Estrae UN archivio (zip/tar[.gz]/tgz) o scompatta un .gz singolo in dest."""
+    import gzip
+    import tarfile
+    import zipfile
+    low = str(path).lower()
+    dest.mkdir(parents=True, exist_ok=True)
+    if low.endswith(".zip"):
+        with zipfile.ZipFile(path) as z:
+            z.extractall(dest)
+    elif low.endswith((".tar.gz", ".tgz")):
+        with tarfile.open(path, "r:gz") as t:
+            t.extractall(dest)
+    elif low.endswith(".tar"):
+        with tarfile.open(path, "r:") as t:
+            t.extractall(dest)
+    elif low.endswith(".gz"):                   # gzip di un singolo file (es. x8.gz)
+        out = dest / Path(path).name[:-3]
+        with gzip.open(path, "rb") as g, open(out, "wb") as f:
+            shutil.copyfileobj(g, f)
+
+
+def _unpack(pkg: Path, dest: Path) -> Path:
+    """Estrae pkg in dest gestendo gli archivi ANNIDATI (alcuni release sono uno
+    zip che contiene un .tar.gz, es. rustscan). Max 3 livelli, best-effort."""
+    _extract_one(pkg, dest)
+    for _ in range(3):
+        nested = [p for p in dest.rglob("*")
+                  if p.is_file() and str(p).lower().endswith(
+                      (".zip", ".tar.gz", ".tgz", ".tar", ".gz"))]
+        if not nested:
+            break
+        for p in nested:
+            try:
+                _extract_one(p, p.parent)
+                p.unlink()
+            except Exception:                  # noqa: BLE001
+                pass
+    return dest
+
+
+def _install_gobin(tool: str, log=print) -> bool:
+    """Scarica il BINARIO release dal repo GitHub (campo 'gh_repo': 'owner/nome')
+    e lo mette in ~/.local/bin, senza compilare. E' il modo giusto nella live
+    (che sta in RAM/tmpfs): un download di pochi MB invece di ~450MB di toolchain
+    + build che riempirebbero il tmpfs. Sceglie l'asset per architettura (niente
+    arm/32-bit), preferendo build statiche/musl; i binari glibc girano tramite
+    gcompat. Ritorna False (fallback su go install) se nessun asset e' adatto."""
+    import json as _json
+    import tempfile
+    import urllib.request
+
+    td = model.tool_data(tool)
+    repo = td.get("gh_repo")
+    if not repo:
+        return False
+    binname = _bin(tool)
+    want, avoid = _go_arch_tokens()
+    api = f"https://api.github.com/repos/{repo}/releases/latest"
+    req = urllib.request.Request(
+        api, headers={"User-Agent": "nxs-tool",
+                      "Accept": "application/vnd.github+json"})
+    try:
+        with urllib.request.urlopen(req, timeout=30) as r:
+            rel = _json.load(r)
+    except Exception as e:                     # noqa: BLE001
+        log(f"[*] {tool}: release GitHub non raggiungibili ({e}).")
+        return False
+    assets = rel.get("assets") or []
+    other_os = ("windows", "win32", "win64", "win-", "_win", ".exe", "darwin",
+                "macos", "mac.", "_mac", "-mac", "apple", "freebsd", "openbsd",
+                "netbsd", "android", ".dmg", ".msi", ".apk")
+    skip_ext = (".sha256", ".sha512", ".txt", ".sig", ".pem", ".deb", ".rpm",
+                ".md5", ".asc", ".json", "checksums")
+    hint = (td.get("asset") or "").lower()     # disambigua i casi limite (repo.json)
+
+    import re
+    clean_re = re.compile(re.escape(binname) + r"[-_.](v?\d)", re.I)
+
+    def _ok(n: str) -> bool:
+        n = n.lower()
+        if any(o in n for o in other_os) or any(a in n for a in avoid):
+            return False
+        if n.endswith(skip_ext):
+            return False
+        if hint and hint not in n:
+            return False
+        return any(w in n for w in want) or ("linux" in n)
+
+    def _rank(name: str) -> tuple:
+        low = name.lower()
+        clean = 0 if clean_re.match(name) else 1        # nome "pulito" (no -web/-nolocal)
+        musl = 0 if "musl" in low else 1                # build musl: gira senza gcompat
+        arch = 0 if any(w in low for w in want) else 1  # arch esplicita > solo "linux"
+        arc = 0 if low.endswith((".zip", ".tar.gz", ".tgz")) else 1
+        return (clean, musl, arch, arc)
+
+    cands = sorted(
+        ((_rank(a["name"]), a["name"], a["browser_download_url"])
+         for a in assets
+         if a.get("browser_download_url") and _ok(a.get("name", ""))),
+        key=lambda c: c[0])
+    if not cands:
+        log(f"[*] {tool}: nessun binario release per questa architettura.")
+        return False
+
+    LOCAL_BIN.mkdir(parents=True, exist_ok=True)
+    # prova i candidati migliori finche' uno produce un eseguibile compatibile
+    for _r, name, url in cands[:4]:
+        log(f"[*] scarico il binario release: {name}")
+        try:
+            with tempfile.TemporaryDirectory(prefix="nxs-gobin-") as tmp:
+                tmp = Path(tmp)
+                pkg = tmp / Path(name).name
+                with urllib.request.urlopen(
+                        urllib.request.Request(url, headers={"User-Agent": "nxs-tool"}),
+                        timeout=300) as r, open(pkg, "wb") as f:
+                    shutil.copyfileobj(r, f)
+                if name.lower().endswith((".zip", ".tar.gz", ".tgz", ".tar", ".gz")):
+                    _unpack(pkg, tmp / "x")     # gestisce anche archivi ANNIDATI (zip->tar.gz)
+                    src = _find_bin(tmp / "x", binname)
+                else:
+                    src = pkg                   # binario nudo
+                if not src or not src.exists():
+                    log(f"[*] {tool}: '{binname}' non trovato in {name}, provo un altro asset.")
+                    continue
+                if not _runnable(src, log):
+                    log(f"[*] {tool}: {name} non compatibile con musl, provo un altro asset.")
+                    continue
+                dst = LOCAL_BIN / binname
+                shutil.copyfile(src, dst)
+                dst.chmod(0o755)
+        except Exception as e:                 # noqa: BLE001
+            log(f"[*] {tool}: {name} non utilizzabile ({e}).")
+            continue
+        _ensure_apk_deps(tool, log)
+        log(f"[+] {tool} pronto in ~/.local/bin (binario release, nessuna compilazione).")
+        return True
+    log(f"[*] {tool}: nessun binario release utilizzabile.")
+    return False
+
+
+def _find_bin(root: Path, binname: str) -> Path | None:
+    """Cerca l'eseguibile 'binname' in un albero estratto. Ordine: match esatto
+    del nome; poi un file che inizia col nome (es. 'httpx_1.6' -> 'httpx'); infine,
+    se il tool e' stato rinominato a monte (es. cvemap -> vulnx), ripiega
+    sull'UNICO file ELF presente nell'archivio."""
+    exact, prefix, elfs = None, None, []
+    for p in root.rglob("*"):
+        if not p.is_file():
+            continue
+        nm = p.name
+        if nm == binname:
+            exact = p
+            break
+        if prefix is None and (nm.startswith(binname + "_") or nm.startswith(binname + "-") or nm == binname + ".exe"):
+            prefix = p
+        try:
+            if open(p, "rb").read(4) == b"\x7fELF":
+                elfs.append(p)
+        except Exception:                      # noqa: BLE001
+            pass
+    if exact or prefix:
+        return exact or prefix
+    return elfs[0] if len(elfs) == 1 else None
+
+
 def _install_go(tool: str, log=print) -> bool:
-    """Installa un tool scritto in Go con `go install <module>@<ver>`. Il binario
-    finisce direttamente in ~/.local/bin (GOBIN), gia' nel PATH. La toolchain Go
-    si installa on-demand (apk add go) e resta per i tool successivi."""
+    """Installa un tool Go. Strategia: PRIMA il binario release statico
+    (leggero, niente toolchain, ideale per la live in RAM); se non disponibile,
+    ripiega sulla compilazione con `go install`."""
+    if _install_gobin(tool, log):
+        return True
+    if model.tool_data(tool).get("gh_repo"):
+        log(f"[*] {tool}: nessun binario release utilizzabile, provo a compilare.")
+    return _install_go_compile(tool, log)
+
+
+def _install_go_compile(tool: str, log=print) -> bool:
+    """Compila un tool Go con `go install <module>@<ver>`. Il binario finisce in
+    ~/.local/bin (GOBIN). Toolchain Go installata on-demand (apk add go). NB:
+    nella live in RAM la toolchain (~450MB) + build possono esaurire il tmpfs;
+    usare la persistenza NXSDATA o preferire il binario release."""
     ref = model.tool_data(tool).get("go")
     if not ref:
         log(f"[!] {tool}: manca il campo 'go' (modulo) in repo.json.")
@@ -341,14 +567,21 @@ def _install_go(tool: str, log=print) -> bool:
 
 # ---------------------------------------------------------------- cargo (compila binari Rust)
 def _install_cargo(tool: str, log=print) -> bool:
-    """Installa un tool Rust con `cargo install`. Campo 'cargo' = nome crate;
-    in alternativa 'cargo_git' = URL del repo. --root ~/.local -> bin in ~/.local/bin."""
+    """Installa un tool Rust. Strategia: PRIMA il binario release (statico/musl,
+    leggero) se il repo lo pubblica (campo 'gh_repo'); solo se non utilizzabile
+    ripiega su `cargo install` (compilazione: nella live in RAM richiede molto
+    spazio -> serve persistenza NXSDATA). Campo 'cargo' = crate; 'cargo_git' = repo."""
+    if _install_gobin(tool, log):
+        return True
     td = model.tool_data(tool)
     crate = td.get("cargo")
     giturl = td.get("cargo_git")
     if not crate and not giturl:
         log(f"[!] {tool}: manca 'cargo' o 'cargo_git' in repo.json.")
         return False
+    if td.get("gh_repo"):
+        log(f"[*] {tool}: nessun binario release utilizzabile, compilo con cargo "
+            "(serve spazio: usa la persistenza NXSDATA se la live e' in RAM).")
     if not have("cargo") or not have("cc"):
         # Rust su Alpine musl: servono anche i build tools (gcc/musl-dev) e, per
         # i crate con TLS/openssl-sys, openssl-dev + pkgconf.

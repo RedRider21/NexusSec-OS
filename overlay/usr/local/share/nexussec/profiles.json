@@ -263,7 +263,11 @@
         "mitm6",
         "pywerview",
         "ldapdomaindump",
-        "villain"
+        "villain",
+        "kerbrute",
+        "cvemap",
+        "fscan",
+        "rustscan"
       ]
     },
     "forensics": {
@@ -393,6 +397,7 @@
         "findomain",
         "firewalk",
         "fragrouter",
+        "gau",
         "h8mail",
         "holehe",
         "instaloader",
@@ -401,6 +406,7 @@
         "linkedin2username",
         "maigret",
         "massdns",
+        "metabigor",
         "metagoofil",
         "netmask",
         "phoneinfoga",
@@ -418,7 +424,9 @@
         "theharvester",
         "tookie-osint",
         "twofi",
+        "uncover",
         "urlcrazy",
+        "waybackurls",
         "whois",
         "zenmap"
       ]
@@ -436,6 +444,7 @@
         "burpsuite",
         "cadaver",
         "caido",
+        "cariddi",
         "commix",
         "crlfuzz",
         "cutycapt",
@@ -453,7 +462,9 @@
         "hakrawler",
         "heartleech",
         "httprint",
+        "httpx",
         "httrack",
+        "interactsh-client",
         "jboss-autopwn",
         "joomscan",
         "jsql-injection",
@@ -483,6 +494,7 @@
         "thc-ssl-dos",
         "tinja",
         "tlssled",
+        "tlsx",
         "tnscmd10g",
         "uniscan",
         "uniscan-gui",
@@ -490,6 +502,7 @@
         "wafw00f",
         "wapiti",
         "watobo",
+        "webanalyze",
         "webscarab",
         "webshells",
         "weevely",
@@ -497,6 +510,7 @@
         "whatweb",
         "wpprobe",
         "wpscan",
+        "x8",
         "xsser",
         "zaproxy"
       ]
