@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
 # NexusSec Browser - launcher (Alpine).
 #
 # Il browser e' Python GTK3 + WebKit2 (in /usr/local/lib/nxs_browser). Su

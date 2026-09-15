@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
 # nxs-nightlight - filtro luce blu (night-light) via gamma xrandr.
 #
 # Riduce le componenti blu/verde della gamma su TUTTE le uscite connesse, per

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
 """Salvaschermo NexusSec - GTK3 + Cairo, coerente con l'estetica della distro.
 
 Finestra a schermo intero, senza decorazioni, keep-above; animazione Cairo

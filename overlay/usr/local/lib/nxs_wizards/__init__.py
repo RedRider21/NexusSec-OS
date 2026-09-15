@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
 """NexusSec - procedure guidate (wizard).
 
 Piccole interfacce che chiedono pochi dati (un IP, un dominio, un URL, un file)

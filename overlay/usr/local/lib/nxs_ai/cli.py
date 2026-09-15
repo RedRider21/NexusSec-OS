@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
 """CLI dell'assistente: `nxs-ai "domanda"` (one-shot) o `nxs-ai` (conversazione).
 
 Fase 1: consulente read-only. Nessun comando viene eseguito dall'agente."""

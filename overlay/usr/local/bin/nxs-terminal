@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
 # NexusSec - apre il terminale (lxterminal, fallback xterm con tema Nebula).
 command -v lxterminal >/dev/null 2>&1 && exec lxterminal
 exec xterm -bg "#050a14" -fg "#c8f5ff"

@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
 # NexusSec - diagnostica rapida: binari, profilo, pannello, GTK, log (Alpine).
 # Eseguire dal terminale: nxs-diag
 echo "================= NexusSec diag ================="

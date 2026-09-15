@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
 """Relazione HTML del caso - generata automaticamente.
 
 Perche' HTML e non PDF: si apre con nxs-browser (gia' nella distro), si stampa

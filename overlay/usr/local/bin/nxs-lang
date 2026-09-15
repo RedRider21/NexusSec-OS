@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
 # nxs-lang - lingua dell'interfaccia NexusSec (it/en/fr/es/de).
 # La scelta e' salvata in ~/.config/nxs/lang e usata da pannello, Centro di
 # Controllo e app che chiamano nxs_i18n.t().

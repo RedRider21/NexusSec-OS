@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
 # NexusSec - gestore inattivita' del salvaschermo (basato su xautolock).
 # Legge ~/.config/nxs/screensaver.conf e (ri)avvia xautolock che lancia
 # 'nxs-screensaver' dopo N minuti di inattivita'. Idempotente: uccide la

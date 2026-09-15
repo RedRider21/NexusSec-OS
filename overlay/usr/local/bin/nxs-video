@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
 # NexusSec - Visualizzatore video (GTK3 + GStreamer, sink 'gtksink').
 #
 # DAL 2026.08.25 GStreamer e i codec sono PREINSTALLATI (dep di nexussec-base,

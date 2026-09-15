@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
 # NexusSec - spegnimento/riavvio/logout (Alpine, OpenRC).
 #
 # Su una live con persistenza apkovl (Alpine Local Backup), le modifiche di

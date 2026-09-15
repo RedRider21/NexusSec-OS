@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
 # NexusSec OS - launcher Centro di Controllo (Alpine).
 # Trova python3 e lancia il modulo nxs_cc con PYTHONPATH corretto. Tutto
 # l'output (errori inclusi) va in /tmp/nxs-cc.log per la diagnostica.

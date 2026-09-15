@@ -19,7 +19,7 @@ pkgrel=2
 pkgdesc="NexusSec OS - firmware wireless + audio SOF (subset per modloop: WiFi USB + Intel + sof, senza GPU)"
 url="https://github.com/thecloners21"
 arch="noarch"
-license="MIT"
+license="AGPL-3.0-or-later"
 depends="
 	wireless-regdb
 	linux-firmware-intel

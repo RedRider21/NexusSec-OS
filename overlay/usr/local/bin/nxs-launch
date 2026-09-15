@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
 """nxs-launch <app> [args] - chiede al demone nxs-launcherd di aprire un'app GTK
 NexusSec con avvio "caldo" (fork da un processo che ha gia' importato GTK).
 

@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
 # NexusSec OS - procedure guidate (wizard). Apre la GUI o esegue da CLI:
 #   nxs-wizard               -> GUI (scelta procedura)
 #   nxs-wizard gui <id>      -> GUI sul wizard <id>

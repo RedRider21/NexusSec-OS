@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
 # NexusSec - lancia un'app GUI; se manca, mostra come installarla con apk.
 # Uso: nxs-app BINARIO [PACCHETTO_APK]
 BIN="$1"; PKG="${2:-$1}"

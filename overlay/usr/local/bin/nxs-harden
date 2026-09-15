@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
 # nxs-harden - irrobustimento di sicurezza del sistema NexusSec.
 #
 # Pensato soprattutto per il sistema INSTALLATO su disco (la live e' usa-e-getta

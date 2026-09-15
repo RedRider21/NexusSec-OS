@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
 # NexusSec OS - gestore dischi. Senza argomenti apre la GUI GTK3; con --lista,
 # --lista-completa, --partizioni o --liberi DISCO stampa in testo (usato da
 # nxs-install, che e' uno script di shell e non deve tirarsi dietro GTK).

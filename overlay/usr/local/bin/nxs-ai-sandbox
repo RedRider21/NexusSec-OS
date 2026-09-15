@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
 # nxs-ai-sandbox - sandbox bubblewrap per il (futuro) agente AI di NexusSec.
 #
 # L'agente AI sara' una superficie d'attacco importante (esegue codice,

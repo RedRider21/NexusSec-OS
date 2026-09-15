@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
 # NexusSec - gestione WiFi minima per il pannello (scan / connect / status)
 # via wpa_supplicant + wpa_cli. L'interfaccia si autorileva (wlan*/wl*).
 #

@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
 # nxs-anon - Modalita' ANONIMA GLOBALE (Tor trasparente + kill-switch).
 #
 # A differenza di `nxs-tor` (che offre solo un proxy SOCKS 9050 usato dalle app

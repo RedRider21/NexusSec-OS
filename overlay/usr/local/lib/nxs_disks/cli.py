@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
 """Modalita' testuale di nxs-disks: usata da nxs-install e dal terminale.
 
 Sta qui e non nella GUI perche' nxs-install e' uno script di shell e non puo'

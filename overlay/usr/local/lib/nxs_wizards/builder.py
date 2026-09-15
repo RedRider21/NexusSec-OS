@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
 """Costruttore di wizard personalizzati (GTK3).
 
 Editor grafico che compone una ricetta (schema v2) e la salva in

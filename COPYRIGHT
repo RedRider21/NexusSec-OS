@@ -5,15 +5,21 @@ Il codice sorgente ORIGINALE di NexusSec OS (in particolare: overlay/,
 aports/nexussec-*, build/, gli script nxs-*, il pannello e il Centro di
 Controllo in Python, i profili operativi, gli sfondi, le icone e i temi
 originali) è software libero: puoi ridistribuirlo e/o modificarlo secondo i
-termini della GNU General Public License, versione 3 o (a tua scelta) una
+termini della GNU Affero General Public License, versione 3 o (a tua scelta) una
 versione successiva, come pubblicata dalla Free Software Foundation.
 
 Il testo completo della licenza è nel file LICENSE.
-Identificatore SPDX:  GPL-3.0-or-later
+Identificatore SPDX:  AGPL-3.0-or-later
+
+Doppia licenza: il titolare, che detiene il 100% dei diritti sul codice
+originale, rende disponibile in alternativa all'AGPLv3 una LICENZA COMMERCIALE
+per usi che non possono/non intendono rispettare gli obblighi di copyleft (vedi
+COMMERCIAL.md). Le versioni pubblicate fino al 15 settembre 2026 incluso erano
+distribuite sotto GPL-3.0-or-later (testo storico in LICENSE-GPL-3.0.txt).
 
 Questo programma è distribuito nella speranza che sia utile, ma SENZA ALCUNA
 GARANZIA; senza neppure la garanzia implicita di COMMERCIABILITÀ o IDONEITÀ PER
-UN PARTICOLARE SCOPO. Vedi la GNU General Public License per maggiori dettagli.
+UN PARTICOLARE SCOPO. Vedi la GNU Affero General Public License per maggiori dettagli.
 
 --------------------------------------------------------------------------------
 Componenti di terze parti

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
 """Caso forense - logica pura, senza GTK.
 
 PERCHE' ESISTE: gli strumenti forensi veri (The Sleuth Kit, libewf) sono

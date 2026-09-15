@@ -7,7 +7,7 @@ pkgrel=11
 pkgdesc="NexusSec OS - desktop base (Openbox + Python + isolamento tool)"
 url="https://github.com/thecloners21"
 arch="noarch"
-license="MIT"
+license="AGPL-3.0-or-later"
 # Stack desktop (equivalenti Alpine dei vecchi .tcz TinyCore):
 #   openbox, pcmanfm, lxterminal, lxappearance, pluma, feh, xdotool, wmctrl,
 #   font-dejavu, adwaita-icon-theme, gtk+3.0  (== gtk3 + gir via py3-gobject3)

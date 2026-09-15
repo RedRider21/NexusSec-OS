@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
 # NexusSec - installazione su disco / persistenza (Alpine).
 #
 # Tre modi per NON perdere l'arsenale (immagini container/kali) al riavvio:

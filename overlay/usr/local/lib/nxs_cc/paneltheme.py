@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
 """Skin colore del pannello NexusSec (barra + menu + popup).
 
 INDIPENDENTI dai profili: una skin definisce una palette FISSA per la barra e i

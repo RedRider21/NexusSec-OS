@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
 """Backend selezionabile per l'agente AI (astrazione unica: chat()).
 
 - LOCALE: server ollama su 127.0.0.1:11434 (API /api/chat). Il runtime e il

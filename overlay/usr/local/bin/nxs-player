@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
 # NexusSec - Lettore audio (GTK3 + GStreamer). Sostituisce il vecchio
 # "Test Audio": e' un vero lettore (playlist, seek, volume, prev/next) che
 # serve ANCHE a provare l'uscita audio (pulsante "Prova audio").

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
 """Lettore audio NexusSec - GTK3 + GStreamer (playbin).
 
 Sostituisce il vecchio "Test Audio": e' un vero lettore (playlist, seek,

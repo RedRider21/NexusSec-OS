@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
 """Viste GTK native del Centro di Controllo NexusSec.
 
 Ogni funzione open_* costruisce e mostra una finestra con una vera

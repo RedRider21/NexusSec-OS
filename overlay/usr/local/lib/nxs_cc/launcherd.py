@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
 """nxs-launcherd - avvio "caldo" delle app GTK NexusSec (servizio IN-PROCESS).
 
 Un unico processo residente importa gi/GTK + i moduli del desktop UNA volta,

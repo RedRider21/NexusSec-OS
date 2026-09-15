@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
 """Casi forensi - interfaccia GTK3.
 
 Riusa lo stile del Centro di Controllo (nxs_cc.common) e l'elenco dischi di

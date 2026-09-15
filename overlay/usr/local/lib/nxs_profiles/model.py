@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
 """Dati e stato dei profili NexusSec (base Alpine Linux).
 
 Attivare un profilo = installare il suo META-PACCHETTO apk

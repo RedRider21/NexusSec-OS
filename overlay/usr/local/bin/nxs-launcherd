@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
 # nxs-launcherd - avvia il demone "launcher caldo" (fork-zygote) delle app GTK
 # NexusSec. Precarica gi/GTK + i moduli nostri una volta e apre le finestre via
 # fork, saltando il costo di import a ogni lancio. Lanciato in autostart in

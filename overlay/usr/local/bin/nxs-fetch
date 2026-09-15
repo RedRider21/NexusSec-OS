@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
 # nxs-fetch - riepilogo di sistema con il logo NexusSec (stile neofetch), in
 # shell PURA (busybox ash): nessun pacchetto extra, poche centinaia di byte.
 # Il logo (esagono + N a nodi, come il badge NexusSec) e' colorato con l'ACCENT

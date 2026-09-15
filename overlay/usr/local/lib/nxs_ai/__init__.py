@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
 """nxs_ai - Agente AI di NexusSec (Fase 1: consulente read-only).
 
 Filosofia (vedi PROPOSTA-AGENTE-AI.md):

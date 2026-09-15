@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
 # NexusSec OS - selettore grafico del profilo operativo (GTK3).
 # Avvio CALDO via demone (fork da GTK gia' importato); fallback all'avvio normale.
 if command -v nxs-launch >/dev/null 2>&1 && nxs-launch profile "$@" 2>/dev/null; then

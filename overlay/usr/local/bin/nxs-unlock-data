@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
 # nxs-unlock-data - sblocca e monta la persistenza CIFRATA (LUKS) di NexusSec.
 #
 # La persistenza cifrata (creata da `nxs-persist` con LUKS) NON puo' essere

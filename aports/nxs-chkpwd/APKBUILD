@@ -8,7 +8,7 @@ pkgrel=0
 pkgdesc="NexusSec: verifica password shadow per il greeter (helper setuid)"
 url="https://github.com/thecloners21"
 arch="all"
-license="MIT"
+license="AGPL-3.0-or-later"
 # 'suid' autorizza il file setuid in fase di packaging; '!check' niente test.
 options="!check suid"
 source="nxs-chkpwd.c"

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
 """NexusSec OS - splash di avvio a schermo intero (GTK3 + Cairo).
 
 Compone gli asset pre-renderizzati (build/make-plymouth-theme.py ->

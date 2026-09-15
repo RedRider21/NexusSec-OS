@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
 """Agente consulente (Fase 1): costruisce il contesto read-only e il system
 prompt, interroga il backend e registra un audit trail locale.
 

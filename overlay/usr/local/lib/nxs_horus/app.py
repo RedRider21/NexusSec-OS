@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
 """HORUS - finestra GTK3 + WebKit2.
 
 Avvia il backend locale (server.py) su 127.0.0.1 con porta effimera e apre la

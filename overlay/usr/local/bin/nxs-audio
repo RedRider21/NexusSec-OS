@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
 # nxs-audio - controllo volume/uscite E microfono/sorgenti via wpctl
 # (PipeWire + WirePlumber). Usato dal widget audio del pannello (nxs_cc.panel).
 # Best-effort: se PipeWire non e' attivo stampa uno stato neutro senza errori.

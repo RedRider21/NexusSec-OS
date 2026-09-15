@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
 """Configurazione persistente di NexusSec Browser.
 
 Portata dall'originale (ola-browser/config.py): la classe e' identica nella

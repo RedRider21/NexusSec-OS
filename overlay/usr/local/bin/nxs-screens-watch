@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
 # nxs-screens-watch - riallinea gli schermi quando cambia la situazione.
 #
 # CAUSA A MONTE che risolve (non c'era NULLA che facesse questo):

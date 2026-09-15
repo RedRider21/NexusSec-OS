@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
 # nxs-prompt - stile del prompt del terminale, COMMUTABILE da configurazione.
 # La scelta e' salvata in ~/.config/nxs/prompt e letta da ~/.config/nxs/shrc
 # (bash via ~/.bashrc, ash via $ENV). Ha effetto sui NUOVI terminali.

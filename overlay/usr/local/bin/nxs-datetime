@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
 # NexusSec - imposta ora/data/fuso orario di sistema dal pannello, senza aprire
 # il Centro di Controllo. Usato da nxs_cc/panel.py (clic sull'orologio).
 #

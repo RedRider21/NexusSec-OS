@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
 # nxs-battery - stato alimentazione da /sys/class/power_supply (nessuna dipendenza).
 # Usato dall'applet del pannello.
 #   nxs-battery status  -> "nobattery" | "ac-only" | "<pct>\t<stato>\t<ac 0|1>"

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
 """HORUS - backend locale.
 
 Un piccolo http.server legato SOLO a 127.0.0.1 (loopback): serve la SPA

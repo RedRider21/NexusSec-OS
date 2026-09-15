@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
 """Montaggio dischi - l'UNICO punto in cui NexusSec tocca un disco.
 
 REGOLA FORENSIC (decisione utente): i dischi si VEDONO ma non si toccano se non

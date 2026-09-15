@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
 # nxs-writeblock - write-blocker forense a livello di BLOCCO per NexusSec OS.
 #
 # Agganciato al profilo Forensics (nxs_profiles.model): quando Forensics e'

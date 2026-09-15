@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
 # nxs-session - dialogo grafico di fine sessione (blocca / esci / riavvia / spegni).
 #
 # Alternativa "bella" alle voci di menu: finestra centrata, brandizzata NexusSec,

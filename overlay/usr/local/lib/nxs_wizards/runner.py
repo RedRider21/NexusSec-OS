@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
 """Esecutore delle procedure guidate.
 
 run_wizard() e' il "regista": valida i campi, sceglie modalita'/opzioni/stealth,

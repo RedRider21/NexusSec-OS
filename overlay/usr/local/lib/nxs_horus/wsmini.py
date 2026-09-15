@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
 """Client WebSocket minimale (solo quel che serve a HORUS per aisstream).
 
 Python non ha un client WebSocket in stdlib e la distro e' spesso offline: qui

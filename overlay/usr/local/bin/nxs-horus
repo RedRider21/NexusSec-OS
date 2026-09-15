@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
 # HORUS - dashboard OSINT/GEOINT globale (launcher).
 #
 # Il nome: Horus e' il figlio di Osiris nella mitologia egizia. HORUS e' il

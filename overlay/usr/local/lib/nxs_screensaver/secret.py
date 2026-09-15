@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
 """Gestione della password del salvaschermo (blocco schermo).
 
 La password NON e' salvata in chiaro: si conserva solo un hash PBKDF2-HMAC-SHA256

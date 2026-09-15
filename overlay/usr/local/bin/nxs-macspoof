@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
 # nxs-macspoof - MAC spoofing opzionale (manuale o automatico al boot).
 #
 # Assegna a ogni interfaccia di rete reale (Ethernet/Wi-Fi) un indirizzo MAC

@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
 # nxs-metadata - rimozione metadati con MAT2 (Metadata Anonymisation Toolkit).
 #
 # I file (foto, PDF, documenti office, audio/video...) contengono metadati che

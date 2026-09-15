@@ -6,7 +6,7 @@ pkgrel=0
 pkgdesc="NexusSec - profilo Web Pentest (meta)"
 url="https://github.com/thecloners21"
 arch="noarch"
-license="MIT"
+license="AGPL-3.0-or-later"
 # NB: solo pacchetti apk REALI (validati). Tool pip/container/non-in-apk -> on-demand via nxs-tool.
 depends="nikto sqlmap gobuster ffuf sslscan nuclei"
 options="!check"

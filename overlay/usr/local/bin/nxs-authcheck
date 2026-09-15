@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
 # nxs-authcheck <utente> - verifica la password (letta da STDIN) contro /etc/shadow.
 #
 # Ritorna:  0 = password corretta · 1 = errata/account senza password ·

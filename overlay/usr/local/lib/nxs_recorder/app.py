@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
 """nxs-recorder - registratore vocale NexusSec (GTK3 + Cairo).
 
 Cattura dal microfono con `arecord` (ALSA, gia' nella base; instradato via il

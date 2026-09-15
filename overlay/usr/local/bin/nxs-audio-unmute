@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
 # NexusSec - sblocca e alza l'audio su TUTTI i livelli, con ritentativi.
 #
 # Perche' serve: su HARDWARE reale (avvio da chiavetta) la scheda c'e' e il

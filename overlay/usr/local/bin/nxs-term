@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
 # NexusSec - esegue un comando in un terminale in modo affidabile.
 # lxterminal con il server a istanza singola fa cilecca con -e: forziamo
 # --no-remote (nuovo processo) e in fallback xterm.

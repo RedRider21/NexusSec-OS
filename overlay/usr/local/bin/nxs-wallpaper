@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
 # nxs-wallpaper - sceglie lo SFONDO del desktop (voce separata, indipendente dal
 # profilo e dalla skin del pannello). La scelta e' salvata in
 # ~/.config/nxs/wallpaper e sopravvive al cambio profilo; "reset" torna allo

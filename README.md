@@ -1096,10 +1096,14 @@ NexusSec-OS/
 
 ## Licenza e marchi
 
-Il codice sorgente originale di NexusSec OS è distribuito sotto **GNU GPL v3.0
-o successiva** (`GPL-3.0-or-later`): vedi [`LICENSE`](LICENSE) e
-[`COPYRIGHT`](COPYRIGHT). I pacchetti di terze parti inclusi restano soggetti
-alle rispettive licenze.
+Il codice sorgente originale di NexusSec OS è distribuito sotto **GNU AGPL v3.0
+o successiva** (`AGPL-3.0-or-later`): vedi [`LICENSE`](LICENSE) e
+[`COPYRIGHT`](COPYRIGHT). L'AGPLv3 estende il copyleft anche all'**uso come
+servizio di rete**. In alternativa è disponibile una **licenza commerciale**
+(doppia licenza) per usi proprietari/chiusi: vedi [`COMMERCIAL.md`](COMMERCIAL.md).
+I contributi sono soggetti al [`CLA`](CLA.md). I pacchetti di terze parti inclusi
+restano soggetti alle rispettive licenze: vedi [`THIRD-PARTY.md`](THIRD-PARTY.md).
+*(Le versioni fino al 15/09/2026 erano rilasciate sotto GPL-3.0-or-later.)*
 
 I nomi «NexusSec»/«NexusSec OS», il logo e l'identità visiva sono **marchi** di
 Daniele Deplano (RedRider21) e non sono concessi dalla licenza del software: le
