@@ -47,6 +47,8 @@ from . import model
 LOOT = Path(os.path.expanduser("~")) / "NexusSec-loot"   # output condiviso coi container
 GIT_BASE = Path(os.path.expanduser("~")) / ".local" / "share" / "nexussec" / "git"
 LOCAL_BIN = Path(os.path.expanduser("~")) / ".local" / "bin"
+GO_BASE = Path(os.path.expanduser("~")) / ".local" / "share" / "nexussec" / "go"
+CARGO_ROOT = Path(os.path.expanduser("~")) / ".local"   # bin -> ~/.local/bin
 
 # --- Persistenza tool (solo se NXSDATA e' montato) --------------------------
 # I tool 'container'/'kali' e quelli 'pip'/'git' (che vivono in ~/.local) sono
@@ -193,7 +195,7 @@ def is_installed(tool: str) -> bool:
     if m == "kali":
         # installato = l'ambiente condiviso esiste E contiene gia il pacchetto.
         return _image_exists(KALI_ENV) and _kali_pkg(tool) in _kali_installed_pkgs()
-    if m == "git":
+    if m in ("git", "go", "cargo"):
         return have(_bin(tool)) or (LOCAL_BIN / _bin(tool)).exists()
     # apk / pip: il comando vive nel PATH una volta installato
     if have(_bin(tool)) or have(tool):
@@ -303,6 +305,69 @@ def _install_git(tool: str, log=print) -> bool:
     launcher.chmod(0o755)
     log(f"[+] {tool} pronto: {launcher}")
     return True
+
+
+# ---------------------------------------------------------------- go (compila binari Go)
+def _install_go(tool: str, log=print) -> bool:
+    """Installa un tool scritto in Go con `go install <module>@<ver>`. Il binario
+    finisce direttamente in ~/.local/bin (GOBIN), gia' nel PATH. La toolchain Go
+    si installa on-demand (apk add go) e resta per i tool successivi."""
+    ref = model.tool_data(tool).get("go")
+    if not ref:
+        log(f"[!] {tool}: manca il campo 'go' (modulo) in repo.json.")
+        return False
+    if "@" not in ref:
+        ref += "@latest"
+    if not have("go"):
+        log("[*] apk add go (toolchain, una tantum)")
+        if subprocess.run(priv(["apk", "add", "--no-cache", "go", "git"])).returncode != 0:
+            log("[!] impossibile installare la toolchain Go.")
+            return False
+    LOCAL_BIN.mkdir(parents=True, exist_ok=True)
+    GO_BASE.mkdir(parents=True, exist_ok=True)
+    env = dict(os.environ,
+               GOBIN=str(LOCAL_BIN), GOPATH=str(GO_BASE),
+               GOCACHE=str(GO_BASE / "cache"),
+               GOFLAGS="-buildvcs=false", CGO_ENABLED="0")
+    log(f"[*] go install {ref}")
+    ok = subprocess.run(["go", "install", ref], env=env).returncode == 0
+    if ok:
+        _ensure_apk_deps(tool, log)
+        log(f"[+] {tool} pronto in ~/.local/bin.")
+    else:
+        log(f"[!] {tool}: 'go install' fallito.")
+    return ok
+
+
+# ---------------------------------------------------------------- cargo (compila binari Rust)
+def _install_cargo(tool: str, log=print) -> bool:
+    """Installa un tool Rust con `cargo install`. Campo 'cargo' = nome crate;
+    in alternativa 'cargo_git' = URL del repo. --root ~/.local -> bin in ~/.local/bin."""
+    td = model.tool_data(tool)
+    crate = td.get("cargo")
+    giturl = td.get("cargo_git")
+    if not crate and not giturl:
+        log(f"[!] {tool}: manca 'cargo' o 'cargo_git' in repo.json.")
+        return False
+    if not have("cargo") or not have("cc"):
+        # Rust su Alpine musl: servono anche i build tools (gcc/musl-dev) e, per
+        # i crate con TLS/openssl-sys, openssl-dev + pkgconf.
+        log("[*] apk add cargo + build tools (Rust toolchain, una tantum)")
+        if subprocess.run(priv(["apk", "add", "--no-cache", "cargo",
+                                "build-base", "openssl-dev", "pkgconf"])).returncode != 0:
+            log("[!] impossibile installare la toolchain Rust.")
+            return False
+    LOCAL_BIN.mkdir(parents=True, exist_ok=True)
+    cmd = ["cargo", "install", "--root", str(CARGO_ROOT)]
+    cmd += (["--git", giturl] if giturl else [crate])
+    log(f"[*] {' '.join(cmd)}")
+    ok = subprocess.run(cmd).returncode == 0
+    if ok:
+        _ensure_apk_deps(tool, log)
+        log(f"[+] {tool} pronto in ~/.local/bin.")
+    else:
+        log(f"[!] {tool}: 'cargo install' fallito.")
+    return ok
 
 
 # ---------------------------------------------------------------- kali (container Debian)
@@ -502,6 +567,10 @@ def _install_impl(tool: str, log=print) -> bool:
         if ok:
             _ensure_apk_deps(tool, log)
         return ok
+    if m == "go":
+        return _install_go(tool, log)
+    if m == "cargo":
+        return _install_cargo(tool, log)
     if m == "kali":
         ok = _install_kali(tool, log)
         if ok:
@@ -582,6 +651,12 @@ def uninstall(tool: str, log=print) -> bool:
         if dest.exists():
             shutil.rmtree(dest, ignore_errors=True)
         log(f"[*] {tool}: rimosso clone e launcher.")
+        return True
+    if m in ("go", "cargo"):
+        binp = LOCAL_BIN / _bin(tool)
+        if binp.exists():
+            binp.unlink()
+        log(f"[*] {tool}: binario rimosso da ~/.local/bin.")
         return True
     if m == "kali":
         # NON cancellare l'ambiente condiviso (ci vivono gli altri tool Kali):

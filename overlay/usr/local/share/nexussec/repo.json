@@ -3236,6 +3236,104 @@
       "entry": "SecretFinder.py",
       "bin": "secretfinder",
       "description": "Cerca API key, token e segreti nei file JavaScript. Non presente in Kali."
+    },
+    "httpx": {
+      "category": "web",
+      "method": "go",
+      "go": "github.com/projectdiscovery/httpx/cmd/httpx",
+      "bin": "httpx",
+      "description": "Probe HTTP veloce (ProjectDiscovery): stato, titoli, tech, TLS. Fascia-2 (binario Go)."
+    },
+    "gau": {
+      "category": "osint",
+      "method": "go",
+      "go": "github.com/lc/gau/v2/cmd/gau",
+      "bin": "gau",
+      "description": "Recupera URL noti da Wayback/CommonCrawl/OTX (getallurls). Binario Go."
+    },
+    "waybackurls": {
+      "category": "osint",
+      "method": "go",
+      "go": "github.com/tomnomnom/waybackurls",
+      "bin": "waybackurls",
+      "description": "Estrae gli URL storici di un dominio da Wayback Machine. Binario Go."
+    },
+    "kerbrute": {
+      "category": "password",
+      "method": "go",
+      "go": "github.com/ropnop/kerbrute",
+      "bin": "kerbrute",
+      "description": "Enumerazione utenti e password spraying via Kerberos (Active Directory). Binario Go."
+    },
+    "interactsh-client": {
+      "category": "web",
+      "method": "go",
+      "go": "github.com/projectdiscovery/interactsh/cmd/interactsh-client",
+      "bin": "interactsh-client",
+      "description": "Rilevazione interazioni OOB (OAST) per SSRF/blind (ProjectDiscovery). Binario Go."
+    },
+    "uncover": {
+      "category": "recon",
+      "method": "go",
+      "go": "github.com/projectdiscovery/uncover/cmd/uncover",
+      "bin": "uncover",
+      "description": "Trova host esposti via Shodan/Censys/Fofa (ProjectDiscovery). Binario Go."
+    },
+    "cvemap": {
+      "category": "vuln",
+      "method": "go",
+      "go": "github.com/projectdiscovery/cvemap/cmd/cvemap",
+      "bin": "cvemap",
+      "description": "Navigazione strutturata dei CVE (ProjectDiscovery). Binario Go."
+    },
+    "tlsx": {
+      "category": "recon",
+      "method": "go",
+      "go": "github.com/projectdiscovery/tlsx/cmd/tlsx",
+      "bin": "tlsx",
+      "description": "Ricognizione TLS di massa (SAN, cifrari, scadenze). Binario Go."
+    },
+    "cariddi": {
+      "category": "web",
+      "method": "go",
+      "go": "github.com/edoardottt/cariddi/cmd/cariddi",
+      "bin": "cariddi",
+      "description": "Crawler per endpoint, segreti, token e file interessanti. Binario Go."
+    },
+    "webanalyze": {
+      "category": "web",
+      "method": "go",
+      "go": "github.com/rverton/webanalyze/cmd/webanalyze",
+      "bin": "webanalyze",
+      "description": "Fingerprint delle tecnologie web (Wappalyzer CLI). Binario Go."
+    },
+    "metabigor": {
+      "category": "osint",
+      "method": "go",
+      "go": "github.com/j3ssie/metabigor",
+      "bin": "metabigor",
+      "description": "OSINT su organizzazioni/IP/ASN senza API key. Binario Go."
+    },
+    "fscan": {
+      "category": "recon",
+      "method": "go",
+      "go": "github.com/shadow1ng/fscan",
+      "bin": "fscan",
+      "description": "Scanner intranet all-in-one (porte, servizi, brute, PoC). Binario Go."
+    },
+    "x8": {
+      "category": "web",
+      "method": "cargo",
+      "cargo": "x8",
+      "bin": "x8",
+      "description": "Scoperta di parametri HTTP nascosti. Fascia-2 (binario Rust)."
+    },
+    "rustscan": {
+      "category": "recon",
+      "method": "cargo",
+      "cargo": "rustscan",
+      "bin": "rustscan",
+      "description": "Port scanner velocissimo (poi passa a nmap). Binario Rust."
     }
   }
 }
