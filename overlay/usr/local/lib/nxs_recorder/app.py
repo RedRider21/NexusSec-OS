@@ -423,6 +423,9 @@ class Recorder(Gtk.Window):
     def _play_last(self, _b):
         if self.recording:
             return
+        if self.playing:                     # gia' in riproduzione -> STOP
+            self._stop_play()
+            return
         if not self.last_file or not os.path.exists(self.last_file):
             return
         # Precalcola lo spettro per finestre CHUNK dal WAV (mono S16), cosi' in
@@ -463,9 +466,26 @@ class Recorder(Gtk.Window):
             self.status.set_text("aplay non disponibile.")
             return
         self.playing = True
+        self.play_btn.set_label("■  Stop")   # il pulsante diventa Stop
         self._play_start = GLib.get_monotonic_time() / 1e6
         self.status.set_text("Riproduco: %s" % os.path.basename(self.last_file))
         GLib.timeout_add(33, self._play_tick)
+
+    def _stop_play(self):
+        """Ferma la riproduzione (pulsante Stop o fine file) e ripristina il
+        pulsante a 'Riascolta'."""
+        self.playing = False
+        proc = getattr(self, "_play_proc", None)
+        if proc is not None:
+            try:
+                proc.terminate()
+            except Exception:                # noqa: BLE001
+                pass
+            self._play_proc = None
+        self.bands = [0.0] * NBANDS
+        self.peak = 0.0
+        self.play_btn.set_label("▶  Riascolta")
+        self.status.set_text("Pronto.")
 
     def _play_tick(self):
         if not self.playing:
@@ -473,10 +493,7 @@ class Recorder(Gtk.Window):
         el = GLib.get_monotonic_time() / 1e6 - self._play_start
         done = (self._play_proc is not None and self._play_proc.poll() is not None)
         if el >= self._play_dur or done:
-            self.playing = False
-            self.bands = [0.0] * NBANDS
-            self.peak = 0.0
-            self.status.set_text("Pronto.")
+            self._stop_play()                # fine file: ripristina il pulsante
             return False
         chunk_dur = CHUNK / float(getattr(self, "_play_rate", RATE))
         idx = int(el / chunk_dur)
