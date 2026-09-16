@@ -1012,6 +1012,7 @@ Centro di Controllo). Dettaglio completo con i sotto-comandi: manuale online.
 | | `nxs-browser` | browser stealth (WebKit) |
 | IA | `nxs-ai` | assistente consulente (backend locale `ollama` o cloud OpenAI-compat); *propone* i comandi, non li esegue. Conosce il catalogo reale |
 | | `nxs-ai-spotlight` | finestra rapida (hotkey **Super+A**); `nxs-ai explain` spiega un output/errore (via pipe) |
+| | `nxs-ai wizard "obiettivo"` | genera una **procedura guidata** (catena di tool dal catalogo), rifinibile nel costruttore |
 | | `nxs-ai-sandbox` | sandbox bubblewrap per l'agente. **Fase 2**: esecuzione confermata dei comandi proposti (opt-in dal CC; conferma per comando; distruttivi/su disco bloccati) |
 | Sicurezza | `nxs-firewall` | firewall nftables (`on`/`off`/`allow`/…) |
 | e privacy | `nxs-tor` | Tor come proxy SOCKS 9050 (`on`/`off`/`status`) |

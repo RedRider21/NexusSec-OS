@@ -53,6 +53,44 @@ def main(argv=None) -> int:
             print(f"[IA] {e}", file=sys.stderr)
             return 1
 
+    # "wizard": genera una procedura guidata (catena di tool) da una descrizione
+    #   nxs-ai wizard "scansione web completa di un dominio"
+    if argv and argv[0] == "wizard":
+        desc = " ".join(argv[1:]).strip()
+        if not desc:
+            print('Uso: nxs-ai wizard "descrizione dell\'obiettivo"', file=sys.stderr)
+            return 2
+        from . import wizardgen
+        print("Genero la procedura con l'IA, un momento…")
+        wiz = wizardgen.generate(desc)
+        if not wiz:
+            return 1
+        print(f"\nBozza procedura: {wiz['name']}")
+        if wiz.get("fields"):
+            print("  Chiede: " + ", ".join(f["label"] for f in wiz["fields"]))
+        for i, s in enumerate(wiz["steps"], 1):
+            print(f"  [{i}] {s['tool']} {s['args']}")
+        print()
+        if not sys.stdin.isatty():
+            print("(non interattivo: non salvo la procedura)")
+            return 0
+        import re as _re
+        try:
+            if input("Salvare questa procedura? [s/N] ").strip().lower() not in ("s", "si", "y", "yes"):
+                print("Annullato."); return 0
+            default = _re.sub(r"[^a-z0-9]+", "-", wiz["name"].lower()).strip("-") or "wizard-ia"
+            slug = input(f"Nome breve/id [{default}]: ").strip() or default
+        except (EOFError, KeyboardInterrupt):
+            print(); return 0
+        slug = _re.sub(r"[^a-z0-9-]+", "-", slug.lower()).strip("-") or default
+        from nxs_wizards import recipes
+        if recipes.save_custom(slug, wiz):
+            print(f"Salvata come '{slug}'. La trovi in `nxs-wizard`, nel menu del "
+                  "profilo e nel costruttore (dove puoi rifinirla).")
+            return 0
+        print("[IA] salvataggio non riuscito.", file=sys.stderr)
+        return 1
+
     # one-shot
     if argv:
         prompt = " ".join(argv)
