@@ -64,7 +64,10 @@ il profilo attivo e tiene un registro locale delle interazioni. Il backend è
   potente e leggero, attivo **solo dopo consenso esplicito**; la chiave API resta
   in locale (`~/.config/nxs`, permessi `600`).
 
-Da terminale: `nxs-ai "domanda"` (risposta singola) oppure `nxs-ai`
+L'assistente **conosce l'arsenale reale** della distro e propone gli strumenti
+giusti da installare al volo con `nxs-tool`. Accessi rapidi: **Super+A** apre uno
+*spotlight* richiamabile ovunque; `<comando> 2>&1 | nxs-ai explain` fa spiegare un
+output o un errore; da terminale `nxs-ai "domanda"` (risposta singola) o `nxs-ai`
 (conversazione).
 
 ## Documentazione
