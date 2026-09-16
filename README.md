@@ -75,6 +75,11 @@ confermata**: l'assistente propone il comando, tu lo vedi e **confermi**, e vien
 eseguito in **sandbox** (bubblewrap) rispettando il profilo attivo. I comandi
 distruttivi o sui dischi sono **sempre bloccati** e ogni esecuzione è tracciata.
 
+Con `nxs-ai wizard "obiettivo"` l'assistente **genera una procedura guidata**:
+propone la catena di strumenti (solo tool dell'arsenale reale, comandi distruttivi
+esclusi), tu la rivedi e la salvi come **wizard riutilizzabile**, poi rifinibile
+nel costruttore grafico.
+
 ## Documentazione
 
 - **[Manuale utente](docs/manuale.html)** — avvio, profili, menu, metodi dei tool,
