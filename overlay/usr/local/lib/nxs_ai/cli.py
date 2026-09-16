@@ -32,6 +32,27 @@ def main(argv=None) -> int:
               "-> Assistente IA (scegli backend locale o cloud).", file=sys.stderr)
         return 2
 
+    # "explain": spiega un output/errore passato via pipe o come argomenti.
+    #   nmap ... 2>&1 | nxs-ai explain      |     nxs-ai explain "<incolla output>"
+    if argv and argv[0] == "explain":
+        text = " ".join(argv[1:]).strip()
+        if not sys.stdin.isatty():
+            piped = sys.stdin.read().strip()
+            text = (text + "\n" + piped).strip() if text else piped
+        if not text:
+            print("Uso: <comando> 2>&1 | nxs-ai explain   oppure   "
+                  "nxs-ai explain \"<output>\"", file=sys.stderr)
+            return 2
+        prompt = ("Spiega il seguente output di un comando eseguito su NexusSec: "
+                  "cosa indica, l'eventuale problema e il passo successivo "
+                  "(mostra i comandi da copiare). Output:\n```\n" + text[:6000] + "\n```")
+        try:
+            print(agent.ask(prompt))
+            return 0
+        except backend.AIError as e:
+            print(f"[IA] {e}", file=sys.stderr)
+            return 1
+
     # one-shot
     if argv:
         prompt = " ".join(argv)

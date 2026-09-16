@@ -1010,7 +1010,8 @@ Centro di Controllo). Dettaglio completo con i sotto-comandi: manuale online.
 | | `nxs-wizard` | procedure guidate (catene di tool) |
 | | `nxs-horus` | dashboard OSINT/GEOINT |
 | | `nxs-browser` | browser stealth (WebKit) |
-| IA | `nxs-ai` | assistente consulente (backend locale `ollama` o cloud OpenAI-compat); *propone* i comandi, non li esegue |
+| IA | `nxs-ai` | assistente consulente (backend locale `ollama` o cloud OpenAI-compat); *propone* i comandi, non li esegue. Conosce il catalogo reale |
+| | `nxs-ai-spotlight` | finestra rapida (hotkey **Super+A**); `nxs-ai explain` spiega un output/errore (via pipe) |
 | | `nxs-ai-sandbox` | sandbox bubblewrap per l'agente (esecuzione confermata, Fase 2) |
 | Sicurezza | `nxs-firewall` | firewall nftables (`on`/`off`/`allow`/…) |
 | e privacy | `nxs-tor` | Tor come proxy SOCKS 9050 (`on`/`off`/`status`) |

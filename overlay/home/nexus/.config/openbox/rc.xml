@@ -202,6 +202,7 @@
   <keybind key="W-d"><action name="ToggleShowDesktop"/></keybind>
   <keybind key="W-v"><action name="Execute"><command>nxs-clipboard menu</command></action></keybind>
   <keybind key="W-n"><action name="Execute"><command>nxs-nightlight toggle</command></action></keybind>
+  <keybind key="W-a"><action name="Execute"><command>nxs-ai-spotlight</command></action></keybind>
   <keybind key="Print"><action name="Execute"><command>nxs-screenshot</command></action></keybind>
   <!-- PANICO: Super+Alt+Canc = spegni subito mettendo al sicuro i dati.
        Combinazione volutamente difficile da premere per sbaglio; nessuna conferma. -->

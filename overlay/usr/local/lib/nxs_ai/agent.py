@@ -32,17 +32,53 @@ REGOLE FERME (non negoziabili su una distro di sicurezza):
   sistemi che e' autorizzato a testare."""
 
 
+def _catalog_by_category(model) -> str:
+    """Elenco COMPATTO dell'arsenale reale (repo.json), raggruppato per categoria:
+    serve a far proporre all'agente SOLO tool realmente presenti nella distro,
+    installabili con `nxs-tool install <nome>`."""
+    import json
+    try:
+        path = getattr(model, "REPO_JSON", "/usr/local/share/nexussec/repo.json")
+        tools = json.load(open(path)).get("tools", {})
+    except Exception:                          # noqa: BLE001
+        return ""
+    by_cat = {}
+    for name, d in tools.items():
+        by_cat.setdefault(d.get("category", "altro"), []).append(name)
+    out = []
+    for cat in sorted(by_cat):
+        out.append(f"  {cat}: " + ", ".join(sorted(by_cat[cat])))
+    return "\n".join(out)
+
+
 def _context() -> str:
-    """Contesto read-only: profilo attivo e alcuni tool installati."""
+    """Contesto read-only: profilo attivo, tool installati e catalogo reale."""
     lines = []
     try:
         sys.path.insert(0, "/usr/local/lib")
         from nxs_profiles import model  # noqa: E402
-        prof = model.current_profile()
-        lines.append(f"Profilo attivo: {prof}")
+        lines.append(f"Profilo attivo: {model.current_profile()}")
+        try:
+            installed = [t for t in model.profile_tools()
+                         if _iso_have(t)]
+            if installed:
+                lines.append("Tool gia' installati: " + ", ".join(sorted(installed)))
+        except Exception:                      # noqa: BLE001
+            pass
+        cat = _catalog_by_category(model)
+        if cat:
+            lines.append("Arsenale disponibile (installa con `nxs-tool install "
+                         "<nome>`), per categoria:\n" + cat)
     except Exception:                          # noqa: BLE001
         pass
     return "\n".join(lines)
+
+
+def _iso_have(tool: str) -> bool:
+    # check veloce sul PATH (no subprocess): il contesto si costruisce a ogni
+    # domanda, quindi niente `apk info` per centinaia di tool.
+    import shutil
+    return shutil.which(tool) is not None
 
 
 def _audit(prompt: str, reply: str) -> None:
