@@ -85,6 +85,44 @@ def main(argv=None) -> int:
         history += [{"role": "user", "content": prompt},
                     {"role": "assistant", "content": reply}]
         history = history[-12:]                 # limita la memoria di contesto
+        # Fase 2: se abilitata, offri l'esecuzione CONFERMATA dei comandi proposti
+        if cfg.get("allow_exec") and sys.stdin.isatty():
+            _offer_exec(reply, history)
+
+
+def _offer_exec(reply: str, history: list[dict]) -> None:
+    """Elenca i comandi proposti e, su conferma esplicita, li esegue in sandbox.
+    Nulla parte senza che l'utente scelga il comando e confermi (s/N)."""
+    from . import executor
+    cmds = executor.extract_commands(reply)
+    if not cmds:
+        return
+    print("Comandi proposti (esecuzione confermata in sandbox):")
+    for i, c in enumerate(cmds, 1):
+        print(f"  [{i}] {c}")
+    try:
+        sel = input("Esegui quale? (numero, Invio = nessuno) ").strip()
+    except (EOFError, KeyboardInterrupt):
+        print(); return
+    if not sel.isdigit() or not (1 <= int(sel) <= len(cmds)):
+        return
+    cmd = cmds[int(sel) - 1]
+    level, needs_net, why = executor.classify(cmd)
+    if level == "blocked":
+        print(f"[IA] Comando NON eseguibile: {why}. Valutalo e lancialo a mano se sicuro.")
+        return
+    net = "CON accesso di rete" if needs_net else "senza rete"
+    try:
+        ok = input(f"Confermi l'esecuzione ({net}) di:\n    {cmd}\n[s/N] ").strip().lower()
+    except (EOFError, KeyboardInterrupt):
+        print(); return
+    if ok not in ("s", "si", "y", "yes"):
+        print("Annullato.")
+        return
+    rc, out = executor.run_confirmed(cmd, needs_net)
+    # rimanda l'output all'agente cosi' puo' commentarlo al giro successivo
+    history.append({"role": "user",
+                    "content": f"Ho eseguito `{cmd}` (uscita {rc}). Output:\n{out[:3000]}"})
 
 
 if __name__ == "__main__":

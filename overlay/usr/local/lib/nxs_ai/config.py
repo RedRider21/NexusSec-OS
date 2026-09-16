@@ -31,6 +31,7 @@ DEFAULT_LOCAL_MODEL = "qwen2.5:3b"
 DEFAULTS = {
     "backend": "off",              # off | local | cloud
     "consent_cloud": False,        # il contesto puo' uscire verso il cloud?
+    "allow_exec": False,           # Fase 2: esecuzione confermata dei comandi (sandbox)
     "cloud": {
         "endpoint": "",            # es. https://api.openai.com  oppure il proprio AIos
         "api_key": "",

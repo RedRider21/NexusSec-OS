@@ -3665,6 +3665,25 @@ def open_ai(_btn=None):
     cl.pack_start(consent, False, False, 0)
     body.pack_start(cl, False, False, 0)
 
+    # --- esecuzione confermata (Fase 2) ---
+    ex = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
+    ex.get_style_context().add_class("nxs-card")
+    ehdr = Gtk.Label(label="Esecuzione dei comandi (Fase 2)"); ehdr.set_xalign(0)
+    ehdr.get_style_context().add_class("nxs-key")
+    ex.pack_start(ehdr, False, False, 0)
+    exec_chk = Gtk.CheckButton(label="Consenti l'esecuzione dei comandi proposti "
+                                     "(sempre con conferma, in sandbox)")
+    exec_chk.set_active(bool(cfg.get("allow_exec")))
+    ex.pack_start(exec_chk, False, False, 0)
+    enote = Gtk.Label(label="Se attivo, nella conversazione (nxs-ai) puoi eseguire "
+                            "un comando proposto: te lo mostra, chiede conferma e lo "
+                            "lancia in sandbox (bubblewrap), rispettando il profilo. "
+                            "I comandi distruttivi o su disco sono sempre bloccati.")
+    enote.set_xalign(0); enote.set_line_wrap(True)
+    enote.get_style_context().add_class("nxs-val")
+    ex.pack_start(enote, False, False, 0)
+    body.pack_start(ex, False, False, 0)
+
     def _sync_sections(*_a):
         loc.set_sensitive(r_local.get_active())
         cl.set_sensitive(r_cloud.get_active())
@@ -3685,6 +3704,7 @@ def open_ai(_btn=None):
         ai_cfg.set_values(
             backend=be,
             consent_cloud=consent.get_active(),
+            allow_exec=exec_chk.get_active(),
             local={"model": combo.get_active_id() or ai_cfg.DEFAULT_LOCAL_MODEL},
             cloud={"endpoint": ep.get_text().strip(),
                    "model": cm.get_text().strip(),
