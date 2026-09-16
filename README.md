@@ -70,6 +70,11 @@ giusti da installare al volo con `nxs-tool`. Accessi rapidi: **Super+A** apre un
 output o un errore; da terminale `nxs-ai "domanda"` (risposta singola) o `nxs-ai`
 (conversazione).
 
+Opzionalmente (**opt-in** dal Centro di Controllo) si può abilitare l'**esecuzione
+confermata**: l'assistente propone il comando, tu lo vedi e **confermi**, e viene
+eseguito in **sandbox** (bubblewrap) rispettando il profilo attivo. I comandi
+distruttivi o sui dischi sono **sempre bloccati** e ogni esecuzione è tracciata.
+
 ## Documentazione
 
 - **[Manuale utente](docs/manuale.html)** — avvio, profili, menu, metodi dei tool,
