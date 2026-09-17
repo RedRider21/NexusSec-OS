@@ -1514,7 +1514,7 @@ class Panel(Gtk.Window):
                         self._lowbatt_warned = True
                         run_bg(["notify-send", "-a", "NexusSec", "-u", "critical",
                                 _t("pn.batt.low"),
-                                f"{cap}% residuo — collega l'alimentatore"])
+                                _t("pn.batt.low_body") % cap])
                 elif (not disch) or cap > 15:
                     self._lowbatt_warned = False
                 return
@@ -1637,17 +1637,18 @@ class Panel(Gtk.Window):
                 bpct, bstate, bac = 0, "unknown", "0"
             on_ac = bac == "1"
             self.batt_btn.set_image(_tray_img(self._batt_icon(bpct, bstate, on_ac)))
-            lab = {"charging": "in carica", "discharging": "in scarica",
-                   "full": "carica", "notcharging": "non in carica"}.get(
-                       bstate, "")
+            lab = {"charging": _t("pn.batt.t_charging"),
+                   "discharging": _t("pn.batt.t_discharging"),
+                   "full": _t("pn.batt.t_full"),
+                   "notcharging": _t("pn.batt.t_notcharging")}.get(bstate, "")
             tip = _t("pn.batt.pct") % bpct
             if lab:
                 tip += " (%s)" % lab
             # Mostra sempre lo stato alimentazione: a rete o a batteria.
             if on_ac:
-                tip += " — rete collegata"
+                tip += _t("pn.batt.on_ac")
             elif bstate == "discharging":
-                tip += " — a batteria"
+                tip += _t("pn.batt.on_batt")
             self.batt_btn.set_tooltip_text(tip)
             self.batt_btn.show()
         return False
@@ -1836,7 +1837,7 @@ class Panel(Gtk.Window):
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
         box.get_style_context().add_class("nxs-calbox")
         box.set_size_request(320, -1)
-        title = Gtk.Label(); title.set_markup("<b>Alimentazione</b>")
+        title = Gtk.Label(); title.set_markup("<b>%s</b>" % _t("pn.batt.power_title"))
         title.set_xalign(0)
         box.pack_start(title, False, False, 0)
 
@@ -1866,7 +1867,7 @@ class Panel(Gtk.Window):
             for c in grid.get_children():
                 grid.remove(c)
             if info.get("battery") != "1":
-                big.set_text("Rete elettrica")
+                big.set_text(_t("pn.batt.mains"))
                 bar.set_fraction(1.0)
                 state_lbl.set_text(_t("pn.batt.ac_nobatt"))
                 grid.show_all()
@@ -1875,44 +1876,44 @@ class Panel(Gtk.Window):
             big.set_text("%d%%" % pct)
             bar.set_fraction(max(0.0, min(1.0, pct / 100.0)))
             st = info.get("state", "unknown")
-            stmap = {"charging": "In carica", "discharging": "In scarica",
+            stmap = {"charging": _t("pn.batt.charging"), "discharging": _t("pn.batt.discharging"),
                      "full": _t("pn.batt.full"), "notcharging": _t("pn.batt.notcharging"),
                      "unknown": _t("pn.batt.unknown")}
             ac = info.get("ac", "0") == "1"
             state_lbl.set_text(stmap.get(st, st) +
-                               (" — rete collegata" if ac else " — a batteria"))
+                               (_t("pn.batt.on_ac") if ac else _t("pn.batt.on_batt")))
             r = 0
             eta = info.get("eta_min")
             if eta:
                 try:
                     m = int(eta); hh, mm = m // 60, m % 60
                     lab = ("%dh %02dmin" % (hh, mm)) if hh else ("%d min" % mm)
-                    add_row(r, "Autonomia residua" if st == "discharging"
-                            else "Tempo alla carica", lab); r += 1
+                    add_row(r, _t("pn.batt.eta_discharge") if st == "discharging"
+                            else _t("pn.batt.eta_charge"), lab); r += 1
                 except ValueError:
                     pass
             if info.get("power_w"):
                 try:
-                    add_row(r, "Potenza", "%.1f W" % (int(info["power_w"]) / 10.0))
+                    add_row(r, _t("pn.batt.power_w"), "%.1f W" % (int(info["power_w"]) / 10.0))
                     r += 1
                 except ValueError:
                     pass
             if info.get("voltage_mv"):
                 try:
-                    add_row(r, "Tensione", "%.2f V" % (int(info["voltage_mv"]) / 1000.0))
+                    add_row(r, _t("pn.batt.voltage"), "%.2f V" % (int(info["voltage_mv"]) / 1000.0))
                     r += 1
                 except ValueError:
                     pass
             if info.get("health"):
-                add_row(r, "Salute batteria", info["health"] + "%"); r += 1
+                add_row(r, _t("pn.batt.health"), info["health"] + "%"); r += 1
             if info.get("cycles"):
-                add_row(r, "Cicli di carica", info["cycles"]); r += 1
+                add_row(r, _t("pn.batt.cycles"), info["cycles"]); r += 1
             if info.get("technology"):
-                add_row(r, "Tecnologia", info["technology"]); r += 1
+                add_row(r, _t("pn.batt.technology"), info["technology"]); r += 1
             if info.get("model"):
-                add_row(r, "Modello", info["model"]); r += 1
+                add_row(r, _t("pn.batt.model"), info["model"]); r += 1
             if info.get("manufacturer"):
-                add_row(r, "Produttore", info["manufacturer"]); r += 1
+                add_row(r, _t("pn.batt.manufacturer"), info["manufacturer"]); r += 1
             grid.show_all()
             return False
 
