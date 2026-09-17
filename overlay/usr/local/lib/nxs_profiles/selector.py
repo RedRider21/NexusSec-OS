@@ -18,6 +18,12 @@ from gi.repository import Gtk, Gdk  # noqa: E402
 
 from . import model
 
+try:
+    from nxs_i18n import t as _t          # traduzioni (it/en/fr/es/de)
+except Exception:                         # noqa: BLE001
+    def _t(key, **kw):                    # fallback: non rompe mai la UI
+        return key
+
 # Riusa CSS/tema del Centro di Controllo (stesso /usr/local/lib).
 try:
     from nxs_cc.common import apply_css
@@ -69,7 +75,7 @@ def _accent_css(accent: str) -> bytes:
 
 class Selector(Gtk.Window):
     def __init__(self):
-        super().__init__(title="NexusSec - Profilo operativo")
+        super().__init__(title=_t("sel.wtitle"))
         apply_css()
         prov = Gtk.CssProvider()
         prov.load_from_data(_EXTRA_CSS)
@@ -91,12 +97,12 @@ class Selector(Gtk.Window):
 
         header = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
         header.get_style_context().add_class("nxs-headerbar")
-        eb = Gtk.Label(label="NEXUSSEC OS  ·  PROFILO OPERATIVO"); eb.set_xalign(0)
+        eb = Gtk.Label(label=_t("sel.eyebrow")); eb.set_xalign(0)
         eb.get_style_context().add_class("nxs-eyebrow")
         header.pack_start(eb, False, False, 0)
-        t = Gtk.Label(label="Seleziona la modalita' operativa"); t.set_xalign(0)
+        t = Gtk.Label(label=_t("sel.title")); t.set_xalign(0)
         t.get_style_context().add_class("title")
-        s = Gtk.Label(label="Il menu e lo sfondo si adattano al profilo scelto")
+        s = Gtk.Label(label=_t("sel.subtitle"))
         s.set_xalign(0); s.get_style_context().add_class("subtitle")
         header.pack_start(t, False, False, 0)
         header.pack_start(s, False, False, 0)
@@ -123,14 +129,14 @@ class Selector(Gtk.Window):
         bar.get_style_context().add_class("nxs-footer")
         self.hint = Gtk.Label(label=""); self.hint.set_xalign(0)
         bar.pack_start(self.hint, True, True, 0)
-        self._clean = Gtk.CheckButton(label="Pulisci profilo precedente")
+        self._clean = Gtk.CheckButton(label=_t("sel.clean"))
         self._clean.set_tooltip_text(
-            "Monomissione: rimuove il meta-pacchetto del profilo precedente (apk del)")
+            _t("sel.clean_tip"))
         bar.pack_start(self._clean, False, False, 0)
-        cancel = Gtk.Button(label="Annulla")
+        cancel = Gtk.Button(label=_t("v.cancel"))
         cancel.connect("clicked", lambda *_: self.destroy())
         bar.pack_start(cancel, False, False, 0)
-        apply_btn = Gtk.Button(label="Applica profilo")
+        apply_btn = Gtk.Button(label=_t("sel.apply"))
         apply_btn.get_style_context().add_class("nxs-primary")
         apply_btn.connect("clicked", self._on_apply)
         bar.pack_start(apply_btn, False, False, 0)
@@ -176,7 +182,7 @@ class Selector(Gtk.Window):
         box.pack_start(desc, False, False, 0)
 
         ntools = len(d.get("tools", []))
-        cnt = Gtk.Label(label=("%d strumenti" % ntools) if ntools else "sistema base")
+        cnt = Gtk.Label(label=(_t("sel.ntools") % ntools) if ntools else _t("sel.base_system"))
         cnt.set_xalign(0); cnt.get_style_context().add_class("nxs-profilo-desc")
         box.pack_start(cnt, False, False, 0)
 
@@ -194,7 +200,7 @@ class Selector(Gtk.Window):
             else:
                 ctx.remove_class("sel")
         d = model.profile_data(key)
-        self.hint.set_text("Profilo: %s" % d.get("name", key))
+        self.hint.set_text(_t("sel.profile_hint") % d.get("name", key))
 
     def _on_apply(self, _btn):
         model.activate_profile(self._selected,
