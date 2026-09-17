@@ -124,6 +124,23 @@ Pannello nativo in Python (GTK3, stile MATE):
 - **WiFi interno** (incluse le schede **Intel/iwlwifi**) e cablato pronti
   all'uso, oltre agli adattatori WiFi USB da pentest.
 
+## Multilingua
+
+Tutta l'interfaccia è tradotta in **5 lingue** — **italiano, inglese, francese,
+spagnolo, tedesco**: Centro di Controllo e tutte le sue viste, pannello (menu,
+tooltip di rete, batteria e Bluetooth, stati) e le applicazioni **Browser**,
+**Dischi**, **Casi forensi** e il selettore del **Profilo operativo**.
+
+Il cambio lingua è **al volo**: dall'**applet Lingua** del pannello, dalla voce
+**Lingua** del menu o dal **Centro di Controllo** (o da terminale con
+`nxs-lang set <it|en|fr|es|de>`). Pannello, servizio delle finestre e icone del
+desktop si riallineano subito, senza riavviare la sessione.
+
+L'italiano è la **lingua sorgente**, con fallback lingua → inglese → italiano
+(una voce non ancora tradotta non lascia mai un buco nell'interfaccia). Fanno
+eccezione, di proposito, i **registri della catena di custodia** dei *Casi
+forensi*, mantenuti in italiano per la loro riproducibilità probatoria.
+
 ## Screenshot
 
 All'avvio una **splashscreen flat** con barra di caricamento accompagna la
