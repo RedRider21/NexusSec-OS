@@ -840,7 +840,7 @@ def open_packages(_btn=None):
                 elif line.strip():
                     store.append([line.split()[0], "", ""])
                     count += 1
-            log(f"  {count} risultati.\n" if count else "  Nessun risultato (serve rete? prova 'Aggiorna indice').\n")
+            log((_t("v.pkg_results") % count) if count else _t("v.pkg_noresults"))
             set_busy(False)
             return False
 
@@ -923,8 +923,8 @@ HOTKEYS = [
     ("XF86MonBrightness Up/Down", _t("hk.brightness")),
     ("Super + F5 / F6", _t("hk.bright_dn")),
     ("Super + L", _t("hk.lock")),
-    ("Tasto dx desktop", _t("hk.menu")),
-    ("Tasto centrale desktop", _t("hk.winlist")),
+    (_t("hk.rmb_desktop"), _t("hk.menu")),
+    (_t("hk.mmb_desktop"), _t("hk.winlist")),
 ]
 
 
@@ -1001,10 +1001,7 @@ def _ask_text(parent, title, initial=""):
 def open_hotkeys(_btn=None):
     win, body = panel_window(_t("v.hotkeys.title"), 620, 560)
 
-    intro = Gtk.Label(label="Scorciatoie 'esegui comando' di Openbox. Modifica il "
-                            "comando con un doppio clic; usa i pulsanti per "
-                            "cambiare il tasto, aggiungere o rimuovere. Le modifiche "
-                            "si applicano subito (openbox --reconfigure).")
+    intro = Gtk.Label(label=_t("v.hk_intro"))
     intro.set_xalign(0); intro.set_line_wrap(True)
     intro.get_style_context().add_class("nxs-val")
     body.pack_start(intro, False, False, 0)
@@ -1130,13 +1127,7 @@ def open_statusbar(_btn=None):
     title.get_style_context().add_class("nxs-card-title")
     card.pack_start(title, False, False, 0)
     desc = Gtk.Label(label=(
-        "Barra GTK3 con icone, larga quanto lo schermo, agganciabile in\n"
-        "basso o in alto. A sinistra: menu NexusSec e lanciatori (Terminale,\n"
-        "File, Centro). Al centro: la lista delle finestre aperte (clic per\n"
-        "attivare, clic sulla finestra attiva per minimizzarla). A destra:\n"
-        "orologio e pulsante \"mostra desktop\".\n\n"
-        "Lo spazio sul bordo e' riservato da Openbox (rc.xml) cosi' le\n"
-        "finestre massimizzate non coprono il pannello."))
+        _t("v.panel_intro")))
     desc.set_xalign(0)
     desc.get_style_context().add_class("nxs-val")
     card.pack_start(desc, False, False, 0)
@@ -1223,8 +1214,7 @@ def open_statusbar(_btn=None):
     def apply_ws(_b):
         panelcfg.set_desktops(int(spin_ws.get_value()))
         info_dialog(_t("v.desktops_updated"),
-                    "Ora hai %d desktop virtuali. Il selettore compare nella "
-                    "barra a sinistra (se piu' di uno)."
+                    _t("v.vdesk_info")
                     % int(spin_ws.get_value()), parent=win)
     b_applyws.connect("clicked", apply_ws)
     wbox.pack_end(b_applyws, False, False, 0)
@@ -1323,8 +1313,7 @@ def open_openbox_theme(_btn=None):
     win, body = panel_window(_t("v.obtheme.title"), 480, 460)
     print("[cc] ob-theme: finestra creata", flush=True)
 
-    lab = Gtk.Label(label="Bordi e decorazioni delle finestre. "
-                          "Doppio clic per applicare.")
+    lab = Gtk.Label(label=_t("v.obtheme_intro"))
     lab.set_xalign(0)
     lab.get_style_context().add_class("nxs-val")
     body.pack_start(lab, False, False, 0)
@@ -1445,8 +1434,7 @@ def open_openbox_theme(_btn=None):
                 break
         if target is None:
             info_dialog(_t("v.system_theme"),
-                        "«%s» è installato a livello di sistema e non si può "
-                        "eliminare da qui." % name, parent=win)
+                        _t("v.theme_sys_noremove") % name, parent=win)
             return
         conf = Gtk.MessageDialog(
             transient_for=win, modal=True, message_type=Gtk.MessageType.QUESTION,
@@ -1639,9 +1627,7 @@ def open_autostart(_btn=None):
     win, body = panel_window(_t("v.autostart.title"), 660, 480)
 
     intro = Gtk.Label(label=(
-        "Programmi avviati con la sessione. Spunta per abilitare, scrivi il "
-        "comando, poi premi Salva. Le voci di sistema (sfondo, pannello, "
-        "desktop) restano gestite a parte."))
+        _t("v.autostart_intro")))
     intro.set_xalign(0)
     intro.set_line_wrap(True)
     intro.get_style_context().add_class("nxs-val")
@@ -1698,8 +1684,7 @@ def open_autostart(_btn=None):
         try:
             _autostart_write_user(ents)
             info_dialog(_t("v.saved"),
-                        "Voci di autostart memorizzate in:\n%s\n\n"
-                        "Avranno effetto al prossimo avvio della sessione."
+                        _t("v.autostart_saved")
                         % AUTOSTART, parent=win)
         except OSError as e:
             info_dialog(_t("v.error"), str(e), level="error", parent=win)
@@ -1764,9 +1749,7 @@ def open_wallpaper(_btn=None):
     win, body = panel_window(_t("v.wallpaper.title"), 680, 600)
     from gi.repository import GdkPixbuf
 
-    intro = Gtk.Label(label="Scegli lo sfondo. E' indipendente dal profilo e "
-                            "dalla skin del pannello: resta finche' non lo cambi "
-                            "o premi «Torna allo sfondo del profilo».")
+    intro = Gtk.Label(label=_t("v.wall_intro"))
     intro.set_xalign(0); intro.set_line_wrap(True)
     intro.get_style_context().add_class("nxs-val")
     body.pack_start(intro, False, False, 0)
@@ -1967,9 +1950,7 @@ def open_screensaver(_btn=None):
     win, body = panel_window(_t("v.screensaver.title"), 540, 640)
     cfg = _ss_read()
 
-    intro = Gtk.Label(label="Salvaschermo animato di NexusSec: si avvia dopo un "
-                            "periodo di inattivita' e si chiude a qualsiasi "
-                            "movimento o tasto.")
+    intro = Gtk.Label(label=_t("v.ss_intro"))
     intro.set_xalign(0); intro.set_line_wrap(True)
     intro.get_style_context().add_class("nxs-val")
     body.pack_start(intro, False, False, 0)
@@ -2042,8 +2023,7 @@ def open_screensaver(_btn=None):
         elif _sssecret.has_password():
             pw_state.set_text(_t("v.pw_set"))
         else:
-            pw_state.set_text("Nessuna password impostata: impostala per "
-                              "attivare il blocco.")
+            pw_state.set_text(_t("v.no_pw_set"))
     _refresh_pw_state()
 
     row_pw = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
@@ -2187,10 +2167,7 @@ def open_mouse(_btn=None):
     tempo, dist = _dc_leggi()
 
     intro = Gtk.Label(label=(
-        "GTK riconosce il doppio clic solo se i due clic arrivano entro un "
-        "tempo E restano entro una distanza. Col dito sul touchpad e' la "
-        "distanza a saltare per prima: e' il motivo per cui un doppio tap "
-        "veloce puo' fallire mentre uno lento riesce."))
+        _t("v.mouse_intro")))
     intro.set_xalign(0); intro.set_line_wrap(True)
     intro.get_style_context().add_class("nxs-val")
     body.pack_start(intro, False, False, 0)
@@ -2215,12 +2192,9 @@ def open_mouse(_btn=None):
         return combo
 
     c_tempo = _riga(_t("v.dclick_speed"), _DC_TEMPI, tempo,
-                    "Millisecondi entro cui devono arrivare i due clic. Piu' e' "
-                    "alto, piu' e' facile il doppio clic, ma il sistema aspetta "
-                    "quel tempo prima di concludere che era un clic singolo.")
+                    _t("v.dclick_speed_help"))
     c_dist = _riga(_t("v.move_tol"), _DC_DIST, dist,
-                   "Di quanti pixel puo' spostarsi il puntatore fra i due clic. "
-                   "Col mouse bastano 5; col dito servono di piu'.")
+                   _t("v.move_tol_help"))
 
     # --- zona di prova ---------------------------------------------------
     sep = Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL)
@@ -2410,8 +2384,7 @@ def open_bluetooth(_btn=None):
         for c in devbox.get_children():
             devbox.remove(c)
         if not devs:
-            empty = Gtk.Label(label="Nessun dispositivo. Premi «Scansiona "
-                                    "dispositivi» per cercarne di nuovi.")
+            empty = Gtk.Label(label=_t("v.bt_none_scan"))
             empty.set_xalign(0); empty.get_style_context().add_class("nxs-val")
             empty.set_line_wrap(True)
             devbox.pack_start(empty, False, False, 0)
@@ -2541,11 +2514,9 @@ def open_bluetooth(_btn=None):
                 elif out == "err-nofile":
                     set_status(_t("v.file_not_found"))
                 elif out == "err-obexd":
-                    set_status("Invio non riuscito: obexd non si avvia "
-                               "(vedi /tmp/nxs-bt-obex.log).")
+                    set_status(_t("v.bt_send_fail_obexd"))
                 else:
-                    set_status("Invio non riuscito: verifica che il device sia "
-                               "abbinato e raggiungibile, poi riprova. (%s)" % out)
+                    set_status(_t("v.bt_send_fail_check") % out)
                 return False
             GLib.idle_add(done)
         threading.Thread(target=worker, daemon=True).start()
@@ -2635,13 +2606,11 @@ def open_bluetooth(_btn=None):
                 if not state:
                     set_status(_t("v.bt_recv_off"))
                 elif out.startswith("on"):
-                    set_status("Ricezione attiva: invia dal tuo telefono verso "
-                               "questo PC.")
+                    set_status(_t("v.bt_recv_on"))
                 elif out == "err-noobex":
                     set_status(_t("v.bt_recv_na"))
                 else:
-                    set_status("Ricezione NON attivata (%s). Vedi "
-                               "/tmp/nxs-bt-obex.log." % out)
+                    set_status(_t("v.bt_recv_notact") % out)
                 return False
             GLib.idle_add(done)
         threading.Thread(target=worker, daemon=True).start()
@@ -2670,18 +2639,13 @@ def open_bluetooth(_btn=None):
 # ---------------------------------------------------------------------------
 _WSTYLES = [
     ("vetro",  _t("v.ws.glass_hud"),
-     "Velatura d'accento, filetto superiore colorato e trama a righe "
-     "nell'header. Elegante, \"console operativa\". (predefinito)"),
+     _t("v.ws.glass_desc")),
     ("flat",   _t("v.ws.flat_round"),
-     "Card scure con angoli morbidi e filo d'accento leggero. Sobrio e "
-     "riposante: e' lo stile classico di NexusSec."),
+     _t("v.ws.flat_desc")),
     ("telaio", _t("v.ws.frame"),
-     "Fondo quasi nero, elementi definiti dal bordo d'accento e da una "
-     "barretta laterale. Estetica terminale/cyber, molto tecnica."),
+     _t("v.ws.frame_desc")),
     ("aero",   _t("v.ws.real_glass"),
-     "Finestre DAVVERO traslucide con sfocatura dello sfondo, come l'effetto "
-     "vetro/acrilico di Windows. Accende il compositore (picom): su VM con "
-     "grafica software puo' essere piu' pesante."),
+     _t("v.ws.real_desc")),
 ]
 
 
@@ -2692,9 +2656,7 @@ def open_window_style(_btn=None):
     except Exception:                       # noqa: BLE001
         _wmodel = None
 
-    intro = Gtk.Label(label="Scegli come vestire le finestre del desktop. Lo "
-                            "stile si accorda all'accento del profilo attivo e "
-                            "vale per Centro di Controllo, viste e dialoghi.")
+    intro = Gtk.Label(label=_t("v.ws_intro"))
     intro.set_xalign(0); intro.set_line_wrap(True)
     intro.get_style_context().add_class("nxs-val")
     body.pack_start(intro, False, False, 0)
@@ -2739,8 +2701,7 @@ def open_window_style(_btn=None):
             apply_window_style_live()
         except Exception:                   # noqa: BLE001
             pass
-        status.set_text("Stile «%s» applicato. Le finestre gia' aperte si "
-                        "aggiornano riaprendole." %
+        status.set_text(_t("v.ws_applied") %
                         dict((k, n) for k, n, _ in _WSTYLES).get(style, style))
     # anteprima immediata anche solo cambiando la scelta
     for rb in radios.values():
@@ -2764,15 +2725,11 @@ _THEME_FAMILIES = [
     ("retro", _t("v.ac.retro"),
      _t("v.ac.retro_desc")),
     ("cards", _t("v.ac.cards"),
-     "Pulsanti a sfera semaforo a sinistra (chiudi/minimizza/massimizza) con il "
-     "simbolo dentro, angoli arrotondati (picom). Bordo e titolo seguono il "
-     "colore del profilo. Attiva un compositor solo mentre e' selezionata."),
+     _t("v.ac.cards_desc")),
     ("raw:NexusSec-Arc-Dark", _t("v.ac.arc_dark"),
-     "Variante scura stile Arc con semafori tondi (adattata da Lubuntu Arc-Round, "
-     "GPL-3). Tema fisso, non segue il profilo."),
+     _t("v.ac.arc_dark_desc")),
     ("raw:NexusSec-Arc-Light", _t("v.ac.arc_light"),
-     "Variante chiara stile Arc con semafori tondi (adattata da Lubuntu Arc-Round, "
-     "GPL-3). Tema fisso, non segue il profilo."),
+     _t("v.ac.arc_light_desc")),
 ]
 _PROMPT_STYLES = [
     ("default", _t("v.ac.prompt_one"),
@@ -2794,9 +2751,7 @@ def open_appearance(_btn=None):
     except Exception:                       # noqa: BLE001
         _m = None
 
-    intro = Gtk.Label(label="Scegli la FAMIGLIA del tema finestre e lo stile del "
-                            "prompt del terminale. «Retro» e «Cards» seguono in "
-                            "automatico il colore del profilo operativo attivo.")
+    intro = Gtk.Label(label=_t("v.ac_intro"))
     intro.set_xalign(0); intro.set_line_wrap(True)
     intro.get_style_context().add_class("nxs-val")
     body.pack_start(intro, False, False, 0)
@@ -2843,8 +2798,7 @@ def open_appearance(_btn=None):
     for rb in fam_radios.values():
         rb.connect("toggled", lambda w: w.get_active() and fam_apply())
 
-    note = Gtk.Label(label="Per un tema Openbox specifico e non coordinato "
-                           "(es. uno dei «1977») usa «Temi finestre».")
+    note = Gtk.Label(label=_t("v.ac_note"))
     note.set_xalign(0); note.set_line_wrap(True)
     note.get_style_context().add_class("nxs-val")
     body.pack_start(note, False, False, 0)
@@ -2854,11 +2808,7 @@ def open_appearance(_btn=None):
     h_pt.get_style_context().add_class("nxs-section")
     body.pack_start(h_pt, False, False, 0)
 
-    pt_intro = Gtk.Label(label="Colori di barra, menu e popup. «Segui il profilo» "
-                               "usa il colore del profilo attivo (standard); le "
-                               "altre skin sono a colori fissi, indipendenti dal "
-                               "profilo. Puoi aggiungere skin tue lasciando un file "
-                               ".css in ~/.config/nxs/panel-themes/.")
+    pt_intro = Gtk.Label(label=_t("v.pt_intro"))
     pt_intro.set_xalign(0); pt_intro.set_line_wrap(True)
     pt_intro.get_style_context().add_class("nxs-val")
     body.pack_start(pt_intro, False, False, 0)
@@ -2916,8 +2866,7 @@ def open_appearance(_btn=None):
     body.pack_start(h_ft, False, False, 0)
     ft_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
     ft_row.get_style_context().add_class("nxs-card")
-    ft_lab = Gtk.Label(label="Mostra il logo e le info di sistema all'apertura "
-                             "del terminale")
+    ft_lab = Gtk.Label(label=_t("v.fetch_desc"))
     ft_lab.set_xalign(0); ft_lab.set_line_wrap(True)
     ft_lab.get_style_context().add_class("nxs-key")
     ft_row.pack_start(ft_lab, True, True, 0)
@@ -2979,8 +2928,7 @@ def open_appearance(_btn=None):
             subprocess.run(["nxs-prompt", "set", st])
         except OSError:
             pass
-        pr_status.set_text("Prompt «%s» impostato. Apri un nuovo terminale per "
-                           "vederlo." % st)
+        pr_status.set_text(_t("v.prompt_set") % st)
     for rb in pr_radios.values():
         rb.connect("toggled", lambda w: w.get_active() and pr_apply())
 
@@ -3024,11 +2972,7 @@ def _eye_entry(placeholder=_t("v.password")):
 def open_firewall(_btn=None):
     win, body = panel_window(_t("v.fw.title"), 560, 560)
 
-    intro = Gtk.Label(label="Firewall nftables. Politica: traffico in USCITA "
-                            "libero (i tool devono poter uscire), traffico in "
-                            "INGRESSO bloccato salvo le porte che apri qui. "
-                            "Per mettere in ascolto un handler/reverse shell, "
-                            "apri la porta o disattiva temporaneamente.")
+    intro = Gtk.Label(label=_t("v.fw_intro"))
     intro.set_xalign(0); intro.set_line_wrap(True)
     intro.get_style_context().add_class("nxs-val")
     body.pack_start(intro, False, False, 0)
@@ -3133,10 +3077,7 @@ def _users_list():
 def open_users(_btn=None):
     win, body = panel_window(_t("v.users.title"), 560, 560)
 
-    intro = Gtk.Label(label="Utenti del sistema. Sulla live l'utente predefinito "
-                            "e' «nexus» con password «nexus» (stile Kali): "
-                            "cambiala qui. Le modifiche sono permanenti solo se "
-                            "il sistema e' installato o con persistenza.")
+    intro = Gtk.Label(label=_t("v.users_intro"))
     intro.set_xalign(0); intro.set_line_wrap(True)
     intro.get_style_context().add_class("nxs-val")
     body.pack_start(intro, False, False, 0)
@@ -3246,10 +3187,7 @@ def open_users(_btn=None):
 def open_security(_btn=None):
     win, body = panel_window(_t("v.sec.title"), 580, 600)
 
-    intro = Gtk.Label(label="Stato delle difese del sistema. La live e' comoda "
-                            "ed effimera; una volta INSTALLATA su disco puoi "
-                            "irrobustirla (password, niente autologin, doas con "
-                            "password, blocco schermo, persistenza cifrata).")
+    intro = Gtk.Label(label=_t("v.sec.intro"))
     intro.set_xalign(0); intro.set_line_wrap(True)
     intro.get_style_context().add_class("nxs-val")
     body.pack_start(intro, False, False, 0)
@@ -3359,8 +3297,7 @@ def open_security(_btn=None):
                 _t("v.priv.tor_desc"))
     priv_switch(_t("v.priv.anon"),
                 ["nxs-anon", "status"], ["nxs-anon", "on"], ["nxs-anon", "off"],
-                "Tutto il traffico via Tor (trasparente) + kill-switch: niente leak. "
-                "UDP e IPv6 disattivati.")
+                _t("v.priv.anon_desc"))
     priv_switch(_t("v.priv.mac"),
                 ["nxs-macspoof", "status"],
                 ["sh", "-c", "nxs-macspoof on; nxs-macspoof now"],
@@ -3368,8 +3305,7 @@ def open_security(_btn=None):
                 _t("v.priv.mac_desc"))
     priv_switch(_t("v.priv.panic_usb"),
                 ["nxs-panic", "status"], ["nxs-panic", "arm"], ["nxs-panic", "disarm"],
-                "Se estrai la chiavetta di boot, il PC si spegne mettendo al sicuro i dati "
-                "(chiave LUKS fuori dalla RAM). Solo supporti rimovibili.")
+                _t("v.priv.panic_desc"))
 
     # Refresh periodico degli switch privacy (allineamento live col pannello).
     # I comandi di stato girano in un thread per non bloccare la UI; l'update
@@ -3410,9 +3346,7 @@ def open_security(_btn=None):
                                 buttons=Gtk.ButtonsType.NONE,
                                 text=_t("v.priv.panic_q"))
         dlg.format_secondary_text(
-            "Il PC si spegne immediatamente mettendo al sicuro i dati "
-            "(chiave di cifratura fuori dalla RAM, cache svuotate). "
-            "Le finestre aperte NON verranno salvate.")
+            _t("v.priv.panic_body"))
         dlg.add_button(_t("v.cancel"), Gtk.ResponseType.CANCEL)
         bok = dlg.add_button(_t("v.priv.shutdown_now"), Gtk.ResponseType.OK)
         bok.get_style_context().add_class("destructive-action")
@@ -3455,8 +3389,7 @@ def open_screens(_btn=None):
     Dopo ogni applicazione rilegge lo stato e riposiziona i pannelli (già
     gestito da nxs-screens -> _reposition_panels)."""
     win, body = panel_window(_t("v.screens.title"), 620, 640)
-    intro = Gtk.Label(label="Monitor: estendi, duplica o usa un solo schermo; "
-                            "la risoluzione si applica all'output selezionato.")
+    intro = Gtk.Label(label=_t("v.screens_intro"))
     intro.set_xalign(0)
     intro.get_style_context().add_class("nxs-val")
     body.pack_start(intro, False, False, 0)
@@ -3561,10 +3494,7 @@ def open_ai(_btn=None):
     win, body = panel_window(_t("v.ai.title"), 620, 680)
     cfg = ai_cfg.load()
 
-    intro = Gtk.Label(label="Assistente consulente di NexusSec: risponde e "
-                            "PROPONE i comandi, non li esegue (Fase 1). Scegli "
-                            "dove gira il modello. Nulla viene scaricato senza "
-                            "una tua azione esplicita.")
+    intro = Gtk.Label(label=_t("v.ai.intro"))
     intro.set_xalign(0); intro.set_line_wrap(True)
     intro.get_style_context().add_class("nxs-val")
     body.pack_start(intro, False, False, 0)
@@ -3609,14 +3539,12 @@ def open_ai(_btn=None):
     def _refresh_local():
         inst = ai_be.ollama_installed()
         if not inst:
-            lstat.set_markup("<b>Runtime non installato.</b> Premi il pulsante per "
-                             "installarlo (apk add ollama).")
+            lstat.set_markup(_t("v.ai.runtime_not_installed"))
         else:
             models = ai_be.ollama_models()
-            srv = "attivo" if ai_be.server_running() else _t("v.ai.off_ondemand")
-            got = ", ".join(models) if models else "nessuno"
-            lstat.set_markup(f"Runtime installato. Server: {srv}.\n"
-                             f"Modelli scaricati: <b>{got}</b>")
+            srv = _t("v.active") if ai_be.server_running() else _t("v.ai.off_ondemand")
+            got = ", ".join(models) if models else _t("v.none_word")
+            lstat.set_markup(_t("v.ai.runtime_ok") % (srv, got))
         b_inst.set_sensitive(not inst)
     _refresh_local()
 
@@ -3648,10 +3576,7 @@ def open_ai(_btn=None):
     chdr = Gtk.Label(label=_t("v.ai.cloud_backend")); chdr.set_xalign(0)
     chdr.get_style_context().add_class("nxs-key")
     cl.pack_start(chdr, False, False, 0)
-    warn = Gtk.Label(label="Attenzione: con il cloud il contesto (domande, output "
-                           "incollati) esce verso un servizio esterno. Usa un "
-                           "endpoint di cui ti fidi. La chiave resta solo in "
-                           "~/.config/nxs/ai.json (permessi 600).")
+    warn = Gtk.Label(label=_t("v.ai.cloud_warn"))
     warn.set_xalign(0); warn.set_line_wrap(True)
     warn.get_style_context().add_class("nxs-val")
     cl.pack_start(warn, False, False, 0)
@@ -3677,14 +3602,10 @@ def open_ai(_btn=None):
     ehdr = Gtk.Label(label=_t("v.ai.exec_phase2")); ehdr.set_xalign(0)
     ehdr.get_style_context().add_class("nxs-key")
     ex.pack_start(ehdr, False, False, 0)
-    exec_chk = Gtk.CheckButton(label="Consenti l'esecuzione dei comandi proposti "
-                                     "(sempre con conferma, in sandbox)")
+    exec_chk = Gtk.CheckButton(label=_t("v.ai.exec_toggle"))
     exec_chk.set_active(bool(cfg.get("allow_exec")))
     ex.pack_start(exec_chk, False, False, 0)
-    enote = Gtk.Label(label="Se attivo, nella conversazione (nxs-ai) puoi eseguire "
-                            "un comando proposto: te lo mostra, chiede conferma e lo "
-                            "lancia in sandbox (bubblewrap), rispettando il profilo. "
-                            "I comandi distruttivi o su disco sono sempre bloccati.")
+    enote = Gtk.Label(label=_t("v.ai.exec_help"))
     enote.set_xalign(0); enote.set_line_wrap(True)
     enote.get_style_context().add_class("nxs-val")
     ex.pack_start(enote, False, False, 0)
@@ -3716,8 +3637,7 @@ def open_ai(_btn=None):
                    "model": cm.get_text().strip(),
                    "api_key": ak.get_text().strip()})
         info_dialog(win, _t("v.ai.title"),
-                    "Impostazioni salvate. Apri la conversazione con il pulsante "
-                    "in basso o dal terminale con: nxs-ai")
+                    _t("v.ai.saved_hint"))
     b_save.connect("clicked", _save)
     b_chat.connect("clicked", lambda _b: run_bg(
         ["lxterminal", "--title=Assistente IA", "-e", "nxs-ai"]))
@@ -3744,10 +3664,7 @@ def open_language(_btn=None):
         cur = "it"
 
     win, body = panel_window(_t("v.lang.title"), 460, 260)
-    intro = Gtk.Label(label="Lingua dell'interfaccia di NexusSec. Il cambio si "
-                            "applica subito al pannello; le finestre gia' aperte "
-                            "(questo Centro di Controllo incluso) vanno riaperte "
-                            "per vederle nella nuova lingua.")
+    intro = Gtk.Label(label=_t("v.lang.desc"))
     intro.set_xalign(0); intro.set_line_wrap(True)
     intro.get_style_context().add_class("nxs-val")
     body.pack_start(intro, False, False, 0)
@@ -3772,8 +3689,7 @@ def open_language(_btn=None):
         if code and code != cur:
             run_bg(["nxs-lang", "set", code])
             info_dialog(win, _t("v.lang.title"),
-                        "Lingua impostata. Il pannello si riavvia; riapri le altre "
-                        "finestre per applicarla ovunque.")
+                        _t("v.lang.set_msg"))
     b_apply.connect("clicked", _apply)
 
     win.show_all()
