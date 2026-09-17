@@ -39,6 +39,12 @@ from gi.repository import Gtk, Gdk, GLib, GdkPixbuf, WebKit2  # noqa: E402
 
 from nxs_browser.config import config
 
+try:
+    from nxs_i18n import t as _t
+except Exception:                # noqa: BLE001
+    def _t(key, **kw):           # fallback: non rompe mai la UI
+        return key
+
 APP_NAME = "NexusSec Browser"
 
 # ---------------------------------------------------------------------------
@@ -285,7 +291,7 @@ class Browser(Gtk.Window):
         self.tab_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=2)
         sc.add(self.tab_box)
         strip.pack_start(sc, True, True, 0)
-        b = self._iconbtn("tab-new-symbolic", "Nuova tab", lambda: self.new_tab())
+        b = self._iconbtn("tab-new-symbolic", _t("br.new_tab"), lambda: self.new_tab())
         b.get_style_context().add_class("nxs-tab-new")
         strip.pack_start(b, False, False, 0)
         return strip
@@ -296,15 +302,15 @@ class Browser(Gtk.Window):
         Inspector resta SOLO nel menu."""
         nav = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=4)
         nav.get_style_context().add_class("nxs-navbar")
-        nav.pack_start(self._navbtn("go-previous-symbolic", "Indietro", self.navigate_back), False, False, 0)
-        nav.pack_start(self._navbtn("go-next-symbolic", "Avanti", self.navigate_forward), False, False, 0)
-        nav.pack_start(self._navbtn("view-refresh-symbolic", "Ricarica", self.refresh), False, False, 0)
-        nav.pack_start(self._navbtn("go-home-symbolic", "Home", self.navigate_home), False, False, 0)
-        nav.pack_start(self._navbtn("tab-new-symbolic", "Nuova tab", self.new_tab), False, False, 0)
+        nav.pack_start(self._navbtn("go-previous-symbolic", _t("br.back"), self.navigate_back), False, False, 0)
+        nav.pack_start(self._navbtn("go-next-symbolic", _t("br.forward"), self.navigate_forward), False, False, 0)
+        nav.pack_start(self._navbtn("view-refresh-symbolic", _t("br.reload"), self.refresh), False, False, 0)
+        nav.pack_start(self._navbtn("go-home-symbolic", _t("br.home"), self.navigate_home), False, False, 0)
+        nav.pack_start(self._navbtn("tab-new-symbolic", _t("br.new_tab"), self.new_tab), False, False, 0)
 
         self.url_bar = Gtk.Entry()
         self.url_bar.get_style_context().add_class("nxs-urlbar")
-        self.url_bar.set_placeholder_text("Cerca o digita un indirizzo")
+        self.url_bar.set_placeholder_text(_t("br.url_ph"))
         # Icona "lucchetto" del sito all'inizio dell'URL pill (come Firefox).
         try:
             self.url_bar.set_icon_from_icon_name(
@@ -314,8 +320,8 @@ class Browser(Gtk.Window):
         self.url_bar.connect("activate", lambda _w: self.navigate_to_url())
         nav.pack_start(self.url_bar, True, True, 4)
 
-        nav.pack_start(self._navbtn("bookmark-new-symbolic", "Aggiungi ai preferiti", self.add_bookmark), False, False, 0)
-        nav.pack_start(self._navbtn("weather-clear-night-symbolic", "Cambia tema", self.toggle_theme), False, False, 0)
+        nav.pack_start(self._navbtn("bookmark-new-symbolic", _t("br.add_fav"), self.add_bookmark), False, False, 0)
+        nav.pack_start(self._navbtn("weather-clear-night-symbolic", _t("br.toggle_theme"), self.toggle_theme), False, False, 0)
 
         # Interruttore stealth (anonimato Tor + niente tracce). Mostra icona+testo.
         self._stealth_btn = Gtk.Button()
@@ -338,17 +344,17 @@ class Browser(Gtk.Window):
             mi.connect("activate", lambda _w: cb())
             menu.append(mi)
 
-        item("Nuova Tab", lambda: self.new_tab())
-        item("Chiudi Tab", lambda: self.close_tab(self.current_view()))
+        item(_t("br.new_tab"), lambda: self.new_tab())
+        item(_t("br.close_tab"), lambda: self.close_tab(self.current_view()))
         menu.append(Gtk.SeparatorMenuItem())
-        item("Zoom +", self.zoom_in)
-        item("Zoom -", self.zoom_out)
-        item("Zoom Normale", self.reset_zoom)
+        item(_t("br.zoom_in"), self.zoom_in)
+        item(_t("br.zoom_out"), self.zoom_out)
+        item(_t("br.zoom_reset"), self.reset_zoom)
         menu.append(Gtk.SeparatorMenuItem())
-        item("Cambia Tema", self.toggle_theme)
-        item("Inspector (F12)", self.toggle_inspector)
+        item(_t("br.toggle_theme"), self.toggle_theme)
+        item(_t("br.inspector"), self.toggle_inspector)
         menu.append(Gtk.SeparatorMenuItem())
-        item("Esci", self.destroy)
+        item(_t("br.quit"), self.destroy)
         menu.show_all()
         menu.popup_at_widget(self._menu_btn, Gdk.Gravity.SOUTH_EAST,
                              Gdk.Gravity.NORTH_EAST, None)
@@ -394,16 +400,16 @@ class Browser(Gtk.Window):
 
         # Azioni, riusate in ENTRAMBI i layout (== sempre funzionanti).
         actions = (
-            ("list-add-symbolic", "Aggiungi il sito corrente", self.add_bookmark),
-            ("document-edit-symbolic", "Modifica selezionato", self.edit_bookmark),
-            ("user-trash-symbolic", "Elimina selezionato", self.delete_bookmark),
-            ("view-refresh-symbolic", "Aggiorna", self.load_bookmarks),
+            ("list-add-symbolic", _t("br.add_current"), self.add_bookmark),
+            ("document-edit-symbolic", _t("br.edit_selected"), self.edit_bookmark),
+            ("user-trash-symbolic", _t("br.delete_selected"), self.delete_bookmark),
+            ("view-refresh-symbolic", _t("v.refresh"), self.load_bookmarks),
         )
 
         # --- Header ORIZZONTALE (stato APERTO): titolo + azioni + collassa ----
         self._head_open = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=2)
         self._head_open.get_style_context().add_class("nxs-sidebar-head")
-        title = Gtk.Label(label="Preferiti")
+        title = Gtk.Label(label=_t("br.bookmarks"))
         title.get_style_context().add_class("nxs-sidebar-title")
         title.set_xalign(0)
         title.set_ellipsize(3)
@@ -591,10 +597,10 @@ class Browser(Gtk.Window):
                 transient_for=(self if isinstance(self, Gtk.Window) else None),
                 modal=True, message_type=Gtk.MessageType.QUESTION,
                 buttons=Gtk.ButtonsType.YES_NO,
-                text="Consentire l'accesso a microfono/fotocamera?")
+                text=_t("br.perm_q"))
             d.format_secondary_text(
-                ("Il sito %s chiede di usare il microfono/la fotocamera." % host)
-                if host else "Il sito chiede di usare il microfono/la fotocamera.")
+                (_t("br.perm_site") % host)
+                if host else _t("br.perm_generic"))
             resp = d.run()
             d.destroy()
             try:
@@ -638,7 +644,7 @@ class Browser(Gtk.Window):
         view.show()
 
         self.stack.add_named(view, str(id(view)))
-        ev = self._make_tab(view, "Nuova Tab")
+        ev = self._make_tab(view, _t("br.new_tab"))
         self.tab_box.pack_start(ev, False, False, 0)
         ev.show_all()
         if switch:
@@ -768,19 +774,16 @@ class Browser(Gtk.Window):
         sc = btn.get_style_context()
         if self.stealth:
             if self._tor_ok:
-                icon, label = "security-high-symbolic", "Stealth ON"
-                tip = ("Navigazione ANONIMA attiva: traffico via Tor (IP nascosto) "
-                       "e nessuna traccia locale. Click per disattivare.")
+                icon, label = "security-high-symbolic", _t("br.stealth_on")
+                tip = _t("br.stealth_on_tip")
             else:
-                icon, label = "security-medium-symbolic", "Stealth (no Tor)"
-                tip = ("Nessuna traccia locale, ma Tor non e' disponibile: "
-                       "l'IP reale e' visibile. Installa/avvia 'tor'. Click per disattivare.")
+                icon, label = "security-medium-symbolic", _t("br.stealth_notor")
+                tip = _t("br.stealth_notor_tip")
             sc.add_class("nxs-stealth-on")
             sc.remove_class("nxs-stealth-off")
         else:
-            icon, label = "security-low-symbolic", "Stealth OFF"
-            tip = ("Navigazione NORMALE: memorizza cookie, cronologia e cache. "
-                   "Click per attivare l'anonimato (Tor).")
+            icon, label = "security-low-symbolic", _t("br.stealth_off")
+            tip = _t("br.stealth_off_tip")
             sc.add_class("nxs-stealth-off")
             sc.remove_class("nxs-stealth-on")
         btn.set_image(Gtk.Image.new_from_icon_name(icon, Gtk.IconSize.SMALL_TOOLBAR))
@@ -791,7 +794,7 @@ class Browser(Gtk.Window):
         entry = self._tab_labels.get(view)
         if entry:
             box, _img, lbl = entry
-            title = view.get_title() or "Nuova Tab"
+            title = view.get_title() or _t("br.new_tab")
             lbl.set_text(title)
             box.set_tooltip_text(title)
 
@@ -1114,14 +1117,14 @@ class Browser(Gtk.Window):
             mi.connect("activate", lambda _w: cb())
             menu.append(mi)
 
-        item("Aggiungi sito corrente", self.add_bookmark)
+        item(_t("br.ctx_add"), self.add_bookmark)
         if row is not None and getattr(row, "bookmark", None):
             self.bm_list.select_row(row)
             menu.append(Gtk.SeparatorMenuItem())
-            item("Apri in nuova tab",
+            item(_t("br.open_new_tab"),
                  lambda: self.new_tab(row.bookmark[1]))
-            item("Modifica", self.edit_bookmark)
-            item("Elimina", self.delete_bookmark)
+            item(_t("br.edit"), self.edit_bookmark)
+            item(_t("v.delete"), self.delete_bookmark)
         menu.show_all()
         menu.popup_at_pointer(event)
 
@@ -1147,10 +1150,10 @@ class Browser(Gtk.Window):
         if not bm:
             return
         old_title, old_url = bm
-        new_title = self._prompt("Modifica preferito", "Titolo:", old_title)
+        new_title = self._prompt(_t("br.edit_fav"), _t("br.title_label"), old_title)
         if new_title is None:
             return
-        new_url = self._prompt("Modifica preferito", "URL:", old_url)
+        new_url = self._prompt(_t("br.edit_fav"), _t("br.url_label"), old_url)
         if new_url is None:
             return
         new_url = self._normalize(new_url)
@@ -1168,7 +1171,7 @@ class Browser(Gtk.Window):
         dlg = Gtk.MessageDialog(
             transient_for=self, modal=True, message_type=Gtk.MessageType.QUESTION,
             buttons=Gtk.ButtonsType.YES_NO,
-            text="Eliminare il preferito?")
+            text=_t("br.delete_fav_q"))
         dlg.format_secondary_text(title)
         resp = dlg.run()
         dlg.destroy()
