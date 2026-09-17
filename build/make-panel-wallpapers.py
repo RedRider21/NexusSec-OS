@@ -58,8 +58,9 @@ def make_white(mw):
         for x in range(W):
             px[x, y] = row
     img = img.convert("RGBA")
-    # honeycomb tenue (grigio)
-    img = Image.alpha_composite(img, mw.honeycomb((120, 130, 140), alpha=16))
+    # honeycomb piu' marcato che sugli scuri: sul bianco un alpha basso sparisce,
+    # quindi lo rendiamo visibile (grigio piu' scuro + alpha maggiore).
+    img = Image.alpha_composite(img, mw.honeycomb((95, 108, 122), alpha=36))
     d = ImageDraw.Draw(img, "RGBA")
     cx, cy = W // 2, int(H * 0.44)
     R = 150
@@ -72,14 +73,44 @@ def make_white(mw):
     fW = mw.font(72)
     wm = "NexusSec"; ww = d.textlength(wm, font=fW)
     d.text((cx - ww / 2, cy + 180), wm, font=fW, fill=ink + (255,))
-    ft = mw.font(30)
-    spaced = " ".join("BIANCO")
-    lw = d.textlength(spaced, font=ft)
-    px0, py0 = cx - lw / 2 - 28, cy + 292
-    d.rounded_rectangle([px0, py0, cx + lw / 2 + 28, py0 + 56], radius=28,
-                        fill=(240, 242, 246), outline=ink + (255,))
-    d.text((cx - lw / 2, py0 + 11), spaced, font=ft, fill=ink + (255,))
+    # (nessuna scritta del colore: solo emblema + wordmark)
     out = os.path.join(OUT, "skin-white.png")
+    img.convert("RGB").save(out, "PNG")
+    print("generato", out)
+
+
+def make_white_cyan(mw):
+    """Sfondo CHIARO con accenti CELESTI del pannello (#00e5ff): fondo bianco ->
+    azzurrino, honeycomb celeste ben visibile, emblema esagonale bianco con
+    bordo/wordmark nei toni celeste-blu del pannello (leggibili su chiaro).
+    Nessuna scritta del colore."""
+    from PIL import Image, ImageDraw
+    W, H = mw.W, mw.H
+    cyan = (0, 229, 255)         # accent pannello
+    ink = (0, 106, 138)          # celeste-blu scuro: leggibile su bianco
+    img = Image.new("RGB", (W, H), (255, 255, 255))
+    top, bot = (255, 255, 255), (223, 242, 248)   # bianco -> celeste chiarissimo
+    px = img.load()
+    for y in range(H):
+        t = y / (H - 1)
+        row = tuple(int(top[i] + (bot[i] - top[i]) * t) for i in range(3))
+        for x in range(W):
+            px[x, y] = row
+    img = img.convert("RGBA")
+    # honeycomb celeste ben visibile (sul chiaro serve piu' presenza)
+    img = Image.alpha_composite(img, mw.honeycomb(cyan, alpha=40))
+    d = ImageDraw.Draw(img, "RGBA")
+    cx, cy = W // 2, int(H * 0.44)
+    pts = mw._hexpts(cx, cy, 150)
+    d.polygon(pts, fill=(255, 255, 255, 255), outline=ink + (255,))
+    d.line(pts + [pts[0]], fill=ink + (255,), width=3)
+    fN = mw.font(190)
+    tw = d.textlength("N", font=fN)
+    d.text((cx - tw / 2, cy - 118), "N", font=fN, fill=ink + (255,))
+    fW = mw.font(72)
+    wm = "NexusSec"; ww = d.textlength(wm, font=fW)
+    d.text((cx - ww / 2, cy + 180), wm, font=fW, fill=ink + (255,))
+    out = os.path.join(OUT, "skin-celeste.png")
     img.convert("RGB").save(out, "PNG")
     print("generato", out)
 
@@ -94,9 +125,11 @@ def main():
     mw.DEST = OUT                                 # reindirizza l'output
     W, H = mw.W, mw.H
     for sid, (accent, deep, label) in SKINS.items():
-        mw.make("skin-" + sid, accent, deep, label, (W * 0.5, H * 0.44))
+        # label="" -> nessuna scritta del colore sugli sfondi skin (solo emblema)
+        mw.make("skin-" + sid, accent, deep, "", (W * 0.5, H * 0.44))
     make_white(mw)                               # sfondo chiaro dedicato
-    print("[panel-wallpapers] fatto: %d sfondi in %s" % (len(SKINS) + 1, OUT))
+    make_white_cyan(mw)                          # bianco con accenti celesti (pannello)
+    print("[panel-wallpapers] fatto: %d sfondi in %s" % (len(SKINS) + 2, OUT))
     return 0
 
 

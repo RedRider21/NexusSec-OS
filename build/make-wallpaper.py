@@ -279,18 +279,20 @@ def make(name, accent_hex, deep_hex, label, focal=(W // 2, H // 2)):
     wm = "NexusSec"
     ww = d.textlength(wm, font=fW)
     d.text((cx - ww / 2, cy + 180), wm, font=fW, fill=(226, 246, 255, 255))
-    # tag del profilo (pillola accento, lettere spaziate)
-    tag = (label or name).upper()
-    ft = font(30)
-    spaced = " ".join(tag)
-    lw = d.textlength(spaced, font=ft)
-    px, py = cx - lw / 2 - 28, cy + 292
-    # fill SOLIDO tinto (l'alpha diretto diventerebbe opaco al convert RGB):
-    # scuro con un 20% di accent -> il testo accento risalta bene.
-    pill = mix((8, 13, 22), accent, 0.20)
-    d.rounded_rectangle([px, py, cx + lw / 2 + 28, py + 56], radius=28,
-                        fill=pill, outline=accent + (255,))
-    d.text((cx - lw / 2, py + 11), spaced, font=ft, fill=accent + (255,))
+    # tag/pillola: SOLO se e' dato un label (i profili passano il nome del
+    # profilo; gli sfondi skin passano "" -> niente scritta del colore).
+    if label:
+        tag = label.upper()
+        ft = font(30)
+        spaced = " ".join(tag)
+        lw = d.textlength(spaced, font=ft)
+        px, py = cx - lw / 2 - 28, cy + 292
+        # fill SOLIDO tinto (l'alpha diretto diventerebbe opaco al convert RGB):
+        # scuro con un 20% di accent -> il testo accento risalta bene.
+        pill = mix((8, 13, 22), accent, 0.20)
+        d.rounded_rectangle([px, py, cx + lw / 2 + 28, py + 56], radius=28,
+                            fill=pill, outline=accent + (255,))
+        d.text((cx - lw / 2, py + 11), spaced, font=ft, fill=accent + (255,))
 
     out = os.path.join(DEST, name_to_file(name))
     img.convert("RGB").save(out, "PNG")
