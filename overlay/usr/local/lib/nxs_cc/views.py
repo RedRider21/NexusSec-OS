@@ -3718,3 +3718,57 @@ def open_ai(_btn=None):
 
     win.show_all()
     return win
+
+
+# ----- Lingua dell'interfaccia -------------------------------------------
+def open_language(_btn=None):
+    """Selettore lingua nel Centro di Controllo (oltre all'applet e alla voce
+    di menu del pannello). Applica con nxs-lang set."""
+    import sys as _sys
+    _sys.path.insert(0, "/usr/local/lib")
+    try:
+        import nxs_i18n
+        langs = list(nxs_i18n.LANGS)
+        names = nxs_i18n.LANG_NAMES
+        cur = nxs_i18n.current_lang()
+    except Exception:                          # noqa: BLE001
+        langs = ["it", "en", "fr", "es", "de"]
+        names = {"it": "Italiano", "en": "English", "fr": "Français",
+                 "es": "Español", "de": "Deutsch"}
+        cur = "it"
+
+    win, body = panel_window("Lingua", 460, 260)
+    intro = Gtk.Label(label="Lingua dell'interfaccia di NexusSec. Il cambio si "
+                            "applica subito al pannello; le finestre gia' aperte "
+                            "(questo Centro di Controllo incluso) vanno riaperte "
+                            "per vederle nella nuova lingua.")
+    intro.set_xalign(0); intro.set_line_wrap(True)
+    intro.get_style_context().add_class("nxs-val")
+    body.pack_start(intro, False, False, 0)
+
+    row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+    row.get_style_context().add_class("nxs-card")
+    lab = Gtk.Label(label="Lingua"); lab.set_xalign(0)
+    lab.get_style_context().add_class("nxs-key")
+    row.pack_start(lab, True, True, 0)
+    combo = Gtk.ComboBoxText()
+    for c in langs:
+        combo.append(c, names.get(c, c))
+    combo.set_active_id(cur)
+    row.pack_end(combo, False, False, 0)
+    body.pack_start(row, False, False, 0)
+
+    b_apply = icon_button("Applica", "object-select-symbolic", primary=True)
+    body.pack_start(b_apply, False, False, 0)
+
+    def _apply(_b):
+        code = combo.get_active_id()
+        if code and code != cur:
+            run_bg(["nxs-lang", "set", code])
+            info_dialog(win, "Lingua",
+                        "Lingua impostata. Il pannello si riavvia; riapri le altre "
+                        "finestre per applicarla ovunque.")
+    b_apply.connect("clicked", _apply)
+
+    win.show_all()
+    return win

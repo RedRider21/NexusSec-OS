@@ -134,6 +134,8 @@ VIEW_MAP = {
     "ia": views.open_ai,
     "ai": views.open_ai,
     "assistente": views.open_ai,
+    "lingua": views.open_language,
+    "language": views.open_language,
 }
 
 
@@ -219,6 +221,8 @@ def build_window() -> Gtk.Window:
     ]), False, False, 0)
 
     body.pack_start(section("Aspetto e tema", [
+        Tile("preferences-desktop-locale", "Lingua",
+             "Lingua dell'interfaccia (it/en/fr/es/de)", launch("lingua")),
         Tile("preferences-desktop-theme", "Aspetto coordinato",
              "Famiglia tema finestre (Core/Retro/Cards) + prompt del terminale, "
              "coordinati col colore del profilo", launch("aspetto-coordinato")),

@@ -1170,6 +1170,14 @@ class Panel(Gtk.Window):
                 False, False, 0)
             sep()
 
+        # Lingua interfaccia: IN CIMA (subito sotto il profilo), sempre visibile
+        # senza scorrere. E' anche un applet nella barra e nel Centro di Controllo.
+        _lang_top = self._menu_item("menu", "preferences-desktop-locale-symbolic",
+                                    _t("menu.language"))
+        _lang_top.connect("clicked", lambda _w: self._choose_language())
+        lst.pack_start(_lang_top, False, False, 0)
+        sep()
+
         move_to = "bottom" if self.position == "top" else "top"
         move_label = (_t("menu.move_bottom") if move_to == "bottom"
                       else _t("menu.move_top"))
@@ -1229,12 +1237,6 @@ class Panel(Gtk.Window):
                 lst.pack_start(
                     self._menu_item("menu", icon, label, cmd, mv, conf),
                     False, False, 0)
-        # Selettore lingua interfaccia (it/en/fr/es/de).
-        lang_item = self._menu_item("menu", "preferences-desktop-locale-symbolic",
-                                    _t("menu.language"))
-        lang_item.connect("clicked", lambda _w: self._choose_language())
-        lst.pack_start(lang_item, False, False, 0)
-        sep()
 
         # --- Sezione APPLICAZIONI: app installate via .desktop (LibreOffice,
         #     GIMP, VLC, ...). Cosi' qualunque app apk compare nel menu senza
