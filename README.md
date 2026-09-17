@@ -780,9 +780,15 @@ Con RAM abbondante resta quasi inattivo. Configurato in `/etc/local.d/zram.start
   colpo d'occhio). **Gli stessi interruttori sono anche nel Centro di Controllo →
   Sicurezza** (blocco "Privacy e anonimato"), così pannello e Centro di Controllo
   restano allineati.
-- **Multilingua** (it / en / fr / es / de): layer i18n condiviso (`nxs_i18n`) con
-  selettore nel menu (voce **Lingua**) e CLI `nxs-lang`; l'italiano e' la lingua
-  sorgente, con fallback lingua->inglese->italiano.
+- **Multilingua completo** (it / en / fr / es / de): tutta l'interfaccia e'
+  tradotta — Centro di Controllo e viste, pannello (menu, tooltip di
+  rete/batteria/Bluetooth, stati) e le app (Browser, Dischi, Casi forensi,
+  selettore **Profilo operativo**). Il cambio lingua e' **al volo** dall'applet
+  del pannello, dalla voce **Lingua** del menu o dal Centro di Controllo (CLI
+  `nxs-lang`): pannello, servizio delle finestre e icone del desktop si
+  riallineano subito. Layer i18n condiviso (`nxs_i18n`), italiano lingua sorgente
+  con fallback lingua->inglese->italiano. I registri della catena di custodia dei
+  **Casi forensi** restano in italiano di proposito (riproducibilita' probatoria).
 - **Centro di Controllo** (`nxs-control-center`): info sistema, monitor, rete,
   **gestore pacchetti apk**, temi, sfondo, pannello, autostart, e tile
   **Profilo operativo**.
