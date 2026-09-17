@@ -66,6 +66,15 @@ def _detach_quit(win):
 
 def _open(app, args):
     """Apre l'app richiesta DENTRO il processo servizio (chiamata da idle_add)."""
+    # Il servizio e' residente: la lingua puo' essere cambiata dopo l'avvio.
+    # Azzeriamo la memoization di nxs_i18n cosi' ogni finestra rilegge la lingua
+    # attiva da ~/.config/nxs/lang (le stringhe passano tutte da _t()/t()).
+    try:
+        import nxs_i18n
+        nxs_i18n._active = None
+        nxs_i18n._cache.clear()
+    except Exception:                # noqa: BLE001
+        pass
     try:
         if app == "cc":
             m = nxs_cc.main

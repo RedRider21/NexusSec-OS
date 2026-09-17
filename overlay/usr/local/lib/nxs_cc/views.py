@@ -1917,14 +1917,19 @@ def open_keyboard(_btn=None):
 # Salvaschermo (nxs-screensaver + xautolock)
 # ---------------------------------------------------------------------------
 SS_CONF = HOME / ".config" / "nxs" / "screensaver.conf"
-SS_STYLES = [("nebula", _t("v.ss.nebula")),
-             ("matrix", _t("v.ss.matrix")),
-             ("starfield", _t("v.ss.stars")),
-             ("aurora", _t("v.ss.aurora")),
-             ("grid", _t("v.ss.synthwave")),
-             ("hexpulse", _t("v.ss.honeycomb")),
-             ("orbits", _t("v.ss.orbits")),
-             ("logo", _t("v.ss.logo"))]
+
+
+def _ss_styles():
+    # Costruita a runtime (non a import-time): il demone caldo importa il modulo
+    # una volta, quindi le etichette tradotte vanno risolte all'apertura vista.
+    return [("nebula", _t("v.ss.nebula")),
+            ("matrix", _t("v.ss.matrix")),
+            ("starfield", _t("v.ss.stars")),
+            ("aurora", _t("v.ss.aurora")),
+            ("grid", _t("v.ss.synthwave")),
+            ("hexpulse", _t("v.ss.honeycomb")),
+            ("orbits", _t("v.ss.orbits")),
+            ("logo", _t("v.ss.logo"))]
 
 
 def _ss_read():
@@ -1985,10 +1990,11 @@ def open_screensaver(_btn=None):
     lab_st.set_xalign(0); lab_st.get_style_context().add_class("nxs-key")
     row_st.pack_start(lab_st, True, True, 0)
     combo = Gtk.ComboBoxText()
-    for key, desc in SS_STYLES:
+    _styles = _ss_styles()
+    for key, desc in _styles:
         combo.append(key, desc)
     combo.set_active_id(cfg.get("style", "nebula")
-                        if cfg.get("style", "nebula") in dict(SS_STYLES) else "nebula")
+                        if cfg.get("style", "nebula") in dict(_styles) else "nebula")
     row_st.pack_end(combo, False, False, 0)
     body.pack_start(row_st, False, False, 0)
 
@@ -2120,9 +2126,13 @@ def open_screensaver(_btn=None):
 # Il tempo NON va allungato a caso: piu' e' lungo, piu' il sistema ASPETTA
 # prima di concludere che era un clic singolo, e i clic singoli sembrano lenti.
 # Per questo qui si regolano entrambi, e c'e' una zona di prova per tararli.
-_DC_TEMPI = [(_t("v.spd.vfast"), 300), (_t("v.spd.fast"), 450), (_t("v.spd.normal"), 600),
-             (_t("v.spd.slow"), 800), (_t("v.spd.vslow"), 1000)]
-_DC_DIST = [(_t("v.tol.narrow"), 5), (_t("v.tol.medium"), 10), (_t("v.tol.wide"), 16),
+def _dc_tempi():
+    return [(_t("v.spd.vfast"), 300), (_t("v.spd.fast"), 450), (_t("v.spd.normal"), 600),
+            (_t("v.spd.slow"), 800), (_t("v.spd.vslow"), 1000)]
+
+
+def _dc_dist():
+    return [(_t("v.tol.narrow"), 5), (_t("v.tol.medium"), 10), (_t("v.tol.wide"), 16),
             (_t("v.tol.vwide"), 24)]
 
 
@@ -2191,9 +2201,9 @@ def open_mouse(_btn=None):
         body.pack_start(n, False, False, 0)
         return combo
 
-    c_tempo = _riga(_t("v.dclick_speed"), _DC_TEMPI, tempo,
+    c_tempo = _riga(_t("v.dclick_speed"), _dc_tempi(), tempo,
                     _t("v.dclick_speed_help"))
-    c_dist = _riga(_t("v.move_tol"), _DC_DIST, dist,
+    c_dist = _riga(_t("v.move_tol"), _dc_dist(), dist,
                    _t("v.move_tol_help"))
 
     # --- zona di prova ---------------------------------------------------

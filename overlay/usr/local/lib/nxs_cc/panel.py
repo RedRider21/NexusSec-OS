@@ -76,9 +76,14 @@ TOOL_CATEGORIES = [
     ("anonymity",  ("Anonimato",         "security-high-symbolic")),
     ("other",      ("Altri strumenti",   "applications-utilities-symbolic")),
 ]
-TOOL_CAT_LABEL = {k: v[0] for k, v in TOOL_CATEGORIES}
+TOOL_CAT_LABEL = {k: v[0] for k, v in TOOL_CATEGORIES}   # etichette IT (fallback)
 TOOL_CAT_ICON = {k: v[1] for k, v in TOOL_CATEGORIES}
 TOOL_CAT_ORDER = [k for k, _ in TOOL_CATEGORIES]
+
+
+def cat_label(cat):
+    """Nome tradotto della categoria (risolto a runtime: segue la lingua)."""
+    return _t("cat." + cat)
 
 PANEL_HEIGHT = panelcfg.get_height()
 ICON_PX = panelcfg.get_icon_px()
@@ -1200,13 +1205,13 @@ class Panel(Gtk.Window):
              ["nxs-screensaver"], None, None),
             ("applets-screenshooter-symbolic", _t("menu.screenshot"),
              ["nxs-screenshot", "full", "1"], None, None),
-            ("audio-input-microphone-symbolic", "Registratore vocale",
+            ("audio-input-microphone-symbolic", _t("menu.recorder"),
              ["nxs-recorder"], None, None),
-            ("edit-clear-all-symbolic", "Pulisci metadati (MAT2)",
+            ("edit-clear-all-symbolic", _t("menu.metadata"),
              ["nxs-metadata", "gui"], None, None),
-            ("weather-clear-night-symbolic", "Filtro luce blu (Super+N)",
+            ("weather-clear-night-symbolic", _t("menu.nightlight"),
              ["nxs-nightlight", "toggle"], None, None),
-            ("edit-paste-symbolic", "Appunti - cronologia (Super+V)",
+            ("edit-paste-symbolic", _t("menu.clipboard"),
              ["nxs-clipboard", "menu"], None, None),
             (None, None, None, None, None),
             # Dischi e casi forensi: raggiungibili anche dal menu, non solo
@@ -1250,7 +1255,8 @@ class Panel(Gtk.Window):
             header_a.get_style_context().add_class("nxs-menu-cat")
             hlbl_a = Gtk.Label()
             hlbl_a.set_xalign(0)
-            hlbl_a.set_markup("▸  APPLICAZIONI  <small>(%d)</small>" % len(desktop_apps))
+            hlbl_a.set_markup("▸  %s  <small>(%d)</small>"
+                              % (_t("menu.applications"), len(desktop_apps)))
             header_a.add(hlbl_a)
             lst.pack_start(header_a, False, False, 0)
             for app in desktop_apps:
@@ -1278,8 +1284,8 @@ class Panel(Gtk.Window):
                           reveal=_reveal_row):
                 st["collapsed"] = not st["collapsed"]
                 arrow = "▸" if st["collapsed"] else "▾"
-                lbl.set_markup("%s  APPLICAZIONI  <small>(%d)</small>"
-                               % (arrow, len(rows)))
+                lbl.set_markup("%s  %s  <small>(%d)</small>"
+                               % (arrow, _t("menu.applications"), len(rows)))
                 for r in rows:
                     r.hide() if st["collapsed"] else reveal(r)
             header_a.connect("clicked", _toggle_a)
@@ -1330,7 +1336,7 @@ class Panel(Gtk.Window):
                 hlbl = Gtk.Label()
                 hlbl.set_xalign(0)
                 hlbl.set_markup("▸  %s  <small>(%d)</small>"
-                                % (TOOL_CAT_LABEL[cat].upper(), len(tools)))
+                                % (cat_label(cat).upper(), len(tools)))
                 header.add(hlbl)
                 lst.pack_start(header, False, False, 0)
                 for tool in sorted(tools):
@@ -1340,7 +1346,7 @@ class Panel(Gtk.Window):
                     tool_rows.append((row, haystack))
                     section_rows.append(row)
 
-                def _toggle(_btn, lbl=hlbl, name=TOOL_CAT_LABEL[cat],
+                def _toggle(_btn, lbl=hlbl, name=cat_label(cat),
                             rows=section_rows, st=state, reveal=_reveal_row):
                     st["collapsed"] = not st["collapsed"]
                     arrow = "▸" if st["collapsed"] else "▾"
@@ -1593,9 +1599,9 @@ class Panel(Gtk.Window):
             bi = "bluetooth-disabled-symbolic"
         self.bt_btn.set_image(_tray_img(bi))
         self.bt_btn.set_tooltip_text(
-            {"conn": "Bluetooth: dispositivo connesso", "on": "Bluetooth acceso",
-             "off": "Bluetooth spento",
-             "noadapter": "Bluetooth non disponibile"}.get(bt, "Bluetooth"))
+            {"conn": _t("tray.bt.conn"), "on": _t("tray.bt.on"),
+             "off": _t("tray.bt.off"),
+             "noadapter": _t("tray.bt.noadapter")}.get(bt, _t("tray.bt.default")))
         # Stato collegamento: la rete CABLATA ha priorita' visiva (se il cavo e'
         # inserito e attivo mostriamo l'icona ethernet, non piu' il WiFi
         # sganciato). Altrimenti lo stato WiFi (connesso/disconnesso/assente).

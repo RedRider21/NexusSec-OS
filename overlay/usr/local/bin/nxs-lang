@@ -24,12 +24,34 @@ for c in nxs_i18n.LANGS: print(c, nxs_i18n.LANG_NAMES[c])'
     python3 -c 'import sys, nxs_i18n; sys.exit(0 if nxs_i18n.set_lang(sys.argv[1]) else 1)' "$2" \
       || { echo "lingua non valida: $2 (usa: nxs-lang list)" >&2; exit 1; }
     echo "lingua impostata: $2"
-    # Applica riavviando il pannello. pkill DIRETTO (si auto-esclude) e rilancio
-    # da un launcher separato il cui argv NON contiene 'nxs_cc.panel'.
+    # Variabili di lingua per i processi che riavviamo (pcmanfm legge i
+    # Name[xx]/Comment[xx] dei .desktop tramite LANGUAGE).
+    case "$2" in
+      en) LC=en_US ;; fr) LC=fr_FR ;; es) LC=es_ES ;; de) LC=de_DE ;; *) LC=it_IT ;;
+    esac
+    export LANGUAGE="$2" LANG="${LC}.UTF-8"
+    # 1) Demone "caldo" (nxs_cc.launcherd): e' RESIDENTE e ha importato i moduli
+    #    (e la lingua) al boot -> Centro di Controllo, viste e selettore profili
+    #    resterebbero nella vecchia lingua. Va RIAVVIATO perche' riparta pulito.
+    if command -v nxs-launcherd >/dev/null 2>&1; then
+      pkill -f nxs_cc.launcherd 2>/dev/null || true
+      sleep 1
+      setsid nxs-launcherd >/tmp/nxs-launcherd.log 2>&1 &
+    fi
+    # 2) Pannello. pkill DIRETTO (si auto-esclude) e rilancio da launcher separato
+    #    il cui argv NON contiene 'nxs_cc.panel'.
     if command -v nxs-panel >/dev/null 2>&1; then
       pkill -f nxs_cc.panel 2>/dev/null || true
       sleep 1
       setsid nxs-panel >/dev/null 2>&1 &
+    fi
+    # 3) Icone del desktop: pcmanfm sceglie i Name[xx] alla partenza (da LANGUAGE).
+    #    Lo riavviamo con la nuova lingua cosi' le etichette cambiano SUBITO
+    #    (best-effort: se pcmanfm non c'e', semplicemente non fa nulla).
+    if command -v pcmanfm >/dev/null 2>&1 && [ -n "${DISPLAY:-}" ]; then
+      pkill -f "pcmanfm --desktop" 2>/dev/null || true
+      sleep 1
+      setsid pcmanfm --desktop --profile=NexusSec >/dev/null 2>&1 &
     fi
     ;;
   *)

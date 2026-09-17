@@ -78,7 +78,10 @@ def safe(handler):
         return None
     return wrapper
 
-APP_TITLE = _t("cc.app_title")
+# NB: NIENTE stringhe tradotte a livello di modulo. Il demone "caldo"
+# (nxs_cc.launcherd) importa questo modulo UNA volta: una costante legata qui
+# resterebbe nella lingua del boot. Le stringhe si risolvono con _t() al momento
+# di costruire la finestra (vedi build_window), cosi' seguono la lingua attiva.
 
 # Viste apribili direttamente da riga di comando (usate dal menu Openbox
 # per saltare al pannello giusto senza passare da un terminale):
@@ -193,7 +196,8 @@ def section(title: str, tiles: list[Tile]) -> Gtk.Box:
 
 def build_window() -> Gtk.Window:
     apply_css()
-    win = Gtk.Window(title=APP_TITLE)
+    app_title = _t("cc.app_title")
+    win = Gtk.Window(title=app_title)
     win.set_default_size(820, 560)
     win.set_position(Gtk.WindowPosition.CENTER)
     win.connect("destroy", Gtk.main_quit)
@@ -203,7 +207,7 @@ def build_window() -> Gtk.Window:
 
     header = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
     header.get_style_context().add_class("nxs-headerbar")
-    title = Gtk.Label(label=APP_TITLE); title.set_xalign(0)
+    title = Gtk.Label(label=app_title); title.set_xalign(0)
     title.get_style_context().add_class("title")
     sub = Gtk.Label(label=_t("cc.subtitle")); sub.set_xalign(0)
     sub.get_style_context().add_class("subtitle")
