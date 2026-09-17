@@ -20,6 +20,12 @@ from nxs_cc.common import (apply_css, info_dialog, install_screens_refresh_monit
                            center_toplevel_windows)
 from nxs_cc import views
 
+try:
+    from nxs_i18n import t as _t          # traduzioni (it/en/fr/es/de)
+except Exception:                         # noqa: BLE001
+    def _t(key, **kw):                    # fallback: non rompe mai la UI
+        return key
+
 
 def launch(view: str):
     """Apre una vista come PROCESSO separato (nxs-control-center <view>).
@@ -72,7 +78,7 @@ def safe(handler):
         return None
     return wrapper
 
-APP_TITLE = "NexusSec // Centro di Controllo"
+APP_TITLE = _t("cc.app_title")
 
 # Viste apribili direttamente da riga di comando (usate dal menu Openbox
 # per saltare al pannello giusto senza passare da un terminale):
@@ -199,7 +205,7 @@ def build_window() -> Gtk.Window:
     header.get_style_context().add_class("nxs-headerbar")
     title = Gtk.Label(label=APP_TITLE); title.set_xalign(0)
     title.get_style_context().add_class("title")
-    sub = Gtk.Label(label="Strumenti di configurazione del sistema"); sub.set_xalign(0)
+    sub = Gtk.Label(label=_t("cc.subtitle")); sub.set_xalign(0)
     sub.get_style_context().add_class("subtitle")
     header.pack_start(title, False, False, 0)
     header.pack_start(sub, False, False, 0)
@@ -214,90 +220,89 @@ def build_window() -> Gtk.Window:
     body.set_margin_start(16); body.set_margin_end(16)
     sw.add(body)
 
-    body.pack_start(section("Profilo operativo", [
-        Tile("preferences-system", "Cambia profilo",
-             "Pen Testing, Forensics, OSINT, Web: menu e sfondo si adattano",
+    body.pack_start(section(_t("cc.sec.profile"), [
+        Tile("preferences-system", _t("cc.t.profile"),
+             _t("cc.d.profile"),
              launch_app(["nxs-profile"])),
     ]), False, False, 0)
 
-    body.pack_start(section("Aspetto e tema", [
-        Tile("preferences-desktop-locale", "Lingua",
-             "Lingua dell'interfaccia (it/en/fr/es/de)", launch("lingua")),
-        Tile("preferences-desktop-theme", "Aspetto coordinato",
-             "Famiglia tema finestre (Core/Retro/Cards) + prompt del terminale, "
-             "coordinati col colore del profilo", launch("aspetto-coordinato")),
-        Tile("preferences-desktop-theme", "Tema GTK e icone",
-             "Tema GTK, set di icone e cursori (lxappearance)", launch("tema-gtk")),
-        Tile("preferences-desktop-wallpaper", "Sfondo",
-             "Sfondi abbinati alle skin, dei profili o un file (voce a se')",
+    body.pack_start(section(_t("cc.sec.appearance"), [
+        Tile("preferences-desktop-locale", _t("cc.t.language"),
+             _t("cc.d.language"), launch("lingua")),
+        Tile("preferences-desktop-theme", _t("cc.t.appearance"),
+             _t("cc.d.appearance"), launch("aspetto-coordinato")),
+        Tile("preferences-desktop-theme", _t("cc.t.gtktheme"),
+             _t("cc.d.gtktheme"), launch("tema-gtk")),
+        Tile("preferences-desktop-wallpaper", _t("cc.t.wallpaper"),
+             _t("cc.d.wallpaper"),
              launch("sfondo")),
-        Tile("preferences-desktop-screensaver", "Salvaschermo",
-             "Salvaschermo animato: attivazione, tempo e stile", launch("salvaschermo")),
-        Tile("preferences-system-windows", "Stile finestre",
-             "Aspetto delle finestre: Vetro, Flat o Telaio", launch("stile-finestre")),
+        Tile("preferences-desktop-screensaver", _t("cc.t.screensaver"),
+             _t("cc.d.screensaver"), launch("salvaschermo")),
+        Tile("preferences-system-windows", _t("cc.t.windowstyle"),
+             _t("cc.d.windowstyle"), launch("stile-finestre")),
     ]), False, False, 0)
 
-    body.pack_start(section("Openbox e pannello", [
-        Tile("preferences-system-windows", "Temi finestre",
-             "Bordi e decorazioni finestre (+ obconf)", launch("temi-finestre")),
-        Tile("input-mouse", "Menu tasto destro",
-             "Modifica il menu del click destro (menu.xml)", launch("menu")),
-        Tile("preferences-desktop-display", "Pannello",
-             "Posizione (alto/basso), avvio, riavvio", launch("pannello")),
+    body.pack_start(section(_t("cc.sec.openbox"), [
+        Tile("preferences-system-windows", _t("cc.t.obtheme"),
+             _t("cc.d.obtheme"), launch("temi-finestre")),
+        Tile("input-mouse", _t("cc.t.menu"),
+             _t("cc.d.menu"), launch("menu")),
+        Tile("preferences-desktop-display", _t("cc.t.panel"),
+             _t("cc.d.panel"), launch("pannello")),
     ]), False, False, 0)
 
-    body.pack_start(section("Sistema", [
-        Tile("computer", "Info sistema",
-             "CPU, RAM, disco, kernel, uptime", launch("sysinfo")),
-        Tile("utilities-system-monitor", "Monitor",
-             "CPU, RAM, rete e disco in tempo reale", launch("monitor")),
-        Tile("applications-science", "Assistente IA",
-             "Consulente IA: backend locale (ollama) o cloud", launch("ia")),
-        Tile("system-software-install", "Pacchetti",
-             "Cerca e installa pacchetti Alpine (apk)", launch("pacchetti")),
-        Tile("utilities-terminal", "Log di sistema",
-             "autostart, pannello, Xorg", launch("log")),
+    body.pack_start(section(_t("cc.sec.system"), [
+        Tile("computer", _t("cc.t.sysinfo"),
+             _t("cc.d.sysinfo"), launch("sysinfo")),
+        Tile("utilities-system-monitor", _t("cc.t.monitor"),
+             _t("cc.d.monitor"), launch("monitor")),
+        Tile("applications-science", _t("cc.t.ai"),
+             _t("cc.d.ai"), launch("ia")),
+        Tile("system-software-install", _t("cc.t.packages"),
+             _t("cc.d.packages"), launch("pacchetti")),
+        Tile("utilities-terminal", _t("cc.t.logs"),
+             _t("cc.d.logs"), launch("log")),
     ]), False, False, 0)
 
-    body.pack_start(section("Hardware", [
-        Tile("input-keyboard", "Tastiera", "Layout italiano / US", launch("tastiera")),
-        Tile("network-wired", "Rete",
-             "Interfacce, IP e test di connessione", launch("rete")),
-        Tile("bluetooth", "Bluetooth",
-             "Accensione, scansione, abbinamento e connessione dispositivi",
+    body.pack_start(section(_t("cc.sec.hardware"), [
+        Tile("input-keyboard", _t("cc.t.keyboard"), _t("cc.d.keyboard"), launch("tastiera")),
+        Tile("network-wired", _t("cc.t.network"),
+             _t("cc.d.network"), launch("rete")),
+        Tile("bluetooth", _t("cc.t.bluetooth"),
+             _t("cc.d.bluetooth"),
              launch("bluetooth")),
-        Tile("preferences-desktop-display", "Schermi",
-             "Estendi, duplica o usa un solo monitor; risoluzioni (xrandr)",
+        Tile("preferences-desktop-display", _t("cc.t.screens"),
+             _t("cc.d.screens"),
              launch("schermi")),
-        Tile("drive-harddisk", "Dischi",
-             "Dischi e partizioni; montaggio esplicito in sola lettura",
+        Tile("drive-harddisk", _t("cc.t.disks"),
+             _t("cc.d.disks"),
              launch("dischi")),
-        Tile("input-mouse", "Mouse e touchpad",
-             "Taratura del doppio clic, con zona di prova",
+        Tile("input-mouse", _t("cc.t.mouse"),
+             _t("cc.d.mouse"),
              launch("mouse")),
-        Tile("nxs-case", "Casi forensi",
-             "Acquisizione E01, verifica, timeline e relazione automatica",
+        Tile("nxs-case", _t("cc.t.cases"),
+             _t("cc.d.cases"),
              launch("casi")),
     ]), False, False, 0)
 
-    body.pack_start(section("Sicurezza", [
-        Tile("security-high", "Sicurezza e hardening",
-             "Password, autologin, doas, blocco VT, stato difese", launch("sicurezza")),
-        Tile("network-firewall", "Firewall",
-             "Inbound default-deny, porte in ascolto (nftables)", launch("firewall")),
-        Tile("system-users", "Gestione utenti",
-             "Utenti, password (predefinita nexus/nexus), aggiungi/elimina",
+    body.pack_start(section(_t("cc.sec.security"), [
+        Tile("security-high", _t("cc.t.security"),
+             _t("cc.d.security"), launch("sicurezza")),
+        Tile("network-firewall", _t("cc.t.firewall"),
+             _t("cc.d.firewall"), launch("firewall")),
+        Tile("system-users", _t("cc.t.users"),
+             _t("cc.d.users"),
              launch("utenti")),
     ]), False, False, 0)
 
-    body.pack_start(section("Personale", [
-        Tile("preferences-desktop-keyboard-shortcuts", "Tasti rapidi",
-             "Elenco scorciatoie da tastiera", launch("hotkey")),
-        Tile("system-run", "Autostart",
-             "Programmi avviati con la sessione", launch("autostart")),
+    body.pack_start(section(_t("cc.sec.personal"), [
+        Tile("preferences-desktop-keyboard-shortcuts", _t("cc.t.hotkeys"),
+             _t("cc.d.hotkeys"), launch("hotkey")),
+        Tile("system-run", _t("cc.t.autostart"),
+             _t("cc.d.autostart"), launch("autostart")),
     ]), False, False, 0)
 
-    footer = Gtk.Label(label="NexusSec OS  -  Centro di Controllo")
+    footer = Gtk.Label(label=_t("cc.footer"))
     footer.set_xalign(0)
     footer.get_style_context().add_class("nxs-footer")
     outer.pack_start(footer, False, False, 0)

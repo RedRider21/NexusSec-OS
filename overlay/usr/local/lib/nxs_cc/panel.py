@@ -385,7 +385,7 @@ class LoadMonitor(Gtk.EventBox):
         for m in (self.load, self.cpu, self.mem, self.net, self.disk):
             box.pack_start(m, False, False, 0)
         self.add(box)
-        self.set_tooltip_text("Risorse di sistema (clic: Monitor)")
+        self.set_tooltip_text(_t("pn.tip.monitor"))
         self.connect("button-press-event", self._on_click)
 
         self._prev_cpu = self._read_cpu()
@@ -635,7 +635,7 @@ class Panel(Gtk.Window):
         # Microfono (source PipeWire): applet a sé nella barra (stile MATE).
         # Compare SOLO se un mic e' presente (visibilita' decisa dal poll):
         # clic = popup (livello/muta/ingresso), rotella = +/- diretto sul volume.
-        self.mic_btn = _icon_button("audio-input-microphone-symbolic", "Microfono")
+        self.mic_btn = _icon_button("audio-input-microphone-symbolic", _t("pn.tray.mic"))
         self.mic_btn.connect("clicked", self._toggle_mic)
         self.mic_btn.add_events(Gdk.EventMask.SCROLL_MASK)
         self.mic_btn.connect("scroll-event", self._mic_scroll)
@@ -1039,13 +1039,13 @@ class Panel(Gtk.Window):
         dot.get_style_context().add_class("nxs-tool-dot")
         if installed is True:
             dot.get_style_context().add_class("ok")
-            dot.set_tooltip_text("Installato")
+            dot.set_tooltip_text(_t("pn.dot.installed"))
         elif installed is False:
             dot.get_style_context().add_class("todo")
-            dot.set_tooltip_text("Da scaricare (%s)" % method)
+            dot.set_tooltip_text(_t("pn.dot.todl") % method)
         else:
             dot.get_style_context().add_class("unknown")
-            dot.set_tooltip_text("Stato sconosciuto (%s)" % method)
+            dot.set_tooltip_text(_t("pn.dot.unknown") % method)
         box.pack_start(img, False, False, 0)
         box.pack_start(lab, True, True, 0)
         box.pack_start(dot, False, False, 0)
@@ -1214,7 +1214,7 @@ class Panel(Gtk.Window):
             ("drive-harddisk-symbolic", _t("app.disks"), ["nxs-disks"], None, None),
             ("folder-documents-symbolic", _t("app.cases"), ["nxs-case"], None, None),
             ("find-location-symbolic", _t("app.horus"), ["nxs-horus"], None, None),
-            ("applications-science-symbolic", "Assistente IA (Super+A)",
+            ("applications-science-symbolic", _t("pn.menu.ai"),
              ["nxs-ai-spotlight"], None, None),
             (None, None, None, None, None),
             ("computer-symbolic", _t("app.sysinfo"),
@@ -1397,7 +1397,7 @@ class Panel(Gtk.Window):
         # Un'unica voce che apre il DIALOGO GRAFICO di sessione (nxs-session:
         # Blocca/Esci/Riavvia/Spegni), coerente col menu tasto-destro del desktop.
         power_items = [
-            ("system-shutdown-symbolic", "Esci / Spegni…",
+            ("system-shutdown-symbolic", _t("pn.menu.session"),
              ["nxs-session"], None, None),
         ]
         for icon, label, cmd, mv, conf in power_items:
@@ -1507,7 +1507,7 @@ class Panel(Gtk.Window):
                     if not getattr(self, "_lowbatt_warned", False):
                         self._lowbatt_warned = True
                         run_bg(["notify-send", "-a", "NexusSec", "-u", "critical",
-                                "Batteria quasi scarica",
+                                _t("pn.batt.low"),
                                 f"{cap}% residuo — collega l'alimentatore"])
                 elif (not disch) or cap > 15:
                     self._lowbatt_warned = False
@@ -1570,8 +1570,8 @@ class Panel(Gtk.Window):
                 "microphone-sensitivity-muted-symbolic" if mic_muted
                 else "audio-input-microphone-symbolic"))
             self.mic_btn.set_tooltip_text(
-                "Microfono muto (rotella: volume)" if mic_muted
-                else "Microfono (rotella: volume, clic: opzioni)")
+                _t("pn.mic.muted_tip") if mic_muted
+                else _t("pn.mic.tip"))
             self.mic_btn.show()
         else:
             self.mic_btn.hide()
@@ -1602,25 +1602,25 @@ class Panel(Gtk.Window):
         # Il click sul pulsante apre comunque la gestione WiFi.
         if eth:
             wi = "network-wired-symbolic"
-            self.wifi_btn.set_tooltip_text("Rete cablata connessa (%s)" % eth)
+            self.wifi_btn.set_tooltip_text(_t("pn.wifi.eth") % eth)
         elif wifi.startswith("connected"):
             wi = "network-wireless-signal-excellent-symbolic"
             ssid = wifi[len("connected"):].strip()
-            self.wifi_btn.set_tooltip_text("WiFi: connesso a %s" % ssid if ssid
-                                           else "WiFi: connesso")
+            self.wifi_btn.set_tooltip_text(_t("pn.wifi.conn_ssid") % ssid if ssid
+                                           else _t("pn.wifi.conn"))
         elif wifi == "disconnected":
             wi = "network-wireless-offline-symbolic"
-            self.wifi_btn.set_tooltip_text("WiFi: non connesso")
+            self.wifi_btn.set_tooltip_text(_t("pn.wifi.disc"))
         else:
             wi = "network-wireless-disabled-symbolic"
-            self.wifi_btn.set_tooltip_text("WiFi non disponibile")
+            self.wifi_btn.set_tooltip_text(_t("pn.wifi.na"))
         self.wifi_btn.set_image(_tray_img(wi))
         # Batteria / alimentazione
         if batt == "nobattery":
             self.batt_btn.hide()
         elif batt == "ac-only":
             self.batt_btn.set_image(_tray_img("ac-adapter-symbolic"))
-            self.batt_btn.set_tooltip_text("Alimentazione da rete elettrica")
+            self.batt_btn.set_tooltip_text(_t("pn.batt.ac"))
             self.batt_btn.show()
         else:
             try:
@@ -1634,7 +1634,7 @@ class Panel(Gtk.Window):
             lab = {"charging": "in carica", "discharging": "in scarica",
                    "full": "carica", "notcharging": "non in carica"}.get(
                        bstate, "")
-            tip = "Batteria: %d%%" % bpct
+            tip = _t("pn.batt.pct") % bpct
             if lab:
                 tip += " (%s)" % lab
             # Mostra sempre lo stato alimentazione: a rete o a batteria.
@@ -1718,7 +1718,7 @@ class Panel(Gtk.Window):
             mute_b.connect("clicked", lambda _w: (
                 self._bg(["nxs-audio", "mic-mute"]),
                 GLib.timeout_add(150, self._refresh_media_once)))
-            status.set_text("Microfono muto." if muted
+            status.set_text(_t("pn.mic.muted") if muted
                             else ("Ingresso:" if sources else "Nessun ingresso."))
             for sid, name, is_def in sources:
                 b = Gtk.Button(); b.set_relief(Gtk.ReliefStyle.NONE)
@@ -1862,7 +1862,7 @@ class Panel(Gtk.Window):
             if info.get("battery") != "1":
                 big.set_text("Rete elettrica")
                 bar.set_fraction(1.0)
-                state_lbl.set_text("Alimentazione da rete (nessuna batteria).")
+                state_lbl.set_text(_t("pn.batt.ac_nobatt"))
                 grid.show_all()
                 return False
             pct = int(info.get("percent", "0") or 0)
@@ -1870,8 +1870,8 @@ class Panel(Gtk.Window):
             bar.set_fraction(max(0.0, min(1.0, pct / 100.0)))
             st = info.get("state", "unknown")
             stmap = {"charging": "In carica", "discharging": "In scarica",
-                     "full": "Carica completa", "notcharging": "Non in carica",
-                     "unknown": "Stato sconosciuto"}
+                     "full": _t("pn.batt.full"), "notcharging": _t("pn.batt.notcharging"),
+                     "unknown": _t("pn.batt.unknown")}
             ac = info.get("ac", "0") == "1"
             state_lbl.set_text(stmap.get(st, st) +
                                (" — rete collegata" if ac else " — a batteria"))
@@ -2064,7 +2064,7 @@ class Panel(Gtk.Window):
         title = Gtk.Label(); title.set_markup("<b>Reti WiFi</b>"); title.set_xalign(0)
         head.pack_start(title, True, True, 0)
         rescan = Gtk.Button(); rescan.set_relief(Gtk.ReliefStyle.NONE)
-        rescan.set_tooltip_text("Aggiorna elenco reti")
+        rescan.set_tooltip_text(_t("pn.wifi.rescan"))
         rescan.set_image(Gtk.Image.new_from_icon_name(
             "view-refresh-symbolic", Gtk.IconSize.MENU))
         rescan.connect("clicked", lambda _w: self._wifi_scan())
@@ -2440,7 +2440,7 @@ class Panel(Gtk.Window):
             "(chiave di cifratura fuori dalla RAM, cache svuotate). "
             "Le finestre aperte NON verranno salvate.")
         dlg.add_button("Annulla", Gtk.ResponseType.CANCEL)
-        b = dlg.add_button("Spegni ora", Gtk.ResponseType.OK)
+        b = dlg.add_button(_t("pn.session.shutdown_now"), Gtk.ResponseType.OK)
         b.get_style_context().add_class("destructive-action")
         dlg.set_keep_above(True)
         resp = dlg.run()
@@ -2658,7 +2658,7 @@ class Panel(Gtk.Window):
                     b = Gtk.Button(label=str(i + 1))
                     b.set_relief(Gtk.ReliefStyle.NONE)
                     b.get_style_context().add_class("nxs-pager-btn")
-                    b.set_tooltip_text("Passa al desktop %d" % (i + 1))
+                    b.set_tooltip_text(_t("pn.pager.goto") % (i + 1))
                     b.connect("clicked", self._on_pager, i)
                     self.pager.pack_start(b, False, False, 0)
                     self._pager_btns[i] = b
