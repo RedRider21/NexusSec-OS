@@ -2,7 +2,15 @@
 Type=Application
 Version=1.0
 Name=Lettore audio
+Name[en]=Audio player
+Name[fr]=Lecteur audio
+Name[es]=Reproductor de audio
+Name[de]=Audio-Player
 Comment=Lettore audio NexusSec (playlist, seek, volume) - serve anche a provare l'audio
+Comment[en]=NexusSec audio player (playlist, seek, volume) - also to test audio
+Comment[fr]=Lecteur audio NexusSec (playlist, avance, volume) - sert aussi à tester l'audio
+Comment[es]=Reproductor de audio NexusSec (lista, avance, volumen) - también para probar el audio
+Comment[de]=NexusSec Audio-Player (Wiedergabeliste, Suchen, Lautstärke) - auch zum Audiotest
 Exec=nxs-player %F
 Icon=nxs-player
 Terminal=false

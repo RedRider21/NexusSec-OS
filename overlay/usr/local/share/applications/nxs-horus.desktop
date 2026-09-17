@@ -1,7 +1,15 @@
 [Desktop Entry]
 Type=Application
 Name=HORUS
+Name[en]=HORUS
+Name[fr]=HORUS
+Name[es]=HORUS
+Name[de]=HORUS
 Comment=Occhio OSINT globale: feed mondiali su mappa e ricognizione locale
+Comment[en]=Global OSINT eye: worldwide feeds on a map and local recon
+Comment[fr]=Œil OSINT global : flux mondiaux sur carte et reconnaissance locale
+Comment[es]=Ojo OSINT global: feeds mundiales en mapa y reconocimiento local
+Comment[de]=Globales OSINT-Auge: weltweite Feeds auf Karte und lokale Aufklärung
 Exec=nxs-horus
 Icon=nxs-horus
 Terminal=false

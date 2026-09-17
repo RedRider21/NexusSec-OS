@@ -2,7 +2,15 @@
 Type=Application
 Version=1.0
 Name=NexusSec Browser
+Name[en]=NexusSec Browser
+Name[fr]=NexusSec Browser
+Name[es]=NexusSec Browser
+Name[de]=NexusSec Browser
 Comment=Browser web di NexusSec OS (GTK3 + WebKit2)
+Comment[en]=NexusSec OS web browser (GTK3 + WebKit2)
+Comment[fr]=Navigateur web de NexusSec OS (GTK3 + WebKit2)
+Comment[es]=Navegador web de NexusSec OS (GTK3 + WebKit2)
+Comment[de]=NexusSec OS Webbrowser (GTK3 + WebKit2)
 Exec=nxs-browser
 Icon=nxs-browser
 Terminal=false

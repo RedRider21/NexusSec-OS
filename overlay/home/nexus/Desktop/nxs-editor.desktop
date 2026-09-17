@@ -2,7 +2,15 @@
 Type=Application
 Version=1.0
 Name=Editor di testo
+Name[en]=Text editor
+Name[fr]=Éditeur de texte
+Name[es]=Editor de texto
+Name[de]=Texteditor
 Comment=Editor di testo (pluma): sintassi, schede, cerca/sostituisci
+Comment[en]=Text editor (pluma): syntax, tabs, find/replace
+Comment[fr]=Éditeur de texte (pluma) : syntaxe, onglets, rechercher/remplacer
+Comment[es]=Editor de texto (pluma): sintaxis, pestañas, buscar/reemplazar
+Comment[de]=Texteditor (pluma): Syntax, Tabs, Suchen/Ersetzen
 Exec=pluma
 Icon=accessories-text-editor
 Terminal=false

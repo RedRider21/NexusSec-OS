@@ -2,7 +2,15 @@
 Type=Application
 Version=1.0
 Name=File
+Name[en]=Files
+Name[fr]=Fichiers
+Name[es]=Archivos
+Name[de]=Dateien
 Comment=Gestore file PCManFM
+Comment[en]=PCManFM file manager
+Comment[fr]=Gestionnaire de fichiers PCManFM
+Comment[es]=Gestor de archivos PCManFM
+Comment[de]=PCManFM-Dateimanager
 Exec=pcmanfm
 Icon=system-file-manager
 Terminal=false

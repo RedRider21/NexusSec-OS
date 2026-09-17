@@ -2,7 +2,15 @@
 Type=Application
 Version=1.0
 Name=Profilo operativo
+Name[en]=Operational profile
+Name[fr]=Profil opérationnel
+Name[es]=Perfil operativo
+Name[de]=Betriebsprofil
 Comment=Seleziona la modalita' (Pen Testing, Forensics, OSINT, Web): menu e sfondo si adattano
+Comment[en]=Select the mode (Pen Testing, Forensics, OSINT, Web): menu and wallpaper adapt
+Comment[fr]=Choisir le mode (Pen Testing, Forensics, OSINT, Web) : menu et fond s'adaptent
+Comment[es]=Selecciona el modo (Pen Testing, Forensics, OSINT, Web): el menú y el fondo se adaptan
+Comment[de]=Modus wählen (Pen-Testing, Forensik, OSINT, Web): Menü und Hintergrund passen sich an
 Exec=nxs-profile
 Icon=preferences-system
 Terminal=false

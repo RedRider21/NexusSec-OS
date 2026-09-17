@@ -1,7 +1,15 @@
 [Desktop Entry]
 Type=Application
 Name=Casi forensi
+Name[en]=Forensic cases
+Name[fr]=Dossiers forensiques
+Name[es]=Casos forenses
+Name[de]=Forensische Fälle
 Comment=Acquisizione, verifica, analisi e relazione con catena di custodia
+Comment[en]=Acquisition, verification, analysis and report with chain of custody
+Comment[fr]=Acquisition, vérification, analyse et rapport avec chaîne de possession
+Comment[es]=Adquisición, verificación, análisis e informe con cadena de custodia
+Comment[de]=Erfassung, Prüfung, Analyse und Bericht mit Beweismittelkette
 Exec=nxs-case
 Icon=nxs-case
 Terminal=false

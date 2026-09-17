@@ -2,7 +2,15 @@
 Type=Application
 Version=1.0
 Name=Centro di Controllo
+Name[en]=Control Center
+Name[fr]=Centre de contrôle
+Name[es]=Centro de control
+Name[de]=Kontrollzentrum
 Comment=Strumenti di configurazione del sistema NexusSec
+Comment[en]=NexusSec system configuration tools
+Comment[fr]=Outils de configuration du système NexusSec
+Comment[es]=Herramientas de configuración del sistema NexusSec
+Comment[de]=NexusSec-Systemkonfigurationswerkzeuge
 Exec=nxs-control-center
 Icon=preferences-system
 Terminal=false

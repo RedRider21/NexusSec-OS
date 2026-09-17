@@ -1,7 +1,15 @@
 [Desktop Entry]
 Type=Application
 Name=Dischi
+Name[en]=Disks
+Name[fr]=Disques
+Name[es]=Discos
+Name[de]=Datenträger
 Comment=Dischi e partizioni: consultazione e montaggio in sola lettura
+Comment[en]=Disks and partitions: view and read-only mounting
+Comment[fr]=Disques et partitions : consultation et montage en lecture seule
+Comment[es]=Discos y particiones: consulta y montaje de solo lectura
+Comment[de]=Datenträger und Partitionen: Ansicht und schreibgeschütztes Einhängen
 Exec=nxs-disks
 Icon=drive-harddisk
 Terminal=false

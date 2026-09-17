@@ -2,7 +2,15 @@
 Type=Application
 Version=1.0
 Name=Installa su disco
+Name[en]=Install to disk
+Name[fr]=Installer sur le disque
+Name[es]=Instalar en disco
+Name[de]=Auf Festplatte installieren
 Comment=Installa NexusSec OS sul disco fisso (setup-disk)
+Comment[en]=Install NexusSec OS to the hard disk (setup-disk)
+Comment[fr]=Installer NexusSec OS sur le disque dur (setup-disk)
+Comment[es]=Instalar NexusSec OS en el disco duro (setup-disk)
+Comment[de]=NexusSec OS auf die Festplatte installieren (setup-disk)
 Exec=nxs-term nxs-install
 Icon=drive-harddisk
 Terminal=false

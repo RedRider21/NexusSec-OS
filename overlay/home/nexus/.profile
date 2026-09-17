@@ -18,6 +18,21 @@ export ENV="$HOME/.config/nxs/shrc"
 # qui, PRIMA di startx, cosi' X, il pannello e i tool audio lo ereditano.
 export XDG_RUNTIME_DIR="/run/user/$(id -u)"
 
+# Lingua interfaccia (scelta con nxs-lang, salvata in ~/.config/nxs/lang):
+# esportata QUI prima di startx cosi' pcmanfm/desktop e le app che leggono i
+# file .desktop scelgono i Name[xx]/Comment[xx] della lingua giusta. I messaggi
+# propri di NexusSec passano da nxs_i18n (indipendente); LANGUAGE/LANG servono
+# ai .desktop e alle app di terze parti. Cambiando lingua a runtime il pannello
+# si riaggiorna subito; le icone del desktop seguono al prossimo login.
+_nxslang="$(cat "$HOME/.config/nxs/lang" 2>/dev/null || echo it)"
+case "$_nxslang" in
+  en) export LANGUAGE=en LANG=en_US.UTF-8 ;;
+  fr) export LANGUAGE=fr LANG=fr_FR.UTF-8 ;;
+  es) export LANGUAGE=es LANG=es_ES.UTF-8 ;;
+  de) export LANGUAGE=de LANG=de_DE.UTF-8 ;;
+  *)  export LANGUAGE=it LANG=it_IT.UTF-8 ;;
+esac
+
 # Avvia la sessione grafica sulla prima console. Se X FALLISCE, NON va in loop:
 # mostra l'errore di Xorg + stato driver/DRM e lascia una shell (diagnostica).
 if [ -z "$DISPLAY" ] && [ "$(tty)" = "/dev/tty1" ]; then

@@ -2,7 +2,15 @@
 Type=Application
 Version=1.0
 Name=Visualizzatore video
+Name[en]=Video player
+Name[fr]=Lecteur vidéo
+Name[es]=Reproductor de vídeo
+Name[de]=Video-Player
 Comment=Riproduttore video NexusSec (GTK3 + GStreamer): playlist, seek, schermo intero
+Comment[en]=NexusSec video player (GTK3 + GStreamer): playlist, seek, fullscreen
+Comment[fr]=Lecteur vidéo NexusSec (GTK3 + GStreamer) : playlist, avance, plein écran
+Comment[es]=Reproductor de vídeo NexusSec (GTK3 + GStreamer): lista, avance, pantalla completa
+Comment[de]=NexusSec Video-Player (GTK3 + GStreamer): Wiedergabeliste, Suchen, Vollbild
 Exec=nxs-video %F
 Icon=nxs-video
 Terminal=false

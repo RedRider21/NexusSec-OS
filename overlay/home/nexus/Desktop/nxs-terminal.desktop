@@ -2,7 +2,15 @@
 Type=Application
 Version=1.0
 Name=Terminale
+Name[en]=Terminal
+Name[fr]=Terminal
+Name[es]=Terminal
+Name[de]=Terminal
 Comment=Apri un terminale
+Comment[en]=Open a terminal
+Comment[fr]=Ouvrir un terminal
+Comment[es]=Abrir un terminal
+Comment[de]=Ein Terminal öffnen
 Exec=nxs-terminal
 Icon=utilities-terminal
 Terminal=false
