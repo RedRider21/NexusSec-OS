@@ -26,6 +26,12 @@ import re
 import shutil
 import subprocess
 
+try:
+    from nxs_i18n import t as _t
+except Exception:                # noqa: BLE001
+    def _t(key, **kw):           # fallback: non rompe mai i messaggi
+        return key
+
 # Radice dei punti di montaggio creati da noi. Sotto /media (non /mnt) per non
 # pestare i piedi a chi monta a mano.
 RADICE = "/media/nxs"
@@ -77,11 +83,11 @@ def mount_rw(node):
 
 def _monta(node, scrittura):
     if node.mounted:
-        return (True, "gia' montato in %s" % node.mountpoint)
+        return (True, _t("mnt.already_mounted") % node.mountpoint)
     if node.is_swap:
-        return (False, "e' una partizione di swap: non si monta")
+        return (False, _t("mnt.swap"))
     if not node.fstype:
-        return (False, "nessun filesystem riconosciuto su %s" % node.path)
+        return (False, _t("mnt.no_fs") % node.path)
 
     punto = punto_di_mount(node)
     # Collisione: due partizioni con la STESSA etichetta (es. due NTFS "Windows")
@@ -92,7 +98,7 @@ def _monta(node, scrittura):
         punto = os.path.join(RADICE, node.name)
     ok, msg = _priv(["mkdir", "-p", punto])
     if not ok:
-        return (False, "non riesco a creare %s: %s" % (punto, msg))
+        return (False, _t("mnt.mkdir_fail") % (punto, msg))
 
     opz = ("rw," if scrittura else "ro,") + _OPZIONI_BASE
     ok, msg = _priv(["mount", "-o", opz, node.path, punto])
@@ -107,19 +113,19 @@ def _monta(node, scrittura):
             return (True, punto)
         msg = msg2 or msg
     _priv(["rmdir", punto])
-    return (False, msg or "montaggio fallito")
+    return (False, msg or _t("mnt.mount_fail"))
 
 
 def smonta(node):
     """Smonta. Rimuove anche la cartella se l'avevamo creata noi."""
     if not node.mounted:
-        return (True, "non era montato")
+        return (True, _t("mnt.not_mounted"))
     ok, msg = _priv(["umount", node.mountpoint])
     if not ok:
-        return (False, msg or "smontaggio fallito")
+        return (False, msg or _t("mnt.umount_fail"))
     if node.mountpoint.startswith(RADICE + "/"):
         _priv(["rmdir", node.mountpoint])
-    return (True, "smontato")
+    return (True, _t("mnt.unmounted"))
 
 
 def write_protect(path, attiva):
@@ -138,11 +144,11 @@ def write_protect(path, attiva):
     if shutil.which("nxs-writeblock"):
         ok, msg = _priv(["nxs-writeblock", "lock" if attiva else "unlock", path])
         if ok:
-            return (True, "protetto" if attiva else "protezione rimossa")
-        return (False, msg or "nxs-writeblock ha rifiutato l operazione")
+            return (True, _t("mnt.protected") if attiva else _t("mnt.prot_removed"))
+        return (False, msg or _t("mnt.writeblock_refused"))
     flag = "--setro" if attiva else "--setrw"
     ok, msg = _priv(["blockdev", flag, path])
-    return (ok, msg or ("protetto" if attiva else "protezione rimossa"))
+    return (ok, msg or (_t("mnt.protected") if attiva else _t("mnt.prot_removed")))
 
 
 def luks_apri(path, nome, passphrase):
@@ -152,12 +158,12 @@ def luks_apri(path, nome, passphrase):
     a chiunque con un 'ps' (stessa regola di nxs-users e del PSK WiFi).
     """
     if not _SICURO.match(nome or ""):
-        return (False, "nome del volume non valido")
+        return (False, _t("mnt.bad_volname"))
     return _priv(["cryptsetup", "open", "--readonly", "--key-file=-", path, nome],
                  input_text=passphrase)
 
 
 def luks_chiudi(nome):
     if not _SICURO.match(nome or ""):
-        return (False, "nome del volume non valido")
+        return (False, _t("mnt.bad_volname"))
     return _priv(["cryptsetup", "close", nome])

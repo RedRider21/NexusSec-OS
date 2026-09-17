@@ -24,6 +24,12 @@ from gi.repository import Gtk, GLib, Pango  # noqa: E402
 from nxs_cc.common import panel_window, icon_button, have, run_bg
 from nxs_disks import model, mount
 
+try:
+    from nxs_i18n import t as _t
+except Exception:                # noqa: BLE001
+    def _t(key, **kw):           # fallback: non rompe mai la UI
+        return key
+
 
 def _riga_dettaglio(griglia, r, etichetta, valore):
     k = Gtk.Label(label=etichetta)
@@ -40,13 +46,9 @@ def _riga_dettaglio(griglia, r, etichetta, valore):
 
 
 def open_disks(_btn=None):
-    win, body = panel_window("Dischi", 760, 620)
+    win, body = panel_window(_t("dk.title"), 760, 620)
 
-    intro = Gtk.Label(
-        label="I dischi si vedono sempre, ma NON vengono mai montati da soli: "
-              "NexusSec e' anche una distro forensic. Il montaggio e' sempre "
-              "una tua scelta esplicita e avviene in SOLA LETTURA, salvo tu "
-              "chieda diversamente.")
+    intro = Gtk.Label(label=_t("dk.intro"))
     intro.set_xalign(0)
     intro.set_line_wrap(True)
     intro.get_style_context().add_class("nxs-val")
@@ -59,8 +61,8 @@ def open_disks(_btn=None):
     tree = Gtk.TreeView(model=store)
     tree.set_headers_visible(True)
     for i, (titolo, col) in enumerate(
-            (("Dispositivo", 1), ("Dimensione", 2), ("Filesystem", 3),
-             ("Etichetta", 4), ("Montato in", 5))):
+            ((_t("dk.col_device"), 1), (_t("dk.col_size"), 2), (_t("dk.col_fs"), 3),
+             (_t("dk.col_label"), 4), (_t("dk.col_mounted"), 5))):
         rend = Gtk.CellRendererText()
         rend.set_property("ellipsize", Pango.EllipsizeMode.END)
         c = Gtk.TreeViewColumn(titolo, rend, text=col)
@@ -84,12 +86,12 @@ def open_disks(_btn=None):
     det = Gtk.Grid(column_spacing=12, row_spacing=4)
     det.set_margin_top(8)
     body.pack_start(det, False, False, 0)
-    v_perc = _riga_dettaglio(det, 0, "Percorso", "-")
-    v_tipo = _riga_dettaglio(det, 1, "Tipo", "-")
+    v_perc = _riga_dettaglio(det, 0, _t("dk.path"), "-")
+    v_tipo = _riga_dettaglio(det, 1, _t("dk.type"), "-")
     v_uuid = _riga_dettaglio(det, 2, "UUID", "-")
-    v_uso = _riga_dettaglio(det, 3, "Spazio", "-")
+    v_uso = _riga_dettaglio(det, 3, _t("dk.space"), "-")
     v_smart = _riga_dettaglio(det, 4, "SMART", "-")
-    v_prot = _riga_dettaglio(det, 5, "Protezione", "-")
+    v_prot = _riga_dettaglio(det, 5, _t("dk.protection"), "-")
 
     body.pack_start(stato, False, False, 0)
 
@@ -99,16 +101,16 @@ def open_disks(_btn=None):
     azioni2 = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
     body.pack_start(azioni2, False, False, 0)
 
-    b_ro = icon_button("Monta sola lettura", "drive-harddisk-symbolic", primary=True)
-    b_rw = icon_button("Monta in scrittura", "dialog-warning-symbolic")
-    b_um = icon_button("Smonta", "media-eject-symbolic")
-    b_apri = icon_button("Apri cartella", "folder-open-symbolic")
+    b_ro = icon_button(_t("dk.mount_ro"), "drive-harddisk-symbolic", primary=True)
+    b_rw = icon_button(_t("dk.mount_rw"), "dialog-warning-symbolic")
+    b_um = icon_button(_t("dk.unmount"), "media-eject-symbolic")
+    b_apri = icon_button(_t("dk.open_folder"), "folder-open-symbolic")
     for b in (b_ro, b_rw, b_um, b_apri):
         azioni.pack_start(b, False, False, 0)
 
-    b_prot = icon_button("Blocca scrittura", "changes-prevent-symbolic")
-    b_img = icon_button("Immagine dd...", "media-floppy-symbolic")
-    b_agg = icon_button("Aggiorna", "view-refresh-symbolic")
+    b_prot = icon_button(_t("dk.lock_write"), "changes-prevent-symbolic")
+    b_img = icon_button(_t("dk.image_dd"), "media-floppy-symbolic")
+    b_agg = icon_button(_t("v.refresh"), "view-refresh-symbolic")
     for b in (b_prot, b_img, b_agg):
         azioni2.pack_start(b, False, False, 0)
 
@@ -126,7 +128,7 @@ def open_disks(_btn=None):
                 n.path,
                 n.name if padre is None else "   " + n.name,
                 model.human(n.size),
-                n.fstype or ("-" if n.is_disk else "(nessuno)"),
+                n.fstype or ("-" if n.is_disk else _t("dk.none")),
                 n.label or (n.model if n.is_disk else ""),
                 n.mountpoint or "",
             ])
@@ -163,20 +165,20 @@ def open_disks(_btn=None):
         v_uuid.set_text(n.uuid or "-")
 
         u = model.uso(n.mountpoint) if n.mounted else None
-        v_uso.set_text("%s usati su %s" % (model.human(u[0]), model.human(u[1]))
+        v_uso.set_text(_t("dk.used_on") % (model.human(u[0]), model.human(u[1]))
                        if u else "-")
-        v_prot.set_text("BLOCCATA in scrittura" if model.protetto_in_scrittura(n.path)
-                        else "scrivibile")
-        v_smart.set_text("(lettura in corso...)" if n.is_disk else "-")
+        v_prot.set_text(_t("dk.write_locked") if model.protetto_in_scrittura(n.path)
+                        else _t("dk.writable"))
+        v_smart.set_text(_t("dk.reading") if n.is_disk else "-")
         if n.is_disk:
             def leggi_smart(path=n.path):
                 s = model.smart(path)
                 def mostra():
                     if ctx["sel"] is not None and ctx["sel"].path == path:
                         if s is None:
-                            v_smart.set_text("non disponibile")
+                            v_smart.set_text(_t("dk.unavailable"))
                         else:
-                            ore = ("  -  %s ore di accensione" % s["ore"]) if s["ore"] else ""
+                            ore = (_t("dk.power_hours") % s["ore"]) if s["ore"] else ""
                             v_smart.set_text("%s%s" % (s["stato"], ore))
                     return False
                 GLib.idle_add(mostra)
@@ -189,8 +191,8 @@ def open_disks(_btn=None):
         b_apri.set_sensitive(n.mounted)
         b_prot.set_sensitive(n.is_disk and not ctx["busy"])
         b_img.set_sensitive(not ctx["busy"])
-        b_prot.set_label("Sblocca scrittura" if model.protetto_in_scrittura(n.path)
-                         else "Blocca scrittura")
+        b_prot.set_label(_t("dk.unlock_write") if model.protetto_in_scrittura(n.path)
+                         else _t("dk.lock_write"))
 
     tree.get_selection().connect("changed", aggiorna_dettaglio)
 
@@ -205,7 +207,7 @@ def open_disks(_btn=None):
             ok, msg = fn()
             def fine():
                 ctx["busy"] = False
-                stato.set_text(("OK - %s" if ok else "Errore: %s") % msg)
+                stato.set_text((_t("dk.ok_msg") if ok else _t("dk.err_msg")) % msg)
                 ricarica()
                 return False
             GLib.idle_add(fine)
@@ -214,7 +216,7 @@ def open_disks(_btn=None):
     def on_ro(_w):
         n = ctx["sel"]
         if n:
-            esegui(lambda: mount.mount_ro(n), "Montaggio in sola lettura di %s..." % n.path)
+            esegui(lambda: mount.mount_ro(n), _t("dk.mounting_ro") % n.path)
 
     def on_rw(_w):
         n = ctx["sel"]
@@ -223,21 +225,17 @@ def open_disks(_btn=None):
         d = Gtk.MessageDialog(transient_for=win, modal=True,
                               message_type=Gtk.MessageType.WARNING,
                               buttons=Gtk.ButtonsType.OK_CANCEL,
-                              text="Montare %s in SCRITTURA?" % n.path)
-        d.format_secondary_text(
-            "Il contenuto del disco potra' essere modificato. Su un disco da "
-            "esaminare questo ne altera lo stato e puo' comprometterne il "
-            "valore probatorio.\n\nSe ti serve solo leggere, annulla e usa "
-            "\"Monta sola lettura\".")
+                              text=_t("dk.mount_rw_q") % n.path)
+        d.format_secondary_text(_t("dk.mount_rw_body"))
         r = d.run()
         d.destroy()
         if r == Gtk.ResponseType.OK:
-            esegui(lambda: mount.mount_rw(n), "Montaggio in scrittura di %s..." % n.path)
+            esegui(lambda: mount.mount_rw(n), _t("dk.mounting_rw") % n.path)
 
     def on_um(_w):
         n = ctx["sel"]
         if n:
-            esegui(lambda: mount.smonta(n), "Smontaggio di %s..." % n.mountpoint)
+            esegui(lambda: mount.smonta(n), _t("dk.unmounting") % n.mountpoint)
 
     def on_prot(_w):
         n = ctx["sel"]
@@ -245,7 +243,7 @@ def open_disks(_btn=None):
             return
         attiva = not model.protetto_in_scrittura(n.path)
         esegui(lambda: mount.write_protect(n.path, attiva),
-               "%s la protezione in scrittura..." % ("Attivo" if attiva else "Rimuovo"))
+               _t("dk.prot_enabling") if attiva else _t("dk.prot_disabling"))
 
     def on_apri(_w):
         n = ctx["sel"]
@@ -258,10 +256,10 @@ def open_disks(_btn=None):
         n = ctx["sel"]
         if not n:
             return
-        ch = Gtk.FileChooserDialog(title="Salva l'immagine di %s" % n.path,
+        ch = Gtk.FileChooserDialog(title=_t("dk.save_image") % n.path,
                                    transient_for=win,
                                    action=Gtk.FileChooserAction.SAVE)
-        ch.add_buttons("Annulla", Gtk.ResponseType.CANCEL, "Salva", Gtk.ResponseType.OK)
+        ch.add_buttons(_t("v.cancel"), Gtk.ResponseType.CANCEL, _t("v.save"), Gtk.ResponseType.OK)
         ch.set_current_name("%s.img" % n.name)
         r = ch.run()
         dest = ch.get_filename()
@@ -274,7 +272,7 @@ def open_disks(_btn=None):
             run_bg(["lxterminal", "-e", cmd])
         else:
             run_bg(["xterm", "-e", cmd])
-        stato.set_text("Copia avviata in una finestra di terminale.")
+        stato.set_text(_t("dk.copy_started"))
 
     b_ro.connect("clicked", on_ro)
     b_rw.connect("clicked", on_rw)
