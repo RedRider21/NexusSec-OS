@@ -24,6 +24,12 @@ from nxs_cc.common import panel_window, icon_button, info_dialog, have, run_bg
 from nxs_case import model, report
 
 try:
+    from nxs_i18n import t as _t
+except Exception:                # noqa: BLE001
+    def _t(key, **kw):           # fallback: non rompe mai la UI
+        return key
+
+try:
     from nxs_disks import model as dmodel
 except ImportError:                          # noqa: BLE001
     dmodel = None
@@ -38,22 +44,19 @@ def _lab(testo, classe="nxs-val", wrap=True):
 
 
 def open_case(_btn=None):
-    win, body = panel_window("Casi forensi", 860, 700)
+    win, body = panel_window(_t("cs.title"), 860, 700)
     ctx = {"caso": None, "busy": False}
 
-    intro = _lab("Ogni operazione viene registrata da sola nella catena di custodia "
-                 "con orario UTC, strumento e hash: il verbale non dipende da cosa "
-                 "ti ricordi di annotare. I dischi restano protetti in scrittura "
-                 "per tutta l'acquisizione.")
+    intro = _lab(_t("cs.intro"))
     body.pack_start(intro, False, False, 0)
 
     # ---- barra del caso corrente ----------------------------------------
     barra = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
     barra.set_margin_top(6)
-    lbl_caso = _lab("Nessun caso aperto", "nxs-key", wrap=False)
+    lbl_caso = _lab(_t("cs.no_case"), "nxs-key", wrap=False)
     barra.pack_start(lbl_caso, True, True, 0)
-    b_nuovo = icon_button("Nuovo caso", "document-new-symbolic", primary=True)
-    b_apri = icon_button("Apri", "document-open-symbolic")
+    b_nuovo = icon_button(_t("cs.new_case"), "document-new-symbolic", primary=True)
+    b_apri = icon_button(_t("cs.open"), "document-open-symbolic")
     barra.pack_start(b_nuovo, False, False, 0)
     barra.pack_start(b_apri, False, False, 0)
     body.pack_start(barra, False, False, 0)
@@ -65,12 +68,10 @@ def open_case(_btn=None):
     # ================= 1. ACQUISIZIONE =================
     pg1 = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
     pg1.set_margin_top(10); pg1.set_margin_start(6); pg1.set_margin_end(6)
-    pg1.pack_start(_lab("Scegli il dispositivo da acquisire. Viene copiato in formato "
-                        "E01, che incorpora nell'immagine i dati del caso e gli hash, "
-                        "e viene poi riverificato."), False, False, 0)
+    pg1.pack_start(_lab(_t("cs.acq_intro")), False, False, 0)
     store_dev = Gtk.ListStore(str, str, str)          # percorso, dim, descrizione
     tv = Gtk.TreeView(model=store_dev)
-    for i, t in enumerate(("Dispositivo", "Dimensione", "Contenuto")):
+    for i, t in enumerate((_t("dk.col_device"), _t("dk.col_size"), _t("cs.col_content"))):
         r = Gtk.CellRendererText()
         r.set_property("ellipsize", Pango.EllipsizeMode.END)
         tv.append_column(Gtk.TreeViewColumn(t, r, text=i))
@@ -79,15 +80,15 @@ def open_case(_btn=None):
     pg1.pack_start(sc, False, False, 0)
 
     rowd = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
-    rowd.pack_start(_lab("Descrizione del reperto:", "nxs-key", wrap=False), False, False, 0)
-    e_desc = Gtk.Entry(); e_desc.set_placeholder_text("es. disco interno del portatile sequestrato")
+    rowd.pack_start(_lab(_t("cs.exhibit_desc"), "nxs-key", wrap=False), False, False, 0)
+    e_desc = Gtk.Entry(); e_desc.set_placeholder_text(_t("cs.exhibit_ph"))
     rowd.pack_start(e_desc, True, True, 0)
     pg1.pack_start(rowd, False, False, 0)
 
     az1 = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
-    b_tutto = icon_button("Esegui tutto (acquisisci, verifica, analizza, relazione)",
+    b_tutto = icon_button(_t("cs.run_all"),
                           "media-playback-start-symbolic", primary=True)
-    b_agg = icon_button("Aggiorna elenco", "view-refresh-symbolic")
+    b_agg = icon_button(_t("cs.refresh_list"), "view-refresh-symbolic")
     az1.pack_start(b_tutto, True, True, 0)
     az1.pack_start(b_agg, False, False, 0)
     pg1.pack_start(az1, False, False, 0)
@@ -99,64 +100,59 @@ def open_case(_btn=None):
     sep = Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL)
     sep.set_margin_top(8)
     pg1.pack_start(sep, False, False, 0)
-    pg1.pack_start(_lab("Oppure esegui un singolo passo:", "nxs-key", wrap=False),
+    pg1.pack_start(_lab(_t("cs.single_step"), "nxs-key", wrap=False),
                    False, False, 0)
 
     rowi = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
-    rowi.pack_start(_lab("Immagine del caso:", "nxs-key", wrap=False), False, False, 0)
+    rowi.pack_start(_lab(_t("cs.case_image"), "nxs-key", wrap=False), False, False, 0)
     combo_img = Gtk.ComboBoxText()
     rowi.pack_start(combo_img, True, True, 0)
     pg1.pack_start(rowi, False, False, 0)
 
     passi = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
-    b_acq = icon_button("1 · Acquisisci", "drive-harddisk-symbolic")
-    b_ver = icon_button("2 · Verifica", "security-high-symbolic")
-    b_ana = icon_button("3 · Analizza", "system-search-symbolic")
-    b_rel2 = icon_button("4 · Relazione", "document-properties-symbolic")
+    b_acq = icon_button(_t("cs.step1"), "drive-harddisk-symbolic")
+    b_ver = icon_button(_t("cs.step2"), "security-high-symbolic")
+    b_ana = icon_button(_t("cs.step3"), "system-search-symbolic")
+    b_rel2 = icon_button(_t("cs.step4"), "document-properties-symbolic")
     for b in (b_acq, b_ver, b_ana, b_rel2):
         passi.pack_start(b, True, True, 0)
     pg1.pack_start(passi, False, False, 0)
-    nb.append_page(pg1, Gtk.Label(label="Acquisizione"))
+    nb.append_page(pg1, Gtk.Label(label=_t("cs.tab_acq")))
 
     # ================= 2. NOTE =================
     pg2 = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
     pg2.set_margin_top(10); pg2.set_margin_start(6); pg2.set_margin_end(6)
-    pg2.pack_start(_lab("Le note finiscono nella catena di custodia con l'orario: "
-                        "servono a spiegare le scelte fatte (perche' un disco e' "
-                        "stato escluso, dove e' stato reperito, chi era presente)."),
+    pg2.pack_start(_lab(_t("cs.notes_intro")),
                    False, False, 0)
     tvnote = Gtk.TextView(); tvnote.set_wrap_mode(Gtk.WrapMode.WORD)
     scn = Gtk.ScrolledWindow(); scn.set_size_request(-1, 120); scn.add(tvnote)
     pg2.pack_start(scn, False, False, 0)
-    b_nota = icon_button("Aggiungi al verbale", "list-add-symbolic")
+    b_nota = icon_button(_t("cs.add_note"), "list-add-symbolic")
     pg2.pack_start(b_nota, False, False, 0)
-    pg2.pack_start(_lab("Catena di custodia:", "nxs-key", wrap=False), False, False, 0)
+    pg2.pack_start(_lab(_t("cs.custody"), "nxs-key", wrap=False), False, False, 0)
     store_log = Gtk.ListStore(str, str, str)
     tvlog = Gtk.TreeView(model=store_log)
-    for i, t in enumerate(("Quando (UTC)", "Azione", "Dettagli")):
+    for i, t in enumerate((_t("cs.col_when"), _t("cs.col_action"), _t("cs.col_details"))):
         r = Gtk.CellRendererText()
         r.set_property("ellipsize", Pango.EllipsizeMode.END)
         tvlog.append_column(Gtk.TreeViewColumn(t, r, text=i))
     scl = Gtk.ScrolledWindow(); scl.set_size_request(-1, 200); scl.add(tvlog)
     scl.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
     pg2.pack_start(scl, True, True, 0)
-    nb.append_page(pg2, Gtk.Label(label="Verbale"))
+    nb.append_page(pg2, Gtk.Label(label=_t("cs.tab_record")))
 
     # ================= 3. RELAZIONE =================
     pg3 = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
     pg3.set_margin_top(10); pg3.set_margin_start(6); pg3.set_margin_end(6)
-    pg3.pack_start(_lab("La relazione raccoglie dati del caso, reperti con i "
-                        "rispettivi hash, catena di custodia integrale, partizioni "
-                        "e cronologia. E' un file HTML autonomo: si apre ovunque e "
-                        "si stampa in PDF dal browser."), False, False, 0)
+    pg3.pack_start(_lab(_t("cs.report_intro")), False, False, 0)
     az3 = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
-    b_rel = icon_button("Genera relazione", "document-properties-symbolic", primary=True)
-    b_apri_rel = icon_button("Apri relazione", "document-open-symbolic")
-    b_cart = icon_button("Apri cartella del caso", "folder-open-symbolic")
+    b_rel = icon_button(_t("cs.gen_report"), "document-properties-symbolic", primary=True)
+    b_apri_rel = icon_button(_t("cs.open_report"), "document-open-symbolic")
+    b_cart = icon_button(_t("cs.open_folder"), "folder-open-symbolic")
     for b in (b_rel, b_apri_rel, b_cart):
         az3.pack_start(b, False, False, 0)
     pg3.pack_start(az3, False, False, 0)
-    nb.append_page(pg3, Gtk.Label(label="Relazione"))
+    nb.append_page(pg3, Gtk.Label(label=_t("cs.tab_report")))
 
     # ---- avanzamento -----------------------------------------------------
     prog = Gtk.ProgressBar(); prog.set_show_text(True); prog.set_text("")
@@ -168,7 +164,7 @@ def open_case(_btn=None):
     def aggiorna_dispositivi(_w=None):
         store_dev.clear()
         if dmodel is None:
-            store_dev.append(["(nxs_disks non disponibile)", "", ""])
+            store_dev.append([_t("cs.no_disks"), "", ""])
             return
         for n in dmodel.flatten(dmodel.list_devices()):
             if n.type not in ("disk", "part") or n.name.startswith("zram"):
@@ -194,7 +190,7 @@ def open_case(_btn=None):
                         combo_img.append(os.path.join(imgdir, f), f)
                         trovate += 1
         if trovate == 0:
-            combo_img.append("", "(nessuna immagine: esegui prima il passo 1)")
+            combo_img.append("", _t("cs.no_image_combo"))
         combo_img.set_active(0)
         # i passi 2 e 3 lavorano su un'immagine: senza, restano spenti, cosi'
         # si vede subito che non sono disponibili invece di scoprirlo dopo.
@@ -206,10 +202,10 @@ def open_case(_btn=None):
         c = ctx["caso"]
         _riempi_immagini(c)
         if c is None:
-            lbl_caso.set_text("Nessun caso aperto")
+            lbl_caso.set_text(_t("cs.no_case"))
             store_log.clear()
             return
-        lbl_caso.set_text("Caso: %s   ·   operatore: %s   ·   %s"
+        lbl_caso.set_text(_t("cs.case_bar")
                           % (c.meta.get("nome", "-"), c.meta.get("operatore", "-"), c.dir))
         store_log.clear()
         for r in c.righe_registro():
@@ -219,9 +215,8 @@ def open_case(_btn=None):
 
     def serve_caso():
         if ctx["caso"] is None:
-            info_dialog("Nessun caso aperto",
-                        "Crea o apri un caso prima di procedere: senza caso non "
-                        "esiste una catena di custodia dove registrare le operazioni.",
+            info_dialog(_t("cs.no_case"),
+                        _t("cs.no_case_body"),
                         "warning", win)
             return False
         return True
@@ -249,8 +244,8 @@ def open_case(_btn=None):
             def fine():
                 ctx["busy"] = False
                 prog.set_fraction(1.0 if ok else 0.0)
-                prog.set_text("Completato" if ok else "Interrotto")
-                stato.set_text(("OK — %s" if ok else "Errore: %s") % msg)
+                prog.set_text(_t("cs.done") if ok else _t("cs.interrupted"))
+                stato.set_text((_t("cs.ok_msg") if ok else _t("dk.err_msg")) % msg)
                 for b in (b_tutto, b_rel, b_nuovo, b_apri, b_acq, b_rel2):
                     b.set_sensitive(True)
                 # b_ver/b_ana li riaccende aggiorna_caso, ma solo se ora c'e'
@@ -262,21 +257,21 @@ def open_case(_btn=None):
 
     # --- nuovo caso -------------------------------------------------------
     def on_nuovo(_w):
-        d = Gtk.Dialog(title="Nuovo caso", transient_for=win, modal=True)
-        d.add_buttons("Annulla", Gtk.ResponseType.CANCEL, "Crea", Gtk.ResponseType.OK)
+        d = Gtk.Dialog(title=_t("cs.new_case"), transient_for=win, modal=True)
+        d.add_buttons(_t("v.cancel"), Gtk.ResponseType.CANCEL, _t("v.create"), Gtk.ResponseType.OK)
         box = d.get_content_area()
         box.set_spacing(6); box.set_margin_top(10); box.set_margin_bottom(10)
         box.set_margin_start(12); box.set_margin_end(12)
         campi = {}
         for chiave, etichetta, segnaposto in (
-                ("nome", "Denominazione", "es. Accertamento portatile Rossi"),
-                ("operatore", "Operatore", "nome di chi esegue"),
-                ("riferimento", "Riferimento", "numero di pratica o fascicolo")):
+                ("nome", _t("cs.f_name"), _t("cs.ph_name")),
+                ("operatore", _t("cs.f_operator"), _t("cs.ph_operator")),
+                ("riferimento", _t("cs.f_reference"), _t("cs.ph_reference"))):
             box.pack_start(_lab(etichetta, "nxs-key", wrap=False), False, False, 0)
             e = Gtk.Entry(); e.set_placeholder_text(segnaposto)
             box.pack_start(e, False, False, 0)
             campi[chiave] = e
-        box.pack_start(_lab("Note iniziali", "nxs-key", wrap=False), False, False, 0)
+        box.pack_start(_lab(_t("cs.initial_notes"), "nxs-key", wrap=False), False, False, 0)
         tvn = Gtk.TextView(); tvn.set_wrap_mode(Gtk.WrapMode.WORD)
         scd = Gtk.ScrolledWindow(); scd.set_size_request(-1, 80); scd.add(tvn)
         box.pack_start(scd, True, True, 0)
@@ -289,26 +284,25 @@ def open_case(_btn=None):
             oper = campi["operatore"].get_text().strip()
             d.destroy()
             if not nome or not oper:
-                info_dialog("Dati mancanti",
-                            "Denominazione e operatore sono obbligatori: senza, la "
-                            "relazione non e' attribuibile a nessuno.", "warning", win)
+                info_dialog(_t("cs.missing_data"),
+                            _t("cs.missing_data_body"), "warning", win)
                 return
             os.makedirs(model.BASE_DEFAULT, exist_ok=True)
             ctx["caso"] = model.Caso.crea(model.BASE_DEFAULT, nome, oper,
                                           campi["riferimento"].get_text().strip(), note)
             aggiorna_caso()
-            stato.set_text("Caso creato in %s" % ctx["caso"].dir)
+            stato.set_text(_t("cs.case_created") % ctx["caso"].dir)
         else:
             d.destroy()
 
     def on_apri(_w):
         casi = model.Caso.elenco()
         if not casi:
-            info_dialog("Nessun caso", "Non ci sono casi in %s." % model.BASE_DEFAULT,
+            info_dialog(_t("cs.no_cases"), _t("cs.no_cases_body") % model.BASE_DEFAULT,
                         "info", win)
             return
-        d = Gtk.Dialog(title="Apri caso", transient_for=win, modal=True)
-        d.add_buttons("Annulla", Gtk.ResponseType.CANCEL, "Apri", Gtk.ResponseType.OK)
+        d = Gtk.Dialog(title=_t("cs.open_case_title"), transient_for=win, modal=True)
+        d.add_buttons(_t("v.cancel"), Gtk.ResponseType.CANCEL, _t("cs.open"), Gtk.ResponseType.OK)
         box = d.get_content_area(); box.set_margin_top(10); box.set_margin_start(12)
         box.set_margin_end(12); box.set_margin_bottom(10)
         combo = Gtk.ComboBoxText()
@@ -321,7 +315,7 @@ def open_case(_btn=None):
         if d.run() == Gtk.ResponseType.OK and combo.get_active_id():
             ctx["caso"] = model.Caso(combo.get_active_id())
             aggiorna_caso()
-            stato.set_text("Caso aperto")
+            stato.set_text(_t("cs.case_opened"))
         d.destroy()
 
     # --- sequenza completa ------------------------------------------------
@@ -330,8 +324,8 @@ def open_case(_btn=None):
             return
         m, it = tv.get_selection().get_selected()
         if it is None:
-            info_dialog("Nessun dispositivo",
-                        "Seleziona il dispositivo da acquisire.", "warning", win)
+            info_dialog(_t("cs.no_device"),
+                        _t("cs.select_device"), "warning", win)
             return
         dev = m[it][0]
         desc = e_desc.get_text().strip()
@@ -340,45 +334,40 @@ def open_case(_btn=None):
         d = Gtk.MessageDialog(transient_for=win, modal=True,
                               message_type=Gtk.MessageType.QUESTION,
                               buttons=Gtk.ButtonsType.OK_CANCEL,
-                              text="Avviare l'acquisizione di %s?" % dev)
-        d.format_secondary_text(
-            "Verranno eseguiti in sequenza: protezione in scrittura, copia in "
-            "formato E01, verifica degli hash, analisi (partizioni e cronologia) "
-            "e generazione della relazione.\n\nSu un disco di grandi dimensioni "
-            "l'operazione puo' durare ore. La finestra resta utilizzabile.")
+                              text=_t("cs.start_acq_q") % dev)
+        d.format_secondary_text(_t("cs.start_acq_body"))
         risposta = d.run(); d.destroy()
         if risposta != Gtk.ResponseType.OK:
             return
 
         def sequenza(avanza):
-            avanza("Acquisizione in corso...")
+            avanza(_t("cs.acquiring"))
             ok, img = c.acquisisci(dev, desc, avanza)
             if not ok:
                 return (False, img)
-            avanza("Verifica degli hash...")
+            avanza(_t("cs.verifying"))
             ok_v, _ = c.verifica(img, avanza)
-            avanza("Analisi: partizioni e cronologia...")
+            avanza(_t("cs.analyzing"))
             c.analizza(img, avanza)
-            avanza("Generazione della relazione...")
+            avanza(_t("cs.generating"))
             report.genera(c)
-            return (True, "acquisizione %s, verifica %s, relazione pronta"
-                    % (os.path.basename(img), "superata" if ok_v else "NON superata"))
-        lavora(sequenza, "Sequenza completa")
+            return (True, _t("cs.seq_done")
+                    % (os.path.basename(img), _t("cs.passed") if ok_v else _t("cs.not_passed")))
+        lavora(sequenza, _t("cs.full_seq"))
 
     def _dev_scelto():
         m, it = tv.get_selection().get_selected()
         if it is None:
-            info_dialog("Nessun dispositivo",
-                        "Seleziona il dispositivo nell'elenco qui sopra.", "warning", win)
+            info_dialog(_t("cs.no_device"),
+                        _t("cs.select_device_above"), "warning", win)
             return None
         return m[it][0]
 
     def _img_scelta():
         p = combo_img.get_active_id()
         if not p:
-            info_dialog("Nessuna immagine",
-                        "Questo caso non ha ancora immagini acquisite. Esegui prima "
-                        "il passo 1, oppure apri un caso che ne contenga.", "warning", win)
+            info_dialog(_t("cs.no_image"),
+                        _t("cs.no_image_body"), "warning", win)
         return p
 
     def on_acq(_w):
@@ -389,7 +378,7 @@ def open_case(_btn=None):
             return
         desc = e_desc.get_text().strip()
         c = ctx["caso"]
-        lavora(lambda a: c.acquisisci(dev, desc, a), "Acquisizione")
+        lavora(lambda a: c.acquisisci(dev, desc, a), _t("cs.tab_acq"))
 
     def on_ver(_w):
         if not serve_caso():
@@ -398,7 +387,7 @@ def open_case(_btn=None):
         if not img:
             return
         c = ctx["caso"]
-        lavora(lambda a: c.verifica(img, a), "Verifica")
+        lavora(lambda a: c.verifica(img, a), _t("cs.verify"))
 
     def on_ana(_w):
         if not serve_caso():
@@ -407,7 +396,7 @@ def open_case(_btn=None):
         if not img:
             return
         c = ctx["caso"]
-        lavora(lambda a: c.analizza(img, a), "Analisi")
+        lavora(lambda a: c.analizza(img, a), _t("cs.analysis"))
 
     def on_nota(_w):
         if not serve_caso():
@@ -419,19 +408,19 @@ def open_case(_btn=None):
         ctx["caso"].nota(t)
         b.set_text("")
         aggiorna_caso()
-        stato.set_text("Nota messa a verbale")
+        stato.set_text(_t("cs.note_added"))
 
     def on_rel(_w):
         if not serve_caso():
             return
-        lavora(lambda a: (True, report.genera(ctx["caso"])), "Relazione")
+        lavora(lambda a: (True, report.genera(ctx["caso"])), _t("cs.report"))
 
     def on_apri_rel(_w):
         if not serve_caso():
             return
         p = os.path.join(ctx["caso"].dir, "relazione.html")
         if not os.path.isfile(p):
-            info_dialog("Relazione assente", "Generala prima.", "warning", win)
+            info_dialog(_t("cs.report_missing"), _t("cs.generate_first"), "warning", win)
             return
         if have("nxs-browser"):
             run_bg(["nxs-browser", "file://" + p])
