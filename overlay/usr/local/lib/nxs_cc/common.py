@@ -139,7 +139,7 @@ spinner { color: #00e5ff; }
 .nxs-panel button:active { background-color: rgba(0,229,255,0.20); }
 /* Icone simboliche monocrome in cyan Nebula */
 .nxs-panel button image { color: #00e5ff; -gtk-icon-style: symbolic; }
-.nxs-panel button.nxs-icon { padding: 3px 8px; margin: 2px 1px; }
+.nxs-panel button.nxs-icon { padding: 3px 5px; margin: 2px 0px; }
 .nxs-panel button.nxs-icon:hover image { color: #c8f5ff; }
 .nxs-panel button.nxs-menu { color: #00e5ff; font-weight: bold; padding: 2px 12px; }
 .nxs-panel button.nxs-menu image { color: #00e5ff; }

@@ -2938,11 +2938,29 @@ class Handler(BaseHTTPRequestHandler):
         try:
             data = _fetch(url, headers=headers)
         except Exception as e:
+            # Fallback vulcani: se il geoserver Smithsonian GVP e' giu' (capita),
+            # ripiega su EONET volcanoes (NASA) invece di mostrare errore. Meno
+            # ricco (niente scheda GVP) ma i vulcani attivi restano sulla mappa.
+            if fd["kind"] == "gvp":
+                try:
+                    ev = _fetch("https://eonet.gsfc.nasa.gov/api/v3/events"
+                                "?category=volcanoes&status=open&limit=200")
+                    return self._json(_eonet_to_geojson(ev))
+                except Exception:
+                    pass
             return self._json({"error": "sorgente non raggiungibile: %s" % e}, 502)
         if fd["kind"] == "eonet":
             data = _eonet_to_geojson(data)
         elif fd["kind"] == "gvp":
             data = _gvp_to_geojson(data)
+            # GVP raggiungibile ma vuoto (0 vulcani) -> prova comunque EONET.
+            if not (data.get("features")):
+                try:
+                    ev = _fetch("https://eonet.gsfc.nasa.gov/api/v3/events"
+                                "?category=volcanoes&status=open&limit=200")
+                    data = _eonet_to_geojson(ev)
+                except Exception:
+                    pass
         return self._json(data)
 
     # -- POST --

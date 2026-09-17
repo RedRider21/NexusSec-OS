@@ -647,6 +647,13 @@ class Panel(Gtk.Window):
         self.bt_btn.connect("clicked", self._toggle_bluetooth)
         right.pack_start(self.bt_btn, False, False, 0)
 
+        # Lingua dell'interfaccia: applet nella barra (oltre alla voce di menu).
+        # Clic -> stesso popup di scelta (_choose_language), cambio al volo.
+        self.lang_btn = _icon_button("preferences-desktop-locale-symbolic",
+                                     _t("menu.language"))
+        self.lang_btn.connect("clicked", lambda _b: self._choose_language())
+        right.pack_start(self.lang_btn, False, False, 0)
+
         # Batteria / alimentazione (sysfs): l'applet compare solo se presente
         # una batteria o un alimentatore (su desktop fissi resta nascosto).
         self.batt_btn = _icon_button("battery-missing-symbolic", _t("tray.battery"))
