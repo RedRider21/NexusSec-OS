@@ -1007,3 +1007,17 @@ select option, select optgroup {
   background-color: var(--panel-2);
   color: var(--text);
 }
+
+/* --- Assistente d'indagine (IA) --- */
+#panel-ai #ai-context { width: 100%; box-sizing: border-box; resize: vertical; }
+#ai-dossier-row, #ai-tasks, #ai-ask-row {
+  display: flex; gap: 6px; margin: 8px 0; flex-wrap: wrap;
+}
+#ai-dossier, #ai-question { flex: 1; min-width: 0; }
+#ai-tasks .ai-task { flex: 1; }
+#ai-out {
+  white-space: pre-wrap; word-wrap: break-word;
+  background: var(--panel-2); border: 1px solid var(--line, #1a3a52);
+  border-radius: 8px; padding: 10px; margin-top: 8px;
+  max-height: 42vh; overflow: auto; font-size: 13px; line-height: 1.5;
+}

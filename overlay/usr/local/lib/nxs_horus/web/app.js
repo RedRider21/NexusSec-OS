@@ -967,6 +967,7 @@ document.querySelectorAll(".tab").forEach(t => {
     // Leaflet va ridimensionato quando torna visibile.
     if (panel !== "phone") setTimeout(() => map.invalidateSize(), 60);
     if (panel === "report") loadSavedReports();
+    if (panel === "ai") aiInit();
   });
 });
 
@@ -2842,3 +2843,72 @@ refreshStatus();
 // se la prima chiamata avviene prima che il server sia in ascolto, si auto-corregge.
 setInterval(refreshStatus, 15000);
 restoreActive();   // riattiva i layer che erano accesi (persistono al refresh)
+
+// ---- Assistente d'indagine (IA) -------------------------------------------
+// Riusa il backend IA di NexusSec via /api/ai. Locale-first: col backend locale
+// il contesto non lascia la macchina. L'assistente propone, non esegue.
+let aiWired = false;
+function aiMsg(t) {
+  const m = document.getElementById("ai-msg");
+  if (!m) return;
+  if (!t) { m.hidden = true; return; }
+  m.hidden = false; m.textContent = t;
+}
+async function aiInit() {
+  if (!aiWired) {
+    aiWired = true;
+    document.querySelectorAll(".ai-task").forEach(b =>
+      b.addEventListener("click", () => aiRun(b.dataset.task, "")));
+    document.getElementById("ai-ask").addEventListener("click", () => {
+      const q = document.getElementById("ai-question").value.trim();
+      if (q) aiRun("ask", q);
+    });
+    document.getElementById("ai-load").addEventListener("click", aiLoadDossier);
+    document.getElementById("ai-copy").addEventListener("click", () => {
+      const t = document.getElementById("ai-out").textContent;
+      if (navigator.clipboard) navigator.clipboard.writeText(t);
+    });
+  }
+  try {
+    const d = await (await fetch("api/reports")).json();
+    const sel = document.getElementById("ai-dossier");
+    const cur = sel.value; sel.length = 1;
+    (d.reports || []).forEach(rep => {
+      const o = document.createElement("option");
+      o.value = rep.name; o.textContent = rep.label || rep.name;
+      sel.appendChild(o);
+    });
+    sel.value = cur;
+  } catch (e) { /* nessun dossier: si usa la textarea */ }
+}
+async function aiLoadDossier() {
+  const name = document.getElementById("ai-dossier").value;
+  if (!name) return;
+  const jsonName = name.replace(/\.html$/, ".json");
+  aiMsg("Carico il dossier...");
+  try {
+    const txt = await (await fetch("api/report/file?dl=1&name=" +
+                                   encodeURIComponent(jsonName))).text();
+    document.getElementById("ai-context").value = txt;
+    aiMsg("");
+  } catch (e) { aiMsg("Impossibile caricare il dossier."); }
+}
+async function aiRun(task, question) {
+  const ctx = document.getElementById("ai-context").value;
+  const out = document.getElementById("ai-out");
+  const copy = document.getElementById("ai-copy");
+  out.hidden = true; copy.hidden = true;
+  aiMsg("Elaboro con l'assistente...");
+  try {
+    const r = await fetch("api/ai", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ task, context: ctx, question })
+    });
+    const d = await r.json();
+    if (!r.ok || d.error) { aiMsg("IA: " + (d.error || "errore")); return; }
+    aiMsg("");
+    out.textContent = d.reply || "(nessuna risposta)";
+    out.hidden = false; copy.hidden = false;
+  } catch (e) { aiMsg("Errore di rete: " + (e.message || e)); }
+}

@@ -27,6 +27,7 @@
         <button class="tab" data-panel="socmint">Social</button>
         <button class="tab" data-panel="phone">Telefono</button>
         <button class="tab" data-panel="report">Report</button>
+        <button class="tab" data-panel="ai">Assistente</button>
       </nav>
 
       <!-- Pannello FEED -->
@@ -170,6 +171,33 @@
         </div>
         <p class="hint">In <code>~/NexusSec-loot/horus/</code>. Apri l'HTML o scarica il JSON.</p>
         <ul id="saved-list"></ul>
+      </section>
+
+      <section class="panel" id="panel-ai">
+        <p class="hint">Assistente d'indagine: riassume il fascicolo, suggerisce
+        pivot e abbozza il report, usando il backend IA configurato nel Centro di
+        Controllo. <b>Con backend locale il contesto resta sulla macchina; con
+        backend cloud viene inviato al servizio esterno.</b> L'assistente
+        <b>non esegue scansioni</b>: propone.</p>
+        <label class="fld"><span>Fascicolo / contesto</span>
+          <textarea id="ai-context" rows="7" placeholder="Incolla note, risultati recon, indicatori... oppure carica un dossier salvato."></textarea>
+        </label>
+        <div id="ai-dossier-row">
+          <select id="ai-dossier"><option value="">— dossier salvato —</option></select>
+          <button id="ai-load" class="btn btn-alt">Carica nel contesto</button>
+        </div>
+        <div id="ai-tasks">
+          <button class="btn ai-task" data-task="summary">Riassumi</button>
+          <button class="btn ai-task" data-task="pivot">Suggerisci pivot</button>
+          <button class="btn ai-task" data-task="report">Bozza report</button>
+        </div>
+        <div id="ai-ask-row">
+          <input id="ai-question" type="text" placeholder="Domanda libera sul caso...">
+          <button id="ai-ask" class="btn">Chiedi</button>
+        </div>
+        <p class="msg" id="ai-msg" hidden></p>
+        <div id="ai-out" hidden></div>
+        <button id="ai-copy" class="btn btn-alt" hidden>Copia risposta</button>
       </section>
 
       <footer id="foot">

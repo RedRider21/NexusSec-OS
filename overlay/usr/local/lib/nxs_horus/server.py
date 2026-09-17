@@ -2952,13 +2952,31 @@ class Handler(BaseHTTPRequestHandler):
                         "/api/geoint", "/api/report", "/api/settings", "/api/exif",
                         "/api/socmint", "/api/email", "/api/recorder",
                         "/api/recorder/follow", "/api/track/import",
-                        "/api/translate", "/api/report/delete"):
+                        "/api/translate", "/api/report/delete", "/api/ai"):
             return self.send_error(404)
         try:
             n = int(self.headers.get("Content-Length", 0))
             body = json.loads(self.rfile.read(n).decode("utf-8")) if n else {}
         except (ValueError, json.JSONDecodeError):
             return self._json({"error": "richiesta non valida"}, 400)
+        if path == "/api/ai":
+            # Assistente d'indagine: riusa il backend IA di NexusSec (nxs_ai),
+            # locale-first. Il fascicolo esce SOLO col backend cloud + consenso.
+            try:
+                import sys as _sys
+                _sys.path.insert(0, "/usr/local/lib")
+                from nxs_ai import osint as _osint, backend as _aib
+            except Exception as e:                          # noqa: BLE001
+                return self._json({"error": "assistente IA non disponibile: %s" % e}, 500)
+            try:
+                txt = _osint.analyze(body.get("task", "ask"),
+                                     body.get("context", ""),
+                                     body.get("question", ""))
+                return self._json({"reply": txt})
+            except _aib.AIError as e:
+                return self._json({"error": str(e)}, 400)
+            except Exception as e:                          # noqa: BLE001
+                return self._json({"error": "errore IA: %s" % e}, 500)
         if path == "/api/settings":
             return self._json(_save_settings(body))
         if path == "/api/recorder":
