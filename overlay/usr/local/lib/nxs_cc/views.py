@@ -58,7 +58,7 @@ def _cpu_model() -> str:
                 return line.split(":", 1)[1].strip()
     except OSError:
         pass
-    return "CPU sconosciuta"
+    return _t("v.cpu_unknown")
 
 
 def _cpu_count() -> int:
@@ -159,14 +159,14 @@ def open_sysinfo(_btn=None):
 
     uname = run_capture(["uname", "-r"]) or "?"
     arch = run_capture(["uname", "-m"]) or "?"
-    row(0, "Host", socket.gethostname())
-    row(1, "Utente", os.getenv("USER", "nexus"))
+    row(0, _t("v.host"), socket.gethostname())
+    row(1, _t("v.user"), os.getenv("USER", "nexus"))
     _alpine = run_capture(["sh", "-c", "cat /etc/alpine-release 2>/dev/null"]) or "?"
     row(2, _t("v.system"), f"NexusSec OS (Alpine {_alpine})")
-    row(3, "Kernel", uname)
-    row(4, "Architettura", arch)
-    row(5, "CPU", f"{_cpu_model()}  ({_cpu_count()} core)")
-    up = row(6, "Uptime", run_capture(["uptime", "-p"]) or run_capture(["uptime"]))
+    row(3, _t("v.kernel"), uname)
+    row(4, _t("v.arch"), arch)
+    row(5, _t("v.cpu"), f"{_cpu_model()}  ({_cpu_count()} core)")
+    up = row(6, _t("v.uptime"), run_capture(["uptime", "-p"]) or run_capture(["uptime"]))
 
     # RAM
     body.pack_start(Gtk.Separator(), False, False, 6)
@@ -184,7 +184,7 @@ def open_sysinfo(_btn=None):
     body.pack_start(disk_bar, False, False, 0)
 
     # Pacchetti apk installati
-    tcz = row(7, "Pacchetti apk",
+    tcz = row(7, _t("v.apk_pkgs"),
               run_capture(["sh", "-c", "apk info 2>/dev/null | wc -l"]))
 
     def refresh(*_a):
@@ -336,12 +336,12 @@ def open_monitor(_btn=None):
         res.pack_start(card, False, False, 0)
         return gr, val
 
-    cpu_g, cpu_v = make_graph("CPU", (0.00, 0.898, 1.00))
+    cpu_g, cpu_v = make_graph(_t("v.cpu"), (0.00, 0.898, 1.00))
     ram_g, ram_v = make_graph(_t("v.ram"), (0.40, 0.95, 0.65))
-    net_g, net_v = make_graph("Rete (rx+tx)", (1.00, 0.72, 0.25), True)
-    disk_g, disk_v = make_graph("Disco (lettura+scrittura)", (0.66, 0.55, 1.00), True)
+    net_g, net_v = make_graph(_t("v.net_rxtx"), (1.00, 0.72, 0.25), True)
+    disk_g, disk_v = make_graph(_t("v.disk_rw"), (0.66, 0.55, 1.00), True)
 
-    # --- Pannellino "Carico medio di sistema" ---
+    # --- Pannellino _t("v.loadavg_plain") ---
     ncpu = max(1, _cpu_count())
     load_card = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
     load_card.get_style_context().add_class("nxs-card")
@@ -352,7 +352,7 @@ def open_monitor(_btn=None):
 
     load_bars = {}
     lgrid = Gtk.Grid(column_spacing=10, row_spacing=4)
-    for i, name in enumerate(("1 min", "5 min", "15 min")):
+    for i, name in enumerate((_t("v.1min"), _t("v.5min"), _t("v.15min"))):
         kl = Gtk.Label(label=name); kl.set_xalign(0)
         kl.get_style_context().add_class("nxs-val")
         pb = Gtk.ProgressBar(); pb.set_show_text(True); pb.set_hexpand(True)
@@ -469,15 +469,15 @@ def open_monitor(_btn=None):
         return v
 
     _alpine = run_capture(["sh", "-c", "cat /etc/alpine-release 2>/dev/null"]) or "?"
-    srow(0, "Host", socket.gethostname())
-    srow(1, "Utente", os.getenv("USER", "nexus"))
+    srow(0, _t("v.host"), socket.gethostname())
+    srow(1, _t("v.user"), os.getenv("USER", "nexus"))
     srow(2, _t("v.system"), "NexusSec OS (Alpine %s)" % _alpine)
-    srow(3, "Kernel", run_capture(["uname", "-r"]) or "?")
-    srow(4, "Architettura", run_capture(["uname", "-m"]) or "?")
-    srow(5, "CPU", "%s  (%d core)" % (_cpu_model(), _cpu_count()))
-    sys_up = srow(6, "Uptime",
+    srow(3, _t("v.kernel"), run_capture(["uname", "-r"]) or "?")
+    srow(4, _t("v.arch"), run_capture(["uname", "-m"]) or "?")
+    srow(5, _t("v.cpu"), "%s  (%d core)" % (_cpu_model(), _cpu_count()))
+    sys_up = srow(6, _t("v.uptime"),
                   run_capture(["uptime", "-p"]) or run_capture(["uptime"]))
-    srow(7, "Pacchetti apk",
+    srow(7, _t("v.apk_pkgs"),
          run_capture(["sh", "-c", "apk info 2>/dev/null | wc -l"]))
 
     sys_box.pack_start(Gtk.Separator(), False, False, 4)
@@ -585,7 +585,7 @@ def open_network(_btn=None):
 
     store = Gtk.ListStore(str, str, str)
     tree = Gtk.TreeView(model=store)
-    for i, title in enumerate(("Interfaccia", "Indirizzo IPv4", "Stato")):
+    for i, title in enumerate((_t("v.col_iface"), _t("v.col_ipv4"), _t("v.col_state"))):
         col = Gtk.TreeViewColumn(title, Gtk.CellRendererText(), text=i)
         col.set_expand(i == 1)
         tree.append_column(col)
@@ -600,7 +600,7 @@ def open_network(_btn=None):
         for r in _parse_interfaces():
             store.append(list(r))
         if not len(store):
-            store.append(("(nessuna)", "-", "-"))
+            store.append((_t("v.none_paren"), "-", "-"))
 
     refresh()
 
@@ -618,8 +618,8 @@ def open_network(_btn=None):
     cb_if.set_active(0)
     grid.attach(cb_if, 1, 0, 2, 1)
 
-    rb_dhcp = Gtk.RadioButton.new_with_label_from_widget(None, "Automatico (DHCP)")
-    rb_static = Gtk.RadioButton.new_with_label_from_widget(rb_dhcp, "Statico")
+    rb_dhcp = Gtk.RadioButton.new_with_label_from_widget(None, _t("v.auto_dhcp"))
+    rb_static = Gtk.RadioButton.new_with_label_from_widget(rb_dhcp, _t("v.static"))
     grid.attach(rb_dhcp, 0, 1, 3, 1)
     grid.attach(rb_static, 0, 2, 3, 1)
 
@@ -630,10 +630,10 @@ def open_network(_btn=None):
         grid.attach(e, 1, row, 2, 1)
         return e
 
-    e_ip = mk_row("Indirizzo IP:", 3, "es. 192.168.1.50")
-    e_mask = mk_row("Maschera:", 4, "es. 255.255.255.0")
-    e_gw = mk_row("Gateway:", 5, "es. 192.168.1.1")
-    e_dns = mk_row("DNS:", 6, "es. 1.1.1.1")
+    e_ip = mk_row(_t("v.ip_label"), 3, "es. 192.168.1.50")
+    e_mask = mk_row(_t("v.mask_label"), 4, "es. 255.255.255.0")
+    e_gw = mk_row(_t("v.gw_label"), 5, "es. 192.168.1.1")
+    e_dns = mk_row(_t("v.dns_label"), 6, "es. 1.1.1.1")
 
     def on_mode(*_a):
         static = rb_static.get_active()
@@ -664,7 +664,7 @@ def open_network(_btn=None):
             ok = "0% packet loss" in out or " 0% packet" in out
             m = re.search(r"min/avg/max\S*\s*=\s*[\d.]+/([\d.]+)", out)
             avg = f"  (avg {m.group(1)} ms)" if m else ""
-            txt = ("Connessione OK" + avg) if ok else "Nessuna connettivita' (1.1.1.1 irraggiungibile)"
+            txt = (_t("v.conn_ok") + avg) if ok else _t("v.conn_none")
             GLib.idle_add(finish, txt)
 
         def finish(txt):
@@ -677,7 +677,7 @@ def open_network(_btn=None):
     def do_apply(_b):
         iface = cb_if.get_active_text()
         if not iface:
-            info_dialog(_t("v.network"), "Nessuna interfaccia selezionata.", level="warn", parent=win)
+            info_dialog(_t("v.network"), _t("v.no_iface_sel"), level="warn", parent=win)
             return
         if rb_static.get_active():
             ip = e_ip.get_text().strip()
@@ -685,16 +685,16 @@ def open_network(_btn=None):
             gw = e_gw.get_text().strip()
             dns = e_dns.get_text().strip()
             if not _valid_ipv4(ip):
-                info_dialog(_t("v.network"), "Indirizzo IP non valido.", level="warn", parent=win)
+                info_dialog(_t("v.network"), _t("v.ip_invalid"), level="warn", parent=win)
                 return
             if not _valid_ipv4(mask):
-                info_dialog(_t("v.network"), "Maschera non valida.", level="warn", parent=win)
+                info_dialog(_t("v.network"), _t("v.mask_invalid"), level="warn", parent=win)
                 return
             if gw and not _valid_ipv4(gw):
-                info_dialog(_t("v.network"), "Gateway non valido.", level="warn", parent=win)
+                info_dialog(_t("v.network"), _t("v.gw_invalid"), level="warn", parent=win)
                 return
             if dns and not _valid_ipv4(dns):
-                info_dialog(_t("v.network"), "DNS non valido.", level="warn", parent=win)
+                info_dialog(_t("v.network"), _t("v.dns_invalid"), level="warn", parent=win)
                 return
             script = (
                 f"pkill -f 'udhcpc.*{iface}' 2>/dev/null; "
@@ -779,7 +779,7 @@ def open_packages(_btn=None):
     # Risultati
     store = Gtk.ListStore(str, str, str)  # nome, versione, descrizione
     tree = Gtk.TreeView(model=store)
-    for i, title in enumerate(("Pacchetto", "Versione", "Descrizione")):
+    for i, title in enumerate((_t("v.col_pkg"), _t("v.col_version"), _t("v.col_desc"))):
         rend = Gtk.CellRendererText()
         if i == 2:
             rend.set_property("ellipsize", Pango.EllipsizeMode.END)
@@ -849,7 +849,7 @@ def open_packages(_btn=None):
     def do_install(*_a):
         sel = tree.get_selection().get_selected()
         if not sel[1] or busy["on"]:
-            info_dialog(_t("v.nosel"), "Seleziona un pacchetto dalla lista.", parent=win)
+            info_dialog(_t("v.nosel"), _t("v.pick_pkg"), parent=win)
             return
         name = store.get_value(sel[1], 0)
         set_busy(True)
@@ -903,28 +903,28 @@ def open_packages(_btn=None):
 # Hotkey (tabella)
 # ---------------------------------------------------------------------------
 HOTKEYS = [
-    ("Super + T", "Terminale"),
-    ("Super + E", "File manager"),
-    ("Super + C", "Centro di Controllo"),
-    ("Super + D", "Mostra / nascondi desktop"),
-    ("Super + Up", "Massimizza finestra"),
-    ("Super + Down", "Riduci a icona"),
-    ("Super + Left / Right", "Aggancia a meta' schermo"),
-    ("Super + F", "Schermo intero"),
-    ("Super + S", "Arrotola (shade) la titlebar"),
-    ("Alt + F4", "Chiudi finestra"),
-    ("Alt + Tab", "Finestra successiva"),
-    ("Alt + Shift + Tab", "Finestra precedente"),
-    ("Alt + trascina", "Sposta la finestra"),
-    ("Alt + tasto dx trascina", "Ridimensiona la finestra"),
-    ("Print", "Screenshot fullscreen in /tmp"),
-    ("XF86Audio Raise/Lower/Mute", "Volume (amixer/pactl)"),
-    ("Super + F1 / F2 / F3", "Volume mute / giu' / su'"),
-    ("XF86MonBrightness Up/Down", "Luminosita'"),
-    ("Super + F5 / F6", "Luminosita' giu' / su'"),
-    ("Super + L", "Blocca schermo (xtrlock)"),
-    ("Tasto dx desktop", "Menu NexusSec"),
-    ("Tasto centrale desktop", "Lista finestre"),
+    ("Super + T", _t("hk.terminal")),
+    ("Super + E", _t("hk.filemgr")),
+    ("Super + C", _t("hk.cc")),
+    ("Super + D", _t("hk.showdesk")),
+    ("Super + Up", _t("hk.maximize")),
+    ("Super + Down", _t("hk.minimize")),
+    ("Super + Left / Right", _t("hk.snap")),
+    ("Super + F", _t("hk.fullscreen")),
+    ("Super + S", _t("hk.shade")),
+    ("Alt + F4", _t("hk.close")),
+    ("Alt + Tab", _t("hk.next")),
+    ("Alt + Shift + Tab", _t("hk.prev")),
+    ("Alt + trascina", _t("hk.move")),
+    ("Alt + tasto dx trascina", _t("hk.resize")),
+    ("Print", _t("hk.screenshot")),
+    ("XF86Audio Raise/Lower/Mute", _t("hk.volume")),
+    ("Super + F1 / F2 / F3", _t("hk.vol_mute")),
+    ("XF86MonBrightness Up/Down", _t("hk.brightness")),
+    ("Super + F5 / F6", _t("hk.bright_dn")),
+    ("Super + L", _t("hk.lock")),
+    ("Tasto dx desktop", _t("hk.menu")),
+    ("Tasto centrale desktop", _t("hk.winlist")),
 ]
 
 
@@ -956,9 +956,9 @@ def _ob_key_from_event(ev):
 
 def _capture_key(parent):
     """Dialogo 'premi la combinazione' -> ritorna la stringa Openbox o None."""
-    dlg = Gtk.Dialog(title="Nuova combinazione", transient_for=parent, modal=True)
+    dlg = Gtk.Dialog(title=_t("v.new_combo"), transient_for=parent, modal=True)
     dlg.add_button(_t("v.cancel"), Gtk.ResponseType.CANCEL)
-    lab = Gtk.Label(label="Premi la combinazione desiderata…\n(Esc per annullare)")
+    lab = Gtk.Label(label=_t("v.press_combo"))
     lab.set_margin_top(24); lab.set_margin_bottom(24)
     lab.set_margin_start(28); lab.set_margin_end(28)
     dlg.get_content_area().add(lab)
@@ -1012,11 +1012,11 @@ def open_hotkeys(_btn=None):
     store = Gtk.ListStore(str, str)                    # tasto, comando
     tree = Gtk.TreeView(model=store)
     tree.set_headers_visible(True)
-    c0 = Gtk.TreeViewColumn("Tasto", Gtk.CellRendererText(), text=0)
+    c0 = Gtk.TreeViewColumn(_t("v.col_key"), Gtk.CellRendererText(), text=0)
     c0.set_min_width(180)
     tree.append_column(c0)
     rend = Gtk.CellRendererText(); rend.set_property("editable", True)
-    c1 = Gtk.TreeViewColumn("Comando", rend, text=1)
+    c1 = Gtk.TreeViewColumn(_t("v.col_command"), rend, text=1)
     c1.set_expand(True)
     tree.append_column(c1)
     sw = Gtk.ScrolledWindow()
@@ -1052,7 +1052,7 @@ def open_hotkeys(_btn=None):
         k = _capture_key(win)
         if not k:
             return
-        cmd = _ask_text(win, "Comando da eseguire per %s" % k)
+        cmd = _ask_text(win, _t("v.cmd_for") % k)
         if not cmd:
             return
         keys("add", k, cmd)
@@ -1147,8 +1147,8 @@ def open_statusbar(_btn=None):
     pbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
     pbox.set_margin_top(8); pbox.set_margin_bottom(8)
     pbox.set_margin_start(10); pbox.set_margin_end(10)
-    rb_bottom = Gtk.RadioButton.new_with_label_from_widget(None, "In basso")
-    rb_top = Gtk.RadioButton.new_with_label_from_widget(rb_bottom, "In alto")
+    rb_bottom = Gtk.RadioButton.new_with_label_from_widget(None, _t("v.bottom"))
+    rb_top = Gtk.RadioButton.new_with_label_from_widget(rb_bottom, _t("v.top"))
     if panelcfg.get_position() == "top":
         rb_top.set_active(True)
     pbox.pack_start(rb_bottom, False, False, 0)
@@ -1160,8 +1160,8 @@ def open_statusbar(_btn=None):
         pos = "top" if rb_top.get_active() else "bottom"
         panelcfg.move_panel(pos)
         info_dialog(_t("v.panel_moved"),
-                    "Posizione: %s. Openbox ricaricato e pannello riavviato."
-                    % ("in alto" if pos == "top" else "in basso"), parent=win)
+                    _t("v.pos_applied")
+                    % (_t("v.top_low") if pos == "top" else _t("v.bottom_low")), parent=win)
     b_applypos.connect("clicked", apply_pos)
     pbox.pack_end(b_applypos, False, False, 0)
     frame_pos.add(pbox)
@@ -1198,7 +1198,7 @@ def open_statusbar(_btn=None):
         panelcfg.apply_layout(height=int(spin_h.get_value()),
                               icon_px=int(spin_i.get_value()))
         info_dialog(_t("v.bar_updated"),
-                    "Altezza e icone applicate. Pannello riavviato.", parent=win)
+                    _t("v.size_applied"), parent=win)
     b_applydim.connect("clicked", apply_dim)
     row_bd = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
     row_bd.pack_end(b_applydim, False, False, 0)
@@ -1238,9 +1238,9 @@ def open_statusbar(_btn=None):
     def refresh_state():
         running = _panel_running()
         state.set_markup(
-            "Stato: <span foreground='%s'>in esecuzione</span>" % COL_ACCENT
+            _t("v.state_running") % COL_ACCENT
             if running else
-            "Stato: <span foreground='%s'>non attivo</span>" % COL_ALERT)
+            _t("v.state_off") % COL_ALERT)
     refresh_state()
     body.pack_start(state, False, False, 4)
 
@@ -1518,7 +1518,7 @@ def open_menu_editor(_btn=None):
             s, e = buf.get_bounds()
             MENU_XML.write_text(buf.get_text(s, e, False))
             panelcfg.openbox_reconfigure()
-            info_dialog(_t("v.saved"), "Menu aggiornato e Openbox ricaricato.",
+            info_dialog(_t("v.saved"), _t("v.menu_updated"),
                         parent=win)
         except Exception as err:                       # noqa: BLE001
             info_dialog(_t("v.error"), str(err), level="error", parent=win)
@@ -1753,7 +1753,7 @@ def open_gtk_theme(_btn=None):
     elif have("lxappearance"):
         run_bg(["lxappearance"])
     else:
-        info_dialog(_t("v.lxappearance_missing"), "Eseguire: doas apk add lxappearance", level="warn")
+        info_dialog(_t("v.lxappearance_missing"), _t("v.run_lxapp"), level="warn")
 
 
 def open_wallpaper(_btn=None):
@@ -1761,7 +1761,7 @@ def open_wallpaper(_btn=None):
     sfondi dei profili + file personale. E' una scelta SEPARATA e indipendente
     (voce a se': non cambia con profilo/skin) e persiste finche' non si preme
     «Torna allo sfondo del profilo». Applica via `nxs-wallpaper` (override)."""
-    win, body = panel_window("Sfondo del desktop", 680, 600)
+    win, body = panel_window(_t("v.wallpaper.title"), 680, 600)
     from gi.repository import GdkPixbuf
 
     intro = Gtk.Label(label="Scegli lo sfondo. E' indipendente dal profilo e "
@@ -1777,9 +1777,9 @@ def open_wallpaper(_btn=None):
     def apply_wp(path):
         try:
             subprocess.run(["nxs-wallpaper", "set", str(path)])
-            status.set_text("Sfondo impostato: %s" % os.path.basename(str(path)))
+            status.set_text(_t("v.wall_set") % os.path.basename(str(path)))
         except OSError:
-            status.set_text("Impossibile impostare lo sfondo.")
+            status.set_text(_t("v.wall_fail"))
 
     scroll = Gtk.ScrolledWindow()
     scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
@@ -1810,32 +1810,32 @@ def open_wallpaper(_btn=None):
     skin_dir = _P("/usr/local/share/nexussec/wallpapers")
     if skin_dir.is_dir():
         for f in sorted(skin_dir.glob("skin-*.png")):
-            add_thumb(f, "Skin: " + f.stem[5:])
+            add_thumb(f, _t("v.skin_prefix") + f.stem[5:])
     prof_dir = HOME / ".themes/NexusSec-Core/backgrounds"
     if prof_dir.is_dir():
         for f in sorted(prof_dir.glob("*.png")):
-            add_thumb(f, "Profilo: " + f.stem)
+            add_thumb(f, _t("v.profile_prefix") + f.stem)
 
     body.pack_start(status, False, False, 0)
 
     btns = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
-    b_reset = icon_button("Torna allo sfondo del profilo", "view-refresh-symbolic")
+    b_reset = icon_button(_t("v.wall_back_profile"), "view-refresh-symbolic")
 
     def do_reset(_b):
         try:
             subprocess.run(["nxs-wallpaper", "reset"])
-            status.set_text("Sfondo: quello del profilo.")
+            status.set_text(_t("v.wall_is_profile"))
         except OSError:
             pass
     b_reset.connect("clicked", do_reset)
-    b_file = icon_button("File personale...", "document-open")
+    b_file = icon_button(_t("v.personal_file"), "document-open")
 
     def pick_file(_b):
-        dlg = Gtk.FileChooserDialog(title="Scegli sfondo",
+        dlg = Gtk.FileChooserDialog(title=_t("v.choose_wall"),
                                     action=Gtk.FileChooserAction.OPEN, modal=True)
         dlg.add_button(_t("v.cancel"), Gtk.ResponseType.CANCEL)
-        dlg.add_button("Imposta", Gtk.ResponseType.ACCEPT)
-        flt = Gtk.FileFilter(); flt.set_name("Immagini")
+        dlg.add_button(_t("v.set"), Gtk.ResponseType.ACCEPT)
+        flt = Gtk.FileFilter(); flt.set_name(_t("v.images"))
         flt.add_mime_type("image/png"); flt.add_mime_type("image/jpeg")
         dlg.add_filter(flt)
         if prof_dir.is_dir():
@@ -1858,8 +1858,8 @@ def open_wallpaper(_btn=None):
 # Tastiera
 # ---------------------------------------------------------------------------
 def open_keyboard(_btn=None):
-    win, body = panel_window("Tastiera", 480, 420)
-    info = Gtk.Label(label="Layout tastiera per la sessione grafica.")
+    win, body = panel_window(_t("v.keyboard.title"), 480, 420)
+    info = Gtk.Label(label=_t("v.kbd_desc"))
     info.set_xalign(0)
     info.get_style_context().add_class("nxs-val")
     body.pack_start(info, False, False, 0)
@@ -1867,13 +1867,13 @@ def open_keyboard(_btn=None):
     def set_layout(name):
         if name == "it" and (HOME / ".Xmodmap-it").exists():
             subprocess.Popen(["xmodmap", str(HOME / ".Xmodmap-it")])
-            info_dialog("Layout", "Impostato: italiano", parent=win)
+            info_dialog(_t("v.layout"), _t("v.kbd_set_it"), parent=win)
         else:
             subprocess.Popen(["sh", "-c", "setxkbmap us 2>/dev/null || true"])
-            info_dialog("Layout", "Impostato: US (best effort)", parent=win)
+            info_dialog(_t("v.layout"), _t("v.kbd_set_us"), parent=win)
 
     row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
-    b_it = icon_button("Italiano", "preferences-desktop-locale")
+    b_it = icon_button(_t("v.italian"), "preferences-desktop-locale")
     b_it.connect("clicked", lambda _b: set_layout("it"))
     b_us = icon_button("US", "preferences-desktop-keyboard")
     b_us.connect("clicked", lambda _b: set_layout("us"))
@@ -1882,22 +1882,22 @@ def open_keyboard(_btn=None):
     body.pack_start(row, False, False, 0)
 
     # --- Prova tastiera: verifica caratteri e corrispondenze dei tasti -----
-    frame = Gtk.Frame(label="Prova tastiera")
+    frame = Gtk.Frame(label=_t("v.kbd_test"))
     fbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
     fbox.set_margin_top(8); fbox.set_margin_bottom(8)
     fbox.set_margin_start(8); fbox.set_margin_end(8)
     frame.add(fbox)
 
     hint = Gtk.Label(
-        label="Scrivi qui per controllare che i caratteri corrispondano ai tasti:")
+        label=_t("v.kbd_test_hint"))
     hint.set_xalign(0)
     fbox.pack_start(hint, False, False, 0)
 
     entry = Gtk.Entry()
-    entry.set_placeholder_text("es. è à ù ò ì @ # \\ | tasti accentati...")
+    entry.set_placeholder_text(_t("v.kbd_test_ph"))
     fbox.pack_start(entry, False, False, 0)
 
-    detail = Gtk.Label(label="Premi un tasto: qui appare la corrispondenza.")
+    detail = Gtk.Label(label=_t("v.kbd_press"))
     detail.set_xalign(0)
     detail.set_selectable(True)
     detail.get_style_context().add_class("nxs-key")
@@ -1934,14 +1934,14 @@ def open_keyboard(_btn=None):
 # Salvaschermo (nxs-screensaver + xautolock)
 # ---------------------------------------------------------------------------
 SS_CONF = HOME / ".config" / "nxs" / "screensaver.conf"
-SS_STYLES = [("nebula", "Nebula (rete di particelle)"),
-             ("matrix", "Matrix (pioggia di glifi)"),
-             ("starfield", "Campo stellare (warp)"),
-             ("aurora", "Aurora (bande fluide)"),
-             ("grid", "Griglia synthwave (prospettica)"),
-             ("hexpulse", "Nido d'ape pulsante (badge)"),
-             ("orbits", "Orbite (costellazione)"),
-             ("logo", "Logo NexusSec (emblema pulsante)")]
+SS_STYLES = [("nebula", _t("v.ss.nebula")),
+             ("matrix", _t("v.ss.matrix")),
+             ("starfield", _t("v.ss.stars")),
+             ("aurora", _t("v.ss.aurora")),
+             ("grid", _t("v.ss.synthwave")),
+             ("hexpulse", _t("v.ss.honeycomb")),
+             ("orbits", _t("v.ss.orbits")),
+             ("logo", _t("v.ss.logo"))]
 
 
 def _ss_read():
@@ -1964,7 +1964,7 @@ def _ss_write(cfg):
 
 
 def open_screensaver(_btn=None):
-    win, body = panel_window("Salvaschermo", 540, 640)
+    win, body = panel_window(_t("v.screensaver.title"), 540, 640)
     cfg = _ss_read()
 
     intro = Gtk.Label(label="Salvaschermo animato di NexusSec: si avvia dopo un "
@@ -1976,7 +1976,7 @@ def open_screensaver(_btn=None):
 
     # Attivazione
     row_en = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
-    lab_en = Gtk.Label(label="Attiva il salvaschermo automatico")
+    lab_en = Gtk.Label(label=_t("v.ss_enable"))
     lab_en.set_xalign(0); lab_en.get_style_context().add_class("nxs-key")
     row_en.pack_start(lab_en, True, True, 0)
     sw = Gtk.Switch(); sw.set_valign(Gtk.Align.CENTER)
@@ -1986,7 +1986,7 @@ def open_screensaver(_btn=None):
 
     # Timeout
     row_to = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
-    lab_to = Gtk.Label(label="Avvia dopo (minuti di inattivita')")
+    lab_to = Gtk.Label(label=_t("v.ss_after"))
     lab_to.set_xalign(0); lab_to.get_style_context().add_class("nxs-key")
     row_to.pack_start(lab_to, True, True, 0)
     try:
@@ -2000,7 +2000,7 @@ def open_screensaver(_btn=None):
 
     # Stile
     row_st = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
-    lab_st = Gtk.Label(label="Stile")
+    lab_st = Gtk.Label(label=_t("v.style"))
     lab_st.set_xalign(0); lab_st.get_style_context().add_class("nxs-key")
     row_st.pack_start(lab_st, True, True, 0)
     combo = Gtk.ComboBoxText()
@@ -2014,7 +2014,7 @@ def open_screensaver(_btn=None):
     # --- Blocco schermo con password ---
     sep = Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL)
     body.pack_start(sep, False, False, 4)
-    lock_head = Gtk.Label(); lock_head.set_markup("<b>Blocco schermo</b>")
+    lock_head = Gtk.Label(); lock_head.set_markup(_t("v.lock_hdr"))
     lock_head.set_xalign(0)
     body.pack_start(lock_head, False, False, 0)
 
@@ -2024,7 +2024,7 @@ def open_screensaver(_btn=None):
         _sssecret = None
 
     row_lock = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
-    lab_lock = Gtk.Label(label="Richiedi la password per sbloccare")
+    lab_lock = Gtk.Label(label=_t("v.lock_ask_pw"))
     lab_lock.set_xalign(0); lab_lock.get_style_context().add_class("nxs-key")
     row_lock.pack_start(lab_lock, True, True, 0)
     lock_sw = Gtk.Switch(); lock_sw.set_valign(Gtk.Align.CENTER)
@@ -2038,9 +2038,9 @@ def open_screensaver(_btn=None):
 
     def _refresh_pw_state():
         if _sssecret is None:
-            pw_state.set_text("Modulo password non disponibile.")
+            pw_state.set_text(_t("v.pw_mod_na"))
         elif _sssecret.has_password():
-            pw_state.set_text("Password impostata.")
+            pw_state.set_text(_t("v.pw_set"))
         else:
             pw_state.set_text("Nessuna password impostata: impostala per "
                               "attivare il blocco.")
@@ -2048,7 +2048,7 @@ def open_screensaver(_btn=None):
 
     row_pw = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
     pw_entry = Gtk.Entry(); pw_entry.set_visibility(False)
-    pw_entry.set_placeholder_text("Nuova password")
+    pw_entry.set_placeholder_text(_t("v.new_password"))
     pw_entry.set_hexpand(True)
     pw_entry.set_icon_from_icon_name(Gtk.EntryIconPosition.SECONDARY,
                                      "view-reveal-symbolic")
@@ -2061,7 +2061,7 @@ def open_screensaver(_btn=None):
             "view-conceal-symbolic" if vis else "view-reveal-symbolic")
     pw_entry.connect("icon-press", _eye)
     row_pw.pack_start(pw_entry, True, True, 0)
-    b_setpw = icon_button("Imposta", "emblem-ok")
+    b_setpw = icon_button(_t("v.set"), "emblem-ok")
     b_delpw = icon_button(_t("v.remove"), "user-trash-symbolic")
     row_pw.pack_start(b_setpw, False, False, 0)
     row_pw.pack_start(b_delpw, False, False, 0)
@@ -2072,7 +2072,7 @@ def open_screensaver(_btn=None):
             return
         pw = pw_entry.get_text()
         if len(pw) < 4:
-            pw_state.set_text("La password deve avere almeno 4 caratteri.")
+            pw_state.set_text(_t("v.pw_min4"))
             return
         _sssecret.set_password(pw)
         pw_entry.set_text("")
@@ -2097,7 +2097,7 @@ def open_screensaver(_btn=None):
         if want_lock and (_sssecret is None or not _sssecret.has_password()):
             want_lock = False
             lock_sw.set_active(False)
-            pw_state.set_text("Imposta prima una password per attivare il blocco.")
+            pw_state.set_text(_t("v.pw_first"))
         return {"enabled": "1" if sw.get_active() else "0",
                 "timeout": str(int(spin.get_value())),
                 "style": combo.get_active_id() or "nebula",
@@ -2107,14 +2107,14 @@ def open_screensaver(_btn=None):
         c = collect()
         _ss_write(c)
         run_bg(["nxs-screensaver-idle", "restart"])
-        status.set_text("Impostazioni salvate e applicate.")
+        status.set_text(_t("v.settings_saved_applied"))
 
     # Pulsanti
     btns = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
-    b_try = icon_button("Prova ora", "media-playback-start")
+    b_try = icon_button(_t("v.try_now"), "media-playback-start")
     b_try.connect("clicked", lambda _b: run_bg(
         ["nxs-screensaver", combo.get_active_id() or "nebula"]))
-    b_save = icon_button("Salva e applica", "emblem-ok", primary=True)
+    b_save = icon_button(_t("v.save_apply"), "emblem-ok", primary=True)
     b_save.connect("clicked", do_save)
     b_close = icon_button(_t("v.close"), "window-close")
     b_close.connect("clicked", lambda _b: win.destroy())
@@ -2140,10 +2140,10 @@ def open_screensaver(_btn=None):
 # Il tempo NON va allungato a caso: piu' e' lungo, piu' il sistema ASPETTA
 # prima di concludere che era un clic singolo, e i clic singoli sembrano lenti.
 # Per questo qui si regolano entrambi, e c'e' una zona di prova per tararli.
-_DC_TEMPI = [("Molto veloce", 300), ("Veloce", 450), ("Normale", 600),
-             ("Lento", 800), ("Molto lento", 1000)]
-_DC_DIST = [("Stretta (mouse)", 5), ("Media", 10), ("Ampia (touchpad)", 16),
-            ("Molto ampia", 24)]
+_DC_TEMPI = [(_t("v.spd.vfast"), 300), (_t("v.spd.fast"), 450), (_t("v.spd.normal"), 600),
+             (_t("v.spd.slow"), 800), (_t("v.spd.vslow"), 1000)]
+_DC_DIST = [(_t("v.tol.narrow"), 5), (_t("v.tol.medium"), 10), (_t("v.tol.wide"), 16),
+            (_t("v.tol.vwide"), 24)]
 
 
 def _dc_leggi():
@@ -2183,7 +2183,7 @@ def _dc_scrivi(tempo, dist):
 
 def open_mouse(_btn=None):
     """Taratura del doppio clic, con zona di prova."""
-    win, body = panel_window("Mouse e touchpad", 560, 520)
+    win, body = panel_window(_t("v.mouse.title"), 560, 520)
     tempo, dist = _dc_leggi()
 
     intro = Gtk.Label(label=(
@@ -2205,7 +2205,7 @@ def open_mouse(_btn=None):
         for nome, v in presets:
             combo.append(str(v), "%s  (%d)" % (nome, v))
         if not combo.set_active_id(str(valore)):
-            combo.append(str(valore), "Personalizzato  (%d)" % valore)
+            combo.append(str(valore), _t("v.custom_n") % valore)
             combo.set_active_id(str(valore))
         box.pack_start(combo, True, True, 0)
         body.pack_start(box, False, False, 0)
@@ -2214,11 +2214,11 @@ def open_mouse(_btn=None):
         body.pack_start(n, False, False, 0)
         return combo
 
-    c_tempo = _riga("Velocita del doppio clic:", _DC_TEMPI, tempo,
+    c_tempo = _riga(_t("v.dclick_speed"), _DC_TEMPI, tempo,
                     "Millisecondi entro cui devono arrivare i due clic. Piu' e' "
                     "alto, piu' e' facile il doppio clic, ma il sistema aspetta "
                     "quel tempo prima di concludere che era un clic singolo.")
-    c_dist = _riga("Tolleranza di movimento:", _DC_DIST, dist,
+    c_dist = _riga(_t("v.move_tol"), _DC_DIST, dist,
                    "Di quanti pixel puo' spostarsi il puntatore fra i due clic. "
                    "Col mouse bastano 5; col dito servono di piu'.")
 
@@ -2226,7 +2226,7 @@ def open_mouse(_btn=None):
     sep = Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL)
     sep.set_margin_top(10)
     body.pack_start(sep, False, False, 0)
-    prova_lab = Gtk.Label(label="Prova qui sotto: fai un doppio clic o un doppio tap.")
+    prova_lab = Gtk.Label(label=_t("v.dclick_try"))
     prova_lab.set_xalign(0)
     prova_lab.get_style_context().add_class("nxs-key")
     body.pack_start(prova_lab, False, False, 0)
@@ -2234,7 +2234,7 @@ def open_mouse(_btn=None):
     zona = Gtk.EventBox()
     zona.set_size_request(-1, 110)
     zona.add_events(Gdk.EventMask.BUTTON_PRESS_MASK)
-    inner = Gtk.Label(label="zona di prova")
+    inner = Gtk.Label(label=_t("v.test_zone"))
     inner.get_style_context().add_class("nxs-val")
     zona.add(inner)
     body.pack_start(zona, False, False, 0)
@@ -2244,11 +2244,11 @@ def open_mouse(_btn=None):
     def on_click(_w, ev):
         if ev.type == Gdk.EventType._2BUTTON_PRESS:
             conta["doppi"] += 1
-            inner.set_text("DOPPIO CLIC riconosciuto  (doppi: %d · singoli: %d)"
+            inner.set_text(_t("v.dclick_ok")
                            % (conta["doppi"], conta["singoli"]))
         elif ev.type == Gdk.EventType.BUTTON_PRESS:
             conta["singoli"] += 1
-            inner.set_text("clic singolo  (doppi: %d · singoli: %d)"
+            inner.set_text(_t("v.click_single")
                            % (conta["doppi"], conta["singoli"]))
         return False
     zona.connect("button-press-event", on_click)
@@ -2263,8 +2263,8 @@ def open_mouse(_btn=None):
         d = int(c_dist.get_active_id() or 16)
         _dc_scrivi(t, d)
         conta["singoli"] = conta["doppi"] = 0
-        inner.set_text("zona di prova")
-        stato.set_text("Applicato subito: %d ms, %d px. Riprova qui sopra." % (t, d))
+        inner.set_text(_t("v.test_zone"))
+        stato.set_text(_t("v.dclick_applied") % (t, d))
     c_tempo.connect("changed", applica)
     c_dist.connect("changed", applica)
 
@@ -2305,7 +2305,7 @@ def _bt_device_info(mac: str):
 
 
 def open_bluetooth(_btn=None):
-    win, body = panel_window("Gestione Bluetooth", 580, 580)
+    win, body = panel_window(_t("v.bt.title"), 580, 580)
 
     # --- riga adattatore: nome + rinomina + accensione ---
     adapt = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
@@ -2321,25 +2321,25 @@ def open_bluetooth(_btn=None):
     ada_txt.pack_start(ada_name, False, False, 0)
     ada_txt.pack_start(ada_addr, False, False, 0)
     adapt.pack_start(ada_txt, True, True, 0)
-    ren_btn = icon_button("Rinomina", "document-edit-symbolic")
+    ren_btn = icon_button(_t("v.rename"), "document-edit-symbolic")
     adapt.pack_end(ren_btn, False, False, 0)
     pw_sw = Gtk.Switch(); pw_sw.set_valign(Gtk.Align.CENTER)
     adapt.pack_end(pw_sw, False, False, 0)
     body.pack_start(adapt, False, False, 0)
 
-    # riga "visibile agli altri"
+    # riga _t("v.bt_visible")
     ctl = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
-    disc_lbl = Gtk.Label(label="Rendi visibile ad altri dispositivi")
+    disc_lbl = Gtk.Label(label=_t("v.bt_make_visible"))
     disc_lbl.set_xalign(0); disc_lbl.get_style_context().add_class("nxs-val")
     ctl.pack_start(disc_lbl, True, True, 0)
     disc_sw = Gtk.Switch(); disc_sw.set_valign(Gtk.Align.CENTER)
     ctl.pack_end(disc_sw, False, False, 0)
     body.pack_start(ctl, False, False, 0)
 
-    # riga "ricezione file in arrivo" (OBEX): accende un server che salva i file
+    # riga _t("v.bt_recv") (OBEX): accende un server che salva i file
     # inviati da altri device nella cartella ~/NexusSec-loot.
     rcv = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
-    rcv_lbl = Gtk.Label(label="Ricevi file in arrivo  (salva in ~/NexusSec-loot)")
+    rcv_lbl = Gtk.Label(label=_t("v.bt_recv_full"))
     rcv_lbl.set_xalign(0); rcv_lbl.get_style_context().add_class("nxs-val")
     rcv.pack_start(rcv_lbl, True, True, 0)
     rcv_sw = Gtk.Switch(); rcv_sw.set_valign(Gtk.Align.CENTER)
@@ -2348,7 +2348,7 @@ def open_bluetooth(_btn=None):
 
     # riga scansione + stato
     scan_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
-    scan_btn = icon_button("Scansiona dispositivi", "view-refresh", primary=True)
+    scan_btn = icon_button(_t("v.bt_scan"), "view-refresh", primary=True)
     spinner = Gtk.Spinner()
     scan_row.pack_start(scan_btn, False, False, 0)
     scan_row.pack_start(spinner, False, False, 0)
@@ -2391,10 +2391,10 @@ def open_bluetooth(_btn=None):
     def apply_adapter(raw):
         p = (raw.strip("\n").split("\t") + ["", "", "", "", "", ""])[:6]
         name, alias, addr, powered, disc, _pair = p
-        shown = alias or name or "Adattatore Bluetooth"
+        shown = alias or name or _t("v.bt_adapter")
         if not addr:
-            ada_name.set_text("Nessun adattatore Bluetooth")
-            ada_addr.set_text("In VM non e' disponibile: usa un dongle USB.")
+            ada_name.set_text(_t("v.bt_no_adapter"))
+            ada_addr.set_text(_t("v.bt_vm_hint"))
             for w in (pw_sw, disc_sw, scan_btn, ren_btn):
                 w.set_sensitive(False)
             return False
@@ -2449,41 +2449,41 @@ def open_bluetooth(_btn=None):
 
         act = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=4)
         if d["state"] == "conn":
-            b = icon_button("Disconnetti", "network-offline-symbolic")
+            b = icon_button(_t("v.bt_disconnect"), "network-offline-symbolic")
             b.connect("clicked", lambda _w, m=d["mac"], n=d["name"]:
-                      do_action("disconnect", m, "Disconnessione di %s..." % n))
+                      do_action("disconnect", m, _t("v.bt_disconnecting") % n))
         else:
-            b = icon_button("Connetti", "network-transmit-receive-symbolic",
+            b = icon_button(_t("v.bt_connect"), "network-transmit-receive-symbolic",
                             primary=True)
             b.connect("clicked", lambda _w, m=d["mac"], n=d["name"]:
-                      do_action("connect", m, "Connessione a %s..." % n))
+                      do_action("connect", m, _t("v.bt_connecting") % n))
         act.pack_start(b, False, False, 0)
         if d["state"] == "":
-            bp = icon_button("Abbina", "emblem-synchronizing-symbolic")
+            bp = icon_button(_t("v.bt_pair"), "emblem-synchronizing-symbolic")
             bp.connect("clicked", lambda _w, m=d["mac"], n=d["name"]:
-                       do_action("pair", m, "Abbinamento di %s..." % n))
+                       do_action("pair", m, _t("v.bt_pairing") % n))
             act.pack_start(bp, False, False, 0)
-        bt_lbl = "Revoca fiducia" if d["trusted"] else "Fidati"
+        bt_lbl = _t("v.bt_untrust") if d["trusted"] else _t("v.bt_trust")
         bt_ico = ("security-medium-symbolic" if d["trusted"]
                   else "security-high-symbolic")
         btr = icon_button(bt_lbl, bt_ico)
         btr.connect("clicked", lambda _w, m=d["mac"], t=d["trusted"]:
                     do_action("untrust" if t else "trust", m,
-                              "Aggiornamento fiducia..."))
+                              _t("v.bt_trust_upd")))
         act.pack_start(btr, False, False, 0)
-        bi = icon_button("Info", "dialog-information-symbolic")
+        bi = icon_button(_t("v.info"), "dialog-information-symbolic")
         bi.connect("clicked", lambda _w, m=d["mac"], n=d["name"]:
                    show_info(m, n))
         act.pack_start(bi, False, False, 0)
         # Invia file (OBEX) verso i device accoppiati/connessi.
         if d["state"] in ("conn", "paired"):
-            bsend = icon_button("Invia file", "document-send-symbolic")
+            bsend = icon_button(_t("v.bt_send_file"), "document-send-symbolic")
             bsend.connect("clicked", lambda _w, m=d["mac"], n=d["name"]:
                           send_file(m, n))
             act.pack_start(bsend, False, False, 0)
         brm = icon_button(_t("v.remove"), "user-trash-symbolic")
         brm.connect("clicked", lambda _w, m=d["mac"], n=d["name"]:
-                    do_action("remove", m, "Rimozione di %s..." % n))
+                    do_action("remove", m, _t("v.bt_removing") % n))
         act.pack_start(brm, False, False, 0)
         row.pack_end(act, False, False, 0)
         return row
@@ -2506,9 +2506,9 @@ def open_bluetooth(_btn=None):
                 st["busy"] = False
                 low = out.lower()
                 if action == "connect" and out.strip() and "successful" not in low:
-                    set_status("Connessione non riuscita. Prova ad abbinare prima.")
+                    set_status(_t("v.bt_conn_fail"))
                 else:
-                    set_status("Fatto.")
+                    set_status(_t("v.done_dot"))
                 reload_devices(); refresh_adapter()
                 return False
             GLib.idle_add(done)
@@ -2518,10 +2518,10 @@ def open_bluetooth(_btn=None):
         if st["busy"]:
             return
         dlg = Gtk.FileChooserDialog(
-            title="Invia un file a %s" % name, transient_for=win,
+            title=_t("v.bt_send_to") % name, transient_for=win,
             action=Gtk.FileChooserAction.OPEN)
         dlg.add_button(_t("v.cancel"), Gtk.ResponseType.CANCEL)
-        dlg.add_button("Invia", Gtk.ResponseType.OK)
+        dlg.add_button(_t("v.send"), Gtk.ResponseType.OK)
         dlg.set_default_response(Gtk.ResponseType.OK)
         resp = dlg.run()
         path = dlg.get_filename() if resp == Gtk.ResponseType.OK else None
@@ -2529,17 +2529,17 @@ def open_bluetooth(_btn=None):
         if not path:
             return
         st["busy"] = True
-        set_status("Invio di «%s» a %s..." % (os.path.basename(path), name))
+        set_status(_t("v.bt_sending") % (os.path.basename(path), name))
         def worker():
             out = bt("send", mac, path, timeout=180).strip()
             def done():
                 st["busy"] = False
                 if out == "ok":
-                    set_status("File inviato a %s." % name)
+                    set_status(_t("v.bt_sent") % name)
                 elif out == "err-noobex":
-                    set_status("Invio non disponibile (manca bluez-tools/obexd).")
+                    set_status(_t("v.bt_send_na"))
                 elif out == "err-nofile":
-                    set_status("File non trovato.")
+                    set_status(_t("v.file_not_found"))
                 elif out == "err-obexd":
                     set_status("Invio non riuscito: obexd non si avvia "
                                "(vedi /tmp/nxs-bt-obex.log).")
@@ -2554,19 +2554,19 @@ def open_bluetooth(_btn=None):
         def worker():
             d = _bt_device_info(mac)
             def show():
-                fields = [("Indirizzo", mac)]
-                for k_it, k_bz in (("Nome", "Name"), ("Alias", "Alias"),
-                                   ("Tipo", "Icon"), ("Connesso", "Connected"),
-                                   ("Abbinato", "Paired"), ("Fidato", "Trusted"),
-                                   ("Batteria", "Battery Percentage"),
-                                   ("Produttore", "Modalias")):
+                fields = [(_t("v.bt.address"), mac)]
+                for k_it, k_bz in ((_t("v.bt.name"), "Name"), ("Alias", "Alias"),
+                                   (_t("v.bt.type"), "Icon"), (_t("v.bt.connected"), "Connected"),
+                                   (_t("v.bt.paired"), "Paired"), (_t("v.bt.trusted"), "Trusted"),
+                                   (_t("v.bt.battery"), "Battery Percentage"),
+                                   (_t("v.bt.vendor"), "Modalias")):
                     if k_bz in d:
                         v = d[k_bz]
                         if k_bz in ("Connected", "Paired", "Trusted"):
-                            v = "si" if v == "yes" else "no"
+                            v = _t("v.yes") if v == "yes" else _t("v.no")
                         fields.append((k_it, v))
                 body_txt = "\n".join("%s: %s" % (k, v) for k, v in fields)
-                info_dialog("Dispositivo: %s" % name, body_txt, parent=win)
+                info_dialog(_t("v.dev_label") % name, body_txt, parent=win)
                 return False
             GLib.idle_add(show)
         threading.Thread(target=worker, daemon=True).start()
@@ -2576,14 +2576,14 @@ def open_bluetooth(_btn=None):
             return
         st["busy"] = True
         spinner.start(); scan_btn.set_sensitive(False)
-        set_status("Scansione in corso (qualche secondo)...")
+        set_status(_t("v.bt_scanning"))
         def worker():
             devs = _bt_parse_devices(bt("scan", "12", timeout=45))
             def done():
                 st["busy"] = False
                 spinner.stop(); scan_btn.set_sensitive(True)
-                set_status("Trovati %d dispositivi." % len(devs) if devs
-                           else "Nessun dispositivo trovato.")
+                set_status(_t("v.bt_found") % len(devs) if devs
+                           else _t("v.bt_none_found"))
                 render(devs)
                 return False
             GLib.idle_add(done)
@@ -2591,13 +2591,13 @@ def open_bluetooth(_btn=None):
     scan_btn.connect("clicked", do_scan)
 
     def do_rename(_w=None):
-        dlg = Gtk.Dialog(title="Rinomina adattatore", transient_for=win,
+        dlg = Gtk.Dialog(title=_t("v.bt_rename_adapter"), transient_for=win,
                          modal=True)
         dlg.add_button(_t("v.cancel"), Gtk.ResponseType.CANCEL)
         dlg.add_button(_t("v.save"), Gtk.ResponseType.OK)
         dlg.set_default_response(Gtk.ResponseType.OK)
         ar = dlg.get_content_area(); ar.set_spacing(8); ar.set_border_width(12)
-        ar.add(Gtk.Label(label="Nome visibile del tuo Bluetooth:"))
+        ar.add(Gtk.Label(label=_t("v.bt_visible_name")))
         ent = Gtk.Entry(); ent.set_text(ada_name.get_text())
         ent.set_activates_default(True); ar.add(ent)
         dlg.show_all()
@@ -2633,12 +2633,12 @@ def open_bluetooth(_btn=None):
             out = bt("receive", "on" if state else "off", timeout=15).strip()
             def done():
                 if not state:
-                    set_status("Ricezione file disattivata.")
+                    set_status(_t("v.bt_recv_off"))
                 elif out.startswith("on"):
                     set_status("Ricezione attiva: invia dal tuo telefono verso "
                                "questo PC.")
                 elif out == "err-noobex":
-                    set_status("Ricezione non disponibile (obexd assente).")
+                    set_status(_t("v.bt_recv_na"))
                 else:
                     set_status("Ricezione NON attivata (%s). Vedi "
                                "/tmp/nxs-bt-obex.log." % out)
@@ -3147,11 +3147,11 @@ def open_users(_btn=None):
     def set_pw(user):
         dlg = Gtk.Dialog(title="Password di %s" % user, transient_for=win, modal=True)
         dlg.add_button(_t("v.cancel"), Gtk.ResponseType.CANCEL)
-        dlg.add_button("Imposta", Gtk.ResponseType.OK)
+        dlg.add_button(_t("v.set"), Gtk.ResponseType.OK)
         dlg.set_default_response(Gtk.ResponseType.OK)
         ar = dlg.get_content_area(); ar.set_spacing(8); ar.set_border_width(12)
         ar.add(Gtk.Label(label="Nuova password per «%s»:" % user))
-        e1 = _eye_entry("Nuova password"); e1.set_activates_default(True); ar.add(e1)
+        e1 = _eye_entry(_t("v.new_password")); e1.set_activates_default(True); ar.add(e1)
         ar.add(Gtk.Label(label="Ripeti la password:"))
         e2 = _eye_entry("Ripeti"); ar.add(e2)
         msg = Gtk.Label(); msg.get_style_context().add_class("nxs-val"); ar.add(msg)
@@ -3739,7 +3739,7 @@ def open_language(_btn=None):
         cur = nxs_i18n.current_lang()
     except Exception:                          # noqa: BLE001
         langs = ["it", "en", "fr", "es", "de"]
-        names = {"it": "Italiano", "en": "English", "fr": "Français",
+        names = {"it": _t("v.italian"), "en": "English", "fr": "Français",
                  "es": "Español", "de": "Deutsch"}
         cur = "it"
 
