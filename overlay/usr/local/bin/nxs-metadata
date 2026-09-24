@@ -14,9 +14,10 @@
 #   nxs-metadata gui  [FILE...]        pulisce i file dati (da file manager) o,
 #                                      senza argomenti, apre un selettore grafico
 set -u
+. /usr/local/lib/nxs_i18n/nxs-i18n.sh 2>/dev/null || nxs_t() { printf '%s\n' "${2:-$1}"; }
 
 _notify() {
-  if command -v notify-send >/dev/null 2>&1; then notify-send "NexusSec — Metadati" "$1"
+  if command -v notify-send >/dev/null 2>&1; then notify-send "$(nxs_t md.title 'NexusSec — Metadati')" "$1"
   elif command -v xmessage >/dev/null 2>&1; then printf '%s\n' "$1" | xmessage -center -file - -timeout 8 2>/dev/null &
   else echo "$1"; fi
 }
@@ -38,24 +39,24 @@ _clean() {
       fail=$((fail+1))
     fi
   done
-  if [ "$fail" = 0 ]; then _notify "Ripuliti $ok file (copie *.cleaned accanto agli originali)."
-  else _notify "Ripuliti $ok file, $fail non elaborati."; fi
+  if [ "$fail" = 0 ]; then _notify "$(printf "$(nxs_t md.cleaned_ok 'Ripuliti %s file (copie *.cleaned accanto agli originali).')" "$ok")"
+  else _notify "$(printf "$(nxs_t md.cleaned_partial 'Ripuliti %s file, %s non elaborati.')" "$ok" "$fail")"; fi
 }
 
 case "${1:-}" in
   show)
     shift; [ -n "${1:-}" ] || { echo "uso: nxs-metadata show FILE" >&2; exit 2; }
-    _have_mat2 || { echo "mat2 non disponibile." >&2; exit 1; }
+    _have_mat2 || { echo "$(nxs_t md.no_mat2 'mat2 non disponibile.')" >&2; exit 1; }
     mat2 --show "$@"
     ;;
   clean)
     shift; [ -n "${1:-}" ] || { echo "uso: nxs-metadata clean FILE [FILE...]" >&2; exit 2; }
-    _have_mat2 || { _notify "mat2 non disponibile."; exit 1; }
+    _have_mat2 || { _notify "$(nxs_t md.no_mat2 'mat2 non disponibile.')"; exit 1; }
     _clean "$@"
     ;;
   gui)
     shift
-    _have_mat2 || { _notify "mat2 non disponibile."; exit 1; }
+    _have_mat2 || { _notify "$(nxs_t md.no_mat2 'mat2 non disponibile.')"; exit 1; }
     if [ "$#" -gt 0 ]; then
       _clean "$@"
     else
@@ -64,7 +65,12 @@ case "${1:-}" in
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
-d = Gtk.FileChooserDialog(title="Scegli i file da ripulire (metadati)",
+try:
+    from nxs_i18n import t as _t
+except Exception:
+    def _t(k, **kw):
+        return "Scegli i file da ripulire (metadati)"
+d = Gtk.FileChooserDialog(title=_t("md.pick"),
                           action=Gtk.FileChooserAction.OPEN)
 d.add_buttons(Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
               Gtk.STOCK_OK, Gtk.ResponseType.OK)

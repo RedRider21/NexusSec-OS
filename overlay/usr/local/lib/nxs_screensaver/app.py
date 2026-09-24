@@ -36,6 +36,12 @@ from gi.repository import Gtk, Gdk, GLib, GdkPixbuf  # noqa: E402
 
 from nxs_screensaver import secret  # noqa: E402
 
+try:
+    from nxs_i18n import t as _t
+except Exception:                       # noqa: BLE001
+    def _t(chiave, **kw):               # ripiego: mostra la chiave
+        return chiave
+
 # Asset del brand (gli stessi dello splash di avvio): l'emblema esagonale con la
 # N a nodi e il wordmark. Riusati qui per mostrare il logo nei salvaschermi.
 SPLASH_DIR = os.environ.get("NXS_SPLASH_DIR", "/usr/local/share/nexussec/splash")
@@ -149,10 +155,10 @@ class Saver(Gtk.Window):
         except Exception:                   # noqa: BLE001
             pass
 
-        title = Gtk.Label(label="Schermo bloccato")
+        title = Gtk.Label(label=_t("ss.locked"))
         title.get_style_context().add_class("nxs-lock-title")
         self.card.pack_start(title, False, False, 0)
-        who = Gtk.Label(label="Inserisci la password per sbloccare")
+        who = Gtk.Label(label=_t("ss.enter_pw"))
         who.get_style_context().add_class("nxs-lock-msg")
         who.override_color(Gtk.StateFlags.NORMAL,
                            Gdk.RGBA(0.7, 0.82, 0.9, 1.0))
@@ -160,7 +166,7 @@ class Saver(Gtk.Window):
 
         self.entry = Gtk.Entry()
         self.entry.set_visibility(False)
-        self.entry.set_placeholder_text("Password")
+        self.entry.set_placeholder_text(_t("ss.password"))
         self.entry.set_icon_from_icon_name(Gtk.EntryIconPosition.SECONDARY,
                                            "view-reveal-symbolic")
         self.entry.connect("icon-press", self._toggle_eye)
@@ -173,9 +179,9 @@ class Saver(Gtk.Window):
 
         btns = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
         btns.set_halign(Gtk.Align.CENTER)
-        b_ok = Gtk.Button(label="Sblocca")
+        b_ok = Gtk.Button(label=_t("ss.unlock"))
         b_ok.connect("clicked", lambda _w: self._try_unlock())
-        b_cancel = Gtk.Button(label="Annulla")
+        b_cancel = Gtk.Button(label=_t("ss.cancel"))
         b_cancel.connect("clicked", lambda _w: self._hide_card())
         btns.pack_start(b_ok, False, False, 0)
         btns.pack_start(b_cancel, False, False, 0)
@@ -206,7 +212,7 @@ class Saver(Gtk.Window):
         if secret.verify(self.entry.get_text()):
             self._quit()
         else:
-            self.msg.set_text("Password errata. Riprova.")
+            self.msg.set_text(_t("ss.wrong"))
             self.entry.set_text("")
             self.entry.grab_focus()
 
@@ -664,8 +670,7 @@ class Saver(Gtk.Window):
         cr.move_to((W - e2.width) / 2.0 - e2.x_bearing, ty + 40)
         cr.show_text(clock)
         cr.set_font_size(15)
-        hint = ("Premi un tasto per sbloccare" if self.locked
-                else "Muovi il mouse o premi un tasto per sbloccare")
+        hint = _t("ss.hint_locked") if self.locked else _t("ss.hint")
         e3 = cr.text_extents(hint)
         cr.set_source_rgba(0.55, 0.72, 0.82, 0.7)
         cr.move_to((W - e3.width) / 2.0 - e3.x_bearing, H - 60)

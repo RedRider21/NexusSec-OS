@@ -18,13 +18,15 @@ set -eu
 MODE="${1:-full}"
 DELAY="${2:-}"
 
+. /usr/local/lib/nxs_i18n/nxs-i18n.sh 2>/dev/null || nxs_t() { printf '%s\n' "${2:-$1}"; }
+
 DIR="$HOME/Immagini/NexusSec"
 mkdir -p "$DIR" 2>/dev/null || DIR="/tmp"
 F="$DIR/nxs-shot-$(date +%Y%m%d-%H%M%S).png"
 
 if ! command -v scrot >/dev/null 2>&1; then
-  command -v lxterminal >/dev/null 2>&1 && exec lxterminal --title="scrot mancante" -e nxs-missing scrot scrot
-  command -v xmessage >/dev/null 2>&1 && xmessage -center -timeout 4 "scrot non installato."
+  command -v lxterminal >/dev/null 2>&1 && exec lxterminal --title="$(nxs_t shot.no_scrot_title 'scrot mancante')" -e nxs-missing scrot scrot
+  command -v xmessage >/dev/null 2>&1 && xmessage -center -timeout 4 "$(nxs_t shot.no_scrot 'scrot non installato.')"
   exit 1
 fi
 
@@ -45,9 +47,9 @@ case "$MODE" in
 esac
 
 if [ -f "$F" ]; then
-  MSG="Schermata salvata:
+  MSG="$(nxs_t shot.saved 'Schermata salvata:')
 $F"
 else
-  MSG="Nessuna schermata acquisita."
+  MSG="$(nxs_t shot.none 'Nessuna schermata acquisita.')"
 fi
 command -v xmessage >/dev/null 2>&1 && xmessage -center -timeout 3 "$MSG" || true
