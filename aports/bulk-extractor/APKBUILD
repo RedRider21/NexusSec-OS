@@ -1,7 +1,7 @@
 # Maintainer: NexusSec <deplano.d@gmail.com>
 pkgname=bulk-extractor
 pkgver=2.0.0
-pkgrel=0
+pkgrel=1
 pkgdesc="Estrazione di feature (email/URL/carte) da immagini disco"
 url="https://github.com/simsong/bulk_extractor"
 arch="all"
@@ -49,6 +49,21 @@ package() {
 	make DESTDIR="$pkgdir" install
 	# abuild rifiuta man pages non compresse: per una live le rimuovo.
 	rm -rf "$pkgdir"/usr/share/man
+	# Licenza dell'autore DENTRO il pacchetto (obbligo per GPL, MIT, BSD: chi
+	# riceve il binario deve ricevere avviso di copyright e testo della licenza).
+	# Si copiano i file di licenza originali, se ci sono, e si scrive SEMPRE un
+	# NOTICE con licenza e sorgente originale (il sorgente completo e' pubblicato
+	# anche accanto al repository NexusSec, vedi THIRD-PARTY.md).
+	for _l in COPYING COPYING.txt COPYING.md LICENSE LICENSE.txt LICENSE.md \
+	          LICENCE COPYRIGHT README.license; do
+		if [ -f "$builddir/$_l" ]; then
+			install -Dm644 "$builddir/$_l" "$pkgdir/usr/share/licenses/$pkgname/$_l"
+		fi
+	done
+	mkdir -p "$pkgdir/usr/share/licenses/$pkgname"
+	printf '%s %s\nLicenza/License: %s\nAutori/Upstream: %s\nSorgente/Source: %s\nPacchetto per NexusSec OS (RedRider21/NexusSec-OS, aports/%s)\n' \
+		"$pkgname" "$pkgver" "$license" "$url" "$source" "$pkgname" \
+		> "$pkgdir/usr/share/licenses/$pkgname/NOTICE"
 }
 sha512sums="
 895828f5dbd0e2a69d227448f3defea979107302287755a26dcbad36e37a5ec394a1ae0fd4f70f4c269b660b7ca75a9b3aae49e4c9e98c4c4e1541ff1ea6383c  bulk-extractor-2.0.0.tar.gz

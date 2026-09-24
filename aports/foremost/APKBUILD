@@ -1,7 +1,7 @@
 # Maintainer: NexusSec <deplano.d@gmail.com>
 pkgname=foremost
 pkgver=1.5.7
-pkgrel=0
+pkgrel=1
 pkgdesc="File carving forense per signature (recupero file cancellati)"
 url="http://foremost.sourceforge.net/"
 arch="all"
@@ -24,6 +24,21 @@ package() {
 	install -Dm644 foremost.conf "$pkgdir"/etc/foremost.conf
 	# Niente man page: abuild rifiuta man pages non compresse (e gzip qui e
 	# superfluo per una live). Il tool resta pienamente funzionante.
+	# Licenza dell'autore DENTRO il pacchetto (obbligo per GPL, MIT, BSD: chi
+	# riceve il binario deve ricevere avviso di copyright e testo della licenza).
+	# Si copiano i file di licenza originali, se ci sono, e si scrive SEMPRE un
+	# NOTICE con licenza e sorgente originale (il sorgente completo e' pubblicato
+	# anche accanto al repository NexusSec, vedi THIRD-PARTY.md).
+	for _l in COPYING COPYING.txt COPYING.md LICENSE LICENSE.txt LICENSE.md \
+	          LICENCE COPYRIGHT README.license; do
+		if [ -f "$builddir/$_l" ]; then
+			install -Dm644 "$builddir/$_l" "$pkgdir/usr/share/licenses/$pkgname/$_l"
+		fi
+	done
+	mkdir -p "$pkgdir/usr/share/licenses/$pkgname"
+	printf '%s %s\nLicenza/License: %s\nAutori/Upstream: %s\nSorgente/Source: %s\nPacchetto per NexusSec OS (RedRider21/NexusSec-OS, aports/%s)\n' \
+		"$pkgname" "$pkgver" "$license" "$url" "$source" "$pkgname" \
+		> "$pkgdir/usr/share/licenses/$pkgname/NOTICE"
 }
 sha512sums="
 4de46df37fa1bd3d6043c5e7f3dfa07aeca419aa2c6f6bd900777e22c2b8b6e43c78fde4b81ae33c84f8bea0a4dc7311063783298fe9b246a17533e6e8248242  foremost-1.5.7.tar.gz
