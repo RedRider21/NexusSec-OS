@@ -51,6 +51,8 @@
   "br.zoom_in": "Zoom +",
   "br.zoom_out": "Zoom -",
   "br.zoom_reset": "Zoom normale",
+  "bt.unknown_dev": "Dispositivo senza nome",
+  "bt.unnamed": "senza nome",
   "cat.anonymity": "Anonimato",
   "cat.bruteforce": "Brute force",
   "cat.crypto": "Crypto/Stego",
