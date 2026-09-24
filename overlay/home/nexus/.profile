@@ -32,6 +32,9 @@ case "$_nxslang" in
   de) export LANGUAGE=de LANG=de_DE.UTF-8 ;;
   *)  export LANGUAGE=it LANG=it_IT.UTF-8 ;;
 esac
+# Menu del tasto destro di Openbox nella stessa lingua (solo se e' ancora
+# quello di serie: le modifiche dell'utente non si toccano).
+command -v nxs-lang >/dev/null 2>&1 && nxs-lang sync-menu >/dev/null 2>&1 || true
 
 # Avvia la sessione grafica sulla prima console. Se X FALLISCE, NON va in loop:
 # mostra l'errore di Xorg + stato driver/DRM e lascia una shell (diagnostica).

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Menu root di Openbox: compare col TASTO DESTRO sul DESKTOP (pcmanfm ha
+     show_wm_menu=1, quindi inoltra il clic al window manager). Raccoglie le
+     azioni piu' frequenti cosi' non serve aprire il menu dal pannello. -->
+<openbox_menu xmlns="http://openbox.org/3.4/menu">
+
+  <menu id="nxs-tools" label="Outils">
+    <item label="Éditeur de texte"><action name="Execute"><command>pluma</command></action></item>
+    <item label="Enregistreur vocal"><action name="Execute"><command>nxs-recorder</command></action></item>
+    <item label="Nettoyer les métadonnées (MAT2)"><action name="Execute"><command>nxs-metadata gui</command></action></item>
+    <item label="Presse-papiers (historique)"><action name="Execute"><command>nxs-clipboard menu</command></action></item>
+    <item label="Filtre lumière bleue (on/off)"><action name="Execute"><command>nxs-nightlight toggle</command></action></item>
+    <item label="Raccourcis clavier"><action name="Execute"><command>nxs-control-center hotkey</command></action></item>
+    <item label="Disques"><action name="Execute"><command>nxs-disks</command></action></item>
+    <item label="Affaires forensiques"><action name="Execute"><command>nxs-case</command></action></item>
+    <item label="Procédures guidées (Wizard)"><action name="Execute"><command>nxs-wizard</command></action></item>
+    <item label="Centre de contrôle"><action name="Execute"><command>nxs-control-center</command></action></item>
+  </menu>
+
+  <menu id="nxs-security" label="Sécurité">
+    <item label="Verrouiller l'écran"><action name="Execute"><command>nxs-screensaver</command></action></item>
+    <item label="Capture d'écran (entière)"><action name="Execute"><command>nxs-screenshot full 1</command></action></item>
+    <item label="Capture d'écran (zone)"><action name="Execute"><command>nxs-screenshot area 0</command></action></item>
+    <separator/>
+    <item label="Anonyme (tout via Tor) : ACTIVER"><action name="Execute"><command>nxs-anon on</command></action></item>
+    <item label="Anonyme (tout via Tor) : DÉSACTIVER"><action name="Execute"><command>nxs-anon off</command></action></item>
+    <separator/>
+    <item label="Pare-feu : ACTIVER"><action name="Execute"><command>nxs-firewall on</command></action></item>
+    <item label="Pare-feu : DÉSACTIVER"><action name="Execute"><command>nxs-firewall off</command></action></item>
+    <separator/>
+    <item label="MAC aléatoire maintenant"><action name="Execute"><command>nxs-macspoof now</command></action></item>
+    <separator/>
+    <item label="PANIQUE : effacer et éteindre"><action name="Execute"><command>nxs-panic wipe</command></action></item>
+  </menu>
+
+  <menu id="root-menu" label="NexusSec">
+    <item label="Profil opérationnel"><action name="Execute"><command>nxs-profile</command></action></item>
+    <item label="Changer le fond d'écran"><action name="Execute"><command>nxs-control-center sfondo</command></action></item>
+    <separator/>
+    <item label="Terminal"><action name="Execute"><command>nxs-terminal</command></action></item>
+    <item label="NexusSec Browser"><action name="Execute"><command>nxs-browser</command></action></item>
+    <item label="Gestionnaire de fichiers"><action name="Execute"><command>pcmanfm</command></action></item>
+    <item label="HORUS (OSINT mondial)"><action name="Execute"><command>nxs-horus</command></action></item>
+    <separator/>
+    <menu id="nxs-tools"/>
+    <menu id="nxs-security"/>
+    <separator/>
+    <item label="Redémarrer Openbox"><action name="Reconfigure"/></item>
+    <item label="Déconnexion / Éteindre…"><action name="Execute"><command>nxs-session</command></action></item>
+  </menu>
+
+</openbox_menu>

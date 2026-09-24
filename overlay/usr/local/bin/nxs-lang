@@ -8,8 +8,29 @@
 #   nxs-lang get              stampa la lingua attiva
 #   nxs-lang list             elenca i codici disponibili
 #   nxs-lang set <codice>     imposta la lingua e riavvia il pannello
+#   nxs-lang sync-menu        menu del tasto destro nella lingua attiva
 set -eu
 export PYTHONPATH="${PYTHONPATH:-/usr/local/lib}"
+
+# Menu del tasto destro (Openbox) nella lingua $1: si sostituisce SOLO se il
+# menu dell'utente e' ancora uno di quelli di serie (qualunque lingua). Se e'
+# stato modificato - a mano o con l'editor del menu del Centro di Controllo -
+# non si tocca. File di serie generati da build/make-openbox-menus.py.
+sync_menu() {
+  skel=/usr/local/share/nexussec/openbox-menu
+  menu="$HOME/.config/openbox/menu.xml"
+  [ -f "$skel/menu.$1.xml" ] || return 0
+  if [ -f "$menu" ]; then
+    stock=0
+    for f in "$skel"/menu.*.xml; do cmp -s "$menu" "$f" && { stock=1; break; }; done
+    [ "$stock" = 1 ] || return 0
+    cmp -s "$menu" "$skel/menu.$1.xml" && return 0      # gia' giusto
+  fi
+  mkdir -p "$(dirname "$menu")"
+  cp "$skel/menu.$1.xml" "$menu" 2>/dev/null || return 0
+  # Openbox rilegge il menu solo su reconfigure (se non gira, nessun effetto)
+  [ -n "${DISPLAY:-}" ] && command -v openbox >/dev/null 2>&1 && openbox --reconfigure 2>/dev/null || true
+}
 
 case "${1:-get}" in
   get)
@@ -24,6 +45,7 @@ for c in nxs_i18n.LANGS: print(c, nxs_i18n.LANG_NAMES[c])'
     python3 -c 'import sys, nxs_i18n; sys.exit(0 if nxs_i18n.set_lang(sys.argv[1]) else 1)' "$2" \
       || { echo "lingua non valida: $2 (usa: nxs-lang list)" >&2; exit 1; }
     echo "lingua impostata: $2"
+    sync_menu "$2"
     # Variabili di lingua per i processi che riavviamo (pcmanfm legge i
     # Name[xx]/Comment[xx] dei .desktop tramite LANGUAGE).
     case "$2" in
@@ -54,7 +76,11 @@ for c in nxs_i18n.LANGS: print(c, nxs_i18n.LANG_NAMES[c])'
       setsid pcmanfm --desktop --profile=NexusSec >/dev/null 2>&1 &
     fi
     ;;
+  sync-menu)
+    # allinea il menu del tasto destro alla lingua attiva (usato all'avvio)
+    sync_menu "$(python3 -c 'import nxs_i18n; print(nxs_i18n.current_lang())')"
+    ;;
   *)
-    echo "uso: nxs-lang {get|list|set <codice>}" >&2; exit 2
+    echo "uso: nxs-lang {get|list|set <codice>|sync-menu}" >&2; exit 2
     ;;
 esac
