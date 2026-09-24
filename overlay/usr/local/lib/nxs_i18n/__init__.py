@@ -89,3 +89,29 @@ def t(key: str, **kw) -> str:
         except (KeyError, IndexError, ValueError):
             pass
     return s
+
+# --- nomi dei tasti (portato da Vesper) -----------------------------------
+# Le scorciatoie nei sorgenti si scrivono all'italiana ("Ctrl+Maiusc+S") e si
+# traducono qui, al momento di mostrarle (es. in tedesco "Strg+Umschalt+S").
+import re as _re
+
+_TASTI = {
+    "ctrl": "ctrl", "maiusc": "shift", "alt": "alt", "super": "super",
+    "invio": "enter", "esc": "esc", "spazio": "space", "tab": "tab",
+    "backspace": "backspace", "canc": "delete", "ins": "insert",
+    "su": "up", "giu": "down", "giù": "down",
+    "sinistra": "left", "destra": "right",
+    "pagsu": "pageup", "paggiu": "pagedown", "paggiù": "pagedown",
+    "inizio": "home", "fine": "end",
+}
+
+_RX_TASTI = _re.compile(
+    r"(?<![^\W\d_])(?:%s)(?![^\W\d_])" % "|".join(
+        sorted((_re.escape(k) for k in _TASTI), key=len, reverse=True)),
+    _re.IGNORECASE)
+
+
+def taccel(etichetta: str) -> str:
+    """Traduce i nomi dei tasti dentro una scorciatoia ("Ctrl+Maiusc+S")."""
+    return _RX_TASTI.sub(
+        lambda m: t("k." + _TASTI[m.group(0).lower()]), etichetta or "")

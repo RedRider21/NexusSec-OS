@@ -29,6 +29,7 @@ TR = {
     "Strumenti": ("Tools", "Outils", "Herramientas", "Werkzeuge"),
     "Editor di testo": ("Text editor", "Éditeur de texte", "Editor de texto", "Texteditor"),
     "Registratore vocale": ("Voice recorder", "Enregistreur vocal", "Grabadora de voz", "Sprachaufnahme"),
+    "Immagini": ("Images", "Images", "Imágenes", "Bilder"),
     "Pulisci metadati (MAT2)": ("Clean metadata (MAT2)", "Nettoyer les métadonnées (MAT2)",
                                 "Limpiar metadatos (MAT2)", "Metadaten bereinigen (MAT2)"),
     "Appunti (cronologia)": ("Clipboard (history)", "Presse-papiers (historique)",

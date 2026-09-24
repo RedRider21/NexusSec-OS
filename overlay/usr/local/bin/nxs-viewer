@@ -1,0 +1,8 @@
+#!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
+# NexusSec - Visualizzatore di immagini (GTK3 + GdkPixbuf, portato da Vesper).
+# Nessuna dipendenza extra: usa solo cio' che il desktop ha gia'.
+#
+#   nxs-viewer [FILE o CARTELLA]
+exec env PYTHONPATH=/usr/local/lib python3 -m nxs_viewer "$@" >>/tmp/nxs-viewer.log 2>&1

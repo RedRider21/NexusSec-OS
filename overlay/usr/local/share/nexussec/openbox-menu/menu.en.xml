@@ -7,6 +7,7 @@
   <menu id="nxs-tools" label="Tools">
     <item label="Text editor"><action name="Execute"><command>pluma</command></action></item>
     <item label="Voice recorder"><action name="Execute"><command>nxs-recorder</command></action></item>
+    <item label="Images"><action name="Execute"><command>nxs-viewer</command></action></item>
     <item label="Clean metadata (MAT2)"><action name="Execute"><command>nxs-metadata gui</command></action></item>
     <item label="Clipboard (history)"><action name="Execute"><command>nxs-clipboard menu</command></action></item>
     <item label="Blue light filter (on/off)"><action name="Execute"><command>nxs-nightlight toggle</command></action></item>

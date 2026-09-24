@@ -7,6 +7,7 @@
   <menu id="nxs-tools" label="Herramientas">
     <item label="Editor de texto"><action name="Execute"><command>pluma</command></action></item>
     <item label="Grabadora de voz"><action name="Execute"><command>nxs-recorder</command></action></item>
+    <item label="Imágenes"><action name="Execute"><command>nxs-viewer</command></action></item>
     <item label="Limpiar metadatos (MAT2)"><action name="Execute"><command>nxs-metadata gui</command></action></item>
     <item label="Portapapeles (historial)"><action name="Execute"><command>nxs-clipboard menu</command></action></item>
     <item label="Filtro de luz azul (on/off)"><action name="Execute"><command>nxs-nightlight toggle</command></action></item>

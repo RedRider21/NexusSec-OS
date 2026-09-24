@@ -7,6 +7,7 @@
   <menu id="nxs-tools" label="Strumenti">
     <item label="Editor di testo"><action name="Execute"><command>pluma</command></action></item>
     <item label="Registratore vocale"><action name="Execute"><command>nxs-recorder</command></action></item>
+    <item label="Immagini"><action name="Execute"><command>nxs-viewer</command></action></item>
     <item label="Pulisci metadati (MAT2)"><action name="Execute"><command>nxs-metadata gui</command></action></item>
     <item label="Appunti (cronologia)"><action name="Execute"><command>nxs-clipboard menu</command></action></item>
     <item label="Filtro luce blu (on/off)"><action name="Execute"><command>nxs-nightlight toggle</command></action></item>
