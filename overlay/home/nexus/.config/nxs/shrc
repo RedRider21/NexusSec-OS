@@ -23,30 +23,46 @@ fi
 _nxs_u="${USER:-$(id -un 2>/dev/null || echo user)}"
 _nxs_h="$(hostname 2>/dev/null || echo nexussec)"
 
+# Colori: le CORNICI/l'utente seguono l'ACCENTO del profilo attivo (lo stesso di
+# pannello, menu e logo del riepilogo), letto da ~/.config/nxs/accent.css; il
+# resto usa colori NEUTRI della palette NexusSec, cosi' non si scontra con
+# nessun accento (ciano, rosso, ambra, verde, viola). Il terminale ha sfondo
+# nero in ogni tema. Sulla console di testo (TERM=linux, niente truecolor) si
+# ripiega sui colori base.
+_nxs_e=$(printf '\033')
+if [ "$TERM" = "linux" ]; then
+  _nxs_ac="1;36"; _nxs_tx="1;37"; _nxs_wh="1;37"; _nxs_al="1;31"
+else
+  _nxs_hex=$(grep -oE '#[0-9a-fA-F]{6}' "$HOME/.config/nxs/accent.css" 2>/dev/null | head -1)
+  _nxs_hex=${_nxs_hex:-#00e5ff}; _nxs_hex=${_nxs_hex#\#}
+  _nxs_ac="1;38;2;$(printf '%d;%d;%d' 0x$(printf %.2s "$_nxs_hex") \
+          0x$(printf %s "$_nxs_hex" | cut -c3-4) 0x$(printf %s "$_nxs_hex" | cut -c5-6))"
+  _nxs_tx="1;38;2;200;245;255"      # testo chiaro NexusSec
+  _nxs_wh="1;38;2;255;255;255"      # bianco
+  _nxs_al="1;38;2;255;90;138"       # allarme (root)
+fi
+_nxs_id="$_nxs_tx"
+[ "$(id -u 2>/dev/null)" = "0" ] && _nxs_id="$_nxs_al"
+
 case "$_nxs_pstyle" in
   parrot)
-    # Stile Parrot/Kali a due righe. Box-drawing UTF-8 (terminale UTF-8).
-    # Colori ad ALTO CONTRASTO (256 colori): il blu standard (34) delle cornici
-    # era quasi invisibile sui fondi scuri. Cornici azzurro-ciano, utente@host
-    # verde (ROSSO se root, come Kali), percorso bianco.
-    _nxs_c='\[\033[1;38;5;45m\]'                 # cornici
-    _nxs_id='\[\033[1;38;5;84m\]'                # utente@host
-    [ "$(id -u 2>/dev/null)" = "0" ] && _nxs_id='\[\033[1;38;5;203m\]'
-    _nxs_p='\[\033[1;38;5;255m\]'                # percorso
-    PS1="${_nxs_c}┌──[${_nxs_id}${_nxs_u}@${_nxs_h}${_nxs_c}]─[${_nxs_p}\w${_nxs_c}]
-${_nxs_c}└──╼ \$\[\033[0m\] "
-    unset _nxs_c _nxs_id _nxs_p
+    # Stile Parrot/Kali a due righe (box-drawing UTF-8): cornici nel colore
+    # del profilo, utente@host chiaro (rosa-allarme se root), percorso bianco.
+    _nxs_c="\[${_nxs_e}[${_nxs_ac}m\]"
+    PS1="${_nxs_c}┌──[\[${_nxs_e}[${_nxs_id}m\]${_nxs_u}@${_nxs_h}${_nxs_c}]─[\[${_nxs_e}[${_nxs_wh}m\]\w${_nxs_c}]
+${_nxs_c}└──╼ \$\[${_nxs_e}[0m\] "
+    unset _nxs_c
     ;;
   plain)
     PS1="${_nxs_u}@${_nxs_h}:\w\\$ "
     ;;
   *)
     # default: HUD NexusSec a una riga (accent ciano).
-    # (host in azzurro chiaro: il blu standard era poco leggibile su fondo scuro)
-    PS1="\[\033[1;96m\]${_nxs_u}\[\033[0m\]@\[\033[1;38;5;75m\]${_nxs_h}\[\033[0m\]:\[\033[1;95m\]\w\[\033[0m\]\\$ "
+    # utente nel colore del profilo, host chiaro, percorso bianco
+    PS1="\[${_nxs_e}[${_nxs_ac}m\]${_nxs_u}\[${_nxs_e}[0m\]@\[${_nxs_e}[${_nxs_id}m\]${_nxs_h}\[${_nxs_e}[0m\]:\[${_nxs_e}[${_nxs_wh}m\]\w\[${_nxs_e}[0m\]\\$ "
     ;;
 esac
-unset _nxs_pstyle _nxs_u _nxs_h
+unset _nxs_pstyle _nxs_u _nxs_h _nxs_e _nxs_hex _nxs_ac _nxs_tx _nxs_wh _nxs_al _nxs_id
 export PS1
 
 # Riepilogo di sistema col logo NexusSec all'apertura del terminale (stile
