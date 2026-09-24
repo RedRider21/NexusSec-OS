@@ -46,6 +46,41 @@ from pathlib import Path
 
 from . import model
 
+try:
+    from nxs_i18n import t as _t
+except Exception:                       # noqa: BLE001
+    def _t(chiave, **kw):               # ripiego: mostra la chiave
+        return chiave
+
+# Tool che NexusSec compila dai sorgenti originali e pubblica nel proprio
+# repository apk (non esistono nei repo Alpine). Tutti gli altri arrivano dalle
+# fonti dei loro autori.
+_COMPILATI_DA_NEXUSSEC = {"bulk-extractor", "chkrootkit", "dirb", "dmitry",
+                          "foremost", "medusa", "rkhunter", "scalpel"}
+
+
+def _fonte(tool: str) -> str:
+    """Da dove arriva il tool, detto in chiaro (per l'avviso al primo download)."""
+    td = model.tool_data(tool)
+    m = _method(tool)
+    if m == "apk":
+        if (td.get("apk") or tool) in _COMPILATI_DA_NEXUSSEC or tool in _COMPILATI_DA_NEXUSSEC:
+            return _t("tool.src.nexussec")
+        return _t("tool.src.alpine") % (td.get("apk") or tool)
+    if m == "container":
+        return _t("tool.src.image") % (_image(tool) or "?")
+    if m == "kali":
+        return _t("tool.src.kali") % td.get("apt", tool)
+    if m == "pip":
+        return _t("tool.src.pypi") % td.get("pip", tool)
+    if m == "git":
+        return _t("tool.src.git") % (td.get("git") or "?")
+    if m in ("go", "cargo"):
+        if td.get("gh_repo"):
+            return _t("tool.src.release") % td["gh_repo"]
+        return _t("tool.src.build") % (td.get(m) or tool)
+    return m
+
 LOOT = Path(os.path.expanduser("~")) / "NexusSec-loot"   # output condiviso coi container
 GIT_BASE = Path(os.path.expanduser("~")) / ".local" / "share" / "nexussec" / "git"
 LOCAL_BIN = Path(os.path.expanduser("~")) / ".local" / "bin"
@@ -784,6 +819,9 @@ def install(tool: str, log=print) -> bool:
     via notifica desktop. La logica vera e' in _install_impl."""
     already = is_installed(tool)
     if not already:
+        # Trasparenza: da dove arriva e a quali condizioni (una riga, solo al
+        # primo download). Il tool non e' parte di NexusSec: e' dei suoi autori.
+        log(_t("tool.src.note") % (tool, _fonte(tool)))
         _notify(f"Installo {tool}...", f"metodo: {_method(tool)}", "low")
     ok = _install_impl(tool, log)
     if not already:
