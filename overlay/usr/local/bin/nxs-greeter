@@ -3,6 +3,12 @@
 # Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
 # nxs-greeter - schermata di login grafica di NexusSec (Python/GTK3).
 #
+# Aspetto sul modello di slick-greeter (Linux Mint): barra sottile in alto
+# (host a sinistra; lingua tastiera, rete, batteria, data/ora e spegnimento a
+# destra), sfondo del PROFILO ATTIVO nitido e appena scurito, riquadro compatto
+# a sinistra con il nome dell'utente e il campo password con la freccia.
+# Colori: accent del profilo (segue il cambio profilo come il resto del desktop).
+#
 # Autentica contro /etc/shadow tramite l'helper privilegiato:
 #   - nxs-chkpwd (setuid root) se presente -> funziona anche su sistema
 #     hardenizzato (doas con password);
@@ -13,10 +19,14 @@
 #   nxs-greeter               a schermo intero (uso dal boot, dietro flag)
 #
 # Uscita: 0 = autenticazione riuscita · 1 = uscita senza login.
+import glob
 import math
 import os
+import pwd
+import socket
 import subprocess
 import sys
+import time
 
 import gi
 gi.require_version("Gtk", "3.0")
@@ -42,22 +52,41 @@ CHKPWD = "/usr/bin/nxs-chkpwd"             # helper setuid (pacchetto apk)
 AUTHCHECK = "/usr/local/bin/nxs-authcheck"  # fallback via doas
 
 ACCENT = "#00e5ff"
+OSCURA = 0.22          # velo scuro sopra lo sfondo (leggibilita' della barra)
 
-_CSS = b"""
-window { background-color: #050a14; }
-.nxs-gr-card { background-color: rgba(10,26,38,0.94);
-  border: 1px solid #1a3a52; border-radius: 16px; }
-.nxs-gr-title { color: #eaffff; }
-.nxs-gr-sub { color: #5a8a9a; }
-.nxs-gr-err { color: #ff5a8a; }
-.nxs-gr entry { min-height: 34px; background-color: #08131d; color: #c8f5ff;
-  border: 1px solid #1a3a52; border-radius: 9px; padding: 4px 10px; }
-.nxs-gr entry:focus { border-color: #00e5ff; }
-.nxs-gr-login { background-color: #00334a; color: #00e5ff;
-  border: 1px solid #17475f; border-radius: 10px; padding: 8px 0; }
-.nxs-gr-login:hover { background-color: #0a4a63; }
-.nxs-gr-pw { background: none; border: none; color: #5a8a9a; padding: 6px 10px; }
-.nxs-gr-pw:hover { color: #00e5ff; }
+# CSS con segnaposto @ACC@ (accent del profilo). Tutto sotto .nxs-gr per non
+# toccare altro; priorita' USER per prevalere sul CSS comune di nxs_cc.
+_CSS = """
+.nxs-gr, .nxs-gr * { font-family: "Chakra Petch", "DejaVu Sans", sans-serif; }
+.nxs-gr-bar { background-color: rgba(0,0,0,0.55); padding: 3px 12px; }
+.nxs-gr-bar label { color: #e8f6fb; font-size: 10.5pt; }
+.nxs-gr-bar image { color: #e8f6fb; }
+.nxs-gr-box { background-color: rgba(5,12,20,0.66); border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.08); }
+.nxs-gr-name { color: #ffffff; font-size: 15pt; font-weight: 600; }
+.nxs-gr-msg { color: #ff5a8a; font-size: 10pt; }
+.nxs-gr-hint { color: #ffb000; font-size: 10pt; }
+.nxs-gr entry { min-height: 38px; background-image: none;
+  background-color: rgba(8,16,26,0.85); color: #ffffff;
+  border: 1px solid rgba(255,255,255,0.18); border-radius: 9px;
+  padding: 0 12px; font-size: 12pt; box-shadow: none; caret-color: @ACC@; }
+.nxs-gr entry:focus { border-color: @ACC@; }
+.nxs-gr entry image { color: #7fa3b2; }
+.nxs-gr entry selection { background-color: @ACC@; color: #041018; }
+.nxs-gr button.nxs-gr-go { min-width: 38px; min-height: 38px; padding: 0;
+  border-radius: 9px; border: none; box-shadow: none; background-image: none;
+  background-color: @ACC@; color: #041018; }
+.nxs-gr button.nxs-gr-go:hover { background-color: shade(@ACC@, 1.12); }
+.nxs-gr button.nxs-gr-go image { color: #041018; }
+.nxs-gr button.nxs-gr-flat { background: none; border: none; box-shadow: none;
+  padding: 4px 6px; color: #cfe8f1; border-radius: 6px; }
+.nxs-gr button.nxs-gr-flat:hover { background-color: rgba(255,255,255,0.10); }
+.nxs-gr button.nxs-gr-flat image, .nxs-gr button.nxs-gr-flat label { color: #cfe8f1; }
+.nxs-gr-pop { background-color: #0b1620; border: 1px solid #1a3a52; }
+.nxs-gr-pop button { background: none; border: none; box-shadow: none;
+  color: #e8f6fb; padding: 7px 14px; border-radius: 6px; }
+.nxs-gr-pop button label { color: #e8f6fb; }
+.nxs-gr-pop button:hover { background-color: rgba(255,255,255,0.08); }
 """
 
 
@@ -81,13 +110,24 @@ def _accent():
     return ACCENT
 
 
-def _install_css():
+def _sfondo():
+    """Percorso dello sfondo del profilo attivo (o di quello scelto a mano)."""
+    try:
+        from nxs_profiles import model
+        p = str(model.wallpaper_path())
+        if os.path.isfile(p):
+            return p
+    except Exception:
+        pass
+    return None
+
+
+def _install_css(acc):
     try:
         prov = Gtk.CssProvider()
-        prov.load_from_data(_CSS)
+        prov.load_from_data(_CSS.replace("@ACC@", acc).encode())
         Gtk.StyleContext.add_provider_for_screen(
-            Gdk.Screen.get_default(), prov,
-            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+            Gdk.Screen.get_default(), prov, Gtk.STYLE_PROVIDER_PRIORITY_USER)
     except Exception:
         pass
 
@@ -113,29 +153,155 @@ def authenticate(user, password):
     return False
 
 
-def _draw_logo(_area, cr):
-    # Esagono cyan con "N" al centro (identita' NexusSec).
-    w = _area.get_allocated_width()
-    h = _area.get_allocated_height()
-    cx, cy = w / 2.0, h / 2.0
-    r = min(w, h) / 2.0 - 6
-    cr.set_line_width(5)
-    cr.set_source_rgb(0.0, 0.898, 1.0)          # #00e5ff
-    for i in range(6):
-        ang = math.pi / 180 * (60 * i - 90)
-        x = cx + r * math.cos(ang)
-        y = cy + r * math.sin(ang)
-        cr.line_to(x, y) if i else cr.move_to(x, y)
-    cr.close_path()
-    cr.stroke()
-    cr.select_font_face("sans-serif", cairo.FONT_SLANT_NORMAL,
-                        cairo.FONT_WEIGHT_BOLD)
-    cr.set_font_size(r * 1.05)
-    ext = cr.text_extents("N")
-    cr.move_to(cx - ext.width / 2 - ext.x_bearing,
-               cy - ext.height / 2 - ext.y_bearing)
-    cr.show_text("N")
-    return False
+# --- dati di sistema per la barra e il riquadro ------------------------------
+def utenti():
+    """Utenti "umani" (uid 1000..65533 con una shell vera): (login, nome)."""
+    out = []
+    try:
+        for p in pwd.getpwall():
+            if 1000 <= p.pw_uid < 65534 and not p.pw_shell.endswith(
+                    ("nologin", "false")):
+                nome = (p.pw_gecos or "").split(",")[0].strip() or p.pw_name
+                out.append((p.pw_name, nome))
+    except Exception:
+        pass
+    if not any(u == AUTH_USER_DEFAULT for u, _ in out):
+        out.insert(0, (AUTH_USER_DEFAULT, "NexusSec"))
+    # l'utente predefinito per primo
+    out.sort(key=lambda x: x[0] != AUTH_USER_DEFAULT)
+    return out
+
+
+def layout_tastiera():
+    try:
+        r = subprocess.run(["setxkbmap", "-query"], capture_output=True,
+                           text=True, timeout=2)
+        for riga in r.stdout.splitlines():
+            if riga.startswith("layout:"):
+                return riga.split(":", 1)[1].strip().split(",")[0].upper()
+    except Exception:
+        pass
+    return ""
+
+
+def icona_rete():
+    wifi = cavo = False
+    for d in glob.glob("/sys/class/net/*"):
+        n = os.path.basename(d)
+        if n == "lo":
+            continue
+        try:
+            with open(os.path.join(d, "operstate")) as f:
+                su = f.read().strip() == "up"
+        except OSError:
+            continue
+        if su:
+            if os.path.isdir(os.path.join(d, "wireless")):
+                wifi = True
+            else:
+                cavo = True
+    if cavo:
+        return "network-wired-symbolic"
+    if wifi:
+        return "network-wireless-signal-good-symbolic"
+    return "network-offline-symbolic"
+
+
+def stato_batteria():
+    """(icona, percentuale) o None se non c'e' batteria (desktop/VM)."""
+    for d in glob.glob("/sys/class/power_supply/BAT*"):
+        try:
+            with open(os.path.join(d, "capacity")) as f:
+                cap = int(f.read().strip())
+            with open(os.path.join(d, "status")) as f:
+                st = f.read().strip()
+        except (OSError, ValueError):
+            continue
+        liv = ("full" if cap >= 90 else "good" if cap >= 50
+               else "low" if cap >= 20 else "caution")
+        car = st in ("Charging", "Full")
+        if car and liv == "full":
+            nome = "battery-full-charged-symbolic"
+        else:
+            nome = "battery-%s%s-symbolic" % (liv, "-charging" if car else "")
+        return nome, cap
+    return None
+
+
+def _lista(chiave, riserva):
+    v = _t(chiave).split(",")
+    return v if len(v) == len(riserva) else riserva
+
+
+def data_ora():
+    t = time.localtime()
+    giorni = _lista("gr.days", ["lun", "mar", "mer", "gio", "ven", "sab", "dom"])
+    mesi = _lista("gr.months", ["gen", "feb", "mar", "apr", "mag", "giu", "lug",
+                                "ago", "set", "ott", "nov", "dic"])
+    return "%s %d %s   %s" % (giorni[t.tm_wday], t.tm_mday, mesi[t.tm_mon - 1],
+                              time.strftime("%H:%M", t))
+
+
+# --- piccoli elementi grafici ------------------------------------------------
+def _icona(nome, px=16):
+    i = Gtk.Image.new_from_icon_name(nome, Gtk.IconSize.MENU)
+    i.set_pixel_size(px)
+    return i
+
+
+def _logo(px, rgb, spessore=2.0):
+    """Esagono con la N (identita' NexusSec) nel colore del profilo."""
+    a = Gtk.DrawingArea()
+    a.set_size_request(px, px)
+
+    def draw(w, cr):
+        s = w.get_allocated_width()
+        cx = cy = s / 2.0
+        r = s / 2.0 - spessore
+        cr.set_line_width(spessore)
+        cr.set_source_rgb(*rgb)
+        for i in range(6):
+            ang = math.radians(60 * i - 90)
+            (cr.line_to if i else cr.move_to)(cx + r * math.cos(ang),
+                                              cy + r * math.sin(ang))
+        cr.close_path()
+        cr.stroke()
+        cr.select_font_face("Chakra Petch", cairo.FONT_SLANT_NORMAL,
+                            cairo.FONT_WEIGHT_BOLD)
+        cr.set_font_size(r * 1.0)
+        e = cr.text_extents("N")
+        cr.move_to(cx - e.width / 2 - e.x_bearing, cy - e.height / 2 - e.y_bearing)
+        cr.show_text("N")
+        return False
+    a.connect("draw", draw)
+    return a
+
+
+def _flat(figlio, tip=None):
+    b = Gtk.Button()
+    b.add(figlio)
+    b.set_relief(Gtk.ReliefStyle.NONE)
+    b.set_can_focus(False)
+    b.get_style_context().add_class("nxs-gr-flat")
+    if tip:
+        b.set_tooltip_text(tip)
+    return b
+
+
+def _popover(rel, voci):
+    """Menu a comparsa sotto 'rel': voci = [(etichetta, callback)]."""
+    pop = Gtk.Popover.new(rel)
+    pop.get_style_context().add_class("nxs-gr-pop")
+    box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
+    box.set_border_width(6)
+    for testo, cb in voci:
+        b = Gtk.Button(label=testo)
+        b.get_child().set_xalign(0)
+        b.connect("clicked", lambda _w, c=cb: (pop.popdown(), c()))
+        box.pack_start(b, False, False, 0)
+    box.show_all()
+    pop.add(box)
+    return pop
 
 
 class Greeter(Gtk.Window):
@@ -144,57 +310,131 @@ class Greeter(Gtk.Window):
         self.set_title("NexusSec OS")
         self.result = 1
         self.connect("destroy", Gtk.main_quit)
+        self.connect("key-press-event", self._on_key)
         if WINDOWED:
-            self.set_default_size(460, 480)
+            self.set_default_size(1280, 720)
             self.set_position(Gtk.WindowPosition.CENTER)
-            self.connect("key-press-event", self._on_key)
         else:
             self.fullscreen()
             self.set_keep_above(True)
 
-        # Sfondo (wallpaper) disegnato con Cairo dietro la card, via Overlay:
-        # affidabile a schermo intero (il background-image CSS su window in GTK3
-        # spesso non dipinge).
-        self._acc = _hex_rgb(_accent())          # colore del tema corrente
-        overlay = Gtk.Overlay()
-        self.add(overlay)
-        bgarea = Gtk.DrawingArea()
-        bgarea.connect("draw", self._draw_bg)
-        overlay.add(bgarea)                       # sfondo honeycomb a tutto schermo
-        # card di login CENTRATA (scelta utente), sopra lo sfondo pulito honeycomb.
-        center = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        center.set_halign(Gtk.Align.CENTER)
-        center.set_valign(Gtk.Align.CENTER)
-        overlay.add_overlay(center)               # card sopra lo sfondo
+        acc = _accent()
+        self._acc = _hex_rgb(acc)
+        _install_css(acc)
+        self._utenti = utenti()
+        self._utente = self._utenti[0][0]
+        self._img = None                       # sfondo originale
+        self._cache = None                     # sfondo gia' scalato (w, h, surf)
+        p = _sfondo()
+        if p:
+            try:
+                self._img = cairo.ImageSurface.create_from_png(p)
+            except Exception:
+                self._img = None
 
-        card = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=14)
-        card.get_style_context().add_class("nxs-gr-card")
-        card.get_style_context().add_class("nxs-gr")
-        card.set_size_request(360, -1)
-        card.set_margin_top(28); card.set_margin_bottom(28)
-        card.set_margin_start(34); card.set_margin_end(34)
-        center.pack_start(card, False, False, 0)
+        ov = Gtk.Overlay()
+        ov.get_style_context().add_class("nxs-gr")
+        self.add(ov)
+        bg = Gtk.DrawingArea()
+        bg.connect("draw", self._draw_bg)
+        ov.add(bg)
+        ov.add_overlay(self._barra())
+        ov.add_overlay(self._riquadro())
 
-        logo = Gtk.DrawingArea()
-        logo.set_size_request(96, 104)
-        logo.set_halign(Gtk.Align.CENTER)
-        logo.connect("draw", _draw_logo)
-        card.pack_start(logo, False, False, 0)
+        GLib.timeout_add_seconds(5, self._aggiorna_barra)
+        GLib.idle_add(self.pw.grab_focus)
 
-        title = Gtk.Label()
-        title.get_style_context().add_class("nxs-gr-title")
-        title.set_markup("<span size='xx-large'><b>NexusSec OS</b></span>")
-        card.pack_start(title, False, False, 0)
-        sub = Gtk.Label()
-        sub.get_style_context().add_class("nxs-gr-sub")
-        sub.set_markup("<small>%s</small>" % _t("gr.subtitle"))
-        card.pack_start(sub, False, False, 0)
+    # --- barra in alto ---------------------------------------------------------
+    def _barra(self):
+        bar = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=14)
+        bar.get_style_context().add_class("nxs-gr-bar")
+        bar.set_valign(Gtk.Align.START)
+        sx = Gtk.Box(spacing=8)
+        sx.pack_start(_logo(16, self._acc, 1.6), False, False, 0)
+        host = Gtk.Label(label=socket.gethostname() or "nexussec")
+        sx.pack_start(host, False, False, 0)
+        bar.pack_start(sx, False, False, 0)
 
+        # da destra verso sinistra: spegnimento, data/ora, batteria, rete, lingua
+        self.b_power = _flat(_icona("system-shutdown-symbolic", 16), _t("gr.power"))
+        pop = _popover(self.b_power, [
+            (_t("session.reboot"), lambda: self._power(["nxs-shutdown", "reboot"])),
+            (_t("session.poweroff"), lambda: self._power(["nxs-shutdown", "poweroff"])),
+        ])
+        self.b_power.connect("clicked", lambda _w: pop.popup())
+        bar.pack_end(self.b_power, False, False, 0)
+        self.l_ora = Gtk.Label()
+        bar.pack_end(self.l_ora, False, False, 0)
+        self.i_batt = _icona("battery-good-symbolic")
+        self.l_batt = Gtk.Label()
+        bb = Gtk.Box(spacing=4)
+        bb.pack_start(self.i_batt, False, False, 0)
+        bb.pack_start(self.l_batt, False, False, 0)
+        self.box_batt = bb
+        bar.pack_end(bb, False, False, 0)
+        self.i_rete = _icona("network-offline-symbolic")
+        bar.pack_end(self.i_rete, False, False, 0)
+        self.l_kbd = Gtk.Label(label=layout_tastiera())
+        bar.pack_end(self.l_kbd, False, False, 0)
+        self._aggiorna_barra()
+        return bar
+
+    def _aggiorna_barra(self):
+        self.l_ora.set_text(data_ora())
+        self.i_rete.set_from_icon_name(icona_rete(), Gtk.IconSize.MENU)
+        b = stato_batteria()
+        if b:
+            self.i_batt.set_from_icon_name(b[0], Gtk.IconSize.MENU)
+            self.l_batt.set_text("%d%%" % b[1])
+            self.box_batt.set_no_show_all(False)
+            self.box_batt.show_all()
+        else:
+            self.box_batt.set_no_show_all(True)
+            self.box_batt.hide()
+        return True
+
+    # --- riquadro di accesso -------------------------------------------------------
+    def _riquadro(self):
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+        box.get_style_context().add_class("nxs-gr-box")
+        box.set_size_request(400, -1)
+        box.set_halign(Gtk.Align.START)
+        box.set_valign(Gtk.Align.CENTER)
+        # posizione come slick-greeter: ~8% da sinistra, poco sotto il centro
+        scr = Gdk.Screen.get_default()
+        larg = scr.get_width() if scr else 1600
+        box.set_margin_start(max(40, int(larg * 0.085)))
+        box.set_margin_top(60)
+
+        testa = Gtk.Box(spacing=8)
+        testa.set_margin_top(12); testa.set_margin_start(16); testa.set_margin_end(8)
+        self.l_nome = Gtk.Label()
+        self.l_nome.set_xalign(0)
+        self.l_nome.get_style_context().add_class("nxs-gr-name")
+        testa.pack_start(self.l_nome, True, True, 0)
+        # cambio utente: solo se ce n'e' piu' d'uno (o per digitarne un altro)
+        self.b_utenti = _flat(_icona("system-users-symbolic", 16), _t("gr.switch_user"))
+        voci = [(nome if nome == login else "%s  (%s)" % (nome, login),
+                 lambda l=login: self._scegli(l)) for login, nome in self._utenti]
+        voci.append((_t("gr.other_user"), self._altro))
+        pop = _popover(self.b_utenti, voci)
+        self.b_utenti.connect("clicked", lambda _w: pop.popup())
+        testa.pack_end(self.b_utenti, False, False, 0)
+        box.pack_start(testa, False, False, 0)
+
+        corpo = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
+        corpo.set_margin_top(8); corpo.set_margin_bottom(16)
+        corpo.set_margin_start(16); corpo.set_margin_end(16)
+        # campo utente: nascosto, compare solo con "Altro utente..."
         self.user = Gtk.Entry()
         self.user.set_placeholder_text(_t("v.user"))
-        self.user.set_text(AUTH_USER_DEFAULT)
-        card.pack_start(self.user, False, False, 0)
+        self.user.set_icon_from_icon_name(Gtk.EntryIconPosition.PRIMARY,
+                                          "avatar-default-symbolic")
+        self.user.set_no_show_all(True)
+        self.user.connect("activate", lambda _w: self.pw.grab_focus())
+        corpo.pack_start(self.user, False, False, 0)
 
+        riga = Gtk.Box(spacing=8)
         self.pw = Gtk.Entry()
         self.pw.set_placeholder_text(_t("v.password"))
         self.pw.set_visibility(False)
@@ -203,77 +443,91 @@ class Greeter(Gtk.Window):
                                         "view-reveal-symbolic")
         self.pw.connect("icon-press", self._toggle_pw)
         self.pw.connect("activate", self._on_login)
-        card.pack_start(self.pw, False, False, 0)
+        riga.pack_start(self.pw, True, True, 0)
+        vai = Gtk.Button()
+        vai.add(_icona("go-next-symbolic", 18))
+        vai.get_style_context().add_class("nxs-gr-go")
+        vai.set_tooltip_text(_t("gr.login"))
+        vai.connect("clicked", self._on_login)
+        riga.pack_start(vai, False, False, 0)
+        corpo.pack_start(riga, False, False, 0)
 
-        self.err = Gtk.Label(); self.err.set_xalign(0.5)
-        self.err.get_style_context().add_class("nxs-gr-err")
-        card.pack_start(self.err, False, False, 0)
+        self.msg = Gtk.Label()
+        self.msg.set_xalign(0)
+        self.msg.set_no_show_all(True)
+        corpo.pack_start(self.msg, False, False, 0)
+        box.pack_start(corpo, False, False, 0)
 
-        btn = Gtk.Button(label=_t("gr.login"))
-        btn.get_style_context().add_class("nxs-gr-login")
-        btn.connect("clicked", self._on_login)
-        card.pack_start(btn, False, False, 0)
+        self._scegli(self._utente, focus=False)
+        return box
 
-        power = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=18)
-        power.set_halign(Gtk.Align.CENTER)
-        power.set_margin_top(6)
-        for icon, cmd in (("system-reboot-symbolic", ["nxs-shutdown", "reboot"]),
-                          ("system-shutdown-symbolic", ["nxs-shutdown", "poweroff"])):
-            b = Gtk.Button()
-            b.get_style_context().add_class("nxs-gr-pw")
-            b.set_image(Gtk.Image.new_from_icon_name(icon, Gtk.IconSize.LARGE_TOOLBAR))
-            b.set_relief(Gtk.ReliefStyle.NONE)
-            b.connect("clicked", lambda _w, c=cmd: self._power(c))
-            power.pack_start(b, False, False, 0)
-        card.pack_start(power, False, False, 0)
+    def _nome_di(self, login):
+        for l, n in self._utenti:
+            if l == login:
+                return n
+        return login
 
-        GLib.idle_add(self.pw.grab_focus)
+    def _scegli(self, login, focus=True):
+        self._utente = login
+        self.l_nome.set_text(self._nome_di(login))
+        self.user.hide()
+        self._messaggio("")
+        self.pw.set_text("")
+        if focus:
+            self.pw.grab_focus()
 
-    @staticmethod
-    def _hexagon(cr, cx, cy, R):
-        for i in range(6):
-            ang = math.pi / 3.0 * i               # flat-top
-            px = cx + R * math.cos(ang)
-            py = cy + R * math.sin(ang)
-            (cr.line_to if i else cr.move_to)(px, py)
-        cr.close_path()
+    def _altro(self):
+        self._utente = None
+        self.l_nome.set_text(_t("gr.other_user").rstrip("…."))
+        self.user.set_text("")
+        self.user.show()
+        self._messaggio("")
+        self.user.grab_focus()
 
+    def _messaggio(self, testo, classe="nxs-gr-msg"):
+        ctx = self.msg.get_style_context()
+        for c in ("nxs-gr-msg", "nxs-gr-hint"):
+            ctx.remove_class(c)
+        ctx.add_class(classe)
+        self.msg.set_text(testo)
+        self.msg.set_visible(bool(testo))
+
+    # --- sfondo ---------------------------------------------------------------
     def _draw_bg(self, area, cr):
-        """Sfondo PULITO: fondo scuro + glow morbido + honeycomb ("vespaio"),
-        nel colore accent del tema corrente. Niente logo/scritte."""
+        """Sfondo del profilo a tutto schermo ("copri", senza deformarlo) con un
+        velo scuro leggero; la versione scalata si tiene in cache."""
         w = area.get_allocated_width()
         h = area.get_allocated_height()
-        r, g, b = self._acc
-        # fondo scuro
-        cr.set_source_rgb(0.020, 0.039, 0.078)        # #050a14
+        if self._img is None:
+            cr.set_source_rgb(0.020, 0.039, 0.078)          # #050a14
+            cr.paint()
+            r, g, b = self._acc
+            grad = cairo.RadialGradient(w * 0.55, h * 0.45, 0,
+                                        w * 0.55, h * 0.45, max(w, h) * 0.6)
+            grad.add_color_stop_rgba(0, r, g, b, 0.12)
+            grad.add_color_stop_rgba(1, r, g, b, 0.0)
+            cr.set_source(grad)
+            cr.paint()
+            return False
+        if not self._cache or self._cache[:2] != (w, h):
+            surf = cairo.ImageSurface(cairo.FORMAT_RGB24, w, h)
+            c = cairo.Context(surf)
+            iw, ih = self._img.get_width(), self._img.get_height()
+            sc = max(w / iw, h / ih)
+            c.translate((w - iw * sc) / 2.0, (h - ih * sc) / 2.0)
+            c.scale(sc, sc)
+            c.set_source_surface(self._img, 0, 0)
+            c.get_source().set_filter(cairo.FILTER_GOOD)
+            c.paint()
+            c.identity_matrix()
+            c.set_source_rgba(0.01, 0.02, 0.04, OSCURA)
+            c.paint()
+            self._cache = (w, h, surf)
+        cr.set_source_surface(self._cache[2], 0, 0)
         cr.paint()
-        # glow morbido (accent) in alto-centro
-        cx, cy = w / 2.0, h * 0.40
-        rad = max(w, h) * 0.62
-        grad = cairo.RadialGradient(cx, cy, 0, cx, cy, rad)
-        grad.add_color_stop_rgba(0, r, g, b, 0.10)
-        grad.add_color_stop_rgba(1, r, g, b, 0.0)
-        cr.set_source(grad)
-        cr.paint()
-        # honeycomb (vespaio) tenue
-        R = 46.0
-        dx = 1.5 * R
-        dy = math.sqrt(3.0) * R
-        cr.set_line_width(1.2)
-        cr.set_source_rgba(r, g, b, 0.12)
-        col = 0
-        x = -R
-        while x < w + R:
-            yoff = (dy / 2.0) if (col % 2) else 0.0
-            y = -R + yoff
-            while y < h + R:
-                self._hexagon(cr, x, y, R)
-                y += dy
-            x += dx
-            col += 1
-        cr.stroke()
         return False
 
+    # --- azioni -----------------------------------------------------------------
     def _toggle_pw(self, entry, _pos, _ev):
         vis = not entry.get_visibility()
         entry.set_visibility(vis)
@@ -282,15 +536,33 @@ class Greeter(Gtk.Window):
             "view-conceal-symbolic" if vis else "view-reveal-symbolic")
 
     def _on_key(self, _w, ev):
-        if ev.keyval == Gdk.KEY_Escape:
+        if WINDOWED and ev.keyval == Gdk.KEY_Escape:
             self.destroy()
+            return True
+        # avviso Bloc Maiusc (solo se non c'e' gia' un errore da mostrare)
+        GLib.idle_add(self._caps)
+        return False
+
+    def _caps(self):
+        try:
+            caps = Gdk.Keymap.get_for_display(Gdk.Display.get_default()) \
+                .get_caps_lock_state()
+        except Exception:
+            return False
+        ctx = self.msg.get_style_context()
+        if caps:
+            if not self.msg.get_visible() or ctx.has_class("nxs-gr-hint"):
+                self._messaggio(_t("gr.caps"), "nxs-gr-hint")
+        elif ctx.has_class("nxs-gr-hint"):
+            self._messaggio("")
+        return False
 
     def _power(self, cmd):
         subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         self.destroy()
 
     def _on_login(self, _w):
-        user = self.user.get_text().strip() or AUTH_USER_DEFAULT
+        user = self._utente or self.user.get_text().strip() or AUTH_USER_DEFAULT
         pw = self.pw.get_text()
         if authenticate(user, pw):
             self.result = 0
@@ -298,7 +570,7 @@ class Greeter(Gtk.Window):
                 print("AUTH-OK")
             self.destroy()
         else:
-            self.err.set_text(_t("gr.wrong"))
+            self._messaggio(_t("gr.wrong"))
             self.pw.set_text("")
             self.pw.grab_focus()
 
@@ -312,7 +584,6 @@ def main():
             "Avvialo da un TERMINALE DENTRO il desktop, non dalla console dopo "
             "il logout. Per il login grafico al boot: doas nxs-harden greeter on.\n")
         return 2
-    _install_css()
     g = Greeter()
     g.show_all()
     Gtk.main()

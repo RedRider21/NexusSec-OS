@@ -2764,9 +2764,15 @@ class Panel(Gtk.Window):
     def _tick_clock(self):
         t = time.localtime()
         self.clock.set_text(time.strftime("%H:%M", t))
-        giorni = ["lun", "mar", "mer", "gio", "ven", "sab", "dom"]
-        mesi = ["gen", "feb", "mar", "apr", "mag", "giu",
-                "lug", "ago", "set", "ott", "nov", "dic"]
+        # nomi brevi nella lingua attiva (stesse chiavi del greeter); se la
+        # traduzione non ha 7/12 voci si resta sull'italiano
+        giorni = _t("gr.days").split(",")
+        mesi = _t("gr.months").split(",")
+        if len(giorni) != 7:
+            giorni = ["lun", "mar", "mer", "gio", "ven", "sab", "dom"]
+        if len(mesi) != 12:
+            mesi = ["gen", "feb", "mar", "apr", "mag", "giu",
+                    "lug", "ago", "set", "ott", "nov", "dic"]
         self.date.set_text("%s %d %s" % (giorni[t.tm_wday], t.tm_mday,
                                          mesi[t.tm_mon - 1]))
         return self._alive
