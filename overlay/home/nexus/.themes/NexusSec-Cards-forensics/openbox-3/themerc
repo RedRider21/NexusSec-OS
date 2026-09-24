@@ -103,3 +103,8 @@ osd.hilight.bg: flat solid
 osd.hilight.bg.color: #ffb000
 osd.unhilight.bg: flat solid
 osd.unhilight.bg.color: #2a2f37
+
+# Separatori del menu con margini (coerente con NexusSec-Core)
+menu.separator.width: 1
+menu.separator.padding.width: 10
+menu.separator.padding.height: 4

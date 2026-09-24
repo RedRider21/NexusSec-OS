@@ -91,7 +91,7 @@
     <!-- 'italic' or 'normal' -->
   </font>
   <font place="MenuItem">
-    <name>sans</name>
+    <name>Chakra Petch</name>
     <size>10</size>
     <!-- font size in points -->
     <weight>normal</weight>

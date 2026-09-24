@@ -21,6 +21,9 @@ loro licenze al codice NexusSec.
   nftables, Tor, cryptsetup, ...** — licenze rispettive (MIT/BSD/GPL/LGPL).
 - **WebKitGTK** (browser) — LGPL/BSD.
 - **gcompat** — shim di compatibilità glibc→musl, licenza propria (NCSA/MIT).
+- **Icone del menu del tasto destro** (`/usr/local/share/nexussec/menu-icons/`)
+  — icone simboliche di **adwaita-icon-theme** (GNOME Project), ricolorate da
+  `build/make-menu-icons.py`; licenza CC-BY-SA 3.0 / LGPL-3.0.
 
 ## Arsenale (tool on-demand)
 

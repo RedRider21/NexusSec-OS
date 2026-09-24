@@ -1,53 +1,59 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Menu root di Openbox: compare col TASTO DESTRO sul DESKTOP (pcmanfm ha
      show_wm_menu=1, quindi inoltra il clic al window manager). Raccoglie le
-     azioni piu' frequenti cosi' non serve aprire il menu dal pannello. -->
+     azioni piu' frequenti cosi' non serve aprire il menu dal pannello.
+     Icone: SVG gia' tinti in /usr/local/share/nexussec/menu-icons (Openbox non
+     ricolora le simboliche; vedi build/make-menu-icons.py). Lingue: questo e'
+     il menu italiano, le altre le genera build/make-openbox-menus.py. -->
 <openbox_menu xmlns="http://openbox.org/3.4/menu">
 
-  <menu id="nxs-tools" label="Tools">
-    <item label="Text editor"><action name="Execute"><command>pluma</command></action></item>
-    <item label="Voice recorder"><action name="Execute"><command>nxs-recorder</command></action></item>
-    <item label="Images"><action name="Execute"><command>nxs-viewer</command></action></item>
-    <item label="Clean metadata (MAT2)"><action name="Execute"><command>nxs-metadata gui</command></action></item>
-    <item label="Clipboard (history)"><action name="Execute"><command>nxs-clipboard menu</command></action></item>
-    <item label="Blue light filter (on/off)"><action name="Execute"><command>nxs-nightlight toggle</command></action></item>
-    <item label="Keyboard shortcuts"><action name="Execute"><command>nxs-control-center hotkey</command></action></item>
-    <item label="Disks"><action name="Execute"><command>nxs-disks</command></action></item>
-    <item label="Forensic cases"><action name="Execute"><command>nxs-case</command></action></item>
-    <item label="Guided procedures (Wizard)"><action name="Execute"><command>nxs-wizard</command></action></item>
-    <item label="Control Center"><action name="Execute"><command>nxs-control-center</command></action></item>
+  <menu id="nxs-tools" label="Tools" icon="/usr/local/share/nexussec/menu-icons/tools.svg">
+    <item label="Text editor" icon="/usr/local/share/nexussec/menu-icons/editor.svg"><action name="Execute"><command>pluma</command></action></item>
+    <item label="Voice recorder" icon="/usr/local/share/nexussec/menu-icons/recorder.svg"><action name="Execute"><command>nxs-recorder</command></action></item>
+    <item label="Images" icon="/usr/local/share/nexussec/menu-icons/images.svg"><action name="Execute"><command>nxs-viewer</command></action></item>
+    <item label="Clean metadata (MAT2)" icon="/usr/local/share/nexussec/menu-icons/metadata.svg"><action name="Execute"><command>nxs-metadata gui</command></action></item>
+    <item label="Clipboard (history)" icon="/usr/local/share/nexussec/menu-icons/clipboard.svg"><action name="Execute"><command>nxs-clipboard menu</command></action></item>
+    <item label="Blue light filter (on/off)" icon="/usr/local/share/nexussec/menu-icons/nightlight.svg"><action name="Execute"><command>nxs-nightlight toggle</command></action></item>
+    <item label="Keyboard shortcuts" icon="/usr/local/share/nexussec/menu-icons/keyboard.svg"><action name="Execute"><command>nxs-control-center hotkey</command></action></item>
+    <item label="Disks" icon="/usr/local/share/nexussec/menu-icons/disks.svg"><action name="Execute"><command>nxs-disks</command></action></item>
+    <item label="Forensic cases" icon="/usr/local/share/nexussec/menu-icons/cases.svg"><action name="Execute"><command>nxs-case</command></action></item>
+    <item label="Guided procedures (Wizard)" icon="/usr/local/share/nexussec/menu-icons/wizard.svg"><action name="Execute"><command>nxs-wizard</command></action></item>
+    <item label="Control Center" icon="/usr/local/share/nexussec/menu-icons/control-center.svg"><action name="Execute"><command>nxs-control-center</command></action></item>
   </menu>
 
-  <menu id="nxs-security" label="Security">
-    <item label="Lock screen"><action name="Execute"><command>nxs-screensaver</command></action></item>
-    <item label="Screenshot (full screen)"><action name="Execute"><command>nxs-screenshot full 1</command></action></item>
-    <item label="Screenshot (area)"><action name="Execute"><command>nxs-screenshot area 0</command></action></item>
+  <menu id="nxs-security" label="Security" icon="/usr/local/share/nexussec/menu-icons/security.svg">
+    <item label="Lock screen" icon="/usr/local/share/nexussec/menu-icons/lock.svg"><action name="Execute"><command>nxs-screensaver</command></action></item>
+    <item label="Screenshot (full screen)" icon="/usr/local/share/nexussec/menu-icons/screenshot.svg"><action name="Execute"><command>nxs-screenshot full 1</command></action></item>
+    <item label="Screenshot (area)" icon="/usr/local/share/nexussec/menu-icons/screenshot.svg"><action name="Execute"><command>nxs-screenshot area 0</command></action></item>
     <separator/>
-    <item label="Anonymous (all via Tor): ENABLE"><action name="Execute"><command>nxs-anon on</command></action></item>
-    <item label="Anonymous (all via Tor): DISABLE"><action name="Execute"><command>nxs-anon off</command></action></item>
+    <item label="Anonymous (all via Tor): ENABLE" icon="/usr/local/share/nexussec/menu-icons/anon.svg"><action name="Execute"><command>nxs-anon on</command></action></item>
+    <item label="Anonymous (all via Tor): DISABLE" icon="/usr/local/share/nexussec/menu-icons/anon.svg"><action name="Execute"><command>nxs-anon off</command></action></item>
     <separator/>
-    <item label="Firewall: ENABLE"><action name="Execute"><command>nxs-firewall on</command></action></item>
-    <item label="Firewall: DISABLE"><action name="Execute"><command>nxs-firewall off</command></action></item>
+    <item label="Firewall: ENABLE" icon="/usr/local/share/nexussec/menu-icons/firewall.svg"><action name="Execute"><command>nxs-firewall on</command></action></item>
+    <item label="Firewall: DISABLE" icon="/usr/local/share/nexussec/menu-icons/firewall.svg"><action name="Execute"><command>nxs-firewall off</command></action></item>
     <separator/>
-    <item label="Random MAC now"><action name="Execute"><command>nxs-macspoof now</command></action></item>
+    <item label="Random MAC now" icon="/usr/local/share/nexussec/menu-icons/mac.svg"><action name="Execute"><command>nxs-macspoof now</command></action></item>
     <separator/>
-    <item label="PANIC: wipe and shut down"><action name="Execute"><command>nxs-panic wipe</command></action></item>
+    <item label="PANIC: wipe and shut down" icon="/usr/local/share/nexussec/menu-icons/panic.svg"><action name="Execute"><command>nxs-panic wipe</command></action></item>
   </menu>
 
   <menu id="root-menu" label="NexusSec">
-    <item label="Operational profile"><action name="Execute"><command>nxs-profile</command></action></item>
-    <item label="Change wallpaper"><action name="Execute"><command>nxs-control-center sfondo</command></action></item>
+    <!-- intestazione: Openbox la disegna con lo stile "menu.title" del tema
+         (font MenuHeader = Chakra Petch, colore d'accento) -->
+    <separator label="NexusSec"/>
+    <item label="Operational profile" icon="/usr/local/share/nexussec/menu-icons/profile.svg"><action name="Execute"><command>nxs-profile</command></action></item>
+    <item label="Change wallpaper" icon="/usr/local/share/nexussec/menu-icons/wallpaper.svg"><action name="Execute"><command>nxs-control-center sfondo</command></action></item>
     <separator/>
-    <item label="Terminal"><action name="Execute"><command>nxs-terminal</command></action></item>
-    <item label="NexusSec Browser"><action name="Execute"><command>nxs-browser</command></action></item>
-    <item label="File manager"><action name="Execute"><command>pcmanfm</command></action></item>
-    <item label="HORUS (global OSINT)"><action name="Execute"><command>nxs-horus</command></action></item>
+    <item label="Terminal" icon="/usr/local/share/nexussec/menu-icons/terminal.svg"><action name="Execute"><command>nxs-terminal</command></action></item>
+    <item label="NexusSec Browser" icon="/usr/local/share/nexussec/menu-icons/browser.svg"><action name="Execute"><command>nxs-browser</command></action></item>
+    <item label="File manager" icon="/usr/local/share/nexussec/menu-icons/files.svg"><action name="Execute"><command>pcmanfm</command></action></item>
+    <item label="HORUS (global OSINT)" icon="/usr/local/share/nexussec/menu-icons/horus.svg"><action name="Execute"><command>nxs-horus</command></action></item>
     <separator/>
     <menu id="nxs-tools"/>
     <menu id="nxs-security"/>
     <separator/>
-    <item label="Restart Openbox"><action name="Reconfigure"/></item>
-    <item label="Log out / Shut down…"><action name="Execute"><command>nxs-session</command></action></item>
+    <item label="Restart Openbox" icon="/usr/local/share/nexussec/menu-icons/reload.svg"><action name="Reconfigure"/></item>
+    <item label="Log out / Shut down…" icon="/usr/local/share/nexussec/menu-icons/shutdown.svg"><action name="Execute"><command>nxs-session</command></action></item>
   </menu>
 
 </openbox_menu>

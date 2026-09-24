@@ -65,9 +65,16 @@ window.active.button.pressed.bg: flat solid
 window.active.button.pressed.bg.color: #00334a
 
 # --- Menu --------------------------------------------------------------------
-menu.border.color: #17475f
+# Menu del tasto destro: stessa palette del pannello. Intestazione "NexusSec"
+# (separator label) su fondo piu' scuro con l'accento; voce attiva in ciano;
+# separatori con margini per dare aria; bordo con una punta d'accento.
+# Icone delle voci: SVG gia' tinti (menu.xml), freccia sottomenu: bullet.xbm.
+menu.border.width: 1
+menu.border.color: #1f6480
+menu.overlap.x: -1
+menu.overlap.y: 0
 menu.title.bg: flat solid
-menu.title.bg.color: #0a1a26
+menu.title.bg.color: #050f18
 menu.title.text.color: #00e5ff
 menu.title.text.justify: center
 menu.items.bg: flat solid
@@ -77,7 +84,12 @@ menu.items.disabled.text.color: #5a8a9a
 menu.items.active.bg: flat solid
 menu.items.active.bg.color: #00334a
 menu.items.active.text.color: #00e5ff
+menu.bullet.image.color: #33b5d1
+menu.bullet.selected.image.color: #00e5ff
 menu.separator.color: #17475f
+menu.separator.width: 1
+menu.separator.padding.width: 10
+menu.separator.padding.height: 4
 
 # --- OSD (indicatori a schermo) ----------------------------------------------
 osd.border.width: 1

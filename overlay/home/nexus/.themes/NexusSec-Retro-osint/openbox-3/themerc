@@ -111,3 +111,8 @@ window.inactive.button.toggled.bg: flat
 window.inactive.button.toggled.bg.color: #23d18b
 window.inactive.button.toggled.image.color: #23d18b
 
+
+# Separatori del menu con margini (coerente con NexusSec-Core)
+menu.separator.width: 1
+menu.separator.padding.width: 10
+menu.separator.padding.height: 4
