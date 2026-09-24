@@ -790,7 +790,11 @@ class Panel(Gtk.Window):
         w.set_screen(self.get_screen())
         w.get_style_context().add_class("nxs-popup")
         w.add(content)
-        w.show_all()
+        # Il contenuto si prepara SENZA mostrare la finestra: prima si calcolano
+        # misura e posizione, poi si mostra gia' al suo posto. Prima show_all()
+        # stava qui e il popup compariva un istante altrove prima dello
+        # spostamento (flash con pezzi di sfondo, visibile sul popup Schermi).
+        content.show_all()
 
         _min, nat = w.get_preferred_size()
         pw, ph = nat.width, nat.height
@@ -811,6 +815,7 @@ class Panel(Gtk.Window):
         else:
             y = geo.y + geo.height - PANEL_HEIGHT - ph
         w.move(x, y)
+        w.show_all()                       # ora, gia' posizionato
 
         # Ancoraggio al FONDO per il pannello in basso: se il contenuto cambia
         # altezza (es. la ricerca del menu filtra le voci -> il popup si accorcia)
