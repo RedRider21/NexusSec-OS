@@ -1,0 +1,67 @@
+# Maintainer: NexusSec <deplano.d@gmail.com>
+pkgname=scalpel
+pkgver=1.60
+pkgrel=1
+pkgdesc="File carving veloce (fork di foremost)"
+url="https://github.com/sleuthkit/scalpel"
+arch="all"
+license="GPL-2.0-or-later"
+makedepends="autoconf automake tre-dev linux-headers"
+# Pin al commit immutabile del branch master.
+_commit=16872619d0b889ddb566259074be24999c52f3d5
+source="$pkgname-$pkgver.tar.gz::https://github.com/machn1k/Scalpel-2.0/archive/$_commit.tar.gz"
+builddir="$srcdir/Scalpel-2.0-$_commit"
+build() {
+	cd "$builddir"
+	# Shim error.h: glibc-only, assente in musl (scalpel.h lo include).
+	mkdir -p "$builddir"/compat
+	cat > "$builddir"/compat/error.h <<'SHIM'
+#ifndef _NXS_ERROR_H
+#define _NXS_ERROR_H
+#include <stdio.h>
+#include <stdarg.h>
+#include <string.h>
+#include <errno.h>
+#include <stdlib.h>
+static inline void error(int status, int errnum, const char *fmt, ...) {
+	va_list ap;
+	fflush(stdout);
+	fputs("scalpel: ", stderr);
+	va_start(ap, fmt); vfprintf(stderr, fmt, ap); va_end(ap);
+	if (errnum) fprintf(stderr, ": %s", strerror(errnum));
+	fputc('\n', stderr);
+	if (status) exit(status);
+}
+#endif
+SHIM
+	# Ha configure (autotools) ma nessun Makefile finche non lo si lancia.
+	chmod +x configure
+	CFLAGS="$CFLAGS -fcommon -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64 -I$builddir/compat \
+		-Wno-error=implicit-function-declaration -Wno-error=int-conversion \
+		-Wno-error=incompatible-pointer-types" ./configure --prefix=/usr
+	make
+}
+package() {
+	cd "$builddir"
+	install -Dm755 scalpel "$pkgdir"/usr/bin/scalpel 2>/dev/null || \
+		install -Dm755 src/scalpel "$pkgdir"/usr/bin/scalpel
+	install -Dm644 scalpel.conf "$pkgdir"/etc/scalpel/scalpel.conf 2>/dev/null || true
+	# Licenza dell'autore DENTRO il pacchetto (obbligo per GPL, MIT, BSD: chi
+	# riceve il binario deve ricevere avviso di copyright e testo della licenza).
+	# Si copiano i file di licenza originali, se ci sono, e si scrive SEMPRE un
+	# NOTICE con licenza e sorgente originale (il sorgente completo e' pubblicato
+	# anche accanto al repository NexusSec, vedi THIRD-PARTY.md).
+	for _l in COPYING COPYING.txt COPYING.md LICENSE LICENSE.txt LICENSE.md \
+	          LICENCE COPYRIGHT README.license; do
+		if [ -f "$builddir/$_l" ]; then
+			install -Dm644 "$builddir/$_l" "$pkgdir/usr/share/licenses/$pkgname/$_l"
+		fi
+	done
+	mkdir -p "$pkgdir/usr/share/licenses/$pkgname"
+	printf '%s %s\nLicenza/License: %s\nAutori/Upstream: %s\nSorgente/Source: %s\nPacchetto per NexusSec OS (RedRider21/NexusSec-OS, aports/%s)\n' \
+		"$pkgname" "$pkgver" "$license" "$url" "$source" "$pkgname" \
+		> "$pkgdir/usr/share/licenses/$pkgname/NOTICE"
+}
+sha512sums="
+9d21506b90282029bbc083bb7483e5611f6d02e0c174a5dd605a343b648232358a7c9d075ddcd8b706ace9f125025e6e3898dfae77a098863195b4eb287c089a  scalpel-1.60.tar.gz
+"

@@ -1,0 +1,37 @@
+# Maintainer: NexusSec <deplano.d@gmail.com>
+pkgname=rkhunter
+pkgver=1.4.6
+pkgrel=1
+pkgdesc="Rootkit Hunter - scansione integrita e rootkit"
+url="https://rkhunter.sourceforge.net/"
+arch="noarch"
+license="GPL-2.0-or-later"
+depends="bash"
+source="$pkgname-$pkgver.tar.gz::https://downloads.sourceforge.net/project/rkhunter/rkhunter/$pkgver/rkhunter-$pkgver.tar.gz"
+builddir="$srcdir/$pkgname-$pkgver"
+package() {
+	cd "$builddir"
+	sh installer.sh --layout custom . --install
+	install -Dm755 files/rkhunter "$pkgdir"/usr/bin/rkhunter
+	install -Dm644 files/rkhunter.conf "$pkgdir"/etc/rkhunter.conf
+	mkdir -p "$pkgdir"/var/lib/rkhunter/db "$pkgdir"/usr/share/rkhunter
+	cp -r files/* "$pkgdir"/usr/share/rkhunter/ 2>/dev/null || true
+	# Licenza dell'autore DENTRO il pacchetto (obbligo per GPL, MIT, BSD: chi
+	# riceve il binario deve ricevere avviso di copyright e testo della licenza).
+	# Si copiano i file di licenza originali, se ci sono, e si scrive SEMPRE un
+	# NOTICE con licenza e sorgente originale (il sorgente completo e' pubblicato
+	# anche accanto al repository NexusSec, vedi THIRD-PARTY.md).
+	for _l in COPYING COPYING.txt COPYING.md LICENSE LICENSE.txt LICENSE.md \
+	          LICENCE COPYRIGHT README.license; do
+		if [ -f "$builddir/$_l" ]; then
+			install -Dm644 "$builddir/$_l" "$pkgdir/usr/share/licenses/$pkgname/$_l"
+		fi
+	done
+	mkdir -p "$pkgdir/usr/share/licenses/$pkgname"
+	printf '%s %s\nLicenza/License: %s\nAutori/Upstream: %s\nSorgente/Source: %s\nPacchetto per NexusSec OS (RedRider21/NexusSec-OS, aports/%s)\n' \
+		"$pkgname" "$pkgver" "$license" "$url" "$source" "$pkgname" \
+		> "$pkgdir/usr/share/licenses/$pkgname/NOTICE"
+}
+sha512sums="
+c51a21b6b66ed1f73a19d8ce04eaba35999eefcb666acc824989c3bf53ac56d24a33ac4fec290be942e33fe24674406b371eafff73f7e697b9e03ec031b37216  rkhunter-1.4.6.tar.gz
+"

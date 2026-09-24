@@ -123,13 +123,28 @@ Pannello nativo in Python (GTK3, stile MATE):
   senza aprire il Centro di Controllo.
 - **WiFi interno** (incluse le schede **Intel/iwlwifi**) e cablato pronti
   all'uso, oltre agli adattatori WiFi USB da pentest.
+- **Login grafico in stile Linux Mint**: all'uscita dalla sessione compare la
+  schermata di accesso (barra sottile con tastiera, rete, batteria, data/ora e
+  spegnimento; sfondo del profilo; riquadro compatto con nome utente e password),
+  non più la console testuale.
+- **Finestra di benvenuto** (stile Mint): primi passi, **licenze** e software di
+  terze parti, uso responsabile; disattivabile, si richiama dal menu.
+- **Rotazione dello schermo** (normale, sinistra, destra, capovolto) dal Centro
+  di Controllo → Schermi, con touch e penna che seguono l'orientamento.
+- **Visualizzatore di immagini** integrato (zoom, rotazione, scorrimento nella
+  cartella, imposta come sfondo) e **menu del tasto destro** curato, con icone,
+  tradotto nella lingua attiva.
+- **Terminale** con prompt immediato; le cornici del prompt (anche in stile
+  Kali/Parrot) prendono il **colore del profilo** attivo.
 
 ## Multilingua
 
 Tutta l'interfaccia è tradotta in **5 lingue** — **italiano, inglese, francese,
 spagnolo, tedesco**: Centro di Controllo e tutte le sue viste, pannello (menu,
-tooltip di rete, batteria e Bluetooth, stati) e le applicazioni **Browser**,
-**Dischi**, **Casi forensi** e il selettore del **Profilo operativo**.
+popup e tooltip), menu del tasto destro, login grafico, finestra di benvenuto e
+le applicazioni (**Browser**, **Dischi**, **Casi forensi**, lettori audio/video,
+registratore, visualizzatore di immagini, salvaschermo, screenshot, appunti,
+pulizia metadati, selettore del **Profilo operativo**).
 
 Il cambio lingua è **al volo**: dall'**applet Lingua** del pannello, dalla voce
 **Lingua** del menu o dal **Centro di Controllo** (o da terminale con
@@ -147,6 +162,13 @@ All'avvio una **splashscreen flat** con barra di caricamento accompagna la
 preparazione del desktop:
 
 ![splash](screenshots/splash.png)
+
+All'uscita dalla sessione, il **login grafico** in stile Linux Mint, nei colori
+del profilo attivo:
+
+| Base | Pen Testing |
+|---|---|
+| ![login-base](screenshots/login-base.png) | ![login-pentest](screenshots/login-pentest.png) |
 
 Il desktop cambia con il profilo: **sfondo, accent del pannello e tema delle
 icone** (anche cartelle e browser). *(Le immagini seguenti sono anteprime
@@ -177,8 +199,11 @@ installare, si installa al primo avvio):
 ## Repository pacchetti (apk)
 
 I pacchetti compilati per NexusSec OS non presenti nei repo Alpine (`dmitry`,
-`foremost`, `medusa`, `chkrootkit`, `rkhunter`, `bulk-extractor`) sono firmati e
-serviti via **GitHub Pages**:
+`foremost`, `medusa`, `chkrootkit`, `rkhunter`, `bulk-extractor`, `dirb`,
+`scalpel`) sono firmati e serviti via **GitHub Pages**. Ogni pacchetto contiene
+le licenze originali dei suoi autori (`/usr/share/licenses/<pacchetto>/`) e i
+**sorgenti corrispondenti** sono pubblicati accanto ai binari, in
+[`sources/`](https://redrider21.github.io/NexusSec-OS/sources/):
 
 ```
 https://redrider21.github.io/NexusSec-OS/
@@ -904,6 +929,13 @@ I **pacchetti di terze parti** inclusi o installati on-demand mantengono le
 licenze dei rispettivi progetti upstream: la licenza AGPL copre **solo** il
 codice originale NexusSec (mera aggregazione). Dettaglio in
 [`THIRD-PARTY.md`](THIRD-PARTY.md).
+
+Gli **strumenti dell'arsenale non sono inclusi** nelle immagini: si scaricano al
+momento, su richiesta dell'utente, dalle fonti dei loro autori e alle loro
+licenze (al primo download `nxs-tool` indica fonte e licenza). Nell'immagine c'è
+solo l'infrastruttura NexusSec più i pacchetti Alpine di base; i testi di
+licenza sono in `/usr/share/doc/nexussec/` e nella **finestra di benvenuto**
+(scheda *Licenze*).
 
 I nomi «**NexusSec**» / «**NexusSec OS**», il **logo** e l'identità visiva sono
 **marchi** di Daniele Deplano (RedRider21) e **non** sono concessi dalla licenza
