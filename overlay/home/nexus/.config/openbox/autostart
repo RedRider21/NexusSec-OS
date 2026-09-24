@@ -132,10 +132,11 @@ command -v nxs-screensaver-idle >/dev/null 2>&1 && (sleep 3; nxs-screensaver-idl
 # Anti-lockout: l'autologin resta + tty2 ha un login normale (da li':
 # rm /etc/nxs/greeter.on). Fail-open (|| true): se il greeter va in errore si
 # prosegue col desktop invece di restare su schermo nero.
-if { [ -f /etc/nxs/greeter.on ] || [ -n "$RELOGIN" ]; } && \
+# Al RIENTRO dopo il logout il login l'ha GIA' fatto .xinitrc, prima di aprire
+# il desktop (vedi li'): qui non va ripetuto.
+if [ -f /etc/nxs/greeter.on ] && [ -z "$RELOGIN" ] && \
    command -v nxs-greeter >/dev/null 2>&1; then
-  echo "greeter: login grafico (post-splash o rientro dopo logout)"
-  rm -f "$RELOGIN_FLAG"
+  echo "greeter: login grafico (post-splash)"
   nxs-greeter || true
 fi
 rm -f "$RELOGIN_FLAG"

@@ -47,18 +47,17 @@ if [ -z "$DISPLAY" ] && [ "$(tty)" = "/dev/tty1" ]; then
   # gate di login attivo (/etc/nxs/greeter.on) sia sulla live normale. La
   # console testuale resta su tty2 (Ctrl+Alt+F2).
   while :; do
-    startx
+    # messaggi di X in un file, non sulla console (restava testo a vista tra
+    # una sessione e l'altra); gli errori veri stanno comunque in Xorg.0.log
+    startx >"${XDG_RUNTIME_DIR:-/tmp}/nxs-startx.log" 2>&1
     ec=$?
     [ "$ec" = "0" ] || break                 # X fallito -> diagnostica sotto
-    if [ -f /etc/nxs/greeter.on ]; then
-      sleep 1                                 # anti-spin, poi torna al greeter
-      continue
-    fi
-    # Logout normale (live): si riparte dal LOGIN GRAFICO (nxs-greeter) per
-    # rientrare oppure riavviare/spegnere, come con un display manager. Prima
-    # si cadeva sulla shell e serviva digitare "exit". Il segnale per
-    # l'autostart e' questo file: niente splash, dritti al login.
+    # Logout: si riparte dal LOGIN GRAFICO (nxs-greeter) per rientrare oppure
+    # riavviare/spegnere, come con un display manager, sia sulla live sia col
+    # gate attivo. Il segnale e' questo file: .xinitrc mostra il login PRIMA di
+    # costruire il desktop, l'autostart salta splash/benvenuto/selettore.
     : > "${XDG_RUNTIME_DIR:-/tmp}/nxs-relogin" 2>/dev/null || true
+    clear                                     # niente testo tra le due sessioni
     sleep 1                                   # anti-spin
   done
   clear

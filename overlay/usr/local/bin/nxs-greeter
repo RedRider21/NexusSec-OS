@@ -18,7 +18,12 @@
 #   nxs-greeter --windowed    finestra normale (test in-sessione)
 #   nxs-greeter               a schermo intero (uso dal boot, dietro flag)
 #
-# Uscita: 0 = autenticazione riuscita · 1 = uscita senza login.
+# Uscita: 0 = autenticazione riuscita · 1 = uscita senza login ·
+#         3 = scelto Riavvia/Spegni (il sistema si sta fermando).
+#
+# Al rientro dopo il logout gira PRIMA del desktop, su X nudo e senza window
+# manager (vedi ~/.xinitrc): la finestra si dimensiona da se' sullo schermo e
+# prende da se' il fuoco della tastiera.
 import glob
 import math
 import os
@@ -315,8 +320,16 @@ class Greeter(Gtk.Window):
             self.set_default_size(1280, 720)
             self.set_position(Gtk.WindowPosition.CENTER)
         else:
+            # Senza window manager (rientro da .xinitrc) fullscreen() non ha
+            # effetto: dimensioni e posizione dello schermo si impostano a mano.
+            scr = Gdk.Screen.get_default()
+            if scr is not None:
+                self.set_default_size(scr.get_width(), scr.get_height())
+            self.set_decorated(False)
+            self.move(0, 0)
             self.fullscreen()
             self.set_keep_above(True)
+            self.connect("map-event", self._prendi_fuoco)
 
         acc = _accent()
         self._acc = _hex_rgb(acc)
@@ -557,8 +570,18 @@ class Greeter(Gtk.Window):
             self._messaggio("")
         return False
 
+    def _prendi_fuoco(self, *_a):
+        # senza window manager nessuno assegna il fuoco: lo si chiede a X
+        try:
+            self.get_window().focus(Gdk.CURRENT_TIME)
+        except Exception:
+            pass
+        self.pw.grab_focus()
+        return False
+
     def _power(self, cmd):
         subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        self.result = 3
         self.destroy()
 
     def _on_login(self, _w):
