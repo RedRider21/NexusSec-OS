@@ -2417,17 +2417,18 @@ def open_bluetooth(_btn=None):
         sub.get_style_context().add_class("nxs-val")
         tags = []
         if d["state"] == "conn":
-            tags.append("connesso")
+            tags.append(_t("v.bt.connected").lower())
         elif d["state"] == "paired":
-            tags.append("abbinato")
+            tags.append(_t("v.bt.paired").lower())
         if d["trusted"]:
-            tags.append("fidato")
+            tags.append(_t("v.bt.trusted").lower())
         # Mostra SEMPRE il MAC (hex) come sottotitolo, insieme al nome in chiaro
         # (label 'name' sopra) e agli eventuali stati: cosi' ogni dispositivo ha
         # sia il nome leggibile sia l'indirizzo esadecimale, sempre visibili.
         sub.set_text("  •  ".join([d["mac"]] + tags))
         txt.pack_start(name, False, False, 0)
         txt.pack_start(sub, False, False, 0)
+        txt.set_valign(Gtk.Align.CENTER)
         row.pack_start(txt, True, True, 0)
 
         act = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=4)
@@ -2468,6 +2469,8 @@ def open_bluetooth(_btn=None):
         brm.connect("clicked", lambda _w, m=d["mac"], n=d["name"]:
                     do_action("remove", m, _t("v.bt_removing") % n))
         act.pack_start(brm, False, False, 0)
+        # centrati nella riga: prima si allungavano per tutta l'altezza della scheda
+        act.set_valign(Gtk.Align.CENTER)
         row.pack_end(act, False, False, 0)
         return row
 

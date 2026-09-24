@@ -57,6 +57,10 @@ viewport { background-color: transparent; }
 .nxs-tile:hover { background-color: rgba(0,229,255,0.10); border-color: #00e5ff; }
 .nxs-tile:active, .nxs-tile:focus { background-color: rgba(0,229,255,0.18); border-color: #00e5ff; }
 .nxs-tile label { color: #c8f5ff; font-size: 9pt; }
+/* dentro una scheda il testo dei PULSANTI prende il colore del pulsante: la
+   regola sopra lo forzava chiaro anche sui pulsanti principali a fondo pieno
+   (accent), dove diventava illeggibile (es. "Connetti" in Gestione Bluetooth) */
+.nxs-tile button label { color: inherit; }
 .nxs-tile-badge { background-color: rgba(0,229,255,0.14); border-radius: 9px;
   padding: 7px; min-width: 20px; min-height: 20px; }
 .nxs-tile-badge image { color: #00e5ff; }
