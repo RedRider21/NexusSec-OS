@@ -42,10 +42,10 @@ if [ -z "$DISPLAY" ] && [ "$(tty)" = "/dev/tty1" ]; then
   # Persistenza CIFRATA (LUKS): se presente e non ancora sbloccata, chiedi la
   # passphrase QUI (tty interattiva) prima di startx. Se assente, non fa nulla.
   command -v nxs-unlock-data >/dev/null 2>&1 && nxs-unlock-data login
-  # Sessione grafica in LOOP: se al logout (uscita pulita di startx) il LOGIN
-  # GRAFICO e' attivo (/etc/nxs/greeter.on), riavviamo la sessione X -> si
-  # ritorna al GREETER (come un display manager), invece di cadere sulla shell.
-  # Senza greeter: comportamento classico della live (shell dopo il logout).
+  # Sessione grafica in LOOP: al logout (uscita pulita di startx) la sessione X
+  # riparte e si torna al LOGIN GRAFICO (come un display manager), sia con il
+  # gate di login attivo (/etc/nxs/greeter.on) sia sulla live normale. La
+  # console testuale resta su tty2 (Ctrl+Alt+F2).
   while :; do
     startx
     ec=$?
@@ -54,7 +54,12 @@ if [ -z "$DISPLAY" ] && [ "$(tty)" = "/dev/tty1" ]; then
       sleep 1                                 # anti-spin, poi torna al greeter
       continue
     fi
-    exec /bin/sh                              # logout senza greeter -> shell
+    # Logout normale (live): si riparte dal LOGIN GRAFICO (nxs-greeter) per
+    # rientrare oppure riavviare/spegnere, come con un display manager. Prima
+    # si cadeva sulla shell e serviva digitare "exit". Il segnale per
+    # l'autostart e' questo file: niente splash, dritti al login.
+    : > "${XDG_RUNTIME_DIR:-/tmp}/nxs-relogin" 2>/dev/null || true
+    sleep 1                                   # anti-spin
   done
   clear
   echo "=================================================================="

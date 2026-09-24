@@ -24,9 +24,15 @@ command -v nxs-screens >/dev/null 2>&1 && nxs-screens autostart
 # Allo sguardo: nero pulito -> splash piena -> sfuma su sfondo+pannello pronti
 # -> appare il selettore.
 
+# Rientro dopo un LOGOUT (lo segnala ~/.profile): niente splash di avvio,
+# dritti al login grafico; niente benvenuto ne' selettore profili (gia' visti).
+RELOGIN_FLAG="${XDG_RUNTIME_DIR:-/tmp}/nxs-relogin"
+RELOGIN=""
+[ -f "$RELOGIN_FLAG" ] && RELOGIN=1
+
 # 1) SPLASH per prima, in background; ne teniamo il PID come "cancello".
 SPLASH_PID=""
-if command -v nxs-boot-splash >/dev/null 2>&1; then
+if [ -z "$RELOGIN" ] && command -v nxs-boot-splash >/dev/null 2>&1; then
   nxs-boot-splash &
   SPLASH_PID=$!
   # Vantaggio: lascia mappare e dipingere la splash su schermo nero PRIMA che
@@ -85,8 +91,14 @@ command -v nxs-launcherd >/dev/null 2>&1 && (sleep 1; nxs-launcherd >/tmp/nxs-la
 #      nota: siamo comunque dietro la splash, che dura ~6,5 s.
 (sleep 1.5; nxs-tool apply; nxs-panel) &
 
-# 6) Integrazione VirtualBox (mouse seamless + auto-resize). Innocuo altrove.
-command -v VBoxClient-all >/dev/null 2>&1 && VBoxClient-all 2>/dev/null &
+# 6) Integrazione VirtualBox (mouse seamless + auto-resize), SOLO dentro
+#    VirtualBox. Prima partiva sempre: su hardware reale (live da chiavetta)
+#    VBoxClient non trova il servizio del kernel di VirtualBox e lo segnala con
+#    una notifica sul desktop. Si riconosce la VM dai dati DMI del firmware.
+if grep -qiE "innotek|virtualbox" /sys/class/dmi/id/sys_vendor \
+     /sys/class/dmi/id/product_name 2>/dev/null; then
+  command -v VBoxClient-all >/dev/null 2>&1 && VBoxClient-all 2>/dev/null &
+fi
 
 # 5b) WiFi: riaggancia da solo una rete gia' usata. Con la persistenza attiva
 #     (NXSDATA) la configurazione conserva TUTTE le reti a cui ti sei collegato,
@@ -120,13 +132,18 @@ command -v nxs-screensaver-idle >/dev/null 2>&1 && (sleep 3; nxs-screensaver-idl
 # Anti-lockout: l'autologin resta + tty2 ha un login normale (da li':
 # rm /etc/nxs/greeter.on). Fail-open (|| true): se il greeter va in errore si
 # prosegue col desktop invece di restare su schermo nero.
-if [ -f /etc/nxs/greeter.on ] && command -v nxs-greeter >/dev/null 2>&1; then
-  echo "greeter: gate di login attivo (post-splash)"
+if { [ -f /etc/nxs/greeter.on ] || [ -n "$RELOGIN" ]; } && \
+   command -v nxs-greeter >/dev/null 2>&1; then
+  echo "greeter: login grafico (post-splash o rientro dopo logout)"
+  rm -f "$RELOGIN_FLAG"
   nxs-greeter || true
 fi
+rm -f "$RELOGIN_FLAG"
 
 # BENVENUTO poi PROFILO, in SEQUENZA: il selettore del profilo parte solo dopo
 # la chiusura della finestra di benvenuto, cosi' non la copre (il selettore e'
 # "sempre in primo piano"). Se l'utente ha tolto "Mostra all'avvio",
 # nxs-welcome --auto esce subito e il selettore compare come prima.
-( command -v nxs-welcome >/dev/null 2>&1 && nxs-welcome --auto; nxs-profile ) &
+if [ -z "$RELOGIN" ]; then
+  ( command -v nxs-welcome >/dev/null 2>&1 && nxs-welcome --auto; nxs-profile ) &
+fi
