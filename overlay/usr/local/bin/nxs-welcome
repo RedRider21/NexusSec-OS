@@ -1,22 +1,9 @@
 #!/bin/sh
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
-# NexusSec - messaggio di benvenuto nel terminale iniziale.
-echo "  Benvenuto in NexusSec OS  (base Alpine Linux)"
-echo
-echo "  Desktop:  click destro = menu    icone = applicazioni"
-echo "  Centro di Controllo:  Super+C  (o icona sul desktop)"
-echo
-echo "  Profilo operativo (Pen Testing / Forensics / OSINT / Web):"
-echo "    nxs-profile               selettore grafico del profilo"
-echo "    nxs-tool profiles         elenca i profili"
-echo "    nxs-tool profile web      attiva un profilo (apk add meta-pacchetto)"
-echo "    nxs-tool list             tool del profilo corrente"
-echo
-echo "  Pacchetti (Alpine apk):"
-echo "    doas apk update           aggiorna l'indice"
-echo "    apk search NOME           cerca un pacchetto"
-echo "    doas apk add NOME         installa"
-echo "    doas apk del NOME         rimuove"
-echo
-exec sh
+# nxs-welcome - finestra di benvenuto (primi passi, licenze, uso responsabile).
+#
+#   nxs-welcome           apre la finestra
+#   nxs-welcome --auto    all'avvio: esce subito se l'utente l'ha disattivata
+#                         ("Mostra all'avvio" tolta)
+exec env PYTHONPATH=/usr/local/lib python3 -m nxs_welcome "$@" >>/tmp/nxs-welcome.log 2>&1

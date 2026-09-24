@@ -1,0 +1,18 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Benvenuto e licenze
+Name[en]=Welcome and licenses
+Name[fr]=Bienvenue et licences
+Name[es]=Bienvenida y licencias
+Name[de]=Willkommen und Lizenzen
+Comment=Primi passi, licenze del software e uso responsabile degli strumenti
+Comment[en]=Getting started, software licenses and responsible use of the tools
+Comment[fr]=Premiers pas, licences des logiciels et usage responsable des outils
+Comment[es]=Primeros pasos, licencias del software y uso responsable de las herramientas
+Comment[de]=Erste Schritte, Softwarelizenzen und verantwortungsvolle Nutzung der Werkzeuge
+Exec=nxs-welcome
+TryExec=nxs-welcome
+Icon=nxs-logo
+Terminal=false
+Categories=System;Documentation;

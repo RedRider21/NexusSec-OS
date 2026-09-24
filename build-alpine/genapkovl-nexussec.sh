@@ -24,6 +24,19 @@ cp -a "$OVERLAY"/. "$tmp"/
 # dei .py aggiornati -> il sistema esegue codice VECCHIO (es. lo stile finestre
 # non cambia). Non devono MAI finire nell'apkovl: Python li rigenera a runtime.
 find "$tmp" -type d -name '__pycache__' -prune -exec rm -rf {} + 2>/dev/null || true
+
+# 1b) Licenze e avvisi DENTRO il sistema. L'AGPL (come la GPL) chiede che chi
+# riceve il software riceva anche il testo della licenza: prima non c'era nulla
+# nella ISO. Si copiano dalla radice del repo (fonte unica, niente duplicati):
+# /usr/share/doc/nexussec/ (li apre la finestra di benvenuto) e la licenza anche
+# in /usr/share/licenses/nexussec/ (posizione standard, come i pacchetti Alpine).
+REPO_ROOT="$(cd "$OVERLAY/.." && pwd)"
+mkdir -p "$tmp/usr/share/doc/nexussec" "$tmp/usr/share/licenses/nexussec"
+for f in LICENSE LICENSE-GPL-3.0.txt COPYRIGHT COMMERCIAL.md TRADEMARKS.md \
+         THIRD-PARTY.md CLA.md; do
+  [ -f "$REPO_ROOT/$f" ] && cp "$REPO_ROOT/$f" "$tmp/usr/share/doc/nexussec/$f"
+done
+[ -f "$REPO_ROOT/LICENSE" ] && cp "$REPO_ROOT/LICENSE" "$tmp/usr/share/licenses/nexussec/LICENSE"
 find "$tmp" -type f \( -name '*.pyc' -o -name '*.pyo' \) -delete 2>/dev/null || true
 
 # 1bis) /etc/apk/world: ELENCO DEI PACCHETTI INSTALLATI AL BOOT. L'init della

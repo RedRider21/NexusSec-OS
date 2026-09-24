@@ -52,6 +52,7 @@
     <menu id="nxs-tools"/>
     <menu id="nxs-security"/>
     <separator/>
+    <item label="Welcome and licenses" icon="/usr/local/share/nexussec/menu-icons/welcome.svg"><action name="Execute"><command>nxs-welcome</command></action></item>
     <item label="Restart Openbox" icon="/usr/local/share/nexussec/menu-icons/reload.svg"><action name="Reconfigure"/></item>
     <item label="Log out / Shut down…" icon="/usr/local/share/nexussec/menu-icons/shutdown.svg"><action name="Execute"><command>nxs-session</command></action></item>
   </menu>

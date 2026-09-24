@@ -57,6 +57,7 @@ ICONE = {
     "horus": ("find-location", TINTA),
     "reload": ("view-refresh", TINTA),
     "shutdown": ("system-shutdown", TINTA),
+    "welcome": ("help-about", TINTA),
 }
 
 _FILL = re.compile(r'(fill|stroke)="(?!none)[^"]*"')

@@ -77,6 +77,8 @@ TR = {
                      "Dateimanager"),
     "HORUS (OSINT globale)": ("HORUS (global OSINT)", "HORUS (OSINT mondial)",
                               "HORUS (OSINT global)", "HORUS (globales OSINT)"),
+    "Benvenuto e licenze": ("Welcome and licenses", "Bienvenue et licences",
+                            "Bienvenida y licencias", "Willkommen und Lizenzen"),
     "Riavvia Openbox": ("Restart Openbox", "Redémarrer Openbox", "Reiniciar Openbox",
                         "Openbox neu starten"),
     "Esci / Spegni…": ("Log out / Shut down…", "Déconnexion / Éteindre…",

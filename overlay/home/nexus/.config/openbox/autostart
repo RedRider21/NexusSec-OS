@@ -125,4 +125,8 @@ if [ -f /etc/nxs/greeter.on ] && command -v nxs-greeter >/dev/null 2>&1; then
   nxs-greeter || true
 fi
 
-nxs-profile &
+# BENVENUTO poi PROFILO, in SEQUENZA: il selettore del profilo parte solo dopo
+# la chiusura della finestra di benvenuto, cosi' non la copre (il selettore e'
+# "sempre in primo piano"). Se l'utente ha tolto "Mostra all'avvio",
+# nxs-welcome --auto esce subito e il selettore compare come prima.
+( command -v nxs-welcome >/dev/null 2>&1 && nxs-welcome --auto; nxs-profile ) &
