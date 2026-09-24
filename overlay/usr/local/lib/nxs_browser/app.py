@@ -23,6 +23,7 @@ tcz/ABI): WebKit2GTK e' la resa equivalente e nativa per lo stack NexusSec.
 """
 
 import json
+import os
 import shutil
 import socket
 import subprocess
@@ -196,7 +197,7 @@ paned > separator { background: transparent; min-width: 1px; min-height: 1px; }
 class Browser(Gtk.Window):
     """Finestra principale del browser."""
 
-    def __init__(self):
+    def __init__(self, start_url=None):
         super().__init__(title=APP_NAME)
         self.set_default_size(1200, 800)
         self.set_icon_name("nxs-browser")
@@ -232,7 +233,9 @@ class Browser(Gtk.Window):
 
         self._build_ui()
         self.apply_theme()
-        self.new_tab(config.get("homepage", "https://duckduckgo.com"))
+        # indirizzo passato da riga di comando (es. manuale dal benvenuto,
+        # relazione dei Casi forensi); altrimenti la pagina iniziale
+        self.new_tab(start_url or config.get("homepage", "https://duckduckgo.com"))
         self.connect("destroy", Gtk.main_quit)
         self.show_all()
         self._update_stealth_button()
@@ -537,6 +540,12 @@ class Browser(Gtk.Window):
                     WebKit2.CookiePersistentStorage.SQLITE)
             except Exception:
                 pass
+        # Download (Salva immagine/link/file): WebKit li salva gia' da solo in
+        # Scaricati, ma in silenzio. Qui si avvisa a fine download (o errore).
+        try:
+            ctx.connect("download-started", self._on_download_started)
+        except Exception:
+            pass
         self._contexts[stealth] = ctx
         return ctx
 
@@ -615,6 +624,46 @@ class Browser(Gtk.Window):
             pass
 
     # --------------------------------------------------------------- tabs
+    # ------------------------------------------------------------ download
+    def _on_download_started(self, _ctx, download):
+        download.connect("finished", self._on_download_finished)
+        download.connect("failed", self._on_download_failed)
+
+    def _download_path(self, download):
+        uri = download.get_destination() or ""
+        try:
+            return GLib.filename_from_uri(uri)[0] if uri.startswith("file:") else uri
+        except Exception:
+            return uri
+
+    def _notify(self, title, body, icon):
+        try:
+            subprocess.Popen(["notify-send", "-a", APP_NAME, "-i", icon, title, body],
+                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        except OSError:
+            pass
+
+    def _on_download_finished(self, download):
+        if getattr(download, "_nxs_failed", False):
+            return          # "finished" arriva anche dopo un errore: gia' avvisato
+        p = self._download_path(download)
+        self._notify(_t("br.dl.done"),
+                     _t("br.dl.done_body") % (os.path.basename(p) or p,
+                                              os.path.dirname(p)),
+                     "folder-download")
+
+    def _on_download_failed(self, download, error):
+        download._nxs_failed = True
+        # annullato dall'utente: nessun avviso d'errore
+        try:
+            if error.matches(WebKit2.DownloadError.quark(),
+                             WebKit2.DownloadError.CANCELLED_BY_USER):
+                return
+        except Exception:
+            pass
+        self._notify(_t("br.dl.failed"), str(getattr(error, "message", error)),
+                     "dialog-error")
+
     def new_tab(self, url=None, switch=True, view=None, stealth=None):
         # Se `view` e' gia' fornito, e' stato creato da WebKit per un popup /
         # link target=_blank (segnale "create"): NON va ricreato, e il caricamento
@@ -1249,8 +1298,23 @@ class Browser(Gtk.Window):
             pass
 
 
+def _url_da_argomenti(argv):
+    """Primo argomento non-opzione -> URL. Un percorso locale diventa file://,
+    un nome senza schema diventa https://."""
+    for a in argv:
+        if a.startswith("-"):
+            continue
+        if "://" in a or a.startswith(("about:", "data:")):
+            return a
+        if os.path.exists(a):
+            return Path(a).resolve().as_uri()
+        return "https://" + a
+    return None
+
+
 def main():
-    win = Browser()  # noqa: F841
+    import sys
+    win = Browser(_url_da_argomenti(sys.argv[1:]))  # noqa: F841
     Gtk.main()
 
 
