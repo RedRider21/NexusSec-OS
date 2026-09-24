@@ -163,6 +163,83 @@ def gen_family(fam_dir, suffix, accents):
     return made
 
 
+def mix(accent, bg, frac):
+    """Miscela accent e bg (frac = quota di accent), per tinte scure coordinate."""
+    a = [int(accent.lstrip("#")[i:i + 2], 16) for i in (0, 2, 4)]
+    b = [int(bg.lstrip("#")[i:i + 2], 16) for i in (0, 2, 4)]
+    return "#%02x%02x%02x" % tuple(
+        int(round(x * frac + y * (1 - frac))) for x, y in zip(a, b))
+
+
+# NexusSec-Core resta il tema HUD fisso per la DECORAZIONE delle finestre, ma il
+# MENU del tasto destro deve seguire il profilo come il resto del desktop (prima
+# restava ciano anche col profilo rosso/verde/ambra). Per ogni profilo diverso da
+# base si genera NexusSec-Core-<profilo>: stesso themerc, cambiano SOLO le
+# chiavi menu.* legate al colore. Base = NexusSec-Core originale (nessuna copia).
+CORE_MENU_KEYS = {
+    "menu.title.text.color": lambda a: a,
+    "menu.items.active.bg.color": lambda a: mix(a, "#0a1a26", 0.25),
+    "menu.items.active.text.color": lambda a: a,
+    "menu.bullet.image.color": lambda a: darken(a, 0.85),
+    "menu.bullet.selected.image.color": lambda a: a,
+    "menu.separator.color": lambda a: mix(a, "#0a1a26", 0.2),
+}
+MENU_ICONS = os.path.join(ROOT, "overlay/usr/local/share/nexussec/menu-icons")
+MENU_ICON_TINT = "#33b5d1"      # tinta delle icone di serie (make-menu-icons.py)
+
+
+def gen_core_menu(accents):
+    src = os.path.join(THEMES_OUT, "NexusSec-Core", "openbox-3")
+    with open(os.path.join(src, "themerc"), encoding="utf-8") as f:
+        righe = f.read().splitlines()
+    made = 0
+    for key, accent in accents.items():
+        if key == "base":
+            continue
+        out = []
+        for r in righe:
+            k = r.split(":", 1)[0].strip()
+            if k in CORE_MENU_KEYS and ":" in r:
+                r = "%s: %s" % (k, CORE_MENU_KEYS[k](accent))
+            out.append(r)
+        dest = os.path.join(THEMES_OUT, "NexusSec-Core-%s" % key, "openbox-3")
+        os.makedirs(dest, exist_ok=True)
+        with open(os.path.join(dest, "themerc"), "w", encoding="utf-8") as f:
+            f.write("# GENERATO da build/make-openbox-themes.py da NexusSec-Core:\n"
+                    "# cambiano solo i colori del menu (profilo %s).\n" % key)
+            f.write("\n".join(out) + "\n")
+        for x in os.listdir(src):
+            if x.endswith(".xbm"):
+                shutil.copyfile(os.path.join(src, x), os.path.join(dest, x))
+        made += 1
+        print("  + NexusSec-Core-%s  (menu %s)" % (key, accent))
+    return made
+
+
+def gen_menu_icons(accents):
+    """Icone del menu tinte col colore di ogni profilo: menu-icons-<profilo>/
+    (base usa menu-icons/ di serie). Le icone d'allarme restano rosa."""
+    made = 0
+    for key, accent in accents.items():
+        if key == "base":
+            continue
+        tinta = darken(accent, 0.85)
+        dest = MENU_ICONS + "-" + key
+        os.makedirs(dest, exist_ok=True)
+        for n in sorted(os.listdir(MENU_ICONS)):
+            if not n.endswith(".svg"):
+                continue
+            with open(os.path.join(MENU_ICONS, n), encoding="utf-8") as f:
+                svg = f.read()
+            svg = svg.replace(MENU_ICON_TINT, tinta).replace(
+                MENU_ICON_TINT.upper(), tinta)
+            with open(os.path.join(dest, n), "w", encoding="utf-8") as f:
+                f.write(svg)
+        made += 1
+        print("  + menu-icons-%s  (%s)" % (key, tinta))
+    return made
+
+
 def main():
     accents = load_accents()
     if not accents:
@@ -173,6 +250,10 @@ def main():
     for fam_dir, suffix in FAMILIES.items():
         print("Famiglia %s -> NexusSec-%s-*" % (fam_dir, suffix))
         total += gen_family(fam_dir, suffix, accents)
+    print("Famiglia core (solo menu) -> NexusSec-Core-*")
+    total += gen_core_menu(accents)
+    print("Icone del menu per profilo")
+    gen_menu_icons(accents)
     print("Fatto: %d temi generati in %s" % (total, THEMES_OUT))
     return 0
 

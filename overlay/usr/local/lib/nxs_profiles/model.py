@@ -695,7 +695,10 @@ def resolve_ob_theme(family: str | None = None, key: str | None = None) -> str:
     elif family == "cards":
         cand = "NexusSec-Cards-%s" % key
     else:
-        return "NexusSec-Core"
+        # core: decorazione HUD fissa, ma il MENU del tasto destro nel colore
+        # del profilo (NexusSec-Core-<profilo>; base = NexusSec-Core)
+        cand = "NexusSec-Core-%s" % key
+        return cand if _theme_installed(cand) else "NexusSec-Core"
     if not _theme_installed(cand):
         base = cand.rsplit("-", 1)[0] + "-base"
         cand = base if _theme_installed(base) else "NexusSec-Core"
@@ -763,10 +766,38 @@ def _manage_picom(enable: bool) -> None:
             pass
 
 
+MENU_XML = Path(os.environ.get(
+    "NXS_OB_MENU", str(HOME / ".config" / "openbox" / "menu.xml")))
+MENU_ICONS = "/usr/local/share/nexussec/menu-icons"
+
+
+def tint_menu_icons(key: str | None = None) -> bool:
+    """Punta le icone del menu del tasto destro alla serie tinta col profilo
+    (menu-icons-<profilo>/, generata al build; base = menu-icons/). Tocca SOLO i
+    percorsi delle nostre icone, quindi vale anche per un menu personalizzato.
+    True se il file e' cambiato (serve un reconfigure di Openbox)."""
+    k = key or current_profile()
+    dest = MENU_ICONS + ("-" + k if k != "base" else "")
+    if not os.path.isdir(dest):
+        dest = MENU_ICONS
+    try:
+        txt = MENU_XML.read_text()
+    except OSError:
+        return False
+    new = re.sub(re.escape(MENU_ICONS) + r"(-[a-z]+)?/", dest + "/", txt)
+    if new == txt:
+        return False
+    try:
+        MENU_XML.write_text(new)
+    except OSError:
+        return False
+    return True
+
+
 def set_window_theme(key: str | None = None, reconfigure: bool = True) -> None:
     """Applica il tema finestre Openbox COORDINATO col profilo.
     La famiglia scelta (~/.config/nxs/theme) decide QUALE tema statico usare:
-    'core' = HUD scuro fisso; 'retro'/'cards' = NexusSec-<Fam>-<profilo>, cosi'
+    'core' = HUD scuro fisso (menu nel colore del profilo); 'retro'/'cards' = NexusSec-<Fam>-<profilo>, cosi'
     la decorazione segue il colore del profilo restando un file STATICO e curato
     (nessuna generazione a runtime: vedi CLAUDE.md). Per 'cards' (stile macOS)
     sposta anche i pulsanti a SINISTRA (titleLayout) e accende picom per gli
@@ -775,6 +806,7 @@ def set_window_theme(key: str | None = None, reconfigure: bool = True) -> None:
     fam = theme_family()
     name = resolve_ob_theme(fam, key)
     layout = OB_TITLELAYOUT_LEFT if fam == "cards" else OB_TITLELAYOUT_DEFAULT
+    tint_menu_icons(key)                 # icone del menu: ricaricate col reconfigure
     _apply_rc(name, layout, reconfigure=reconfigure)
     _manage_picom(_picom_wanted())
 

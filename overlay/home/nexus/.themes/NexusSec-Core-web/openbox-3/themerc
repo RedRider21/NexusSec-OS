@@ -1,0 +1,107 @@
+# GENERATO da build/make-openbox-themes.py da NexusSec-Core:
+# cambiano solo i colori del menu (profilo web).
+# NexusSec-Core - tema finestre Openbox (STATICO, curato).
+# Definisce SOLO la decorazione gestita dal window manager: barra del titolo,
+# bordo, pulsanti, maniglia. La grafica INTERNA delle finestre e' gestita da
+# GTK (nxs_cc/common.py + ~/.config/nxs/window-style.css) e resta "moderna".
+# Palette NexusSec: #050a14 sfondo, #0a1a26 pannello, #00e5ff accent,
+# #c8f5ff testo, #5a8a9a tenue, #1a3a52/#17475f bordi. Font titolo: Chakra Petch
+# (impostato in rc.xml). NON generato a runtime: e' un file fisso e affidabile.
+
+# --- Geometria ---------------------------------------------------------------
+padding.width: 9
+padding.height: 6
+border.width: 1
+window.client.padding.width: 0
+window.client.padding.height: 0
+window.handle.width: 3
+
+# --- Bordo finestra: sottile e discreto (ciano-scuro), non sparato -----------
+window.active.border.color: #17475f
+window.inactive.border.color: #14222e
+
+# --- Maniglia di resize (bassa) + grip d'angolo ------------------------------
+window.active.handle.bg: flat solid
+window.active.handle.bg.color: #0a1a26
+window.inactive.handle.bg: flat solid
+window.inactive.handle.bg.color: #0a141c
+window.active.grip.bg: flat solid
+window.active.grip.bg.color: #17475f
+window.inactive.grip.bg: flat solid
+window.inactive.grip.bg.color: #14222e
+
+# --- Barra del titolo --------------------------------------------------------
+# Attiva: gradiente verticale dalla velatura d'accento in cima al pannello,
+# cosi' la barra "appartiene" allo stile HUD senza essere squillante.
+window.active.title.bg: gradient vertical
+window.active.title.bg.color: #123f57
+window.active.title.bg.colorTo: #0a1a26
+window.inactive.title.bg: flat solid
+window.inactive.title.bg.color: #0a141c
+
+# Separatore sotto la barra del titolo (filetto d'accento tenue)
+window.active.title.separator.color: #17475f
+window.inactive.title.separator.color: #14222e
+
+# --- Testo del titolo (font Chakra Petch da rc.xml) --------------------------
+window.active.label.text.color: #00e5ff
+window.inactive.label.text.color: #5a8a9a
+window.active.label.bg: parentrelative
+window.inactive.label.bg: parentrelative
+window.label.text.justify: center
+
+# --- Pulsanti (minimizza / massimizza / chiudi) ------------------------------
+# Solo colore dell'icona (le forme sono i simboli di default di Openbox):
+# accent su attiva, tenue su inattiva, chiaro all'hover.
+window.active.button.unpressed.image.color: #00e5ff
+window.inactive.button.unpressed.image.color: #5a8a9a
+window.active.button.hover.image.color: #c8f5ff
+window.inactive.button.hover.image.color: #9fc4d2
+window.active.button.pressed.image.color: #ffffff
+window.active.button.disabled.image.color: #2a4452
+window.inactive.button.disabled.image.color: #223440
+# Box morbido dietro il pulsante sotto il cursore (accenno di evidenza)
+window.active.button.hover.bg: flat solid
+window.active.button.hover.bg.color: #17475f
+window.active.button.pressed.bg: flat solid
+window.active.button.pressed.bg.color: #00334a
+
+# --- Menu --------------------------------------------------------------------
+# Menu del tasto destro: stessa palette del pannello. Intestazione "NexusSec"
+# (separator label) su fondo piu' scuro con l'accento; voce attiva in ciano;
+# separatori con margini per dare aria; bordo con una punta d'accento.
+# Icone delle voci: SVG gia' tinti (menu.xml), freccia sottomenu: bullet.xbm.
+# Bordo spesso nel tono del fondo = margine interno uniforme: Openbox non ha
+# un padding dedicato alle voci del menu (solo ai separatori).
+menu.border.width: 6
+menu.border.color: #0d2130
+menu.overlap.x: -1
+menu.overlap.y: 0
+menu.title.bg: flat solid
+menu.title.bg.color: #050f18
+menu.title.text.color: #a06bff
+menu.title.text.justify: center
+menu.items.bg: flat solid
+menu.items.bg.color: #0a1a26
+menu.items.text.color: #c8f5ff
+menu.items.disabled.text.color: #5a8a9a
+menu.items.active.bg: flat solid
+menu.items.active.bg.color: #302e5c
+menu.items.active.text.color: #a06bff
+menu.bullet.image.color: #885ad8
+menu.bullet.selected.image.color: #a06bff
+menu.separator.color: #282a51
+menu.separator.width: 1
+menu.separator.padding.width: 10
+menu.separator.padding.height: 4
+
+# --- OSD (indicatori a schermo) ----------------------------------------------
+osd.border.width: 1
+osd.border.color: #17475f
+osd.bg: flat solid
+osd.bg.color: #0a1a26
+osd.label.text.color: #00e5ff
+osd.hilight.bg: flat solid
+osd.hilight.bg.color: #00e5ff
+osd.unhilight.bg: flat solid
+osd.unhilight.bg.color: #1a3a52

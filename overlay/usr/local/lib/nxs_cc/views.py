@@ -1420,7 +1420,7 @@ def open_openbox_theme(_btn=None):
         name = selected_theme()
         if not name:
             return
-        if name == "NexusSec-Core":
+        if name == "NexusSec-Core" or name.startswith("NexusSec-Core-"):
             info_dialog(_t("v.not_removable"),
                         _t("v.core_default"),
                         parent=win)

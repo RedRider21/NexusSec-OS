@@ -20,14 +20,21 @@ sync_menu() {
   skel=/usr/local/share/nexussec/openbox-menu
   menu="$HOME/.config/openbox/menu.xml"
   [ -f "$skel/menu.$1.xml" ] || return 0
+  # Le icone puntano alla serie tinta col profilo (menu-icons-<profilo>/, vedi
+  # nxs_profiles.model.tint_menu_icons): per riconoscere un menu "di serie" il
+  # confronto si fa a percorsi icone normalizzati.
+  norm="${TMPDIR:-/tmp}/nxs-menu-norm.$$"
   if [ -f "$menu" ]; then
+    sed 's#/nexussec/menu-icons-[a-z]*/#/nexussec/menu-icons/#g' "$menu" > "$norm"
     stock=0
-    for f in "$skel"/menu.*.xml; do cmp -s "$menu" "$f" && { stock=1; break; }; done
-    [ "$stock" = 1 ] || return 0
-    cmp -s "$menu" "$skel/menu.$1.xml" && return 0      # gia' giusto
+    for f in "$skel"/menu.*.xml; do cmp -s "$norm" "$f" && { stock=1; break; }; done
+    if [ "$stock" = 1 ] && cmp -s "$norm" "$skel/menu.$1.xml"; then stock=2; fi
+    rm -f "$norm"
+    [ "$stock" = 1 ] || return 0                          # personalizzato o gia' giusto
   fi
   mkdir -p "$(dirname "$menu")"
   cp "$skel/menu.$1.xml" "$menu" 2>/dev/null || return 0
+  python3 -c 'from nxs_profiles import model; model.tint_menu_icons()' 2>/dev/null || true
   # Openbox rilegge il menu solo su reconfigure (se non gira, nessun effetto)
   [ -n "${DISPLAY:-}" ] && command -v openbox >/dev/null 2>&1 && openbox --reconfigure 2>/dev/null || true
 }
