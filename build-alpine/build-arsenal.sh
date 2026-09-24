@@ -11,6 +11,11 @@
 #
 #   build-alpine/build-arsenal.sh [x86_64|aarch64]
 #
+# NXS_ARSENAL_REUSE=DIR: .apk gia' compilati e firmati con la stessa chiave (es.
+# estratti dall'apkovl della ISO della stessa arch) da includere senza
+# ricompilarli: finiscono nello stesso indice. Utile su aarch64, dove gcc
+# emulato crolla a caso sui pacchetti grossi (bulk-extractor).
+#
 # Output: out/arsenal/<arch>/  (*.apk + APKINDEX.tar.gz), da copiare in
 # docs/<arch>/ sul branch main. Su aarch64 gira emulato (qemu): lento, e gcc
 # puo' crollare a caso -> ritentativi come in build-in-container.sh.
@@ -26,11 +31,13 @@ RT="$(command -v podman || command -v docker)"
 TOOLS="${NXS_ARSENAL_TOOLS:-dmitry foremost medusa chkrootkit rkhunter bulk-extractor dirb scalpel}"
 mkdir -p "$ROOT/out/arsenal"
 rm -rf "$ROOT/out/arsenal/$ARCH"
+REUSE="${NXS_ARSENAL_REUSE:-}"
+if [ -n "$REUSE" ]; then REUSE="$(cd "$REUSE" && pwd)"; else REUSE="$ROOT/out/arsenal/.vuoto"; mkdir -p "$REUSE"; fi
 
 # Niente apostrofi nel blocco sh -ec (chiuderebbero gli apici).
 "$RT" run --rm --arch="$PODMAN_ARCH" \
   -e TOOLS="$TOOLS" -e NXS_JOBS="${NXS_JOBS:-}" \
-  -v "$ROOT:/work:ro" -v "$ROOT/out/arsenal:/out" \
+  -v "$ROOT:/work:ro" -v "$ROOT/out/arsenal:/out" -v "$REUSE:/reuse:ro" \
   docker.io/library/alpine:edge sh -ec '
   # testing: serve per alcune dipendenze di build (es. tre-dev di scalpel)
   echo https://dl-cdn.alpinelinux.org/alpine/edge/testing >> /etc/apk/repositories
@@ -47,6 +54,14 @@ rm -rf "$ROOT/out/arsenal/$ARCH"
      > /root/.abuild/abuild.conf
   [ -n "$NXS_JOBS" ] && export JOBS="$NXS_JOBS"
   mkdir -p /root/arsenal
+  # pacchetti riusati: nella cartella del repo PRIMA delle build, cosi abuild
+  # li mette nello stesso indice che firma alla fine
+  arch=$(apk --print-arch)
+  mkdir -p /root/packages/arsenal/$arch
+  for f in /reuse/*.apk; do
+    [ -f "$f" ] || continue
+    cp "$f" /root/packages/arsenal/$arch/ && echo "[arsenal] riuso $(basename $f)"
+  done
   mancanti=""
   for p in $TOOLS; do
     cp -a /work/aports/$p /root/arsenal/
@@ -59,7 +74,6 @@ rm -rf "$ROOT/out/arsenal/$ARCH"
     done
     [ -n "$fatto" ] || mancanti="$mancanti $p"
   done
-  arch=$(apk --print-arch)
   mkdir -p /out/$arch
   cp /root/packages/arsenal/$arch/*.apk /root/packages/arsenal/$arch/APKINDEX.tar.gz /out/$arch/
   echo "[arsenal] pronti in out/arsenal/$arch:"; ls -l /out/$arch
