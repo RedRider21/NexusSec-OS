@@ -69,8 +69,10 @@ window.active.button.pressed.bg.color: #00334a
 # (separator label) su fondo piu' scuro con l'accento; voce attiva in ciano;
 # separatori con margini per dare aria; bordo con una punta d'accento.
 # Icone delle voci: SVG gia' tinti (menu.xml), freccia sottomenu: bullet.xbm.
-menu.border.width: 1
-menu.border.color: #1f6480
+# Bordo spesso nel tono del fondo = margine interno uniforme: Openbox non ha
+# un padding dedicato alle voci del menu (solo ai separatori).
+menu.border.width: 6
+menu.border.color: #0d2130
 menu.overlap.x: -1
 menu.overlap.y: 0
 menu.title.bg: flat solid

@@ -116,3 +116,7 @@ window.inactive.button.toggled.image.color: #23d18b
 menu.separator.width: 1
 menu.separator.padding.width: 10
 menu.separator.padding.height: 4
+
+# Bordo spesso nel tono del fondo = margine interno uniforme del menu
+menu.border.width: 6
+menu.border.color: #efefec
