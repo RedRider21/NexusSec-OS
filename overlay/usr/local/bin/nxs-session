@@ -23,12 +23,17 @@ try:
     apply_css()
 except Exception:
     pass
+try:
+    from nxs_i18n import t as _t
+except Exception:                       # noqa: BLE001
+    def _t(chiave, **kw):               # ripiego: mostra la chiave
+        return chiave
 
 ACTIONS = [
-    ("system-lock-screen-symbolic", "Blocca", ["nxs-screensaver"]),
-    ("system-log-out-symbolic", "Esci", ["openbox", "--exit"]),
-    ("system-reboot-symbolic", "Riavvia", ["nxs-shutdown", "reboot"]),
-    ("system-shutdown-symbolic", "Spegni", ["nxs-shutdown", "poweroff"]),
+    ("system-lock-screen-symbolic", _t("session.lock"), ["nxs-screensaver"]),
+    ("system-log-out-symbolic", _t("session.logout"), ["openbox", "--exit"]),
+    ("system-reboot-symbolic", _t("session.reboot"), ["nxs-shutdown", "reboot"]),
+    ("system-shutdown-symbolic", _t("session.poweroff"), ["nxs-shutdown", "poweroff"]),
 ]
 
 
@@ -40,7 +45,7 @@ def _run(cmd, win):
 
 def main():
     win = Gtk.Window(type=Gtk.WindowType.TOPLEVEL)
-    win.set_title("Sessione NexusSec")
+    win.set_title(_t("session.wtitle"))
     win.set_decorated(False)
     win.set_position(Gtk.WindowPosition.CENTER_ALWAYS)
     win.set_keep_above(True)
@@ -56,7 +61,7 @@ def main():
     win.add(outer)
 
     title = Gtk.Label()
-    title.set_markup("<b>Termina sessione</b>")
+    title.set_markup("<b>%s</b>" % _t("session.title"))
     title.set_xalign(0.5)
     outer.pack_start(title, False, False, 0)
 
@@ -78,7 +83,7 @@ def main():
         b.connect("clicked", lambda _w, c=cmd: _run(c, win))
         row.pack_start(b, False, False, 0)
 
-    cancel = Gtk.Button(label="Annulla (Esc)")
+    cancel = Gtk.Button(label=_t("session.cancel"))
     cancel.get_style_context().add_class("nxs-menu-item")
     cancel.connect("clicked", lambda _w: win.destroy())
     outer.pack_end(cancel, False, False, 0)

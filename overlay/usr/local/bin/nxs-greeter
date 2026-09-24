@@ -26,6 +26,11 @@ import cairo  # noqa: E402
 # Tema NexusSec (accent/CSS di base), se disponibile.
 sys.path.insert(0, "/usr/local/lib")
 try:
+    from nxs_i18n import t as _t
+except Exception:                       # noqa: BLE001
+    def _t(chiave, **kw):               # ripiego: mostra la chiave
+        return chiave
+try:
     from nxs_cc.common import apply_css
     apply_css()
 except Exception:
@@ -182,16 +187,16 @@ class Greeter(Gtk.Window):
         card.pack_start(title, False, False, 0)
         sub = Gtk.Label()
         sub.get_style_context().add_class("nxs-gr-sub")
-        sub.set_markup("<small>Accedi per continuare</small>")
+        sub.set_markup("<small>%s</small>" % _t("gr.subtitle"))
         card.pack_start(sub, False, False, 0)
 
         self.user = Gtk.Entry()
-        self.user.set_placeholder_text("Utente")
+        self.user.set_placeholder_text(_t("v.user"))
         self.user.set_text(AUTH_USER_DEFAULT)
         card.pack_start(self.user, False, False, 0)
 
         self.pw = Gtk.Entry()
-        self.pw.set_placeholder_text("Password")
+        self.pw.set_placeholder_text(_t("v.password"))
         self.pw.set_visibility(False)
         self.pw.set_input_purpose(Gtk.InputPurpose.PASSWORD)
         self.pw.set_icon_from_icon_name(Gtk.EntryIconPosition.SECONDARY,
@@ -204,7 +209,7 @@ class Greeter(Gtk.Window):
         self.err.get_style_context().add_class("nxs-gr-err")
         card.pack_start(self.err, False, False, 0)
 
-        btn = Gtk.Button(label="Accedi")
+        btn = Gtk.Button(label=_t("gr.login"))
         btn.get_style_context().add_class("nxs-gr-login")
         btn.connect("clicked", self._on_login)
         card.pack_start(btn, False, False, 0)
@@ -293,7 +298,7 @@ class Greeter(Gtk.Window):
                 print("AUTH-OK")
             self.destroy()
         else:
-            self.err.set_text("Password errata")
+            self.err.set_text(_t("gr.wrong"))
             self.pw.set_text("")
             self.pw.grab_focus()
 

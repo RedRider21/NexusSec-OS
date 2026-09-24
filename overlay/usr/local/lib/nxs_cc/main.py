@@ -71,7 +71,7 @@ def safe(handler):
         except Exception as e:           # noqa: BLE001
             traceback.print_exc()
             try:
-                info_dialog("Errore", "%s: %s" % (type(e).__name__, e),
+                info_dialog(_t("v.error"), "%s: %s" % (type(e).__name__, e),
                             level="error")
             except Exception:
                 pass
@@ -329,8 +329,8 @@ def run() -> int:
             win.show_all()
     except Exception:                    # noqa: BLE001
         traceback.print_exc()
-        info_dialog("Errore di avvio",
-                    "Vedi /tmp/nxs-cc.log per i dettagli.", level="error")
+        info_dialog(_t("cc.start_error"),
+                    _t("cc.start_error_body"), level="error")
         return 1
     # Dopo un cambio schermi (nxs-screens) la finestra si ricentra sul monitor
     # attivo da sola, senza chiudere e riaprire.

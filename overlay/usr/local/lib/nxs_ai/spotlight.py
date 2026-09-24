@@ -20,6 +20,12 @@ sys.path.insert(0, "/usr/local/lib")
 from nxs_ai import agent, backend, config  # noqa: E402
 
 try:
+    from nxs_i18n import t as _t
+except Exception:                       # noqa: BLE001
+    def _t(chiave, **kw):               # ripiego: mostra la chiave
+        return chiave
+
+try:
     from nxs_cc.common import apply_css       # stile coerente col resto
 except Exception:                             # noqa: BLE001
     def apply_css():
@@ -39,7 +45,7 @@ class Spotlight(Gtk.Window):
         self.add(box)
 
         self.entry = Gtk.Entry()
-        self.entry.set_placeholder_text("Chiedi all'assistente IA…  (Invio per inviare, Esc per chiudere)")
+        self.entry.set_placeholder_text(_t("ai.spot_ph"))
         self.entry.connect("activate", self._on_send)
         box.pack_start(self.entry, False, False, 0)
 

@@ -8,6 +8,12 @@ import shutil
 import subprocess
 from pathlib import Path
 
+try:
+    from nxs_i18n import t as _t
+except Exception:                       # noqa: BLE001
+    def _t(chiave, **kw):               # ripiego: mostra la chiave
+        return chiave
+
 import gi
 gi.require_version("Gtk", "3.0")
 gi.require_version("Gio", "2.0")
@@ -636,7 +642,7 @@ def run_bg(cmd: list[str]) -> None:
     try:
         subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     except FileNotFoundError as e:
-        info_dialog("Comando non trovato", str(e), level="warn")
+        info_dialog(_t("cc.cmd_not_found"), str(e), level="warn")
 
 
 def run_capture(cmd: list[str], timeout: int = 6) -> str:

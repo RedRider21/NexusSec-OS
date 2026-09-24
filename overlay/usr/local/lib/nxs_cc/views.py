@@ -669,7 +669,7 @@ def open_network(_btn=None):
 
         def finish(txt):
             spinner.stop()
-            ping_lbl.set_text("Connettivita': " + txt)
+            ping_lbl.set_text(_t("v.conn_prefix") % txt)
             return False
 
         threading.Thread(target=worker, daemon=True).start()
@@ -702,24 +702,24 @@ def open_network(_btn=None):
                 f"{{ [ -n '{gw}' ] && {{ route del default 2>/dev/null; route add default gw {gw}; }}; }}; "
                 f"{{ [ -n '{dns}' ] && echo 'nameserver {dns}' > /etc/resolv.conf; }}; true"
             )
-            descr = f"IP statico {ip}/{mask} su {iface}"
+            descr = _t("v.net_static_descr") % (ip, mask, iface)
         else:
             script = (
                 f"pkill -f 'udhcpc.*{iface}' 2>/dev/null; "
                 f"ifconfig {iface} up; "
                 f"udhcpc -b -i {iface} -t 8 -T 2 2>&1"
             )
-            descr = f"DHCP su {iface}"
+            descr = _t("v.net_dhcp_descr") % iface
 
         spinner.start()
-        ping_lbl.set_text("Applico: " + descr + " ...")
+        ping_lbl.set_text(_t("v.net_applying") % descr)
 
         def worker():
             out = run_capture(["sudo", "sh", "-c", script], timeout=25)
             def finish():
                 spinner.stop()
                 refresh()
-                ping_lbl.set_text("Applicato: " + descr)
+                ping_lbl.set_text(_t("v.net_applied") % descr)
                 if out:
                     print("[rete] " + out, flush=True)
                 return False
@@ -1548,7 +1548,7 @@ def open_text_editor(title: str, path: Path, on_save=None):
             Path(path).write_text(buf.get_text(s, e, False))
             if on_save is not None:
                 on_save()
-            info_dialog(_t("v.saved"), f"Scritto: {path}", parent=win)
+            info_dialog(_t("v.saved"), _t("v.written") % path, parent=win)
         except OSError as err:
             info_dialog(_t("v.error"), str(err), level="error", parent=win)
 
@@ -1891,14 +1891,14 @@ def open_keyboard(_btn=None):
         uni = Gdk.keyval_to_unicode(ev.keyval)
         ch = chr(uni) if uni and uni >= 32 else ""
         mods = []
-        if ev.state & Gdk.ModifierType.CONTROL_MASK: mods.append("Ctrl")
-        if ev.state & Gdk.ModifierType.MOD1_MASK:    mods.append("Alt")
-        if ev.state & Gdk.ModifierType.SHIFT_MASK:   mods.append("Shift")
-        if ev.state & Gdk.ModifierType.MOD4_MASK:    mods.append("Super")
+        # nomi dei modificatori tradotti (es. Strg/Umschalt in tedesco)
+        if ev.state & Gdk.ModifierType.CONTROL_MASK: mods.append(_t("k.ctrl"))
+        if ev.state & Gdk.ModifierType.MOD1_MASK:    mods.append(_t("k.alt"))
+        if ev.state & Gdk.ModifierType.SHIFT_MASK:   mods.append(_t("k.shift"))
+        if ev.state & Gdk.ModifierType.MOD4_MASK:    mods.append(_t("k.super"))
         modstr = " + ".join(mods + [name]) if mods else name
-        car = f"  carattere: '{ch}'" if ch else ""
-        detail.set_text(
-            f"tasto: {modstr}   keysym: {name}   keycode: {ev.hardware_keycode}{car}")
+        car = (_t("v.kbd_char") % ch) if ch else ""
+        detail.set_text(_t("v.kbd_detail") % (modstr, name, ev.hardware_keycode) + car)
         return False  # lascia che l'entry riceva comunque il tasto
 
     entry.connect("key-press-event", on_key)
@@ -3122,8 +3122,7 @@ def open_users(_btn=None):
                     info_dialog(_t("v.done"), _t("v.pw_updated") % user, parent=win)
                 else:
                     info_dialog(_t("v.pw_needed"),
-                                "Non applicata dalla GUI (doas protetto). Da terminale:\n"
-                                "  doas nxs-users passwd %s" % user,
+                                _t("v.pw_not_applied") % user,
                                 level="error", parent=win)
             except (OSError, subprocess.SubprocessError):
                 info_dialog(_t("v.error"), _t("v.nxs_users_fail"),
