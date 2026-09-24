@@ -14,3 +14,6 @@ __pycache__/
 *.pyc
 # chiave privata di firma: MAI in git (resta solo locale)
 build-alpine/arsenal-keys/*.rsa
+
+# documenti di lavoro personali (strategia, analisi legali): mai pubblicati
+privato/
