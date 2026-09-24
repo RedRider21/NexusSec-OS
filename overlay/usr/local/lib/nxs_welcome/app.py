@@ -25,7 +25,7 @@ import sys
 
 import gi
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk, Gdk  # noqa: E402
+from gi.repository import Gtk, Gdk, GLib  # noqa: E402
 
 try:
     from nxs_cc.common import apply_css
@@ -137,7 +137,40 @@ class Benvenuto(Gtk.Window):
         self.set_icon_name("nxs-logo")
         self.connect("destroy", Gtk.main_quit)
         self.connect("key-press-event", self._tasto)
+        self._stack = None
+        self._lingua = self._lingua_attiva()
+        self._costruisci()
+        # La lingua si puo' cambiare mentre la finestra e' aperta (anche dal suo
+        # pulsante "Lingua"): si controlla ogni secondo e, se cambia, si
+        # ricostruisce il contenuto restando sulla stessa scheda.
+        GLib.timeout_add_seconds(1, self._controlla_lingua)
 
+    @staticmethod
+    def _lingua_attiva():
+        try:
+            import nxs_i18n
+            nxs_i18n._active = None          # rilegge ~/.config/nxs/lang
+            nxs_i18n._cache.clear()
+            return nxs_i18n.current_lang()
+        except Exception:                    # noqa: BLE001
+            return ""
+
+    def _controlla_lingua(self):
+        ora = self._lingua_attiva()
+        if ora and ora != self._lingua:
+            self._lingua = ora
+            pagina = self._stack.get_visible_child_name() if self._stack else None
+            self._costruisci()
+            if pagina:
+                self._stack.set_visible_child_name(pagina)
+        return True                          # continua a controllare
+
+    def _costruisci(self):
+        vecchio = self.get_child()
+        if vecchio is not None:
+            self.remove(vecchio)
+            vecchio.destroy()
+        self.set_title(_t("wel.wtitle"))
         outer = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
         self.add(outer)
 
@@ -159,6 +192,7 @@ class Benvenuto(Gtk.Window):
 
         # --- pagine -------------------------------------------------------
         stack = Gtk.Stack()
+        self._stack = stack
         stack.set_transition_type(Gtk.StackTransitionType.CROSSFADE)
         stack.add_titled(self._primi_passi(), "start", _t("wel.tab.start"))
         stack.add_titled(self._licenze(), "licenses", _t("wel.tab.licenses"))
@@ -186,6 +220,7 @@ class Benvenuto(Gtk.Window):
         chiudi.connect("clicked", lambda _w: self.destroy())
         foot.pack_end(chiudi, False, False, 0)
         outer.pack_start(foot, False, False, 0)
+        outer.show_all()
 
     def _tasto(self, _w, ev):
         if ev.keyval == Gdk.KEY_Escape:
