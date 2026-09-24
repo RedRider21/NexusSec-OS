@@ -247,6 +247,17 @@ ricorrenti su **musl + gcc 15**:
   emulata). NON rimuoverli. Lo sblocco mixer (`nxs-audio-unmute`, ALSA+wpctl con
   ritentativi, in autostart) copre l'auto-mute ma NON basta senza il firmware.
 
+- **Logout = display manager, non finestra sopra al desktop** (2026-09-24).
+  `.profile` fa girare `startx` in loop; al logout crea
+  `$XDG_RUNTIME_DIR/nxs-relogin`. `.xinitrc` vede il flag e mostra
+  `nxs-greeter` su **X nudo** (sfondo del profilo con feh sulla radice, NESSUN
+  Openbox/pannello/pcmanfm dietro) e solo dopo l'accesso avvia la sessione;
+  l'autostart salta splash/benvenuto/selettore e NON ripete il greeter. Prima
+  il greeter partiva dall'autostart a desktop gia' costruito: si rivedeva il
+  desktop per un attimo e il login sembrava finto. Senza WM `fullscreen()` non
+  basta: il greeter si dimensiona e prende il fuoco da se'. Codici d'uscita:
+  0 accesso, 3 Riavvia/Spegni (non aprire la sessione), altro = fail-open.
+
 ### Gotcha stile finestre / bytecode (2026-08-26, DURAMENTE imparati)
 
 - **`.pyc` stale nell'apkovl = codice VECCHIO eseguito.** Non committare/impac-
