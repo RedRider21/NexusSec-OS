@@ -112,6 +112,7 @@ depends="
 	iw
 	util-linux-misc
 	xrandr
+	xinput
 	iproute2
 	bridge
 	tor

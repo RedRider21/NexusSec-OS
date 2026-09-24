@@ -2469,7 +2469,8 @@ class Panel(Gtk.Window):
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
         box.get_style_context().add_class("nxs-calbox")
         box.set_size_request(300, -1)
-        title = Gtk.Label(); title.set_markup("<b>Schermi</b>"); title.set_xalign(0)
+        title = Gtk.Label(); title.set_markup("<b>%s</b>" % _t("pn.scr.title"))
+        title.set_xalign(0)
         box.pack_start(title, False, False, 0)
 
         outs = []
@@ -2479,12 +2480,13 @@ class Panel(Gtk.Window):
                 outs.append((p[0], p[2], p[3]))       # nome, primary?, WxH
 
         if not outs:
-            lbl = Gtk.Label(label="Nessuno schermo rilevato."); lbl.set_xalign(0)
+            lbl = Gtk.Label(label=_t("pn.scr.none")); lbl.set_xalign(0)
             box.pack_start(lbl, False, False, 0)
         else:
             if len(outs) >= 2:
                 row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=4)
-                for lbl, act in (("Estendi", ["extend"]), ("Duplica", ["mirror"])):
+                for lbl, act in ((_t("pn.scr.extend"), ["extend"]),
+                                 (_t("pn.scr.mirror"), ["mirror"])):
                     b = Gtk.Button(label=lbl)
                     b.get_style_context().add_class("nxs-menu-item")
                     b.connect("clicked", lambda _w, a=act: self._screens_apply(a))
@@ -2495,27 +2497,56 @@ class Panel(Gtk.Window):
                 oc.get_style_context().add_class("nxs-dt-row")
                 hdr = Gtk.Label(); hdr.set_xalign(0)
                 hdr.set_markup("<b>%s</b>%s  <small>%s</small>" % (
-                    name, "  (principale)" if prim == "primary" else "", res))
+                    name, _t("pn.scr.primary") if prim == "primary" else "", res))
                 oc.pack_start(hdr, False, False, 0)
-                # Risoluzioni: Gtk.ComboBoxText nativa (ripristinata) - scorre in
-                # modo affidabile, anche col touchpad. Scegli la risoluzione e
-                # premi Applica.
+                # Risoluzioni: Gtk.ComboBoxText nativa - scorre in modo
+                # affidabile, anche col touchpad. Scegli e premi Applica.
                 r = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=4)
                 combo = Gtk.ComboBoxText()
                 modes = self._run_out(["nxs-screens", "modes", name]).split()
                 for m in modes:
                     combo.append_text(m)
                 if modes:
-                    combo.set_active(0)
+                    # quella in uso, non la prima dell'elenco: altrimenti
+                    # "Applica" senza toccare nulla cambiava risoluzione
+                    cur = res.split("@")[0]
+                    combo.set_active(modes.index(cur) if cur in modes else 0)
                 r.pack_start(combo, True, True, 0)
-                ba = Gtk.Button(label="Applica")
+                ba = Gtk.Button(label=_t("pn.scr.apply"))
                 ba.get_style_context().add_class("nxs-menu-item")
                 ba.connect("clicked", lambda _w, n=name, c=combo:
                            self._screens_apply(["mode", n, c.get_active_text() or ""]))
                 r.pack_start(ba, False, False, 0)
                 oc.pack_start(r, False, False, 0)
+
+                # Orientamento (da Vesper): un monitor si puo' montare in
+                # verticale, e qui - dove si sceglie la risoluzione - e' il
+                # posto naturale per girarlo. C'e' anche nel Centro di Controllo.
+                rr = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=4)
+                rlab = Gtk.Label(label=_t("pn.scr.orientation"))
+                rlab.set_xalign(0)
+                rr.pack_start(rlab, False, False, 0)
+                rot = Gtk.ComboBoxText()
+                for rid, rtxt in (("normal", _t("pn.scr.rot.normal")),
+                                  ("left", _t("pn.scr.rot.left")),
+                                  ("right", _t("pn.scr.rot.right")),
+                                  ("inverted", _t("pn.scr.rot.inverted"))):
+                    rot.append(rid, rtxt)
+                cur_rot = (self._run_out(["nxs-screens", "rotation", name])
+                           or "normal").strip()
+                rot.set_active_id(cur_rot if cur_rot in
+                                  ("normal", "left", "right", "inverted")
+                                  else "normal")
+                rr.pack_start(rot, True, True, 0)
+                br = Gtk.Button(label=_t("pn.scr.apply"))
+                br.get_style_context().add_class("nxs-menu-item")
+                br.connect("clicked", lambda _w, n=name, c=rot:
+                           self._screens_apply(
+                               ["rotate", n, c.get_active_id() or "normal"]))
+                rr.pack_start(br, False, False, 0)
+                oc.pack_start(rr, False, False, 0)
                 if len(outs) >= 2:
-                    bo = Gtk.Button(label="Usa solo questo")
+                    bo = Gtk.Button(label=_t("pn.scr.only"))
                     bo.get_style_context().add_class("nxs-menu-item")
                     bo.connect("clicked",
                                lambda _w, n=name: self._screens_apply(["only", n]))
