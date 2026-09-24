@@ -28,6 +28,12 @@ try:
 except Exception:                       # noqa: BLE001
     Pango = None
 
+try:
+    from nxs_i18n import t as _t
+except Exception:                       # noqa: BLE001
+    def _t(chiave, **kw):               # ripiego: mostra la chiave
+        return chiave
+
 RATE = 16000            # Hz (voce: 16 kHz e' piu' che sufficiente e leggero)
 CH = 1                  # mono
 BYTES = 2              # S16_LE
@@ -128,7 +134,7 @@ button:checked { background:#0a2a3a; color:#00e5ff; border-color:#00e5ff; }
 
 class Recorder(Gtk.Window):
     def __init__(self):
-        super().__init__(title="NexusSec - Registratore vocale")
+        super().__init__(title=_t("rc.app"))
         self.set_default_size(600, 340)
         self.set_icon_name("audio-input-microphone-symbolic")
 
@@ -164,13 +170,14 @@ class Recorder(Gtk.Window):
         self.add(root)
 
         head = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
-        t = Gtk.Label(label="Registratore vocale"); t.set_xalign(0)
+        t = Gtk.Label(label=_t("rc.app")); t.set_xalign(0)
         t.get_style_context().add_class("rec-title")
         head.pack_start(t, True, True, 0)
         # Selettore visualizzazione: Spettro (frequenze) oppure Onda (ampiezza).
         self._viz_guard = False
-        self.btn_spec = Gtk.ToggleButton(label="Spettro"); self.btn_spec.set_active(True)
-        self.btn_wave = Gtk.ToggleButton(label="Onda")
+        self.btn_spec = Gtk.ToggleButton(label=_t("rc.spectrum"))
+        self.btn_spec.set_active(True)
+        self.btn_wave = Gtk.ToggleButton(label=_t("rc.wave"))
         self.btn_spec.connect("toggled", self._on_viz, "spec")
         self.btn_wave.connect("toggled", self._on_viz, "wave")
         seg = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=0)
@@ -196,20 +203,20 @@ class Recorder(Gtk.Window):
 
         # Comandi
         ctr = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
-        self.rec_btn = Gtk.Button(label="●  Registra")
+        self.rec_btn = Gtk.Button(label=_t("rc.record"))
         self.rec_btn.get_style_context().add_class("rec-go")
         self.rec_btn.connect("clicked", self._toggle_record)
         ctr.pack_start(self.rec_btn, False, False, 0)
-        self.play_btn = Gtk.Button(label="▶  Riascolta")
+        self.play_btn = Gtk.Button(label=_t("rc.replay"))
         self.play_btn.set_sensitive(False)
         self.play_btn.connect("clicked", self._play_last)
         ctr.pack_start(self.play_btn, False, False, 0)
-        open_btn = Gtk.Button(label="Cartella")
+        open_btn = Gtk.Button(label=_t("rc.folder"))
         open_btn.connect("clicked", self._open_folder)
         ctr.pack_end(open_btn, False, False, 0)
         root.pack_start(ctr, False, False, 0)
 
-        self.status = Gtk.Label(label="Premi Registra per iniziare.")
+        self.status = Gtk.Label(label=_t("rc.ready_hint"))
         self.status.set_xalign(0)
         self.status.get_style_context().add_class("rec-sub")
         root.pack_start(self.status, False, False, 0)
@@ -279,10 +286,10 @@ class Recorder(Gtk.Window):
     def _no_mic(self):
         # arecord non parte: ripristina lo stato "non in registrazione".
         self.recording = False
-        self.rec_btn.set_label("●  Registra")
+        self.rec_btn.set_label(_t("rc.record"))
         self.rec_btn.get_style_context().remove_class("rec-stop")
         self.rec_btn.get_style_context().add_class("rec-go")
-        self.status.set_text("Nessun microfono disponibile (arecord non parte).")
+        self.status.set_text(_t("rc.nomic"))
         try:
             if self.wav:
                 self.wav.close()
@@ -385,12 +392,12 @@ class Recorder(Gtk.Window):
             # Stop: basta azzerare recording -> _cap_loop esce, chiude il WAV e
             # ferma arecord; l'onda resta ferma sull'ultimo tracciato.
             self.recording = False
-            self.rec_btn.set_label("●  Registra")
+            self.rec_btn.set_label(_t("rc.record"))
             self.rec_btn.get_style_context().remove_class("rec-stop")
             self.rec_btn.get_style_context().add_class("rec-go")
             if self.last_file:
                 self.play_btn.set_sensitive(True)
-                self.status.set_text("Salvato: %s" % self.last_file)
+                self.status.set_text(_t("rc.saved") % self.last_file)
             return
         # start
         try:
@@ -414,13 +421,13 @@ class Recorder(Gtk.Window):
             self._start_mono = GLib.get_monotonic_time() / 1e6
             self.recording = True
             self.time_lbl.set_text("00:00")
-            self.rec_btn.set_label("■  Stop")
+            self.rec_btn.set_label(_t("rc.stop"))
             self.rec_btn.get_style_context().remove_class("rec-go")
             self.rec_btn.get_style_context().add_class("rec-stop")
-            self.status.set_text("Registrazione in corso...")
+            self.status.set_text(_t("rc.recording"))
             threading.Thread(target=self._cap_loop, daemon=True).start()
         except Exception as e:             # noqa: BLE001
-            self.status.set_text("Impossibile registrare: %s" % e)
+            self.status.set_text(_t("rc.rec_fail") % e)
 
     def _play_last(self, _b):
         if self.recording:
@@ -438,7 +445,7 @@ class Recorder(Gtk.Window):
             raw = wf.readframes(wf.getnframes())
             wf.close()
         except Exception as e:              # noqa: BLE001
-            self.status.set_text("Impossibile leggere il file: %s" % e)
+            self.status.set_text(_t("rc.read_fail") % e)
             return
         total = len(raw) // 2
         bands = []
@@ -465,12 +472,12 @@ class Recorder(Gtk.Window):
             self._play_proc = subprocess.Popen(["aplay", "-q", self.last_file],
                                                stderr=subprocess.DEVNULL)
         except (OSError, FileNotFoundError):
-            self.status.set_text("aplay non disponibile.")
+            self.status.set_text(_t("rc.noaplay"))
             return
         self.playing = True
-        self.play_btn.set_label("■  Stop")   # il pulsante diventa Stop
+        self.play_btn.set_label(_t("rc.stop"))   # il pulsante diventa Stop
         self._play_start = GLib.get_monotonic_time() / 1e6
-        self.status.set_text("Riproduco: %s" % os.path.basename(self.last_file))
+        self.status.set_text(_t("rc.playing") % os.path.basename(self.last_file))
         GLib.timeout_add(33, self._play_tick)
 
     def _stop_play(self):
@@ -486,8 +493,8 @@ class Recorder(Gtk.Window):
             self._play_proc = None
         self.bands = [0.0] * NBANDS
         self.peak = 0.0
-        self.play_btn.set_label("▶  Riascolta")
-        self.status.set_text("Pronto.")
+        self.play_btn.set_label(_t("rc.replay"))
+        self.status.set_text(_t("rc.ready"))
 
     def _play_tick(self):
         if not self.playing:
@@ -512,9 +519,17 @@ class Recorder(Gtk.Window):
     def _open_folder(self, _b):
         try:
             os.makedirs(OUTDIR, exist_ok=True)
-            subprocess.Popen(["pcmanfm", OUTDIR], stderr=subprocess.DEVNULL)
-        except (OSError, FileNotFoundError):
-            self.status.set_text("Cartella: %s" % OUTDIR)
+            # il file manager di NexusSec; se manca, quello del sistema
+            for cmd in (["nxs-files", OUTDIR], ["xdg-open", OUTDIR]):
+                try:
+                    subprocess.Popen(cmd, stderr=subprocess.DEVNULL)
+                    break
+                except (OSError, FileNotFoundError):
+                    continue
+            else:
+                self.status.set_text(_t("rc.folder_path") % OUTDIR)
+        except OSError:
+            self.status.set_text(_t("rc.folder_path") % OUTDIR)
 
     def _on_destroy(self, _w):
         self._stop = True
