@@ -26,15 +26,24 @@ _nxs_h="$(hostname 2>/dev/null || echo nexussec)"
 case "$_nxs_pstyle" in
   parrot)
     # Stile Parrot/Kali a due righe. Box-drawing UTF-8 (terminale UTF-8).
-    PS1="\[\033[1;34m\]┌──[\[\033[1;32m\]${_nxs_u}@${_nxs_h}\[\033[1;34m\]]─[\[\033[1;37m\]\w\[\033[1;34m\]]
-└──╼\[\033[0m\] "
+    # Colori ad ALTO CONTRASTO (256 colori): il blu standard (34) delle cornici
+    # era quasi invisibile sui fondi scuri. Cornici azzurro-ciano, utente@host
+    # verde (ROSSO se root, come Kali), percorso bianco.
+    _nxs_c='\[\033[1;38;5;45m\]'                 # cornici
+    _nxs_id='\[\033[1;38;5;84m\]'                # utente@host
+    [ "$(id -u 2>/dev/null)" = "0" ] && _nxs_id='\[\033[1;38;5;203m\]'
+    _nxs_p='\[\033[1;38;5;255m\]'                # percorso
+    PS1="${_nxs_c}┌──[${_nxs_id}${_nxs_u}@${_nxs_h}${_nxs_c}]─[${_nxs_p}\w${_nxs_c}]
+${_nxs_c}└──╼ \$\[\033[0m\] "
+    unset _nxs_c _nxs_id _nxs_p
     ;;
   plain)
     PS1="${_nxs_u}@${_nxs_h}:\w\\$ "
     ;;
   *)
     # default: HUD NexusSec a una riga (accent ciano).
-    PS1="\[\033[1;36m\]${_nxs_u}\[\033[0m\]@\[\033[1;34m\]${_nxs_h}\[\033[0m\]:\[\033[1;35m\]\w\[\033[0m\]\\$ "
+    # (host in azzurro chiaro: il blu standard era poco leggibile su fondo scuro)
+    PS1="\[\033[1;96m\]${_nxs_u}\[\033[0m\]@\[\033[1;38;5;75m\]${_nxs_h}\[\033[0m\]:\[\033[1;95m\]\w\[\033[0m\]\\$ "
     ;;
 esac
 unset _nxs_pstyle _nxs_u _nxs_h

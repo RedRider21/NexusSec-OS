@@ -52,8 +52,14 @@ shell="$(basename "${SHELL:-sh}" 2>/dev/null)"
 # uptime da /proc/uptime -> Xh Ym
 up=$(cut -d. -f1 /proc/uptime 2>/dev/null)
 if [ -n "$up" ]; then uph=$((up/3600)); upm=$(((up%3600)/60)); uptime="${uph}h ${upm}m"; else uptime="?"; fi
-# pacchetti apk installati
-if command -v apk >/dev/null 2>&1; then pkgs="$(apk info 2>/dev/null | wc -l | tr -d ' ') (apk)"; else pkgs="?"; fi
+# pacchetti apk installati: contati DIRETTAMENTE dal database (una riga "P:"
+# per pacchetto). Prima si lanciava "apk info", che su una live da chiavetta
+# e' lento (carica database e indici) e ritardava di molto il prompt.
+if [ -r /lib/apk/db/installed ]; then
+  pkgs="$(grep -c '^P:' /lib/apk/db/installed 2>/dev/null) (apk)"
+else
+  pkgs="?"
+fi
 # profilo operativo NexusSec
 prof=""
 if [ -r /etc/sec_os/state.json ]; then
