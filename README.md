@@ -792,8 +792,8 @@ Con RAM abbondante resta quasi inattivo. Configurato in `/etc/local.d/zram.start
 - **Centro di Controllo** (`nxs-control-center`): info sistema, monitor, rete,
   **gestore pacchetti apk**, temi, sfondo, pannello, autostart, e tile
   **Profilo operativo**.
-- **NexusSec Browser** (GTK3 + WebKit2): motore `webkit2gtk` installato
-  on-demand via apk.
+- **NexusSec Browser** (GTK3 + WebKit2): motore `webkit2gtk-4.1`
+  preinstallato; avviso a fine download.
 - Lanciatori sul desktop (pcmanfm) + menu tasto destro Openbox.
 - **Notifiche desktop** (`dunst`, a tema): feedback delle **installazioni
   on-demand** ("Installo *tool*… / pronto / fallita", anche durante i wizard) e
@@ -813,13 +813,30 @@ Con RAM abbondante resta quasi inattivo. Configurato in `/etc/local.d/zram.start
   combinazione), **aggiungi/rimuovi** scorciatoie; applicate al volo.
 - **Dialogo di sessione grafico** (`nxs-session`, menu → *Esci / Spegni…*):
   Blocca / Esci / Riavvia / Spegni con conferma, brandizzato.
-- **Login grafico (greeter)** — `nxs-greeter`: schermata di login in Python/GTK
-  (logo esagonale, sfondo *honeycomb* nel colore del tema, mostra/nascondi
-  password, Riavvia/Spegni). **Opzionale**, per il sistema installato: si abilita
-  con `nxs-harden greeter on` e compare **dopo la splash**; al logout si ritorna al
-  greeter. La **live resta con autologin** (nessun rischio di restare chiusi fuori:
-  fallback su tty2). Autentica contro `/etc/shadow` (Alpine non usa PAM) tramite
-  l'helper setuid **`nxs-chkpwd`**, così funziona anche con `doas` protetto.
+- **Login grafico (greeter)** — `nxs-greeter`: schermata di accesso in
+  Python/GTK **in stile Linux Mint** (slick-greeter): barra sottile in alto con
+  host, tastiera, rete, batteria, data/ora e menu Riavvia/Spegni; sfondo del
+  **profilo attivo**; riquadro compatto a sinistra con nome utente, cambio utente
+  / *Altro utente…*, password con mostra/nascondi e avviso Bloc Maiusc; colori del
+  profilo. Compare all'**uscita dalla sessione** (anche sulla live: niente più
+  console testuale; al rientro non si ripetono splash, benvenuto e selettore) e,
+  sul sistema installato, **dopo la splash** con `nxs-harden greeter on`.
+  Autentica contro `/etc/shadow` (Alpine non usa PAM) tramite l'helper setuid
+  **`nxs-chkpwd`**, così funziona anche con `doas` protetto.
+- **Finestra di benvenuto** (`nxs-welcome`, stile Mint) al primo accesso, sopra
+  il selettore di profilo: primi passi, **licenze** (NexusSec AGPL; arsenale non
+  incluso, scaricato dalle fonti degli autori alle loro licenze), uso
+  responsabile, informazioni. Segue il cambio lingua; disattivabile, si richiama
+  dal menu.
+- **Rotazione dello schermo** (`nxs-screens rotate`, Centro di Controllo →
+  Schermi → *Orientamento*): normale/sinistra/destra/capovolto, con rimappatura di
+  touch e penna. Portata da Vesper.
+- **Visualizzatore di immagini** (`nxs-viewer`, da Vesper): doppio clic su
+  un'immagine; zoom, rotazione, scorrimento nella cartella, imposta come sfondo.
+- **Menu del tasto destro** (Openbox) curato: icone, intestazione, font del
+  tema e traduzione nella lingua attiva.
+- **Terminale**: prompt immediato (riepilogo di sistema in ~0,06 s); cornici e
+  nome utente del prompt (anche stile Kali/Parrot) nel **colore del profilo**.
 - **Cambia sfondo** dal menu tasto-destro del desktop.
 
 > Nota (live): le modifiche a scorciatoie/sfondo/impostazioni valgono per la
@@ -1111,6 +1128,12 @@ servizio di rete**. In alternativa è disponibile una **licenza commerciale**
 (doppia licenza) per usi proprietari/chiusi: vedi [`COMMERCIAL.md`](COMMERCIAL.md).
 I contributi sono soggetti al [`CLA`](CLA.md). I pacchetti di terze parti inclusi
 restano soggetti alle rispettive licenze: vedi [`THIRD-PARTY.md`](THIRD-PARTY.md).
+Gli strumenti dell'arsenale **non sono inclusi** nelle immagini: si scaricano su
+richiesta dalle fonti dei loro autori (al primo download `nxs-tool` ne indica
+fonte e licenza). Le licenze sono installate in `/usr/share/doc/nexussec/` e
+mostrate nella finestra di benvenuto; i pacchetti compilati da NexusSec portano
+le licenze originali in `/usr/share/licenses/<pacchetto>/` e i loro sorgenti sono
+pubblicati su Pages in `sources/` (`build/collect-sources.sh`).
 *(Le versioni fino al 15/09/2026 erano rilasciate sotto GPL-3.0-or-later.)*
 
 I nomi «NexusSec»/«NexusSec OS», il logo e l'identità visiva sono **marchi** di
