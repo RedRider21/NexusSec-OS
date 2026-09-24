@@ -193,7 +193,7 @@ REPOS
   # a mkimage (la copia in APKROOT/etc/apk/keys e firma indice del media).
   # NB: niente apostrofi in questo blocco (e tra apici singoli per podman).
   export PACKAGER_PUBKEY="$(ls /root/.abuild/*.rsa.pub | head -1)"
-  export NXS_OVERLAY=/tmp/ovl NXS_OUT=/work/out
+  export NXS_OVERLAY=/tmp/ovl NXS_OUT=/work/out NXS_REPO_ROOT=/work
   cd /root/aports/scripts
   sh ./mkimage.sh --profile nexussec \
      --outdir /work/out --arch "$NXS_ARCH" \

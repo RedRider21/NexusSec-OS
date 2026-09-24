@@ -108,7 +108,7 @@ REPOS
 
   echo "[ctr] mkimage (profilo nexussec-rpi -> tar.gz diskless)..."
   export PACKAGER_PUBKEY="$(ls /root/.abuild/*.rsa.pub | head -1)"
-  export NXS_OVERLAY=/tmp/ovl NXS_OUT=/work/out
+  export NXS_OVERLAY=/tmp/ovl NXS_OUT=/work/out NXS_REPO_ROOT=/work
   cd /root/aports/scripts
   sh ./mkimage.sh --profile nexussec_rpi \
      --outdir /work/out --arch "$NXS_ARCH" \

@@ -30,7 +30,12 @@ find "$tmp" -type d -name '__pycache__' -prune -exec rm -rf {} + 2>/dev/null || 
 # nella ISO. Si copiano dalla radice del repo (fonte unica, niente duplicati):
 # /usr/share/doc/nexussec/ (li apre la finestra di benvenuto) e la licenza anche
 # in /usr/share/licenses/nexussec/ (posizione standard, come i pacchetti Alpine).
-REPO_ROOT="$(cd "$OVERLAY/.." && pwd)"
+# Radice del repo: esplicita (NXS_REPO_ROOT) perche' la build in container usa
+# una COPIA dell'overlay in /tmp/ovl, dove "overlay/.." non e' il repo.
+REPO_ROOT="${NXS_REPO_ROOT:-$(cd "$OVERLAY/.." && pwd)}"
+# Senza licenza la ISO non si deve fare (obbligo AGPL): meglio fallire che
+# produrre un'immagine non conforme senza accorgersene.
+[ -f "$REPO_ROOT/LICENSE" ] || { echo "genapkovl: LICENSE non trovata in $REPO_ROOT (impostare NXS_REPO_ROOT)" >&2; exit 1; }
 mkdir -p "$tmp/usr/share/doc/nexussec" "$tmp/usr/share/licenses/nexussec"
 for f in LICENSE LICENSE-GPL-3.0.txt COPYRIGHT COMMERCIAL.md TRADEMARKS.md \
          THIRD-PARTY.md CLA.md; do
