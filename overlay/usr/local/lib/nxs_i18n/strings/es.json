@@ -138,6 +138,8 @@
   "br.tr.done": "Página traducida al %s.",
   "br.tr.done_from": "Traducida de %s a %s.",
   "br.tr.failed": "La traducción falló: %s",
+  "br.tr.limited": "Google está limitando las solicitudes por un rato: inténtalo en unos minutos o elige LibreTranslate en Ajustes.",
+  "br.tr.mismatch": "el servicio devolvió un número distinto de textos",
   "br.tr.original": "Mostrar original",
   "br.tr.privacy": "El texto de la página se envía a %s.",
   "br.tr.restored": "Página original restaurada.",

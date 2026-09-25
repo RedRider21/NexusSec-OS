@@ -138,6 +138,8 @@
   "br.tr.done": "Seite übersetzt in %s.",
   "br.tr.done_from": "Übersetzt von %s nach %s.",
   "br.tr.failed": "Übersetzung fehlgeschlagen: %s",
+  "br.tr.limited": "Google begrenzt die Anfragen vorübergehend: In ein paar Minuten erneut versuchen oder LibreTranslate in den Einstellungen wählen.",
+  "br.tr.mismatch": "der Dienst lieferte eine andere Anzahl von Texten",
   "br.tr.original": "Original anzeigen",
   "br.tr.privacy": "Der Seitentext wird an %s gesendet.",
   "br.tr.restored": "Originalseite wiederhergestellt.",

@@ -20,6 +20,8 @@ pannello lo dice. In modalita' anonima la richiesta passa via Tor (curl
 import json
 import subprocess
 import threading
+import time
+from urllib.parse import quote
 
 import gi
 gi.require_version("Gtk", "3.0")
@@ -48,7 +50,13 @@ LINGUE = [
 # font per quelle scritture (i CJK da soli pesano oltre 100 MB) e sia il nome
 # nell'elenco sia la pagina tradotta sarebbero quadratini illeggibili.
 NOMI = dict(LINGUE)
-BLOCCO = 3500          # caratteri per richiesta
+BLOCCO = 4000          # caratteri per richiesta
+MAX_TESTI = 100        # testi per richiesta
+PAUSA = 0.4            # secondi tra un blocco e l'altro (niente raffiche)
+
+
+class Limitato(RuntimeError):
+    """Il servizio ha risposto 429: troppe richieste."""
 
 # --- script nella pagina ------------------------------------------------------------
 JS_RACCOGLI = r"""
@@ -103,25 +111,41 @@ JS_LINGUA = "(document.documentElement.lang || '').toLowerCase()"
 
 # --- servizi ---------------------------------------------------------------------------
 def _curl(args, dati, via_tor):
-    cmd = ["curl", "-sS", "--max-time", "40"]
+    cmd = ["curl", "-sS", "--max-time", "40", "-w", "\n%{http_code}"]
     if via_tor:
         cmd += ["--socks5-hostname", "127.0.0.1:9050"]
     r = subprocess.run(cmd + args, input=dati.encode("utf-8"),
                        capture_output=True, timeout=60)
     if r.returncode != 0:
         raise RuntimeError(r.stderr.decode("utf-8", "replace").strip() or "curl")
-    return r.stdout.decode("utf-8", "replace")
+    corpo, _, codice = r.stdout.decode("utf-8", "replace").rpartition("\n")
+    if codice == "429":
+        raise Limitato(_t("br.tr.limited"))
+    if not codice.startswith("2"):
+        raise RuntimeError("HTTP %s" % codice)
+    return corpo
 
 
 def _google(testi, dest, via_tor):
-    """Blocco di testi separati da a-capo -> (traduzioni, lingua rilevata)."""
-    q = "\n".join(testi)
-    out = _curl(["--data-urlencode", "q@-",
-                 "https://translate.googleapis.com/translate_a/single"
-                 "?client=gtx&sl=auto&dt=t&tl=" + dest], q, via_tor)
+    """Un parametro q per testo (endpoint translate_a/t): la risposta ha UNA
+    traduzione per testo, nello stesso ordine, qualunque cosa contengano.
+    Prima i testi si univano con a-capo e si ricontavano le righe: su pagine
+    come Wikipedia non tornavano, e il ripiego testo-per-testo sparava
+    centinaia di richieste in pochi secondi -> Google rispondeva 429."""
+    corpo = "&".join("q=" + quote(t, safe="") for t in testi)
+    out = _curl(["-H", "Content-Type: application/x-www-form-urlencoded",
+                 "--data-binary", "@-",
+                 "https://translate.googleapis.com/translate_a/t"
+                 "?client=gtx&sl=auto&tl=" + dest], corpo, via_tor)
     d = json.loads(out)
-    pezzi = "".join(seg[0] or "" for seg in (d[0] or []))
-    return pezzi.split("\n"), (d[2] if len(d) > 2 else "") or ""
+    tr, lingua = [], ""
+    for voce in d:
+        if isinstance(voce, list):
+            tr.append(voce[0] if voce else "")
+            lingua = lingua or (voce[1] if len(voce) > 1 else "")
+        else:
+            tr.append(voce)
+    return tr, lingua
 
 
 def _libre(testi, dest, via_tor):
@@ -146,8 +170,9 @@ def traduci_blocco(testi, dest, via_tor):
     f = _libre if servizio == "libre" else _google
     tr, lingua = f(testi, dest, via_tor)
     if len(tr) != len(testi):
-        # il servizio ha unito/spezzato righe: si ripiega testo per testo
-        tr = [f([t], dest, via_tor)[0][0] if t else t for t in testi]
+        # niente ripiego testo per testo (raffica di richieste = blocco):
+        # si lascia il blocco in originale
+        raise RuntimeError(_t("br.tr.mismatch"))
     return tr, lingua
 
 
@@ -298,7 +323,7 @@ class Traduttore:
         via_tor = self._via_tor(view)
         blocchi, cur, lung, ini = [], [], 0, 0
         for i, t in enumerate(testi):
-            if cur and lung + len(t) > BLOCCO:
+            if cur and (lung + len(t) > BLOCCO or len(cur) >= MAX_TESTI):
                 blocchi.append((ini, cur))
                 ini, cur, lung = i, [], 0
             cur.append(t)
@@ -314,6 +339,8 @@ class Traduttore:
                 GLib.idle_add(self._applica, view, js)
                 pct = int(100 * (k + 1) / max(1, len(blocchi)))
                 GLib.idle_add(self._messaggio, _t("br.tr.working") % pct)
+                if k + 1 < len(blocchi):
+                    time.sleep(PAUSA)
         except Exception as e:       # noqa: BLE001
             GLib.idle_add(self._errore, view, str(e))
             return
