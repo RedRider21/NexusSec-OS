@@ -1,0 +1,11 @@
+# Immagine per provare il desktop NexusSec in Xephyr senza rifare la ISO
+# (vedi build/prova-xephyr.sh). Solo la parte grafica di nexussec-base + browser.
+FROM docker.io/library/alpine:edge
+RUN echo https://dl-cdn.alpinelinux.org/alpine/edge/testing >> /etc/apk/repositories && \
+    apk add --no-cache openbox picom pcmanfm lxterminal pluma feh xdotool wmctrl \
+      xautolock dunst libnotify font-dejavu adwaita-icon-theme gtk+3.0 \
+      py3-gobject3 py3-cairo python3 imagemagick xrandr xinput setxkbmap \
+      webkit2gtk-4.1 gst-plugins-base gst-plugins-good dbus dbus-x11 librsvg \
+      bash util-linux-misc xmessage mat2 && \
+    adduser -D -u 1000 -s /bin/sh nexus && \
+    mkdir -p /etc/sec_os && chown nexus /etc/sec_os
