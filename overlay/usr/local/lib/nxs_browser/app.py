@@ -539,32 +539,54 @@ class Browser(Gtk.Window):
             return False
 
     def _ensure_tor(self):
-        """SOCKS di Tor su 9050 raggiungibile? Se no, prova ad avviare un tor
-        utente (rootless, data-dir in home). Ritorna True/False; in caso di
-        fallimento le schede stealth restano effimere ma SENZA proxy (fallback
-        onesto: nessuna traccia locale, ma IP reale) e il badge lo segnala."""
+        """SOCKS di Tor su 9050 raggiungibile? Se no lo accende (nxs-tor on,
+        lo stesso interruttore del pannello: un solo Tor per tutta la distro;
+        ripiego: tor utente) e NON blocca la finestra: controlla in sottofondo
+        e, appena Tor risponde, ricrea il contesto anonimo col proxy e aggiorna
+        il pulsante. Prima il controllo era uno solo, all'apertura: se Tor non
+        era ancora pronto il browser restava "Stealth (no Tor)" fino al riavvio.
+        Finche' Tor non c'e' le schede anonime restano effimere ma SENZA proxy
+        (fallback onesto: nessuna traccia locale, IP reale) e il badge lo dice."""
         if self._tor_running():
             self._tor_ok = True
             return True
-        tor_bin = shutil.which("tor")
-        if tor_bin:
-            try:
+        if not getattr(self, "_tor_avvio", False):
+            self._tor_avvio = True
+            cmd = ["nxs-tor", "on"] if shutil.which("nxs-tor") else None
+            tor_bin = shutil.which("tor")
+            if cmd is None and tor_bin:
                 tdir = self.data_dir / "tor"
                 tdir.mkdir(exist_ok=True)
-                subprocess.Popen(
-                    [tor_bin, "--SocksPort", str(TOR_PORT),
-                     "--DataDirectory", str(tdir), "--quiet"],
-                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                    start_new_session=True)
-            except Exception:
-                pass
-            for _ in range(15):            # il listener SOCKS si apre in fretta
-                if self._tor_running():
-                    self._tor_ok = True
-                    return True
-                time.sleep(0.2)
+                cmd = [tor_bin, "--SocksPort", str(TOR_PORT),
+                       "--DataDirectory", str(tdir), "--quiet"]
+            if cmd:
+                try:
+                    subprocess.Popen(cmd, stdout=subprocess.DEVNULL,
+                                     stderr=subprocess.DEVNULL,
+                                     start_new_session=True)
+                except Exception:
+                    pass
+                self._tor_tentativi = 0
+                GLib.timeout_add(1000, self._attendi_tor)
         self._tor_ok = False
         return False
+
+    def _attendi_tor(self):
+        """Controllo in sottofondo (1 s, fino a 60 s): Tor e' arrivato?"""
+        self._tor_tentativi = getattr(self, "_tor_tentativi", 0) + 1
+        if self._tor_running():
+            self._tor_ok = True
+            self._tor_avvio = False
+            # il contesto anonimo creato senza proxy va rifatto col proxy Tor
+            self._contexts.pop(True, None)
+            self._update_stealth_button()
+            if self.stealth:
+                self._reopen_current_in_mode()
+            return False
+        if self._tor_tentativi >= 60:
+            self._tor_avvio = False
+            return False
+        return True
 
     def _context(self, stealth):
         ctx = self._contexts.get(stealth)

@@ -129,6 +129,10 @@ if [ -f /etc/nxs/panic-usb.on ] && command -v nxs-panic >/dev/null 2>&1; then
 	echo "panico su rimozione chiavetta: armato (watcher avviato)"
 fi
 
+# --- Traduzioni: solo le 5 lingue di NexusSec (i pacchetti *-lang le hanno
+# tutte, ~55 MB in RAM sulla live). In background: non rallenta l'avvio.
+[ -x /usr/local/lib/nxs-prune-locales.sh ] && ( /usr/local/lib/nxs-prune-locales.sh ) &
+
 # --- Pre-compila il bytecode Python del desktop (primi avvii piu' rapidi) -----
 # La live gira in RAM: i .pyc NON esistono al primo boot, quindi il pannello, il
 # Centro di Controllo, il selettore profili e i tool compilerebbero i moduli al

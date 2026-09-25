@@ -3,7 +3,7 @@
 # Sostituisce i pacchetti TinyCore (.tcz) con gli equivalenti Alpine.
 pkgname=nexussec-base
 pkgver=1.0.0
-pkgrel=11
+pkgrel=12
 pkgdesc="NexusSec OS - desktop base (Openbox + Python + isolamento tool)"
 url="https://github.com/thecloners21"
 arch="noarch"
@@ -140,6 +140,13 @@ depends="
 	gst-plugins-bad
 	gst-libav
 	webkit2gtk-4.1
+	webkit2gtk-4.1-lang
+	gtk+3.0-lang
+	glib-lang
+	pcmanfm-lang
+	libfm-lang
+	pluma-lang
+	lxterminal-lang
 	tar
 	xz
 	gzip

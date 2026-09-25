@@ -70,6 +70,9 @@ cp "$KEYS"/*.pub "$ROOTFS"/var/cache/misc/ 2>/dev/null || true
 # fstab minimale (il root e' gestito dall'init via overlay)
 [ -f "$ROOTFS"/etc/fstab ] || printf 'tmpfs /tmp tmpfs nosuid,nodev 0 0\n' > "$ROOTFS"/etc/fstab
 
+# traduzioni: solo le 5 lingue di NexusSec (vedi nxs-prune-locales.sh)
+sh /tmp/ovl/usr/local/lib/nxs-prune-locales.sh "$ROOTFS" 2>/dev/null || true
+
 echo "[fastboot] mksquashfs (zstd)..."
 rm -f "$OUT"
 mksquashfs "$ROOTFS" "$OUT" -comp zstd -Xcompression-level 19 -b 262144 -noappend
