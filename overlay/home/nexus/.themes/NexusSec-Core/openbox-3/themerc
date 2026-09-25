@@ -79,6 +79,10 @@ menu.title.bg: flat solid
 menu.title.bg.color: #050f18
 menu.title.text.color: #00e5ff
 menu.title.text.justify: center
+# Spazio tra le voci: Openbox 3.6 non ha un padding per voce (menuframe.c:
+# altezza = font + |ombra| + 4, fissi). Un'ombra del testo INVISIBILE
+# (shadowtint=0 = trasparenza 0) aggiunge 5px a ogni voce, col testo centrato.
+menu.items.font: shadow=y:shadowoffset=5:shadowtint=0
 menu.items.bg: flat solid
 menu.items.bg.color: #0a1a26
 menu.items.text.color: #c8f5ff
