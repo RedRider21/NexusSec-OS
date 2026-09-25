@@ -14,6 +14,7 @@ from gi.repository import Gtk, GLib, WebKit2  # noqa: E402
 
 from nxs_browser.config import config
 from nxs_browser.downloads import cartella_download, cartella_predefinita
+from nxs_browser.translate import LINGUE
 
 try:
     from nxs_i18n import t as _t
@@ -74,7 +75,13 @@ def apri_impostazioni(browser):
     area.set_spacing(8)
 
     g = Gtk.Grid(column_spacing=14, row_spacing=10)
-    area.pack_start(g, True, True, 0)
+    g.set_margin_end(12)
+    sc = Gtk.ScrolledWindow()
+    sc.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+    sc.set_min_content_height(480)
+    sc.set_propagate_natural_height(True)
+    sc.add(g)
+    area.pack_start(sc, True, True, 0)
     r = 0
 
     # --- Generale ---------------------------------------------------------------
@@ -101,6 +108,9 @@ def apri_impostazioni(browser):
     if motore.get_active_id() is None:
         motore.set_active_id("duckduckgo")
     r = _riga(g, r, _t("br.set.search"), motore)
+    ripristina = Gtk.CheckButton(label=_t("br.set.restore"))
+    ripristina.set_active(bool(config.get("restore_session", False)))
+    g.attach(ripristina, 1, r, 1, 1); r += 1
 
     # --- Download ---------------------------------------------------------------
     g.attach(_sezione(_t("br.set.downloads")), 0, r, 2, 1); r += 1
@@ -131,6 +141,15 @@ def apri_impostazioni(browser):
     anon = Gtk.Switch(); anon.set_halign(Gtk.Align.START)
     anon.set_active(bool(config.get("stealth", True)))
     r = _riga(g, r, _t("br.set.stealth"), anon, _t("br.set.stealth_note"))
+    https = Gtk.Switch(); https.set_halign(Gtk.Align.START)
+    https.set_active(bool(config.get("https_only", True)))
+    r = _riga(g, r, _t("br.set.https"), https, _t("br.set.https_note"))
+    track = Gtk.Switch(); track.set_halign(Gtk.Align.START)
+    track.set_active(bool(config.get("tracking_protection", True)))
+    r = _riga(g, r, _t("br.set.tracking"), track, _t("br.set.tracking_note"))
+    storia = Gtk.Switch(); storia.set_halign(Gtk.Align.START)
+    storia.set_active(bool(config.get("history", True)))
+    r = _riga(g, r, _t("br.set.history"), storia, _t("br.set.history_note"))
 
     b_pulisci = Gtk.Button(label=_t("br.set.clear_data"))
     b_pulisci.set_halign(Gtk.Align.START)
@@ -138,6 +157,7 @@ def apri_impostazioni(browser):
     esito.get_style_context().add_class("nxs-set-note")
 
     def pulisci(_w):
+        browser.cronologia.cancella_tutto()
         ctx = browser._contexts.get(False)
         if ctx is None:
             ctx = browser._context(False)
@@ -153,6 +173,35 @@ def apri_impostazioni(browser):
     riga_p.pack_start(esito, True, True, 0)
     r = _riga(g, r, _t("br.set.data"), riga_p, _t("br.set.data_note"))
 
+    # --- Traduzione ------------------------------------------------------------------
+    g.attach(_sezione(_t("br.set.translation")), 0, r, 2, 1); r += 1
+    dest = Gtk.ComboBoxText()
+    for k, nome in LINGUE:
+        dest.append(k, nome)
+    dest.set_active_id(config.get("translate_to", "") or browser.traduttore.destinazione())
+    r = _riga(g, r, _t("br.set.tr_to"), dest)
+    servizio = Gtk.ComboBoxText()
+    servizio.append("google", "Google Translate")
+    servizio.append("libre", "LibreTranslate")
+    servizio.set_active_id(config.get("translate_service", "google"))
+    r = _riga(g, r, _t("br.set.tr_service"), servizio, _t("br.set.tr_note"))
+    url_lt = Gtk.Entry()
+    url_lt.set_placeholder_text("https://libretranslate.com")
+    url_lt.set_text(config.get("translate_url", ""))
+    chiave = Gtk.Entry()
+    chiave.set_visibility(False)
+    chiave.set_placeholder_text(_t("br.set.tr_key_ph"))
+    chiave.set_text(config.get("translate_key", ""))
+    riga_lt = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+    riga_lt.pack_start(url_lt, True, True, 0)
+    riga_lt.pack_start(chiave, True, True, 0)
+    r = _riga(g, r, "LibreTranslate", riga_lt)
+
+    def servizio_cambiato(_w=None):
+        riga_lt.set_sensitive(servizio.get_active_id() == "libre")
+    servizio.connect("changed", servizio_cambiato)
+    servizio_cambiato()
+
     dlg.show_all()
     home.set_position(-1)                     # niente testo tutto selezionato
     dlg.run()
@@ -165,7 +214,23 @@ def apri_impostazioni(browser):
     d = cartella.get_filename() or ""
     config.config["download_dir"] = "" if d == cartella_predefinita() else d
     config.config["download_ask"] = chiedi.get_active()
+    config.config["restore_session"] = ripristina.get_active()
+    config.config["https_only"] = https.get_active()
+    config.config["history"] = storia.get_active()
+    config.config["translate_to"] = dest.get_active_id() or ""
+    config.config["translate_service"] = servizio.get_active_id() or "google"
+    config.config["translate_url"] = url_lt.get_text().strip()
+    config.config["translate_key"] = chiave.get_text().strip()
+    vecchio_track = bool(config.get("tracking_protection", True))
+    config.config["tracking_protection"] = track.get_active()
     config.save_config()
+    if track.get_active() != vecchio_track:          # vale subito, su ogni scheda
+        for v in browser.stack.get_children():
+            if track.get_active():
+                browser.antitrack.applica(v)
+            else:
+                browser.antitrack.togli_da(v)
+    browser._salva_sessione()
     if scuro.get_active() != browser.dark_mode:
         browser.toggle_theme()
     if anon.get_active() != browser.stealth:

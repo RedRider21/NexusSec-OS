@@ -41,6 +41,11 @@ from gi.repository import Gtk, Gdk, GLib, GdkPixbuf, WebKit2  # noqa: E402
 from nxs_browser.config import config
 from nxs_browser.downloads import GestoreDownload
 from nxs_browser.settings import apri_impostazioni, url_ricerca
+from nxs_browser.extra import FunzioniExtra
+from nxs_browser.findbar import BarraTrova
+from nxs_browser.history import Cronologia, completamento
+from nxs_browser.security import Antitracciamento, SoloHttps
+from nxs_browser.translate import Traduttore
 
 try:
     from nxs_i18n import t as _t
@@ -157,6 +162,10 @@ popover.nxs-dl-pop button:not(.nxs-dl-act) { background: #f0f0f4; color: #15141a
 .nxs-settings button { background: #f0f0f4; color: #15141a; border: 1px solid #e1e1e6;
   border-radius: 8px; padding: 4px 12px; box-shadow: none; }
 .nxs-settings button:hover { background: #e1e1e6; }
+.nxs-findbar { padding: 5px 10px; background: #f0f0f4; border-top: 1px solid #e1e1e6; }
+.nxs-find-info { color: #5b5b66; font-size: 9pt; }
+entry.nxs-find-none { background: #5c1f2c; }
+.nxs-find-none-text { color: #ff5a8a; }
 """
 
 CSS_DARK = b"""
@@ -239,10 +248,14 @@ popover.nxs-dl-pop button:not(.nxs-dl-act) { background: #1c1b22; color: #fbfbfe
 .nxs-settings button { background: #1c1b22; color: #fbfbfe; border: 1px solid #454451;
   border-radius: 8px; padding: 4px 12px; box-shadow: none; }
 .nxs-settings button:hover { background: #454451; }
+.nxs-findbar { padding: 5px 10px; background: #1c1b22; border-top: 1px solid #454451; }
+.nxs-find-info { color: #b0b0ba; font-size: 9pt; }
+entry.nxs-find-none { background: #5c1f2c; }
+.nxs-find-none-text { color: #ff5a8a; }
 """
 
 
-class Browser(Gtk.Window):
+class Browser(FunzioniExtra, Gtk.Window):
     """Finestra principale del browser."""
 
     def __init__(self, start_url=None):
@@ -281,12 +294,25 @@ class Browser(Gtk.Window):
 
         # download: pulsante nella barra + pannello (downloads.py)
         self.downloads = GestoreDownload(self, self._notify)
+        # cronologia, traduzione, sicurezza, ricerca (moduli dedicati)
+        self.cronologia = Cronologia()
+        self.traduttore = Traduttore(self)
+        self.solo_https = SoloHttps(self)
+        self.antitrack = Antitracciamento()
+        self.trova = BarraTrova(self)
+        self._chiuse = []
 
         self._build_ui()
         self.apply_theme()
         # indirizzo passato da riga di comando (es. manuale dal benvenuto,
         # relazione dei Casi forensi); altrimenti la pagina iniziale
-        self.new_tab(start_url or config.get("homepage", "https://duckduckgo.com"))
+        precedenti = [] if start_url else self.schede_da_ripristinare()
+        if precedenti:                      # Impostazioni: riapri le schede
+            for u in precedenti:
+                self.new_tab(u, switch=False, stealth=False)
+            self._set_active_tab(self.stack.get_children()[0])
+        else:
+            self.new_tab(start_url or config.get("homepage", "https://duckduckgo.com"))
         self.connect("destroy", Gtk.main_quit)
         self.show_all()
         self._update_stealth_button()
@@ -312,6 +338,7 @@ class Browser(Gtk.Window):
 
         self.paned = Gtk.Paned(orientation=Gtk.Orientation.HORIZONTAL)
         root.pack_start(self.paned, True, True, 0)
+        root.pack_start(self.trova, False, False, 0)      # Trova (Ctrl+F)
 
         # Rail + pannello preferiti (la sidebar si apre/chiude dal rail).
         self._sidebar = self._build_sidebar()
@@ -332,6 +359,7 @@ class Browser(Gtk.Window):
                       lambda *_: (self.toggle_inspector(), True)[1])
         accel.connect(Gdk.KEY_F11, 0, Gtk.AccelFlags.VISIBLE,
                       lambda *_: (self.toggle_fullscreen(), True)[1])
+        self._scorciatoie(accel)            # le scorciatoie di Firefox (extra.py)
         # Traccia lo stato reale della finestra (per sapere se siamo in fullscreen).
         self.connect("window-state-event", self._on_window_state)
 
@@ -372,6 +400,10 @@ class Browser(Gtk.Window):
         except Exception:
             pass
         self.url_bar.connect("activate", lambda _w: self.navigate_to_url())
+        # suggerimenti da cronologia e preferiti; lucchetto = info sul sito
+        self.url_bar.set_completion(completamento(
+            self.cronologia, lambda u: (self.url_bar.set_text(u), self.navigate_to_url())))
+        self.url_bar.connect("icon-press", self._lucchetto_premuto)
         nav.pack_start(self.url_bar, True, True, 4)
 
         nav.pack_start(self._navbtn("bookmark-new-symbolic", _t("br.add_fav"), self.add_bookmark), False, False, 0)
@@ -384,6 +416,7 @@ class Browser(Gtk.Window):
         self._stealth_btn.get_style_context().add_class("nxs-nav-btn")
         self._stealth_btn.connect("clicked", lambda _w: self.toggle_stealth())
         nav.pack_start(self._stealth_btn, False, False, 0)
+        nav.pack_start(self.traduttore.pulsante, False, False, 0)   # Traduci pagina
 
         nav.pack_start(self.downloads.pulsante, False, False, 0)
 
@@ -402,6 +435,12 @@ class Browser(Gtk.Window):
 
         item(_t("br.new_tab"), lambda: self.new_tab())
         item(_t("br.close_tab"), lambda: self.close_tab(self.current_view()))
+        item(_t("br.reopen_tab"), self.riapri_chiusa)
+        menu.append(Gtk.SeparatorMenuItem())
+        item(_t("br.find.menu"), self.trova.apri)
+        item(_t("br.print"), self.stampa)
+        item(_t("br.save_page"), self.salva_pagina)
+        item(_t("br.source"), self.sorgente)
         menu.append(Gtk.SeparatorMenuItem())
         item(_t("br.zoom_in"), self.zoom_in)
         item(_t("br.zoom_out"), self.zoom_out)
@@ -410,6 +449,7 @@ class Browser(Gtk.Window):
         item(_t("br.toggle_theme"), self.toggle_theme)
         item(_t("br.inspector"), self.toggle_inspector)
         menu.append(Gtk.SeparatorMenuItem())
+        item(_t("br.hist.title"), self.apri_cronologia)
         item(_t("br.dl.title"), self.downloads.mostra)
         item(_t("br.set.title"), lambda: apri_impostazioni(self))
         menu.append(Gtk.SeparatorMenuItem())
@@ -746,6 +786,7 @@ class Browser(Gtk.Window):
         view.connect("notify::favicon", self._on_favicon)
         view.connect("notify::estimated-load-progress", self._on_progress)
         view.connect("create", self._on_create)
+        self._aggancia_scheda(view, mode)   # cronologia, https, tracker, audio, menu
         view.show()
 
         self.stack.add_named(view, str(id(view)))
@@ -766,7 +807,7 @@ class Browser(Gtk.Window):
         def on_press(_w, event):
             if event.button == 1:
                 self._set_active_tab(view)
-                return True
+                return False           # False: lascia partire il trascinamento
             if event.button == 2:      # click centrale: chiudi la scheda
                 self.close_tab(view)
                 return True
@@ -786,7 +827,10 @@ class Browser(Gtk.Window):
         close.connect("clicked", lambda _w: self.close_tab(view))
         box.pack_start(img, False, False, 0)
         box.pack_start(lbl, False, False, 0)
+        view._nxs_audio = self._pulsante_audio(view)     # silenzia scheda
+        box.pack_start(view._nxs_audio, False, False, 0)
         box.pack_start(close, False, False, 0)
+        self._trascinabile(ev, view)                      # riordino schede
         ev.add(box)
         self._tabs[view] = ev
         self._tab_labels[view] = (box, img, lbl)
@@ -804,6 +848,7 @@ class Browser(Gtk.Window):
             if self.stack.get_visible_child() is not view:
                 self.stack.set_visible_child(view)
             self.url_bar.set_text(view.get_uri() or "")
+            self._scheda_attivata(view)
 
     def _on_stack_child(self, _s, _p):
         v = self.stack.get_visible_child()
@@ -813,6 +858,7 @@ class Browser(Gtk.Window):
     def close_tab(self, view):
         if view not in self._tabs or len(self.stack.get_children()) <= 1:
             return
+        self._ricorda_chiusa(view)                   # Ctrl+Maiusc+T
         self.tab_box.remove(self._tabs.pop(view))
         self._tab_labels.pop(view, None)
         self._view_mode.pop(view, None)
@@ -902,6 +948,8 @@ class Browser(Gtk.Window):
             title = view.get_title() or _t("br.new_tab")
             lbl.set_text(title)
             box.set_tooltip_text(title)
+            if not self._view_mode.get(view):
+                self.cronologia.titolo(view.get_uri() or "", view.get_title() or "")
 
     def _on_uri(self, view, _p):
         if view is self.current_view():
@@ -1047,6 +1095,8 @@ class Browser(Gtk.Window):
         for title, url in self._read_bookmarks():
             self.bm_list.add(self._make_bookmark_row(title, url))
         self.bm_list.show_all()
+        # i preferiti sono anche tra i suggerimenti della barra indirizzi
+        self.cronologia.aggiorna_preferiti(self._read_bookmarks())
 
     def _make_bookmark_row(self, title, url):
         """Riga preferito. COLLASSATA: SOLO l'icona (grande e centrata) -> la
@@ -1340,6 +1390,9 @@ class Browser(Gtk.Window):
 .nxs-progress progress { background: %(a)s; }
 .nxs-dl-bar progress { background: %(a)s; }
 .nxs-dl-badge { color: %(a)s; }
+.nxs-tr-offer, .nxs-tr-offer label, .nxs-tr-offer image { color: %(a)s; }
+.nxs-tr-on { background: rgba(%(rgb)s, 0.18); }
+.nxs-tr-on label, .nxs-tr-on image { color: %(a)s; }
 .nxs-bm-list row:selected .nxs-bm-title { color: %(a)s; }
 .nxs-stealth-on { color: %(a)s; font-weight: bold; }
 .nxs-stealth-off { color: #9d9da6; font-weight: normal; }

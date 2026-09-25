@@ -367,8 +367,12 @@ class GestoreDownload:
         GLib.idle_add(lambda: (self.mostra(), False)[1])
 
     def mostra(self):
-        if self.voci:
-            self.pop.popup()
+        # anche senza download (Ctrl+J, voce di menu): il pulsante compare e il
+        # pannello si apre vuoto, con "Apri cartella download"
+        self.pulsante.set_no_show_all(False)
+        self.pulsante.show_all()
+        self.cambiato()
+        self.pop.popup()
 
     def togli(self, voce):
         if voce in self.voci:
