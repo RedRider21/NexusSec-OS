@@ -295,6 +295,11 @@ def info_sito(browser, relativo):
         riga("• " + e, "nxs-find-none-text")
     if config.get("tracking_protection", True):
         riga(_t("br.site.tracking_on"), "nxs-dl-info")
+    if host and not browser._view_mode.get(v):       # anonima: tutto negato
+        from nxs_browser import permissions
+        sep = Gtk.Separator()
+        box.pack_start(sep, False, False, 4)
+        box.pack_start(permissions.riquadro(host), False, False, 0)
     box.show_all()
     pop.add(box)
     pop.popup()

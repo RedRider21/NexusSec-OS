@@ -158,6 +158,8 @@ def apri_impostazioni(browser):
 
     def pulisci(_w):
         browser.cronologia.cancella_tutto()
+        from nxs_browser import permissions
+        permissions.cancella_tutti()
         ctx = browser._contexts.get(False)
         if ctx is None:
             ctx = browser._context(False)

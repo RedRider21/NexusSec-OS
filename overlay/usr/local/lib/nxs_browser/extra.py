@@ -225,9 +225,25 @@ class FunzioniExtra:
 
     # ------------------------------------------------ stampa, salva, sorgente
     def stampa(self):
+        """Stampa: scelta iniziale "Stampa su file" -> PDF nella cartella dei
+        download col titolo della pagina (sulla live di solito non c'e' una
+        stampante; prima partiva selezionata "Stampa su LPR")."""
         v = self.current_view()
-        if v:
-            WebKit2.PrintOperation.new(v).run_dialog(self)
+        if v is None:
+            return
+        from nxs_browser.downloads import cartella_download
+        op = WebKit2.PrintOperation.new(v)
+        ps = Gtk.PrintSettings()
+        # il nome della stampante "su file" e' TRADOTTO da GTK nella lingua
+        # attiva ("Stampa su file"): lo si prende dalle sue traduzioni
+        import gettext
+        ps.set_printer(gettext.dgettext("gtk30", "Print to File"))
+        ps.set(Gtk.PRINT_SETTINGS_OUTPUT_FILE_FORMAT, "pdf")
+        nome = re.sub(r'[\\/:*?"<>|]+', " ", v.get_title() or "pagina").strip()[:80] or "pagina"
+        ps.set(Gtk.PRINT_SETTINGS_OUTPUT_URI, GLib.filename_to_uri(
+            os.path.join(cartella_download(), nome + ".pdf"), None))
+        op.set_print_settings(ps)
+        op.run_dialog(self)
 
     def salva_pagina(self):
         v = self.current_view()

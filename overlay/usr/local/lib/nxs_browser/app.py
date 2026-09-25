@@ -620,8 +620,10 @@ class Browser(FunzioniExtra, Gtk.Window):
             # il contesto anonimo creato senza proxy va rifatto col proxy Tor
             self._contexts.pop(True, None)
             self._update_stealth_button()
-            if self.stealth:
-                self._reopen_current_in_mode()
+            # tutte le schede anonime aperte senza proxy vanno rifatte col proxy
+            cur = self.current_view()
+            for v in [v for v in self.stack.get_children() if self._view_mode.get(v)]:
+                self._rifai_scheda(v, attiva=(v is cur))
             return False
         if self._tor_tentativi >= 60:
             self._tor_avvio = False
@@ -704,40 +706,11 @@ class Browser(FunzioniExtra, Gtk.Window):
             except Exception:
                 pass
 
-        def _on_perm(_v, req):
-            try:
-                is_media = isinstance(req, WebKit2.UserMediaPermissionRequest)
-            except Exception:
-                is_media = False
-            if not is_media:
-                try:
-                    req.deny()
-                except Exception:
-                    pass
-                return True
-            host = ""
-            try:
-                host = urlparse(_v.get_uri() or "").netloc or ""
-            except Exception:
-                pass
-            d = Gtk.MessageDialog(
-                transient_for=(self if isinstance(self, Gtk.Window) else None),
-                modal=True, message_type=Gtk.MessageType.QUESTION,
-                buttons=Gtk.ButtonsType.YES_NO,
-                text=_t("br.perm_q"))
-            d.format_secondary_text(
-                (_t("br.perm_site") % host)
-                if host else _t("br.perm_generic"))
-            resp = d.run()
-            d.destroy()
-            try:
-                req.allow() if resp == Gtk.ResponseType.YES else req.deny()
-            except Exception:
-                pass
-            return True
-
+        # permessi per sito (permissions.py): chiede, ricorda, applica
+        from nxs_browser import permissions
         try:
-            view.connect("permission-request", _on_perm)
+            view.connect("permission-request", lambda v, req:
+                         permissions.gestisci(self, v, req, False))
         except Exception:
             pass
 
@@ -890,6 +863,26 @@ class Browser(FunzioniExtra, Gtk.Window):
             self._contexts.pop(True, None)  # ricrea il contesto stealth col proxy aggiornato
         self._update_stealth_button()
         self._reopen_current_in_mode()
+
+    def _rifai_scheda(self, cur, attiva=True, anonima=None):
+        """Sostituisce la view di una scheda con una nuova (il contesto e'
+        fissato alla creazione), nella stessa posizione e con lo stesso URL."""
+        idx = self.tab_box.get_children().index(self._tabs[cur]) if cur in self._tabs else 0
+        uri = cur.get_uri() or config.get("homepage", "https://duckduckgo.com")
+        modo = self._view_mode.get(cur) if anonima is None else anonima
+        ev = self._tabs.pop(cur, None)
+        if ev is not None:
+            self.tab_box.remove(ev)
+        self._tab_labels.pop(cur, None)
+        self._view_mode.pop(cur, None)
+        self.stack.remove(cur)
+        cur.destroy()
+        newv = self.new_tab(uri, switch=attiva, stealth=modo)
+        if idx < len(self.tab_box.get_children()):
+            self.tab_box.reorder_child(self._tabs[newv], idx)
+        if attiva:
+            self._set_active_tab(newv)
+        return newv
 
     def _reopen_current_in_mode(self):
         """Ricarica la scheda corrente nella modalita' attuale: il contesto e'
