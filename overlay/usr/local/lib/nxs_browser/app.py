@@ -39,6 +39,8 @@ gi.require_version("WebKit2", "4.1")
 from gi.repository import Gtk, Gdk, GLib, GdkPixbuf, WebKit2  # noqa: E402
 
 from nxs_browser.config import config
+from nxs_browser.downloads import GestoreDownload
+from nxs_browser.settings import apri_impostazioni, url_ricerca
 
 try:
     from nxs_i18n import t as _t
@@ -132,6 +134,29 @@ menu { background: #ffffff; color: #15141a; border: 1px solid #e1e1e6;
 menu menuitem { border-radius: 7px; padding: 5px 10px; }
 menu menuitem:hover { background: #e1e1e6; }
 paned > separator { background: transparent; min-width: 1px; min-height: 1px; }
+/* Pannello Download e Impostazioni */
+popover.nxs-dl-pop { background: #f9f9fb; color: #15141a; border: 1px solid #e1e1e6;
+  border-radius: 12px; }
+.nxs-dl-title { font-weight: 700; font-size: 10.5pt; margin-bottom: 2px; }
+.nxs-dl-row { padding: 8px; border-radius: 9px; background: #f0f0f4; }
+.nxs-dl-name { font-weight: 600; }
+.nxs-dl-info { color: #5b5b66; font-size: 8.5pt; }
+.nxs-dl-bar trough { min-height: 4px; border-radius: 2px; background: #e1e1e6; }
+.nxs-dl-bar progress { min-height: 4px; border-radius: 2px; }
+.nxs-dl-act { padding: 4px; border-radius: 7px; color: #15141a; }
+.nxs-dl-act:hover { background: #e1e1e6; }
+.nxs-dl-badge { font-size: 8.5pt; font-weight: 700; }
+popover.nxs-dl-pop button:not(.nxs-dl-act) { background: #f0f0f4; color: #15141a;
+  border: 1px solid #e1e1e6; border-radius: 8px; padding: 4px 12px; box-shadow: none; }
+.nxs-settings, .nxs-settings box, .nxs-settings grid { background: #f9f9fb; color: #15141a; }
+.nxs-settings label { color: #15141a; }
+.nxs-set-section { font-weight: 700; font-size: 10.5pt; margin-top: 8px; }
+.nxs-settings .nxs-set-note { color: #5b5b66; font-size: 8.5pt; }
+.nxs-settings entry { background: #f0f0f4; color: #15141a; border: 1px solid #e1e1e6;
+  border-radius: 8px; padding: 4px 10px; }
+.nxs-settings button { background: #f0f0f4; color: #15141a; border: 1px solid #e1e1e6;
+  border-radius: 8px; padding: 4px 12px; box-shadow: none; }
+.nxs-settings button:hover { background: #e1e1e6; }
 """
 
 CSS_DARK = b"""
@@ -191,6 +216,29 @@ menu { background: #2b2a33; color: #fbfbfe; border: 1px solid #1c1b22;
 menu menuitem { border-radius: 7px; padding: 5px 10px; }
 menu menuitem:hover { background: #3a3944; }
 paned > separator { background: transparent; min-width: 1px; min-height: 1px; }
+/* Pannello Download e Impostazioni */
+popover.nxs-dl-pop { background: #2b2a33; color: #fbfbfe; border: 1px solid #454451;
+  border-radius: 12px; }
+.nxs-dl-title { font-weight: 700; font-size: 10.5pt; margin-bottom: 2px; }
+.nxs-dl-row { padding: 8px; border-radius: 9px; background: #1c1b22; }
+.nxs-dl-name { font-weight: 600; }
+.nxs-dl-info { color: #b0b0ba; font-size: 8.5pt; }
+.nxs-dl-bar trough { min-height: 4px; border-radius: 2px; background: #454451; }
+.nxs-dl-bar progress { min-height: 4px; border-radius: 2px; }
+.nxs-dl-act { padding: 4px; border-radius: 7px; color: #fbfbfe; }
+.nxs-dl-act:hover { background: #454451; }
+.nxs-dl-badge { font-size: 8.5pt; font-weight: 700; }
+popover.nxs-dl-pop button:not(.nxs-dl-act) { background: #1c1b22; color: #fbfbfe;
+  border: 1px solid #454451; border-radius: 8px; padding: 4px 12px; box-shadow: none; }
+.nxs-settings, .nxs-settings box, .nxs-settings grid { background: #2b2a33; color: #fbfbfe; }
+.nxs-settings label { color: #fbfbfe; }
+.nxs-set-section { font-weight: 700; font-size: 10.5pt; margin-top: 8px; }
+.nxs-settings .nxs-set-note { color: #b0b0ba; font-size: 8.5pt; }
+.nxs-settings entry { background: #1c1b22; color: #fbfbfe; border: 1px solid #454451;
+  border-radius: 8px; padding: 4px 10px; }
+.nxs-settings button { background: #1c1b22; color: #fbfbfe; border: 1px solid #454451;
+  border-radius: 8px; padding: 4px 12px; box-shadow: none; }
+.nxs-settings button:hover { background: #454451; }
 """
 
 
@@ -230,6 +278,9 @@ class Browser(Gtk.Window):
         Gtk.StyleContext.add_provider_for_screen(
             Gdk.Screen.get_default(), self._css,
             Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+
+        # download: pulsante nella barra + pannello (downloads.py)
+        self.downloads = GestoreDownload(self, self._notify)
 
         self._build_ui()
         self.apply_theme()
@@ -334,6 +385,8 @@ class Browser(Gtk.Window):
         self._stealth_btn.connect("clicked", lambda _w: self.toggle_stealth())
         nav.pack_start(self._stealth_btn, False, False, 0)
 
+        nav.pack_start(self.downloads.pulsante, False, False, 0)
+
         # Menu a hamburger (sostituisce la menubar, come Firefox).
         self._menu_btn = self._navbtn("open-menu-symbolic", "Menu", self._show_menu)
         nav.pack_start(self._menu_btn, False, False, 0)
@@ -356,6 +409,9 @@ class Browser(Gtk.Window):
         menu.append(Gtk.SeparatorMenuItem())
         item(_t("br.toggle_theme"), self.toggle_theme)
         item(_t("br.inspector"), self.toggle_inspector)
+        menu.append(Gtk.SeparatorMenuItem())
+        item(_t("br.dl.title"), self.downloads.mostra)
+        item(_t("br.set.title"), lambda: apri_impostazioni(self))
         menu.append(Gtk.SeparatorMenuItem())
         item(_t("br.quit"), self.destroy)
         menu.show_all()
@@ -540,8 +596,8 @@ class Browser(Gtk.Window):
                     WebKit2.CookiePersistentStorage.SQLITE)
             except Exception:
                 pass
-        # Download (Salva immagine/link/file): WebKit li salva gia' da solo in
-        # Scaricati, ma in silenzio. Qui si avvisa a fine download (o errore).
+        # Download (Salva immagine/link/file): destinazione, avanzamento e
+        # avvisi li gestisce downloads.GestoreDownload (pannello nella barra).
         try:
             ctx.connect("download-started", self._on_download_started)
         except Exception:
@@ -626,8 +682,7 @@ class Browser(Gtk.Window):
     # --------------------------------------------------------------- tabs
     # ------------------------------------------------------------ download
     def _on_download_started(self, _ctx, download):
-        download.connect("finished", self._on_download_finished)
-        download.connect("failed", self._on_download_failed)
+        self.downloads.nuovo(download)
 
     def _download_path(self, download):
         uri = download.get_destination() or ""
@@ -642,27 +697,6 @@ class Browser(Gtk.Window):
                              stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         except OSError:
             pass
-
-    def _on_download_finished(self, download):
-        if getattr(download, "_nxs_failed", False):
-            return          # "finished" arriva anche dopo un errore: gia' avvisato
-        p = self._download_path(download)
-        self._notify(_t("br.dl.done"),
-                     _t("br.dl.done_body") % (os.path.basename(p) or p,
-                                              os.path.dirname(p)),
-                     "folder-download")
-
-    def _on_download_failed(self, download, error):
-        download._nxs_failed = True
-        # annullato dall'utente: nessun avviso d'errore
-        try:
-            if error.matches(WebKit2.DownloadError.quark(),
-                             WebKit2.DownloadError.CANCELLED_BY_USER):
-                return
-        except Exception:
-            pass
-        self._notify(_t("br.dl.failed"), str(getattr(error, "message", error)),
-                     "dialog-error")
 
     def new_tab(self, url=None, switch=True, view=None, stealth=None):
         # Se `view` e' gia' fornito, e' stato creato da WebKit per un popup /
@@ -888,8 +922,8 @@ class Browser(Gtk.Window):
             return url
         if "." in url and " " not in url:
             return "https://" + url
-        # altrimenti: ricerca
-        return "https://duckduckgo.com/?q=" + GLib.uri_escape_string(url, None, True)
+        # altrimenti: ricerca col motore scelto nelle Impostazioni
+        return url_ricerca(url)
 
     def navigate_to_url(self):
         v = self.current_view()
@@ -1282,6 +1316,8 @@ class Browser(Gtk.Window):
   box-shadow: 0 0 0 3px rgba(%(rgb)s, 0.28); }
 .nxs-tab-active, .nxs-tab-active:hover { box-shadow: inset 0 1px 0 %(a)s; }
 .nxs-progress progress { background: %(a)s; }
+.nxs-dl-bar progress { background: %(a)s; }
+.nxs-dl-badge { color: %(a)s; }
 .nxs-bm-list row:selected .nxs-bm-title { color: %(a)s; }
 .nxs-stealth-on { color: %(a)s; font-weight: bold; }
 .nxs-stealth-off { color: #9d9da6; font-weight: normal; }
