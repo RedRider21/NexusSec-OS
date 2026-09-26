@@ -161,22 +161,67 @@ def _schema_colore(chiaro: bool):
 
 
 def _css_editor() -> bytes:
-    """Ritocchi CSS specifici dell'editor (schede, barre, campo ricerca)."""
+    """Ritocchi CSS dell'editor: menu leggibili col colore del profilo, barre,
+    schede e campo ricerca. Caricato a priorita' APPLICATION+1, quindi puo'
+    correggere lo stile menu di nxs_cc.common (dove il testo delle voci
+    risultava troppo scuro). Colori dal profilo attivo via @AC@ e derivati."""
     ac = _accento()
-    return ("""
-    .nxs-editor-barra { padding: 4px 6px; }
-    .nxs-editor-stato { padding: 2px 8px; font-size: 90%%; }
-    .nxs-editor-stato label { color: alpha(currentColor, 0.75); }
-    .nxs-editor-modificato { color: %s; font-weight: bold; }
-    .nxs-editor-trova entry { min-width: 220px; }
+    css = """
+    /* ---- barra strumenti ---- */
+    .nxs-editor-barra { padding: 6px 8px; border-bottom: 1px solid @LINE@;
+        background: @BAR@; }
+    .nxs-editor-barra button { background: none; border: 1px solid transparent;
+        border-radius: 8px; padding: 6px; }
+    .nxs-editor-barra button:hover { background: @TINT@; border-color: @LINE@; }
+    .nxs-editor-barra button image { color: @INK@; }
+    .nxs-editor-barra button:hover image { color: @AC@; }
+
+    /* ---- schede ---- */
+    notebook header { background: @BAR@; }
+    notebook tab { padding: 5px 12px; border: none;
+        box-shadow: inset 0 -2px transparent; }
+    notebook tab:checked { box-shadow: inset 0 -2px @AC@; }
+    notebook tab label { color: @DIM@; }
+    notebook tab:checked label { color: @INK@; }
     .nxs-editor-tab button { padding: 0; margin: 0;
         min-width: 20px; min-height: 20px;
-        background: none; border: none; box-shadow: none;
-        opacity: 0.55; }
+        background: none; border: none; box-shadow: none; opacity: 0.55; }
     .nxs-editor-tab button:hover { opacity: 1; }
-    notebook tab { padding: 4px 8px; }
+
+    /* ---- barra di stato ---- */
+    .nxs-editor-stato { padding: 3px 10px; font-size: 90%; border-top: 1px solid @LINE@;
+        background: @BAR@; }
+    .nxs-editor-stato label { color: @DIM@; }
+    .nxs-editor-modificato { color: @AC@; font-weight: bold; }
+
+    /* ---- campo ricerca ---- */
+    .nxs-editor-trova { background: @BAR@; border-top: 1px solid @LINE@; }
+    .nxs-editor-trova entry { min-width: 220px; }
     .nxs-editor-trova.nxs-nulla entry { color: #ff5a8a; }
-    """ % ac).encode("ascii", "replace")
+
+    /* ---- MENU: testo leggibile e voce attiva col colore del profilo ---- */
+    menu, .menu, menu.background { background-color: @MENU@;
+        border: 1px solid @LINE@; border-radius: 10px; padding: 6px; }
+    menu menuitem { padding: 7px 14px; border-radius: 7px; }
+    menu label { color: @INK@; }
+    menu menuitem label { color: @INK@; }
+    menu menuitem .nxs-val { color: @DIM@; }
+    menu menuitem:hover, menu menuitem:selected {
+        background-color: @AC@; background-image: none; }
+    menu menuitem:hover label, menu menuitem:selected label,
+    menu menuitem:hover .nxs-val, menu menuitem:selected .nxs-val {
+        color: #04121a; }
+    menu menuitem:disabled label { color: @DIM@; }
+    menu separator { background-color: @LINE@; margin: 4px 8px; }
+    menu check { min-width: 16px; min-height: 16px; }
+    menu menuitem:hover check, menu menuitem:selected check { color: #04121a; }
+    """
+    subs = {"@AC@": ac, "@INK@": "#d4f3ff", "@DIM@": _mix(ac, 0.75),
+            "@LINE@": _mix(ac, 0.45), "@MENU@": "#0a1a26",
+            "@BAR@": "#0b1c2a", "@TINT@": "#12283a"}
+    for k, v in subs.items():
+        css = css.replace(k, v)
+    return css.encode("ascii", "replace")
 
 
 # ---------------------------------------------------------------------------
@@ -525,7 +570,7 @@ class Editor(Gtk.Window):
             prov.load_from_data(_css_editor())
             Gtk.StyleContext.add_provider_for_screen(
                 Gdk.Screen.get_default(), prov,
-                Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION + 1)
+                Gtk.STYLE_PROVIDER_PRIORITY_USER)
         except Exception:                           # noqa: BLE001
             pass
 
