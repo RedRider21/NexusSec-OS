@@ -13,12 +13,15 @@ sola lettura. I pochi tool a **raw-socket** (nmap SYN, masscan, aircrack,
 responder, ...) girano con privilegi e senza sandbox FS — necessario per i
 socket grezzi — ma il core resta comunque intatto perché la live è read-only.
 
-Include un **browser integrato stealth**: di default naviga in modo **anonimo**
-(traffico via **Tor**, IP nascosto) e **senza lasciare tracce** locali
-(cookie/cronologia/cache solo in RAM), con **interruttore** in barra per passare
-al volo alla navigazione normale. Interfaccia a schede con **preferiti** (mostra
-la **favicon** reale dei siti, anche nella barra laterale ridotta) e **tema
-scuro** coerente con l'ambiente NexusSec.
+Include un **browser integrato stealth** con l'interfaccia e le funzioni di
+**Firefox**: di default naviga in modo **anonimo** (traffico via **Tor**, IP
+nascosto) e **senza lasciare tracce** locali (cookie/cronologia/cache solo in
+RAM), con **interruttore** in barra per passare al volo alla navigazione normale.
+In più: **traduzione delle pagine** come in Chrome (anche via Tor), **download**
+con avanzamento, **lucchetto** con certificato e **permessi per sito**,
+modalità **solo HTTPS**, **antitracciamento**, cronologia con suggerimenti, trova
+nella pagina, stampa/PDF, riapri scheda chiusa, silenzia scheda, ripristino della
+sessione, le scorciatoie di Firefox e una pagina di **Impostazioni**.
 
 ## Procedure guidate (Wizard)
 

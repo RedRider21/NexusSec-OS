@@ -487,18 +487,93 @@ footer{border-top:1px solid var(--line);padding:24px 0 60px;color:var(--muted);f
 
 <section id="browser">
   <h2><span class="n">07</span> <span data-lang="it">Browser stealth</span><span data-lang="en">Stealth browser</span></h2>
-  <p data-lang="it"><code>nxs-browser</code> è il browser integrato: di default naviga in modo
-  <strong>anonimo</strong> (traffico via Tor, IP nascosto) e <strong>senza lasciare
-  tracce</strong> locali (cookie, cronologia e cache solo in RAM). Un interruttore
-  in barra passa al volo alla navigazione normale. Interfaccia a schede con
-  preferiti che mostrano la favicon reale dei siti, tema scuro coerente col resto
-  del sistema.</p>
-  <p data-lang="en"><code>nxs-browser</code> is the built-in browser: by default it browses
-  <strong>anonymously</strong> (traffic via Tor, hidden IP) and <strong>without leaving
-  local traces</strong> (cookies, history and cache in RAM only). A bar switch
-  toggles to normal browsing on the fly. Tabbed interface with
-  bookmarks that show sites' real favicon, dark theme consistent with the rest
-  of the system.</p>
+  <p data-lang="it"><code>nxs-browser</code> è il browser integrato (WebKit), con l'interfaccia e le
+  funzioni di Firefox. Di default naviga in modo <strong>anonimo</strong> (traffico via Tor, IP
+  nascosto) e <strong>senza lasciare tracce</strong> locali (cookie, cronologia e cache solo in
+  RAM). Il pulsante <em>Stealth</em> nella barra passa al volo alla navigazione normale.</p>
+  <p data-lang="en"><code>nxs-browser</code> is the built-in browser (WebKit), with Firefox's
+  interface and features. By default it browses <strong>anonymously</strong> (traffic via Tor,
+  hidden IP) and <strong>without leaving local traces</strong> (cookies, history and cache in RAM
+  only). The <em>Stealth</em> button in the bar switches to normal browsing on the fly.</p>
+  <div class="note"><strong><span data-lang="it">«Stealth ON» e «Stealth (no Tor)».</span><span data-lang="en">«Stealth ON» and «Stealth (no Tor)».</span></strong>
+  <span data-lang="it"><em>Stealth ON</em>: anonimato completo, via Tor e senza tracce.
+  <em>Stealth (no Tor)</em>: nessuna traccia locale, ma Tor non risponde e le pagine vedono l'IP
+  reale; il browser accende Tor da solo e, appena è pronto, ricollega le schede anonime.</span>
+  <span data-lang="en"><em>Stealth ON</em>: full anonymity, via Tor and without traces.
+  <em>Stealth (no Tor)</em>: no local traces, but Tor isn't answering and pages see the real IP;
+  the browser starts Tor by itself and reconnects the anonymous tabs as soon as it is ready.</span></div>
+  <h3><span data-lang="it">Funzioni</span><span data-lang="en">Features</span></h3>
+  <ul>
+    <li data-lang="it"><strong>Traduci pagina</strong> (pulsante dopo Stealth, come in Chrome): si
+      illumina quando la pagina è in una lingua diversa dalla tua; traduce sul posto mantenendo
+      l'impaginazione, <em>Mostra originale</em> la ripristina. Servizio Google (predefinito) o
+      LibreTranslate, anche su un server proprio; in modalità anonima la richiesta passa via Tor.</li>
+    <li data-lang="en"><strong>Translate page</strong> (button after Stealth, as in Chrome): it lights
+      up when the page is in a language other than yours; translates in place keeping the layout,
+      <em>Show original</em> restores it. Google service (default) or LibreTranslate, even on your
+      own server; in anonymous mode the request goes through Tor.</li>
+    <li data-lang="it"><strong>Download</strong>: pulsante nella barra con la percentuale; pannello con
+      avanzamento, velocità, tempo residuo, <em>Annulla</em>, <em>Apri</em>, <em>Mostra nella
+      cartella</em>. Cartella scelta nelle Impostazioni, oppure «chiedi ogni volta».</li>
+    <li data-lang="en"><strong>Downloads</strong>: bar button with the percentage; panel with progress,
+      speed, time left, <em>Cancel</em>, <em>Open</em>, <em>Show in folder</em>. Folder chosen in
+      Settings, or «always ask».</li>
+    <li data-lang="it"><strong>Lucchetto</strong>: stato della connessione, certificato (intestatario,
+      emittente, validità, eventuali problemi) e <strong>permessi del sito</strong> (microfono e
+      fotocamera, notifiche, posizione: Chiedi / Consenti / Blocca). Alla prima richiesta un sito
+      chiede con «Ricorda la scelta»; in modalità anonima è tutto negato.</li>
+    <li data-lang="en"><strong>Padlock</strong>: connection state, certificate (subject, issuer,
+      validity, any problems) and <strong>site permissions</strong> (microphone and camera,
+      notifications, location: Ask / Allow / Block). On the first request a site asks with «Remember
+      the choice»; in anonymous mode everything is denied.</li>
+    <li data-lang="it"><strong>Solo HTTPS</strong>: i link <code>http://</code> si provano in
+      <code>https://</code>; se il sito non lo supporta una pagina lo spiega e permette di
+      continuare. Esclusi indirizzi IP e reti locali (laboratorio).</li>
+    <li data-lang="en"><strong>HTTPS-only</strong>: <code>http://</code> links are tried over
+      <code>https://</code>; if the site doesn't support it a page explains and lets you continue.
+      IP addresses and local networks (lab) are excluded.</li>
+    <li data-lang="it"><strong>Antitracciamento</strong>: blocca i tracker di analisi, pubblicità e
+      social caricati da altri siti (elenco curato da NexusSec). Popup automatici bloccati.</li>
+    <li data-lang="en"><strong>Tracking protection</strong>: blocks analytics, advertising and social
+      trackers loaded by other sites (list curated by NexusSec). Automatic pop-ups blocked.</li>
+    <li data-lang="it"><strong>Cronologia</strong> (solo navigazione normale) con suggerimenti mentre
+      scrivi nella barra indirizzi, insieme ai preferiti; finestra Cronologia con ricerca.</li>
+    <li data-lang="en"><strong>History</strong> (normal browsing only) with suggestions while typing
+      in the address bar, together with bookmarks; History window with search.</li>
+    <li data-lang="it"><strong>Trova nella pagina</strong>, <strong>stampa / salva come PDF</strong>
+      (preselezionata «Stampa su file»), <strong>salva pagina</strong>, <strong>sorgente</strong>,
+      <strong>riapri scheda chiusa</strong>, <strong>silenzia scheda</strong> (altoparlante sulla
+      scheda che suona), <strong>riordino delle schede</strong> trascinandole,
+      <strong>ripristino della sessione</strong> all'avvio (opzionale, non per le schede anonime).</li>
+    <li data-lang="en"><strong>Find in page</strong>, <strong>print / save as PDF</strong>
+      («Print to file» preselected), <strong>save page</strong>, <strong>source</strong>,
+      <strong>reopen closed tab</strong>, <strong>mute tab</strong> (speaker on the playing tab),
+      <strong>tab reordering</strong> by dragging, <strong>session restore</strong> at startup
+      (optional, not for anonymous tabs).</li>
+    <li data-lang="it"><strong>Impostazioni</strong> (menu ☰): pagina iniziale, motore di ricerca,
+      cartella download, tema scuro, modalità anonima, solo HTTPS, antitracciamento, cronologia,
+      servizio di traduzione, cancella dati di navigazione.</li>
+    <li data-lang="en"><strong>Settings</strong> (☰ menu): home page, search engine, download folder,
+      dark theme, anonymous mode, HTTPS-only, tracking protection, history, translation service,
+      clear browsing data.</li>
+  </ul>
+  <h3><span data-lang="it">Scorciatoie</span><span data-lang="en">Shortcuts</span></h3>
+  <table>
+    <thead><tr><th><span data-lang="it">Tasti</span><span data-lang="en">Keys</span></th><th><span data-lang="it">Azione</span><span data-lang="en">Action</span></th></tr></thead>
+    <tbody>
+      <tr><td class="k">Ctrl+T · Ctrl+W</td><td><span data-lang="it">nuova scheda · chiudi scheda</span><span data-lang="en">new tab · close tab</span></td></tr>
+      <tr><td class="k">Ctrl+Maiusc+T</td><td><span data-lang="it">riapri l'ultima scheda chiusa</span><span data-lang="en">reopen the last closed tab (Ctrl+Shift+T)</span></td></tr>
+      <tr><td class="k">Ctrl+Tab · Ctrl+Maiusc+Tab</td><td><span data-lang="it">scheda successiva · precedente</span><span data-lang="en">next · previous tab</span></td></tr>
+      <tr><td class="k">Ctrl+L · F6</td><td><span data-lang="it">barra indirizzi</span><span data-lang="en">address bar</span></td></tr>
+      <tr><td class="k">Ctrl+R · F5 · Ctrl+Maiusc+R</td><td><span data-lang="it">ricarica · ricarica senza cache</span><span data-lang="en">reload · reload without cache</span></td></tr>
+      <tr><td class="k">Alt+← · Alt+→ · Alt+Home</td><td><span data-lang="it">indietro · avanti · pagina iniziale</span><span data-lang="en">back · forward · home page</span></td></tr>
+      <tr><td class="k">Ctrl+F · F3 · Maiusc+F3</td><td><span data-lang="it">trova · successivo · precedente</span><span data-lang="en">find · next · previous</span></td></tr>
+      <tr><td class="k">Ctrl+D · Ctrl+H · Ctrl+J</td><td><span data-lang="it">aggiungi preferito · cronologia · download</span><span data-lang="en">add bookmark · history · downloads</span></td></tr>
+      <tr><td class="k">Ctrl+P · Ctrl+S · Ctrl+U</td><td><span data-lang="it">stampa/PDF · salva pagina · sorgente</span><span data-lang="en">print/PDF · save page · source</span></td></tr>
+      <tr><td class="k">Ctrl + + · Ctrl + − · Ctrl+0</td><td><span data-lang="it">zoom</span><span data-lang="en">zoom</span></td></tr>
+      <tr><td class="k">F11 · F12</td><td><span data-lang="it">schermo intero · strumenti sviluppatore</span><span data-lang="en">full screen · developer tools</span></td></tr>
+    </tbody>
+  </table>
 </section>
 
 <section id="persistenza">
@@ -909,7 +984,7 @@ nxs-persist status          # disk persistence status</code></pre>
       <tr><td class="k">nxs-launcherd</td><td><span data-lang="it">Demone <strong>launcher "caldo"</strong> (interno, dalla v2026.09.09): precarica gi/GTK + i moduli del desktop una volta e apre le app, saltando il costo di import a ogni avvio. Parte dall'autostart; se non gira, i comandi ricadono sull'avvio normale.</span><span data-lang="en"><strong>Warm launcher</strong> daemon (internal, since v2026.09.09): preloads gi/GTK + the desktop modules once and opens the apps, skipping the import cost on every launch. Started from autostart; if it isn't running, commands fall back to normal startup.</span></td></tr>
       <tr><td class="k">nxs-launch <span class="tag">app</span></td><td><span data-lang="it">Client leggero del demone (interno): chiede a <code>nxs-launcherd</code> di aprire un'app (<code>cc</code> · <code>profile</code> · <code>screensaver</code>) con avvio rapido; fallback all'avvio normale se il demone non risponde.</span><span data-lang="en">Lightweight client of the daemon (internal): asks <code>nxs-launcherd</code> to open an app (<code>cc</code> · <code>profile</code> · <code>screensaver</code>) with fast startup; falls back to normal startup if the daemon doesn't answer.</span></td></tr>
       <tr><td class="k">nxs-wizard</td><td><span data-lang="it">Procedure guidate. Senza argomenti apre la GUI.<br><code>list</code> · <code>run NOME</code></span><span data-lang="en">Guided procedures. With no arguments it opens the GUI.<br><code>list</code> · <code>run NAME</code></span></td></tr>
-      <tr><td class="k">nxs-browser</td><td><span data-lang="it">Browser stealth integrato (Tor di default, nessuna traccia locale).</span><span data-lang="en">Built-in stealth browser (Tor by default, no local traces).</span></td></tr>
+      <tr><td class="k">nxs-browser</td><td><span data-lang="it">Browser integrato stile Firefox: Tor di default e nessuna traccia locale, traduzione delle pagine, download, solo HTTPS, antitracciamento, permessi per sito (vedi <a href="#browser">Browser</a>). Accetta un indirizzo o un file da aprire.</span><span data-lang="en">Firefox-style built-in browser: Tor by default and no local traces, page translation, downloads, HTTPS-only, tracking protection, per-site permissions (see <a href="#browser">Browser</a>). Accepts an address or a file to open.</span></td></tr>
       <tr><td class="k">nxs-horus</td><td><span data-lang="it"><strong>HORUS</strong>, l'Occhio OSINT/GEOINT globale: mappa mondiale con feed in tempo reale, GEOINT/SOCMINT/ricognizione, correlazioni e <strong>grafo relazioni</strong> (con arricchimento IP/dominio), fascicoli d'indagine ri-editabili con timeline ed export CSV/STIX/PDF, e news a 360° (DuckDuckGo + Google News). In più: <strong>mappa offline</strong> (cache tile IndexedDB + precarico mondo a basso zoom dalle Impostazioni), <strong>schermate</strong> allegabili al dossier e <strong>bundle ZIP</strong> completo (HTML+JSON+CSV+STIX+schermate); l'OSINT su numeri (PhoneInfoga) è esposto solo su <code>127.0.0.1:5000</code>. Vedi la sezione 10.</span><span data-lang="en"><strong>HORUS</strong>, the global OSINT/GEOINT eye: world map with real-time feeds, GEOINT/SOCMINT/recon, correlations and a <strong>relationship graph</strong> (with IP/domain enrichment), re-editable investigation dossiers with a timeline and CSV/STIX/PDF export, and 360° news (DuckDuckGo + Google News). Plus: <strong>offline map</strong> (IndexedDB tile cache + low-zoom world preload from the Settings), <strong>screenshots</strong> attachable to the dossier and a full <strong>ZIP bundle</strong> (HTML+JSON+CSV+STIX+screenshots); phone-number OSINT (PhoneInfoga) is exposed only on <code>127.0.0.1:5000</code>. See section 10.</span></td></tr>
       <tr><td class="k">nxs-ai</td><td><span data-lang="it"><strong>Assistente IA</strong> (consulente): risponde su comandi e tool, spiega gli output e <strong>propone i comandi</strong> — non li esegue. Backend <strong>selezionabile</strong> dal Centro di Controllo: <strong>locale</strong> (<code>ollama</code>, offline) o <strong>cloud</strong> (endpoint compatibile OpenAI, anche un proprio AIos, con consenso). Conosce il catalogo reale. Nulla si scarica da solo.<br><code>nxs-ai "domanda"</code> · <code>nxs-ai</code> conversazione · <code>&lt;comando&gt; 2&gt;&amp;1 | nxs-ai explain</code> · <code>nxs-ai wizard "obiettivo"</code> genera una procedura · <strong>Super+A</strong> spotlight. Con l'esecuzione confermata (opt-in dal CC) puoi eseguire un comando proposto in sandbox, con conferma; i comandi distruttivi sono sempre bloccati.</span><span data-lang="en"><strong>AI assistant</strong> (advisor): answers about commands and tools, explains output and <strong>proposes commands</strong> — it does not run them. <strong>Selectable</strong> backend from Control Center: <strong>local</strong> (<code>ollama</code>, offline) or <strong>cloud</strong> (OpenAI-compatible endpoint, incl. your own AIos, with consent). It knows the real catalog. Nothing is downloaded automatically.<br><code>nxs-ai "question"</code> · <code>nxs-ai</code> chat · <code>&lt;command&gt; 2&gt;&amp;1 | nxs-ai explain</code> · <code>nxs-ai wizard "goal"</code> generates a procedure · <strong>Super+A</strong> spotlight. With confirmed execution (opt-in from CC) you can run a proposed command in a sandbox, on confirmation; destructive commands are always blocked.</span></td></tr>
       <tr><td class="k">nxs-ai-sandbox</td><td><span data-lang="it">Sandbox <code>bubblewrap</code> per l'agente AI: root in sola lettura, home isolata, rete esclusa di default. Usata dall'esecuzione confermata (Fase 2).<br><code>nxs-ai-sandbox [--net] [--workspace CARTELLA] -- COMANDO</code></span><span data-lang="en"><code>bubblewrap</code> sandbox for the AI agent: read-only root, isolated home, network excluded by default. Used by confirmed execution (Phase 2).<br><code>nxs-ai-sandbox [--net] [--workspace FOLDER] -- COMMAND</code></span></td></tr>
