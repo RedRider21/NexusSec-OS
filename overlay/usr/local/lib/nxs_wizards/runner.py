@@ -155,7 +155,7 @@ def run_wizard(wid: str, values: dict, emit, stop=None,
 
     for f in wiz.get("fields", []):
         if f.get("required") and not (values.get(f["key"]) or "").strip():
-            emit(f"[!] campo obbligatorio mancante: {f['label']}")
+            emit(f"[!] campo obbligatorio mancante: {recipes.wtr(wiz, 'f.%s.label' % f['key'], f.get('label', f['key']))}")
             return False
 
     mode_id = mode if mode is not None else recipes.default_mode(wiz)
@@ -177,14 +177,14 @@ def run_wizard(wid: str, values: dict, emit, stop=None,
         logf.write(line + "\n")
         logf.flush()
 
-    out(f"=== {wiz.get('name', wid)} ===")
+    out(f"=== {recipes.wtr(wiz, 'name', wiz.get('name', wid))} ===")
     if wiz.get("modes"):
-        mlabel = next((m.get("label", mode_id) for m in wiz["modes"]
-                       if m.get("id") == mode_id), mode_id)
+        mlabel = next((recipes.wtr(wiz, "m.%s.label" % m["id"], m.get("label", mode_id))
+                       for m in wiz["modes"] if m.get("id") == mode_id), mode_id)
         out(f"Modalita': {mlabel}")
     if wiz.get("options"):
-        on = [o.get("label", o["id"]) for o in wiz["options"]
-              if o["id"] in active_opts] or ["(nessuna)"]
+        on = [recipes.wtr(wiz, "o.%s.label" % o["id"], o.get("label", o["id"]))
+              for o in wiz["options"] if o["id"] in active_opts] or ["(nessuna)"]
         out(f"Opzioni attive: {', '.join(on)}")
     out(f"Stealth: {'ON (anonimato via Tor dove possibile)' if stealth else 'OFF'}")
     out(f"Step da eseguire: {len(steps)}")
@@ -214,7 +214,7 @@ def run_wizard(wid: str, values: dict, emit, stop=None,
                 out("[!] interrotto dall'utente.")
                 return False
             tool = st["tool"]
-            desc = st.get("desc", tool)
+            desc = recipes.wtr_step(wiz, st, st.get("desc", tool))
             raw_args = st.get("args", "")
 
             subst = dict(values)

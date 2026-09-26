@@ -17,6 +17,11 @@ from nxs_cc import common  # imposta gi.require_version("Gtk","3.0") all'import
 from gi.repository import Gtk, GLib
 
 from . import recipes, runner
+try:
+    from nxs_i18n import t as _t
+except Exception:                # noqa: BLE001
+    def _t(k, **kw):
+        return k
 
 
 class _Wizard:
@@ -49,7 +54,7 @@ class _Wizard:
     # ---- schermata: scelta procedura ----
     def show_chooser(self):
         self._clear()
-        intro = Gtk.Label(label="Scegli una procedura guidata:")
+        intro = Gtk.Label(label=_t("wiz.ui.choose"))
         intro.set_xalign(0)
         self.body.pack_start(intro, False, False, 0)
 
@@ -61,25 +66,25 @@ class _Wizard:
 
         ws = recipes.all_wizards()
         if not ws:
-            lst.pack_start(Gtk.Label(label="(nessuna procedura definita)"),
+            lst.pack_start(Gtk.Label(label=_t("wiz.ui.none")),
                            False, False, 0)
         for wid, w in ws.items():
             row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
-            label = w.get("name", wid)
+            label = recipes.wtr(w, "name", w.get("name", wid))
             if w.get("custom"):
-                label += "   (personalizzato)"
+                label += _t("wiz.ui.custom_tag")
             btn = common.icon_button(label, w.get("icon", "system-run-symbolic"))
             btn.connect("clicked", lambda _b, i=wid: self.show_form(i))
             row.pack_start(btn, True, True, 0)
             if w.get("custom"):
-                dele = common.icon_button("Elimina", "user-trash-symbolic")
-                dele.connect("clicked", lambda _b, i=wid, n=w.get("name", wid):
+                dele = common.icon_button(_t("wiz.ui.delete"), "user-trash-symbolic")
+                dele.connect("clicked", lambda _b, i=wid, n=recipes.wtr(w, "name", w.get("name", wid)):
                              self._delete_custom(i, n))
                 row.pack_start(dele, False, False, 0)
             lst.pack_start(row, False, False, 0)
 
         bar = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
-        newb = common.icon_button("Nuovo wizard personalizzato",
+        newb = common.icon_button(_t("wiz.ui.new"),
                                   "list-add-symbolic", primary=True)
         newb.connect("clicked", lambda _b: self.show_builder())
         bar.pack_end(newb, False, False, 0)
@@ -91,7 +96,7 @@ class _Wizard:
             transient_for=self.win, modal=True,
             message_type=Gtk.MessageType.QUESTION,
             buttons=Gtk.ButtonsType.YES_NO,
-            text=f"Eliminare il wizard personalizzato \"{name}\"?")
+            text=_t("wiz.ui.delete_q") % name)
         resp = dlg.run()
         dlg.destroy()
         if resp == Gtk.ResponseType.YES:
@@ -115,12 +120,12 @@ class _Wizard:
             return
         self._cur_wiz = w
 
-        title = Gtk.Label(label=w.get("name", wid))
+        title = Gtk.Label(label=recipes.wtr(w, "name", w.get("name", wid)))
         title.set_xalign(0)
         title.get_style_context().add_class("title")
         self.body.pack_start(title, False, False, 0)
 
-        desc = Gtk.Label(label=w.get("description", ""))
+        desc = Gtk.Label(label=recipes.wtr(w, "desc", w.get("description", "")))
         desc.set_xalign(0)
         desc.set_line_wrap(True)
         self.body.pack_start(desc, False, False, 0)
@@ -129,18 +134,18 @@ class _Wizard:
         entries = {}
         for f in w.get("fields", []):
             row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
-            lab = Gtk.Label(label=f.get("label", f["key"]))
+            lab = Gtk.Label(label=recipes.wtr(w, "f.%s.label" % f["key"], f.get("label", f["key"])))
             lab.set_xalign(0)
             lab.set_size_request(240, -1)
             lab.set_line_wrap(True)
             ent = Gtk.Entry()
             ent.set_hexpand(True)
             if f.get("placeholder"):
-                ent.set_placeholder_text(f["placeholder"])
+                ent.set_placeholder_text(recipes.wtr(w, "f.%s.ph" % f["key"], f["placeholder"]))
             row.pack_start(lab, False, False, 0)
             row.pack_start(ent, True, True, 0)
             if f.get("type") == "file":
-                br = Gtk.Button(label="Sfoglia...")
+                br = Gtk.Button(label=_t("wiz.ui.browse"))
                 br.connect("clicked", lambda _b, e=ent: self._pick_file(e))
                 row.pack_start(br, False, False, 0)
             self.body.pack_start(row, False, False, 0)
@@ -149,14 +154,15 @@ class _Wizard:
         # --- modalita' (intensita', scelta singola) ---
         modes = w.get("modes") or []
         if modes:
-            self._section("Modalita'")
+            self._section(_t("wiz.ui.modes"))
             mbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
             default_m = recipes.default_mode(w)
             first = None
             for m in modes:
-                lbl = m.get("label", m["id"])
-                if m.get("desc"):
-                    lbl += "  —  " + m["desc"]
+                lbl = recipes.wtr(w, "m.%s.label" % m["id"], m.get("label", m["id"]))
+                md = recipes.wtr(w, "m.%s.desc" % m["id"], m.get("desc", ""))
+                if md:
+                    lbl += "  —  " + md
                 rb = Gtk.RadioButton.new_with_label_from_widget(first, lbl)
                 if first is None:
                     first = rb
@@ -170,12 +176,13 @@ class _Wizard:
         # --- opzioni (spunte indipendenti) ---
         options = w.get("options") or []
         if options:
-            self._section("Opzioni")
+            self._section(_t("wiz.ui.options"))
             obox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
             for o in options:
-                lbl = o.get("label", o["id"])
-                if o.get("desc"):
-                    lbl += "  —  " + o["desc"]
+                lbl = recipes.wtr(w, "o.%s.label" % o["id"], o.get("label", o["id"]))
+                od = recipes.wtr(w, "o.%s.desc" % o["id"], o.get("desc", ""))
+                if od:
+                    lbl += "  —  " + od
                 cb = Gtk.CheckButton.new_with_label(lbl)
                 cb.set_active(bool(o.get("default")))
                 cb.connect("toggled", lambda _b: self._recount())
@@ -185,17 +192,14 @@ class _Wizard:
 
         # --- stealth: mostrato solo se praticabile (>=1 step instradabile via Tor) ---
         if recipes.stealth_applicable(w):
-            self._section("Stealth")
+            self._section(_t("wiz.ui.stealth"))
             self._stealth_btn = Gtk.CheckButton.new_with_label(
-                "Anonimato via Tor dove possibile "
-                "(ogni step mostra: via Tor / non anonimizzabile / locale)")
+                _t("wiz.ui.stealth_desc"))
             self._stealth_btn.set_active(recipes.stealth_default(w))
             self._stealth_btn.connect("toggled", lambda _b: self._recount())
             self.body.pack_start(self._stealth_btn, False, False, 0)
         else:
-            note = Gtk.Label(
-                label="Stealth non applicabile: operazioni locali, nessuno "
-                      "step instradabile via Tor.")
+            note = Gtk.Label(label=_t("wiz.ui.stealth_na"))
             note.set_xalign(0)
             note.set_line_wrap(True)
             note.get_style_context().add_class("nxs-dim")
@@ -223,9 +227,9 @@ class _Wizard:
 
         # --- barra pulsanti ---
         bar = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
-        back = common.icon_button("Indietro", "go-previous-symbolic")
+        back = common.icon_button(_t("wiz.ui.back"), "go-previous-symbolic")
         back.connect("clicked", lambda _b: self.show_chooser())
-        self.start_btn = common.icon_button("Avvia",
+        self.start_btn = common.icon_button(_t("wiz.ui.start"),
                                              "media-playback-start-symbolic",
                                              primary=True)
         self.start_btn.connect("clicked",
@@ -253,14 +257,14 @@ class _Wizard:
         n = recipes.count_active_steps(self._cur_wiz, self._selected_mode(),
                                        self._selected_options(),
                                        self._selected_stealth())
-        extra = "  ·  Stealth ON" if self._selected_stealth() else ""
-        self._count_lbl.set_text(f"→ verranno eseguiti {n} step{extra}")
+        extra = _t("wiz.ui.stealth_on") if self._selected_stealth() else ""
+        self._count_lbl.set_text(_t("wiz.ui.count") % (n, extra))
 
     def _pick_file(self, entry):
-        d = Gtk.FileChooserDialog(title="Scegli file/immagine", parent=self.win,
+        d = Gtk.FileChooserDialog(title=_t("wiz.ui.pick_file"), parent=self.win,
                                   action=Gtk.FileChooserAction.OPEN)
-        d.add_buttons("Annulla", Gtk.ResponseType.CANCEL,
-                      "Apri", Gtk.ResponseType.OK)
+        d.add_buttons(_t("wiz.ui.cancel"), Gtk.ResponseType.CANCEL,
+                      _t("wiz.ui.open"), Gtk.ResponseType.OK)
         if d.run() == Gtk.ResponseType.OK:
             entry.set_text(d.get_filename() or "")
         d.destroy()
@@ -299,7 +303,7 @@ class _Wizard:
 
 
 def main(wid: str | None = None, start_builder: bool = False) -> int:
-    win, body = common.panel_window("Procedure guidate NexusSec", 780, 640)
+    win, body = common.panel_window(_t("wiz.ui.title"), 780, 640)
     win.connect("destroy", Gtk.main_quit)
     app = _Wizard(win, body)
     if start_builder:

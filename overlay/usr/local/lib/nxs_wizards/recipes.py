@@ -77,6 +77,32 @@ def _merged() -> dict:
     return merged
 
 
+# ---------------------------------------------------------------- traduzione
+def wtr(w: dict, suffix: str, default: str = "") -> str:
+    """Traduce un campo testuale di una ricetta STANDARD nella lingua attiva
+    (chiave `wiz.<id>.<suffix>` in nxs_i18n). Le ricette PERSONALI restano
+    com'e' scritte dall'utente. Ricaduta sul testo `default` (l'italiano del
+    JSON) se manca la chiave o l'i18n non e' disponibile: la UI non si rompe."""
+    if not w or w.get("custom"):
+        return default
+    try:
+        from nxs_i18n import t
+        key = "wiz.%s.%s" % (w.get("id", ""), suffix)
+        val = t(key)
+        return val if val != key else default
+    except Exception:                       # noqa: BLE001
+        return default
+
+
+def wtr_step(wiz: dict, st: dict, default: str = "") -> str:
+    """Descrizione tradotta di uno step, individuato per posizione nella ricetta
+    originale (il runner filtra gli step ma ne conserva gli oggetti)."""
+    i = next((k for k, x in enumerate(wiz.get("steps", [])) if x is st), None)
+    if i is None:
+        return default
+    return wtr(wiz, "s.%d.desc" % i, default)
+
+
 # ------------------------------------------------------------------- query
 def all_wizards() -> dict:
     """{id: ricetta} di tutti i wizard (standard + personali)."""

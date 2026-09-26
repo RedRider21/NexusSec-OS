@@ -24,7 +24,7 @@ def _print_list() -> None:
         return
     for wid, w in ws.items():
         tag = "personalizzato" if w.get("custom") else w.get("profile", "-")
-        print(f"{wid:18}  {w.get('name', ''):28}  [{tag}]")
+        print(f"{wid:18}  {recipes.wtr(w, 'name', w.get('name', '')):28}  [{tag}]")
 
 
 def main(argv: list[str] | None = None) -> int:
