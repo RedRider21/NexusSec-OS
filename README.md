@@ -913,6 +913,20 @@ container Podman · `git` clone+venv.
 | `torsocks` | apk nativo | ✅ | ✅ |
 </details>
 
+## Ecosistema NexusSec
+
+NexusSec OS è il cuore di una piccola **costellazione** di strumenti che
+condividono brand e filosofia:
+
+- **[Vesper](https://github.com/RedRider21/vesper)** — l'ambiente desktop
+  Python/GTK estratto da NexusSec.
+- **[Termux-NexusSEC-OS](https://github.com/RedRider21/Termux-NexusSEC-OS)** —
+  l'ambiente di pentesting su Android (senza root).
+- **[NexusSec ESP32](https://github.com/RedRider21/nexussec-esp32)** — il gadget
+  hardware di ricognizione wireless (WiFi/BLE/sub-GHz/IR) basato su ESP32-DIV: la
+  distro lo **flesha** con un profilo e ne **importa i risultati** (wardriving in
+  HORUS, handshake nel loot). Sito: <https://redrider21.github.io/nexussec-esp32/>.
+
 ## Licenza e marchi
 
 Il **codice sorgente originale** di NexusSec OS (pannello e Centro di Controllo
