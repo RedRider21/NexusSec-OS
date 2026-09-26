@@ -792,8 +792,17 @@ Con RAM abbondante resta quasi inattivo. Configurato in `/etc/local.d/zram.start
 - **Centro di Controllo** (`nxs-control-center`): info sistema, monitor, rete,
   **gestore pacchetti apk**, temi, sfondo, pannello, autostart, e tile
   **Profilo operativo**.
-- **NexusSec Browser** (GTK3 + WebKit2): motore `webkit2gtk-4.1`
-  preinstallato; avviso a fine download.
+- **NexusSec Browser** (GTK3 + WebKit2, `webkit2gtk-4.1` preinstallato) con le
+  funzioni di Firefox: anonimato via Tor (ricollegato da solo quando Tor e'
+  pronto), **Traduci pagina** come Chrome (Google o LibreTranslate, via Tor in
+  modalita' anonima), **download** con avanzamento, **lucchetto** con certificato
+  e **permessi per sito**, **solo HTTPS**, **antitracciamento** (elenco curato
+  in `nxs_browser/trackers.txt`), cronologia con suggerimenti, trova, stampa/PDF,
+  salva pagina, sorgente, riapri scheda, silenzia scheda, riordino schede,
+  sessione, scorciatoie di Firefox, Impostazioni. Moduli in `nxs_browser/`.
+- **Prova senza ISO**: `build/prova-xephyr.sh` apre il desktop NexusSec in una
+  finestra Xephyr da un container che legge `overlay/usr/local` dal progetto:
+  si modifica, si riapre l'app, si vede subito (`--stop` per chiudere).
 - Lanciatori sul desktop (pcmanfm) + menu tasto destro Openbox.
 - **Notifiche desktop** (`dunst`, a tema): feedback delle **installazioni
   on-demand** ("Installo *tool*… / pronto / fallita", anche durante i wizard) e
