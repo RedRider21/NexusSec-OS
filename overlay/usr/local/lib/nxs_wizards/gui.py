@@ -39,6 +39,36 @@ class _Wizard:
         self._stealth_btn = None
         self._count_lbl = None
         self._cur_wiz = None
+        # schermata corrente (per ricostruirla al cambio lingua a caldo)
+        self._schermo = ("chooser", None)
+        self._lingua = self._lingua_attiva()
+        from gi.repository import GLib as _GLib
+        _GLib.timeout_add_seconds(1, self._controlla_lingua)
+
+    @staticmethod
+    def _lingua_attiva():
+        try:
+            import nxs_i18n
+            nxs_i18n._active = None
+            nxs_i18n._cache.clear()
+            return nxs_i18n.current_lang()
+        except Exception:                       # noqa: BLE001
+            return ""
+
+    def _controlla_lingua(self):
+        # Se la lingua e' cambiata, ricostruisce SOLO la schermata di scelta
+        # (senza input dell'utente). Su form/costruttore non si ricostruisce,
+        # per non perdere cio' che si sta digitando; anche il titolo si aggiorna.
+        ora = self._lingua_attiva()
+        if ora and ora != self._lingua:
+            self._lingua = ora
+            try:
+                self.win.set_title(_t("wiz.ui.title"))
+            except Exception:                   # noqa: BLE001
+                pass
+            if self._schermo[0] == "chooser":
+                self.show_chooser()
+        return True
 
     # ---- utilita' layout ----
     def _clear(self):
@@ -53,6 +83,7 @@ class _Wizard:
 
     # ---- schermata: scelta procedura ----
     def show_chooser(self):
+        self._schermo = ("chooser", None)
         self._clear()
         intro = Gtk.Label(label=_t("wiz.ui.choose"))
         intro.set_xalign(0)
@@ -104,6 +135,7 @@ class _Wizard:
             self.show_chooser()
 
     def show_builder(self, wid=None):
+        self._schermo = ("builder", wid)
         # import ritardato: builder usa recipes/common, non gui (niente ciclo)
         from . import builder
         builder.BuilderScreen(self.win, self.body,
@@ -111,6 +143,7 @@ class _Wizard:
 
     # ---- schermata: form + output ----
     def show_form(self, wid):
+        self._schermo = ("form", wid)
         self._clear()
         self._mode_btns = {}
         self._opt_btns = {}
