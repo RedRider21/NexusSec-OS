@@ -3,15 +3,15 @@
 # Sostituisce i pacchetti TinyCore (.tcz) con gli equivalenti Alpine.
 pkgname=nexussec-base
 pkgver=1.0.0
-pkgrel=12
+pkgrel=13
 pkgdesc="NexusSec OS - desktop base (Openbox + Python + isolamento tool)"
 url="https://github.com/thecloners21"
 arch="noarch"
 license="AGPL-3.0-or-later"
 # Stack desktop (equivalenti Alpine dei vecchi .tcz TinyCore):
-#   openbox, pcmanfm, lxterminal, lxappearance, pluma, feh, xdotool, wmctrl,
+#   openbox, pcmanfm, lxterminal, lxappearance, gtksourceview4, feh, xdotool, wmctrl,
 #   font-dejavu, adwaita-icon-theme, gtk+3.0  (== gtk3 + gir via py3-gobject3)
-#   pluma = editor di testo di MATE (fork di gedit2): evidenziazione sintassi,
+#   gtksourceview4 = motore dell'editor nativo nxs-editor (evidenziazione sintassi,
 #   schede, cerca/sostituisci, codifiche): equivalente gedit-class in stile Mint.
 # Xorg: xorg-server + xinit. Driver: si preferisce 'modesetting' INTEGRATO
 #   (KMS/DRM) che copre VMSVGA/VMware (vmwgfx), QEMU (qxl/virtio/bochs) e HW
@@ -71,7 +71,7 @@ depends="
 	pcmanfm
 	lxterminal
 	lxappearance
-	pluma
+	gtksourceview4
 	feh
 	xdotool
 	wmctrl
@@ -145,7 +145,7 @@ depends="
 	glib-lang
 	pcmanfm-lang
 	libfm-lang
-	pluma-lang
+	gtksourceview4-lang
 	lxterminal-lang
 	tar
 	xz

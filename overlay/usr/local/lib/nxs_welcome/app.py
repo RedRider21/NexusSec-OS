@@ -76,7 +76,7 @@ def _apri_documento(nome: str) -> None:
     """Apre un documento di /usr/share/doc/nexussec con l'editor di testo (in
     sola lettura di fatto: e' un file di sistema)."""
     p = os.path.join(DOC_DIR, nome)
-    for cmd in ("pluma", "xdg-open"):
+    for cmd in ("nxs-editor", "xdg-open"):
         if shutil.which(cmd):
             _avvia([cmd, p])
             return

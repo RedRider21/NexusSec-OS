@@ -8,7 +8,7 @@
 <openbox_menu xmlns="http://openbox.org/3.4/menu">
 
   <menu id="nxs-tools" label="Tools" icon="/usr/local/share/nexussec/menu-icons/tools.svg">
-    <item label="Text editor" icon="/usr/local/share/nexussec/menu-icons/editor.svg"><action name="Execute"><command>pluma</command></action></item>
+    <item label="Text editor" icon="/usr/local/share/nexussec/menu-icons/editor.svg"><action name="Execute"><command>nxs-editor</command></action></item>
     <item label="Voice recorder" icon="/usr/local/share/nexussec/menu-icons/recorder.svg"><action name="Execute"><command>nxs-recorder</command></action></item>
     <item label="Images" icon="/usr/local/share/nexussec/menu-icons/images.svg"><action name="Execute"><command>nxs-viewer</command></action></item>
     <item label="Clean metadata (MAT2)" icon="/usr/local/share/nexussec/menu-icons/metadata.svg"><action name="Execute"><command>nxs-metadata gui</command></action></item>

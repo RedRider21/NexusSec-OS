@@ -565,7 +565,7 @@ class Panel(Gtk.Window):
         for icon, tip, cmd in (
             ("utilities-terminal-symbolic", _t("app.terminal"), ["nxs-terminal"]),
             ("system-file-manager-symbolic", _t("app.files_short"), ["pcmanfm"]),
-            ("accessories-text-editor-symbolic", _t("app.editor"), ["pluma"]),
+            ("accessories-text-editor-symbolic", _t("app.editor"), ["nxs-editor"]),
             ("nxs-browser-symbolic", _t("app.browser"), ["nxs-browser"]),
             ("preferences-system-symbolic", _t("app.control_center"),
              ["nxs-control-center"]),
@@ -1199,7 +1199,7 @@ class Panel(Gtk.Window):
              ["nxs-control-center"], None, None),
             ("utilities-terminal-symbolic", _t("app.terminal"), ["nxs-terminal"], None, None),
             ("system-file-manager-symbolic", _t("app.files"), ["pcmanfm"], None, None),
-            ("accessories-text-editor-symbolic", _t("app.editor"), ["pluma"], None, None),
+            ("accessories-text-editor-symbolic", _t("app.editor"), ["nxs-editor"], None, None),
             ("nxs-browser-symbolic", _t("app.browser"), ["nxs-browser"], None, None),
             ("system-run-symbolic", _t("app.wizard"), ["nxs-wizard"], None, None),
             (None, None, None, None, None),
