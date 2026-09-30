@@ -64,6 +64,9 @@ class _Wizard:
             self._lingua = ora
             try:
                 self.win.set_title(_t("wiz.ui.title"))
+                lab = getattr(self.win, "nxs_header_label", None)
+                if lab is not None:
+                    lab.set_text(_t("wiz.ui.title"))
             except Exception:                   # noqa: BLE001
                 pass
             if self._schermo[0] == "chooser":

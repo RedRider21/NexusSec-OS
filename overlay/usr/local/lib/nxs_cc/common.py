@@ -689,6 +689,7 @@ def panel_window(title: str, width: int = 640, height: int = 460):
     lab.set_xalign(0)
     lab.get_style_context().add_class("title")
     header.pack_start(lab, True, True, 0)
+    win.nxs_header_label = lab            # per aggiornare il titolo (es. cambio lingua)
     outer.pack_start(header, False, False, 0)
 
     body = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
