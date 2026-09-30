@@ -175,6 +175,15 @@ def _css_editor() -> bytes:
     .nxs-editor-barra button:hover { background: @TINT@; border-color: @LINE@; }
     .nxs-editor-barra button image { color: @INK@; }
     .nxs-editor-barra button:hover image { color: @AC@; }
+    .nxs-tb-btn { min-width: 30px; min-height: 30px; padding: 4px; margin: 0 1px; }
+    .nxs-editor-barra separator { background: @LINE@; margin: 6px 4px; min-width: 1px; }
+    /* pill lingua/linguaggio a destra */
+    .nxs-lang-pill { padding: 3px 12px; border-radius: 12px; border: 1px solid @LINE@;
+        background: @TINT@; }
+    .nxs-lang-pill label { color: @DIM@; font-size: 90%; }
+    .nxs-lang-pill:hover { border-color: @AC@; }
+    .nxs-lang-pill:hover label { color: @AC@; }
+    .nxs-stato-sep { background: @LINE@; margin: 3px 2px; min-width: 1px; }
 
     /* ---- schede ---- */
     notebook header { background: @BAR@; }
@@ -576,9 +585,12 @@ class Editor(Gtk.Window):
 
     def _bottone(self, icona, tooltip, callback):
         b = Gtk.Button(relief=Gtk.ReliefStyle.NONE)
-        b.add(Gtk.Image.new_from_icon_name(icona, Gtk.IconSize.LARGE_TOOLBAR))
+        img = Gtk.Image.new_from_icon_name(icona, Gtk.IconSize.MENU)
+        img.set_pixel_size(18)
+        b.add(img)
         b.set_tooltip_text(tooltip)
         b.set_focus_on_click(False)
+        b.get_style_context().add_class("nxs-tb-btn")
         b.connect("clicked", lambda _b: callback())
         return b
 
@@ -605,14 +617,24 @@ class Editor(Gtk.Window):
         # menu delle preferenze e delle azioni meno frequenti
         menu_b = Gtk.MenuButton()
         menu_b.set_relief(Gtk.ReliefStyle.NONE)
-        menu_b.add(Gtk.Image.new_from_icon_name("open-menu-symbolic",
-                                                Gtk.IconSize.LARGE_TOOLBAR))
+        mimg = Gtk.Image.new_from_icon_name("open-menu-symbolic", Gtk.IconSize.MENU)
+        mimg.set_pixel_size(18)
+        menu_b.add(mimg)
         menu_b.set_tooltip_text(_t("ed.options"))
         menu_b.set_popup(self._menu())
+        menu_b.get_style_context().add_class("nxs-tb-btn")
         barra.pack_end(menu_b, False, False, 0)
+        # lingua/linguaggio: pill cliccabile (apre la scelta del linguaggio)
+        self.btn_lingua = Gtk.Button(relief=Gtk.ReliefStyle.NONE)
+        self.btn_lingua.set_focus_on_click(False)
         self.lbl_lingua = Gtk.Label(label=_t("ed.plaintext"))
-        self.lbl_lingua.get_style_context().add_class("nxs-val")
-        barra.pack_end(self.lbl_lingua, False, False, 8)
+        self.btn_lingua.add(self.lbl_lingua)
+        self.btn_lingua.get_style_context().add_class("nxs-lang-pill")
+        self.btn_lingua.set_tooltip_text(_t("ed.m.language"))
+        self.btn_lingua.connect("clicked", lambda _b: self.dialogo_linguaggio())
+        barra.pack_end(self.btn_lingua, False, False, 8)
+        sep = Gtk.Separator(orientation=Gtk.Orientation.VERTICAL)
+        barra.pack_end(sep, False, False, 6)
         return barra
 
     def _voce(self, menu, etichetta, callback, scorciatoia=""):
@@ -728,13 +750,16 @@ class Editor(Gtk.Window):
         return box
 
     def _barra_stato(self):
-        barra = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=14)
+        barra = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
         barra.get_style_context().add_class("nxs-editor-stato")
         self.lbl_pos = Gtk.Label(label=_t("ed.pos0"))
         self.lbl_pos.set_xalign(0)
         barra.pack_start(self.lbl_pos, False, False, 0)
         self.lbl_info = Gtk.Label(label="")
         barra.pack_end(self.lbl_info, False, False, 0)
+        sep = Gtk.Separator(orientation=Gtk.Orientation.VERTICAL)
+        sep.get_style_context().add_class("nxs-stato-sep")
+        barra.pack_end(sep, False, False, 2)
         return barra
 
     # --- scorciatoie da tastiera -----------------------------------------
