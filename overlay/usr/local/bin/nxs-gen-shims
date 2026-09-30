@@ -1,0 +1,54 @@
+#!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
+# nxs-gen-shims [DIR] - genera "shim" per i tool del catalogo (repo.json).
+#
+# Perche': dal MENU un tool non ancora installato viene installato al volo
+# (nxs-tool launch). Dal TERMINALE, invece, il nome nudo dava "not found".
+# Qui creiamo per ogni tool del catalogo un piccolo eseguibile che chiama
+# `nxs-tool launch <id>`: messo IN FONDO al PATH, entra in gioco SOLO quando
+# il binario vero non e' (ancora) installato -> stessa comodita' del menu, in
+# terminale. Una volta installato, il binario reale (piu' avanti nel PATH)
+# vince e lo shim non interferisce. I comandi gia' presenti nel sistema base
+# NON vengono ombreggiati; i comandi NON in catalogo restano "not found".
+DIR="${1:-/run/nxs-shims}"
+REPO="${NXS_REPO_JSON:-/usr/local/share/nexussec/repo.json}"
+command -v python3 >/dev/null 2>&1 || exit 0
+[ -f "$REPO" ] || exit 0
+mkdir -p "$DIR" 2>/dev/null || exit 0
+python3 - "$DIR" "$REPO" <<'PY'
+import json, os, sys
+dst, repo = sys.argv[1], sys.argv[2]
+try:
+    data = json.load(open(repo))
+except Exception:
+    sys.exit(0)
+tools = data.get("tools", data)
+# nome-comando -> id del tool (id "amichevole" + eventuale bin reale)
+names = {}
+for tid, info in (tools.items() if isinstance(tools, dict) else []):
+    if not isinstance(info, dict):
+        continue
+    names.setdefault(tid, tid)
+    b = info.get("bin")
+    if b:
+        names.setdefault(b, tid)
+BASE = ("/usr/local/bin", "/usr/bin", "/bin", "/usr/sbin", "/sbin")
+made = 0
+for name, tid in names.items():
+    if not name or "/" in name:
+        continue
+    # non ombreggiare comandi gia' installati nel sistema base
+    if any(os.access(os.path.join(p, name), os.X_OK) for p in BASE):
+        continue
+    p = os.path.join(dst, name)
+    try:
+        with open(p, "w") as f:
+            f.write('#!/bin/sh\n# shim NexusSec: installa-se-serve ed esegue\n'
+                    'exec nxs-tool launch %s "$@"\n' % tid)
+        os.chmod(p, 0o755)
+        made += 1
+    except OSError:
+        pass
+print(made)
+PY

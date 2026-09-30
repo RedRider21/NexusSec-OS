@@ -7,6 +7,16 @@ case ":$PATH:" in
   *) PATH="$HOME/.local/bin:$PATH"; export PATH ;;
 esac
 
+# Shim dei tool del catalogo (generati a boot in /run/nxs-shims): messi in
+# FONDO al PATH, fanno partire l'installazione on-demand quando si digita in
+# terminale il nome di un tool non ancora installato (come dal menu). Se il
+# tool e' gia' installato vince il binario reale; i comandi non in catalogo
+# restano "non trovati".
+case ":$PATH:" in
+  *":/run/nxs-shims:"*) ;;
+  *) PATH="$PATH:/run/nxs-shims"; export PATH ;;
+esac
+
 # Prompt commutabile: busybox ash legge $ENV a ogni shell interattiva. Lo
 # esportiamo QUI (prima di startx) cosi' lo ereditano X, i terminali e le shell
 # figlie -> il prompt scelto (nxs-prompt) vale ovunque. bash usa invece ~/.bashrc

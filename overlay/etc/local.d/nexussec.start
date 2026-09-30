@@ -145,4 +145,8 @@ if command -v python3 >/dev/null 2>&1; then
 		/usr/local/lib/nxs_i18n >/dev/null 2>&1 || true ) &
 fi
 
+# --- Shim dei tool del catalogo: comando-tool non installato lanciato da
+# terminale -> installazione on-demand (come dal menu). Vedi nxs-gen-shims.
+[ -x /usr/local/bin/nxs-gen-shims ] && ( /usr/local/bin/nxs-gen-shims /run/nxs-shims >/dev/null 2>&1 ) &
+
 echo "stato: openbox=$(command -v openbox) feh=$(command -v feh) podman=$(command -v podman)"
