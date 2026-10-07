@@ -258,6 +258,31 @@ ricorrenti su **musl + gcc 15**:
   basta: il greeter si dimensiona e prende il fuoco da se'. Codici d'uscita:
   0 accesso, 3 Riavvia/Spegni (non aprire la sessione), altro = fail-open.
 
+- **User namespace OBBLIGATORI per bwrap E Podman rootless (2026-10-07).** Sia la
+  sandbox `bwrap` (tool apk/pip) sia Podman rootless (tool container/kali) aprono
+  uno user namespace da utente NON privilegiato. Se il kernel della live li tiene
+  a zero (`user.max_user_namespaces=0`) l'`unshare` fallisce con un messaggio
+  FUORVIANTE: `bwrap: unshare user ns: No space left on device` (NON e' spazio
+  disco: e' il limite dei namespace). Sintomo reale in VM: un tool gia' installato
+  (es. enum4linux) stampa "sandbox bwrap attiva" e poi l'errore, e non parte mai;
+  e qualsiasi install via container fallisce. Fix a monte: `nexussec.start` alza
+  `user.max_user_namespaces` a 15000 a boot (+ `net.ipv4.ping_group_range`), e
+  c'e' `etc/sysctl.d/00-nexussec.conf` per i sistemi installati. In piu'
+  `isolation.bwrap_works()` COLLAUDA bwrap una volta sola: se non funziona, il
+  tool gira SENZA sandbox (con avviso) invece di bloccarsi/ripetere (fallback con
+  grazia). `NXS_ISOLATE=0` disattiva comunque la sandbox.
+
+- **Installer (`nxs-install`): menu a CICLO + selezione disco a NUMERO
+  (2026-10-07).** Prima era una passata singola: dopo "mostra dischi" (o qualsiasi
+  voce) lo script finiva e `nxs-term` CHIUDEVA il terminale di colpo -> sembrava un
+  errore. Ora e' un `while :` con `pausa()`: le voci informative e gli annullamenti
+  tornano al menu; solo `exec ...` (installa) o `q` escono. Inoltre le voci
+  "disco intero"/"a fianco" NON fanno piu' DIGITARE `/dev/sdX` (fonte di errori):
+  si sceglie il disco/partizione da un elenco NUMERATO (`scegli_disco`/
+  `scegli_destinazione`), con il supporto di avvio della live ESCLUSO
+  (`_e_supporto_live`: iso9660/squashfs o montato sotto /media//.modloop). La
+  persistenza (`nxs-persist` senza argomenti) aveva gia' il suo menu numerato.
+
 ### Gotcha stile finestre / bytecode (2026-08-26, DURAMENTE imparati)
 
 - **`.pyc` stale nell'apkovl = codice VECCHIO eseguito.** Non committare/impac-

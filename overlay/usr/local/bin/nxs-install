@@ -33,6 +33,112 @@ conferma_percorso() {
   [ "$c" = "$1" ]
 }
 
+# Pausa per far leggere l'output prima di tornare al menu. Senza questo (e senza
+# il ciclo sotto) lo script terminava dopo ogni scelta e nxs-term CHIUDEVA il
+# terminale di colpo: l'utente che sceglieva "mostra dischi" non vedeva nulla e
+# sembrava un errore. Ora le azioni informative tornano al menu.
+pausa() { printf "\n  Premi Invio per tornare al menu..."; read _ 2>/dev/null; }
+
+# Un disco e' il SUPPORTO DI AVVIO della live (da NON offrire mai): ha una
+# partizione iso9660/squashfs, o e' montato sotto /media o /.modloop.
+_e_supporto_live() {                    # $1 = /dev/sdX disco
+  _d="$1"
+  for _n in "$_d" $(lsblk -rno NAME "$_d" 2>/dev/null | tail -n +2 | sed 's|^|/dev/|'); do
+    case "$(lsblk -no FSTYPE "$_n" 2>/dev/null | grep -v '^$' | head -1)" in
+      iso9660|squashfs) return 0 ;;
+    esac
+    case "$(lsblk -no MOUNTPOINT "$_n" 2>/dev/null | grep -v '^$' | head -1)" in
+      /media/*|/.modloop*) return 0 ;;
+    esac
+  done
+  return 1
+}
+
+# Selettore di DISCO a numero (come nxs-persist): niente piu' /dev/sdX digitato
+# a mano = niente errori di battitura. I messaggi vanno su STDERR cosi' la
+# cattura $(scegli_disco) prende SOLO il device scelto. Vuoto + stato !=0 se
+# l'utente annulla o non c'e' nulla di installabile.
+scegli_disco() {
+  _lf="$(mktemp 2>/dev/null || echo /tmp/nxs-install.disks.$$)"; : > "$_lf"
+  for _d in $(lsblk -rno NAME,TYPE 2>/dev/null | awk '$2=="disk"{print $1}'); do
+    case "$_d" in zram*|loop*|sr*|fd*) continue ;; esac
+    _dd="/dev/$_d"
+    _e_supporto_live "$_dd" && continue
+    _sz="$(lsblk -dno SIZE "$_dd" 2>/dev/null | head -1)"
+    _md="$(lsblk -dno MODEL "$_dd" 2>/dev/null | head -1 | sed 's/[[:space:]]*$//')"
+    _tr="$(lsblk -dno TRAN "$_dd" 2>/dev/null | head -1)"
+    printf '%s\t%s\t%s\t%s\n' "$_dd" "$_sz" "$_tr" "$_md" >> "$_lf"
+  done
+  if [ ! -s "$_lf" ]; then
+    echo "  Nessun disco installabile rilevato (il supporto di avvio della live" >&2
+    echo "  e' escluso di proposito). Collega il disco di destinazione e riprova." >&2
+    rm -f "$_lf"; return 1
+  fi
+  {
+    echo "  Dischi su cui installare (il supporto di avvio della live e' escluso):"
+    _n=0
+    while IFS="$(printf '\t')" read -r _dev _size _tran _model; do
+      _n=$((_n + 1)); _hint=""; [ "$_tran" = "usb" ] && _hint="  (USB)"
+      printf "   [%d] %-13s %8s  %s%s\n" "$_n" "$_dev" "$_size" "${_model:-disco}" "$_hint"
+    done < "$_lf"
+    echo "   [0] annulla"
+    printf "  Scegli un numero: "
+  } >&2
+  read _sel
+  case "$_sel" in ''|*[!0-9]*) rm -f "$_lf"; return 1 ;; esac
+  [ "$_sel" = 0 ] && { rm -f "$_lf"; return 1; }
+  _chosen="$(sed -n "${_sel}p" "$_lf" | cut -f1)"
+  rm -f "$_lf"
+  [ -n "$_chosen" ] || { echo "  scelta non valida." >&2; return 1; }
+  echo "$_chosen"
+}
+
+# Selettore di DESTINAZIONE a numero per l'installazione "a fianco": elenca le
+# partizioni formattabili del disco $1 + l'eventuale spazio libero. Stampa su
+# STDOUT il percorso della partizione scelta, oppure la parola "libero".
+scegli_destinazione() {                 # $1 = disco
+  _disk="$1"
+  _lf="$(mktemp 2>/dev/null || echo /tmp/nxs-install.dest.$$)"; : > "$_lf"
+  nxs-disks --partizioni 2>/dev/null | grep "^$_disk" \
+    | while IFS="$(printf '\t')" read -r _p _psz _pfs _plab _pmp; do
+        printf 'part\t%s\t%s\t%s\t%s\n' "$_p" "$_psz" "$_pfs" "$_plab" >> "$_lf"
+      done
+  _libero="$(nxs-disks --liberi "$_disk" 2>/dev/null | head -1)"
+  [ -n "$_libero" ] && printf 'free\t%s\n' "$_libero" >> "$_lf"
+  if [ ! -s "$_lf" ]; then
+    echo "  Su $_disk non ci sono partizioni formattabili ne' spazio libero >= 2 GiB." >&2
+    echo "  Per fare spazio riduci Windows DA WINDOWS (Gestione disco)." >&2
+    rm -f "$_lf"; return 1
+  fi
+  {
+    echo
+    echo "  Destinazioni su $_disk (scegli a numero):"
+    _n=0
+    while IFS="$(printf '\t')" read -r _k _a _b _c _d; do
+      _n=$((_n + 1))
+      if [ "$_k" = free ]; then
+        printf "   [%d] spazio libero ~%s  ->  creo una partizione nuova (il resto resta intatto)\n" "$_n" "$_c"
+      else
+        printf "   [%d] %-13s %8s  %-8s %s  (verra' FORMATTATA)\n" "$_n" "$_a" "$_b" "${_c:--}" "${_d}"
+      fi
+    done < "$_lf"
+    echo "   [0] annulla"
+    printf "  Scegli un numero: "
+  } >&2
+  read _sel
+  case "$_sel" in ''|*[!0-9]*) rm -f "$_lf"; return 1 ;; esac
+  [ "$_sel" = 0 ] && { rm -f "$_lf"; return 1; }
+  _row="$(sed -n "${_sel}p" "$_lf")"
+  rm -f "$_lf"
+  [ -n "$_row" ] || { echo "  scelta non valida." >&2; return 1; }
+  _kind="$(printf '%s' "$_row" | cut -f1)"
+  if [ "$_kind" = free ]; then echo "libero"; else printf '%s' "$_row" | cut -f2; fi
+}
+
+# Il menu gira in CICLO: le voci informative (d, 5) e gli annullamenti tornano
+# al menu; solo l'installazione vera (exec ...) o 'q' escono.
+while :; do
+echo
 echo "==============================================================="
 echo "  NexusSec OS - installazione su disco / persistenza"
 echo "==============================================================="
@@ -49,16 +155,18 @@ echo
 echo "     d) mostra dischi e partizioni"
 echo "     q) annulla"
 printf "  Scelta: "; read ans
+echo
 
 case "$ans" in
-  d) elenco_dischi ;;
+  d) echo "  Dischi e partizioni (sola lettura, niente viene montato):"; echo
+     elenco_dischi || echo "  (impossibile leggere i dischi)"
+     pausa; continue ;;
 
   1) exec priv setup-alpine ;;
 
-  2) echo "  Dischi disponibili:"; elenco_dischi
-     printf "  Disco di destinazione (es. /dev/sda): "; read disk
-     [ -n "$disk" ] || exit 0
-     [ -b "$disk" ] || { echo "  ERRORE: $disk non e un dispositivo a blocchi."; exit 1; }
+  2) disk="$(scegli_disco)" || { pausa; continue; }
+     [ -n "$disk" ] || { pausa; continue; }
+     [ -b "$disk" ] || { echo "  ERRORE: $disk non e un dispositivo a blocchi."; pausa; continue; }
      echo
      echo "  =========================================================="
      echo "  ATTENZIONE: contenuto ATTUALE di $disk"
@@ -69,43 +177,23 @@ case "$ans" in
      echo "  Se su questo disco c e Windows o un altro Linux da tenere,"
      echo "  annulla e usa la scelta 3 (a fianco)."
      echo
-     conferma_percorso "$disk" || { echo "  Non confermato: non e stato toccato nulla."; exit 0; }
+     conferma_percorso "$disk" || { echo "  Non confermato: non e stato toccato nulla."; pausa; continue; }
      echo "  Dopo l installazione lo storage Podman sara su disco:"
      echo "  l arsenale scaricato restera tra i riavvii."
      exec priv setup-disk -m sys "$disk"
      ;;
 
   3) # --- installazione A FIANCO ------------------------------------------
-     echo "  Dischi, partizioni e spazio libero:"; elenco_dischi
-     echo
-     printf "  Disco su cui installare (es. /dev/sda): "; read disk
-     [ -n "$disk" ] || exit 0
-     [ -b "$disk" ] || { echo "  ERRORE: $disk non e un dispositivo a blocchi."; exit 1; }
-
-     echo
-     echo "  Destinazioni possibili su $disk:"
-     echo "  --- partizioni esistenti (verranno FORMATTATE) ---"
-     nxs-disks --partizioni 2>/dev/null | grep "^$disk" \
-       | awk -F'\t' '{printf "    %-16s %10s  %-8s %s\n", $1, $2, $3, $4}'
-     echo "  --- spazio non allocato (ci si crea una partizione nuova) ---"
+     disk="$(scegli_disco)" || { pausa; continue; }
+     [ -n "$disk" ] || { pausa; continue; }
+     [ -b "$disk" ] || { echo "  ERRORE: $disk non e un dispositivo a blocchi."; pausa; continue; }
+     # Spazio libero del disco: serve al ramo 'libero' qui sotto (inizio/fine).
      libero="$(nxs-disks --liberi "$disk" 2>/dev/null)"
-     if [ -n "$libero" ]; then
-       printf '%s\n' "$libero" | awk -F'\t' '{printf "    libero           %10s\n", $3}'
-     else
-       echo "    (nessuno spazio libero >= 2 GiB)"
-       echo
-       echo "    Per fare spazio: rimpicciolisci Windows DA WINDOWS"
-       echo "    (Gestione disco > Riduci volume). Farlo da qui su un NTFS"
-       echo "    e rischioso e non lo proponiamo."
-     fi
-     echo
-     echo "  Scrivi il percorso di una partizione da formattare (es. /dev/sda3)"
-     echo "  oppure la parola  libero  per usare lo spazio non allocato."
-     printf "  Destinazione: "; read dest
-     [ -n "$dest" ] || exit 0
+     dest="$(scegli_destinazione "$disk")" || { pausa; continue; }
+     [ -n "$dest" ] || { pausa; continue; }
 
      if [ "$dest" = "libero" ]; then
-       [ -n "$libero" ] || { echo "  Non c e spazio libero utilizzabile."; exit 1; }
+       [ -n "$libero" ] || { echo "  Non c e spazio libero utilizzabile."; pausa; continue; }
        ini=$(printf '%s\n' "$libero" | head -1 | cut -f1)
        fin=$(printf '%s\n' "$libero" | head -1 | cut -f2)
        dimh=$(printf '%s\n' "$libero" | head -1 | cut -f3)
@@ -113,25 +201,25 @@ case "$ans" in
        echo "  Verra creata una partizione nuova di circa $dimh su $disk."
        echo "  Le partizioni esistenti NON vengono toccate."
        printf "  Confermi? scrivi  si  : "; read c
-       [ "$c" = "si" ] || { echo "  Annullato."; exit 0; }
+       [ "$c" = "si" ] || { echo "  Annullato."; pausa; continue; }
        # Identifichiamo la partizione NUOVA confrontando l elenco prima/dopo:
        # parted non ne stampa il nome in modo affidabile su tutti i backend.
        tp=$(mktemp); td=$(mktemp)
        lsblk -ln -o NAME "$disk" | sort > "$tp"
        priv parted -s "$disk" mkpart primary ext4 "${ini}B" "${fin}B" || {
-         rm -f "$tp" "$td"; echo "  ERRORE: creazione della partizione fallita."; exit 1; }
+         rm -f "$tp" "$td"; echo "  ERRORE: creazione della partizione fallita."; pausa; continue; }
        priv partprobe "$disk" 2>/dev/null || true
        sleep 2
        lsblk -ln -o NAME "$disk" | sort > "$td"
        nuova=$(comm -13 "$tp" "$td" | head -1)
        rm -f "$tp" "$td"
-       [ -n "$nuova" ] || { echo "  ERRORE: non riesco a identificare la partizione nuova."; exit 1; }
+       [ -n "$nuova" ] || { echo "  ERRORE: non riesco a identificare la partizione nuova."; pausa; continue; }
        dest="/dev/$nuova"
        echo "  Creata: $dest"
      else
-       [ -b "$dest" ] || { echo "  ERRORE: $dest non e una partizione."; exit 1; }
+       [ -b "$dest" ] || { echo "  ERRORE: $dest non e una partizione."; pausa; continue; }
        case "$(lsblk -no MOUNTPOINT "$dest" 2>/dev/null | tr -d ' ')" in
-         /|/boot|/boot/efi) echo "  ERRORE: $dest e in uso dal sistema corrente."; exit 1 ;;
+         /|/boot|/boot/efi) echo "  ERRORE: $dest e in uso dal sistema corrente."; pausa; continue ;;
        esac
        echo
        echo "  =========================================================="
@@ -140,13 +228,13 @@ case "$ans" in
        echo "  =========================================================="
        lsblk -o NAME,SIZE,FSTYPE,LABEL "$dest" 2>/dev/null
        echo
-       conferma_percorso "$dest" || { echo "  Non confermato: non e stato toccato nulla."; exit 0; }
+       conferma_percorso "$dest" || { echo "  Non confermato: non e stato toccato nulla."; pausa; continue; }
      fi
 
      echo "  Formattazione di $dest in ext4..."
-     priv mkfs.ext4 -q -L NEXUSSEC "$dest" || { echo "  ERRORE: formattazione fallita."; exit 1; }
+     priv mkfs.ext4 -q -L NEXUSSEC "$dest" || { echo "  ERRORE: formattazione fallita."; pausa; continue; }
      priv mkdir -p /mnt
-     priv mount "$dest" /mnt || { echo "  ERRORE: montaggio di $dest fallito."; exit 1; }
+     priv mount "$dest" /mnt || { echo "  ERRORE: montaggio di $dest fallito."; pausa; continue; }
      echo
      echo "  Installazione del sistema in $dest, bootloader su $disk."
      echo "  NOTA: il menu di avvio potrebbe non elencare Windows da solo"
@@ -157,6 +245,9 @@ case "$ans" in
      ;;
 
   4) exec nxs-persist ;;
-  5) exec nxs-persist status ;;
-  *) echo "annullato" ;;
+  5) nxs-persist status; pausa; continue ;;
+  q|Q) echo "  annullato."; exit 0 ;;
+  "") continue ;;
+  *) echo "  scelta non valida: scrivi una delle lettere/numeri elencati."; pausa; continue ;;
 esac
+done

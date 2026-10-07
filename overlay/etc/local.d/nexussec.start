@@ -18,6 +18,26 @@ install -d -o nexus -g nexus /home/nexus/.local/share/xorg \
 # fallisce con FileNotFoundError/permessi e NESSUN tool pip si installa. Le
 # creiamo qui (di proprieta' nexus) e mettiamo ~/.local/bin nel PATH (sotto).
 
+# --- User namespace: indispensabili per Podman rootless E per bubblewrap ------
+# bwrap (sandbox dei tool apk/pip) e podman rootless (tool container/kali)
+# aprono uno USER NAMESPACE da utente non privilegiato. Se il kernel li tiene a
+# zero (`user.max_user_namespaces=0`) l'unshare fallisce con un fuorviante
+# "unshare user ns: No space left on device" (NON e' spazio disco: e' il limite
+# dei namespace) e NESSUN tool parte / nessuna immagine container si scarica.
+# Lo alziamo qui a boot (idempotente); se il kernel non ha la voce proc
+# (userns non compilati) l'echo fallisce senza danno e resta il fallback di
+# isolation.py (tool eseguito senza sandbox).
+if [ -w /proc/sys/user/max_user_namespaces ]; then
+	cur_uns="$(cat /proc/sys/user/max_user_namespaces 2>/dev/null || echo 0)"
+	if [ "${cur_uns:-0}" -lt 15000 ] 2>/dev/null; then
+		echo 15000 > /proc/sys/user/max_user_namespaces 2>/dev/null \
+			&& echo "user namespace abilitati (max_user_namespaces=15000)"
+	fi
+fi
+# Ping group range per il ping ICMP rootless (utile ai tool di rete senza raw).
+[ -w /proc/sys/net/ipv4/ping_group_range ] && \
+	echo "0 2147483647" > /proc/sys/net/ipv4/ping_group_range 2>/dev/null || true
+
 # Stato profili scrivibile dall'utente desktop.
 mkdir -p /etc/sec_os
 chown -R nexus:nexus /etc/sec_os 2>/dev/null || true

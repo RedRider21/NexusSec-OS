@@ -980,6 +980,37 @@ def uninstall(tool: str, log=print) -> bool:
 
 
 # ---------------------------------------------------------------- esecuzione
+_BWRAP_OK: bool | None = None   # cache del test "bwrap funziona davvero?"
+
+
+def bwrap_works() -> bool:
+    """Verifica UNA VOLTA che bwrap riesca davvero a creare la sandbox.
+
+    bwrap da utente non privilegiato apre SEMPRE uno user namespace: se il
+    kernel li tiene disabilitati (`user.max_user_namespaces=0`) fallisce con
+    `unshare user ns: No space left on device` e il tool non parte mai. Invece
+    di sbatterci contro ad ogni avvio (e lasciare il terminale a vuoto), lo
+    collaudiamo una sola volta con un comando innocuo e teniamo il risultato.
+    """
+    global _BWRAP_OK
+    if _BWRAP_OK is not None:
+        return _BWRAP_OK
+    if not have("bwrap"):
+        _BWRAP_OK = False
+        return False
+    try:
+        r = subprocess.run(
+            ["bwrap", "--ro-bind", "/", "/", "--unshare-pid",
+             "--die-with-parent", "true"],
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+            timeout=10,
+        )
+        _BWRAP_OK = (r.returncode == 0)
+    except (OSError, subprocess.SubprocessError):
+        _BWRAP_OK = False
+    return _BWRAP_OK
+
+
 def _bwrap(cmd: list[str]) -> list[str]:
     """Sandbox bwrap ATTIVA DI DEFAULT per i tool apk/pip non privilegiati.
 
@@ -988,8 +1019,13 @@ def _bwrap(cmd: list[str]) -> list[str]:
     /tmp (tmpfs effimero), ~/NexusSec-loot (output), ~/.config e ~/.cache (stato
     del tool). La rete e' CONDIVISA (i tool di rete funzionano) e il socket X e'
     riesposto (tool GUI). Disattivabile con NXS_ISOLATE=0 (debug).
+
+    Se bwrap NON e' utilizzabile su questo kernel (user namespace disabilitati)
+    si degrada con grazia: il tool viene restituito SENZA sandbox (meglio un
+    tool che gira che un terminale che non fa nulla). Il core resta comunque
+    protetto dalla natura live/RAM.
     """
-    if os.environ.get("NXS_ISOLATE") == "0" or not have("bwrap"):
+    if os.environ.get("NXS_ISOLATE") == "0" or not bwrap_works():
         return cmd
     home = os.path.expanduser("~")
     for d in (LOOT, Path(home) / ".config", Path(home) / ".cache"):
@@ -1082,7 +1118,14 @@ def build_cmd(tool: str, args: list[str], interactive: bool = True,
         # privilegi e SENZA bwrap (lo romperebbe). Il core resta protetto dalla
         # natura live/RAM in sola lettura.
         return priv([exe] + args)
-    return _bwrap([exe] + args)
+    cmd = _bwrap([exe] + args)
+    if cmd and cmd[0] != "bwrap" and os.environ.get("NXS_ISOLATE") != "0" \
+            and have("bwrap"):
+        # bwrap c'e' ma non e' utilizzabile (user namespace off): eseguo senza
+        # sandbox invece di lasciare il tool bloccato. Avviso una volta sola.
+        log("[!] sandbox bwrap non disponibile su questo kernel "
+            "(user namespace disattivati): eseguo il tool SENZA sandbox.")
+    return cmd
 
 
 def run(tool: str, args_string: str = "", log=print, foreground: bool = False) -> bool:
