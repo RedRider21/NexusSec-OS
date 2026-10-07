@@ -10,3 +10,16 @@
 
 * { outline-color: #00e5ff; }
 selection { background-color: #00334a; color: #00e5ff; }
+
+/* Trattino basso (_) dei nomi file TAGLIATO dal bordo inferiore dell'etichetta
+   nelle viste a icone/elenco del gestore file e sul desktop (il glifo "_" di
+   DejaVu Sans cade sotto la linea di base e la cella lo taglia -> sembrava uno
+   spazio). Un filo di spazio sotto al testo lo rende di nuovo visibile. */
+iconview,
+iconview label,
+.view,
+.view label,
+treeview.view,
+treeview.view label {
+    padding-bottom: 3px;
+}
