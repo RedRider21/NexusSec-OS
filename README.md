@@ -16,6 +16,26 @@ Dimensioni: **ISO ~0.7 GB** (kernel linux-lts + desktop GTK + Podman + browser
 webkit2gtk preinstallato); a regime con un profilo attivo ~400-600 MB in RAM
 (contro i ~4 GB di Kali, ~2.2 GB di Parrot).
 
+## Novità — v2026.10.10
+
+Release di **stabilità**, dopo le prove su VM:
+
+- **I tool del catalogo ora partono in modo affidabile.** Risolta la causa per cui
+  lanciare un tool (es. `enum4linux`) poteva "ciclare" e far cadere la sessione
+  grafica: gli *shim* dei comandi venivano scambiati per il tool già installato,
+  innescando una ricorsione (`_which_real` ora li ignora).
+- **Sandbox bubblewrap robusta**: il collaudo usa gli stessi parametri del lancio
+  reale e, dove la sandbox non è disponibile, il tool parte comunque senza di essa.
+- **User namespace attivati presto all'avvio** (prima del desktop): niente più
+  finestra in cui i primi tool non trovavano i namespace pronti.
+- **Installer su disco** a menu ciclico con **scelta disco/partizione da elenco
+  numerato** (niente `/dev/sdX` digitato a mano).
+- Ritocchi: trattino basso dei nomi file non più tagliato nel gestore file;
+  `nxs-diag` mostra lo stato di sandbox/user namespace/Podman.
+
+Tre immagini (x86_64, aarch64, Raspberry Pi) nella
+[release più recente](https://github.com/RedRider21/NexusSec-OS/releases).
+
 ## Funzionalità in breve
 
 Tutto ciò che offre NexusSec, a colpo d'occhio (dettagli nelle sezioni seguenti):
