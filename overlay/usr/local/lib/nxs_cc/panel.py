@@ -1020,8 +1020,15 @@ class Panel(Gtk.Window):
                 if imgset is None or not img:
                     return None
                 return img in imgset or img.rsplit(":", 1)[0] in imgset
-            # apk/pip/git: l'eseguibile finisce nel PATH host.
+            # apk/pip/git: l'eseguibile finisce nel PATH host. NB: _which_real
+            # IGNORA gli shim di /run/nxs-shims (uno shim non e' il tool
+            # installato) -> altrimenti il pallino risulterebbe sempre verde.
             binname = data.get("bin", tool)
+            wr = getattr(profiles_iso, "_which_real", None)
+            if wr is not None:
+                if wr(binname) or wr(tool):
+                    return True
+                return False
             if profiles_iso.have(binname) or profiles_iso.have(tool):
                 return True
             return False
