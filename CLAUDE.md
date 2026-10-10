@@ -283,6 +283,22 @@ ricorrenti su **musl + gcc 15**:
   (`_e_supporto_live`: iso9660/squashfs o montato sotto /media//.modloop). La
   persistenza (`nxs-persist` senza argomenti) aveva gia' il suo menu numerato.
 
+- **FORK BOMB dagli shim del catalogo = sessione X che crasha (2026-10-10,
+  DURAMENTE imparato).** Gli shim in `/run/nxs-shims` (uno per tool del catalogo,
+  generati a boot da `nxs-gen-shims`, cartella in CODA al PATH) NON vanno mai
+  scambiati per il tool installato. `isolation.is_installed()` e `build_cmd()`
+  (e il pallino del menu in `panel.py`) facevano `shutil.which(<id/bin>)`: con gli
+  shim nel PATH, `which` li trovava -> is_installed FALSO POSITIVO -> saltava
+  l'installazione ed ESEGUIVA lo shim, che richiama `nxs-tool launch` -> ritrova
+  lo shim -> **ricorsione infinita** = fork bomb (python+bwrap+sh a ripetizione)
+  -> PID/RAM esauriti -> l'OOM killer ammazza Xorg -> **ritorno al login**.
+  Sintomi: tool dato per "gia' installato" su live pura, messaggi a raffica,
+  "ciclare", crash della sessione. Fix: **`isolation._which_real(name)`** fa
+  `which` ma SCARTA i risultati dentro `/run/nxs-shims` (uno shim non e'
+  un'installazione). Usato in `is_installed`, `build_cmd` e
+  `panel._tool_installed_fast`. Regola: per sapere se un tool del catalogo e'
+  installato, NON usare `have()`/`which()` nudo -> usa `_which_real()`.
+
 ### Gotcha stile finestre / bytecode (2026-08-26, DURAMENTE imparati)
 
 - **`.pyc` stale nell'apkovl = codice VECCHIO eseguito.** Non committare/impac-
