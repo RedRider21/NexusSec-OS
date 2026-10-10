@@ -983,14 +983,44 @@ def uninstall(tool: str, log=print) -> bool:
 _BWRAP_OK: bool | None = None   # cache del test "bwrap funziona davvero?"
 
 
+def _bwrap_argv(cmd: list[str]) -> list[str]:
+    """Costruisce la riga di comando bwrap COMPLETA, senza decidere se usarla.
+
+    Condivisa da bwrap_works() e da _bwrap(): e' ESSENZIALE che il collaudo usi
+    gli STESSI flag del lancio reale, altrimenti un test piu' permissivo passa e
+    poi il lancio vero fallisce (bug osservato in VM: il test con solo
+    --unshare-pid riusciva, il lancio reale moriva con
+    `unshare user ns: No space left on device` e il tool non partiva mai).
+    """
+    home = os.path.expanduser("~")
+    for d in (LOOT, Path(home) / ".config", Path(home) / ".cache"):
+        try:
+            d.mkdir(parents=True, exist_ok=True)
+        except OSError:
+            pass
+    return [
+        "bwrap",
+        "--ro-bind", "/", "/",                       # core in sola lettura
+        "--dev", "/dev", "--proc", "/proc",
+        "--tmpfs", "/tmp",
+        "--ro-bind-try", "/tmp/.X11-unix", "/tmp/.X11-unix",
+        "--bind-try", str(LOOT), str(LOOT),          # output condiviso
+        "--bind-try", f"{home}/.config", f"{home}/.config",
+        "--bind-try", f"{home}/.cache", f"{home}/.cache",
+        "--chdir", str(LOOT),
+        "--unshare-pid", "--die-with-parent",
+    ] + cmd
+
+
 def bwrap_works() -> bool:
     """Verifica UNA VOLTA che bwrap riesca davvero a creare la sandbox.
 
     bwrap da utente non privilegiato apre SEMPRE uno user namespace: se il
-    kernel li tiene disabilitati (`user.max_user_namespaces=0`) fallisce con
-    `unshare user ns: No space left on device` e il tool non parte mai. Invece
-    di sbatterci contro ad ogni avvio (e lasciare il terminale a vuoto), lo
-    collaudiamo una sola volta con un comando innocuo e teniamo il risultato.
+    kernel li tiene disabilitati o a zero (`user.max_user_namespaces`) fallisce
+    con `unshare user ns: No space left on device` e il tool non parte mai.
+    Collaudiamo la sandbox COMPLETA (gli stessi flag del lancio reale, vedi
+    _bwrap_argv) eseguendo /bin/true: cosi' il risultato del test e' davvero
+    predittivo. Se non funziona, i tool girano senza sandbox (fallback).
     """
     global _BWRAP_OK
     if _BWRAP_OK is not None:
@@ -1000,10 +1030,9 @@ def bwrap_works() -> bool:
         return False
     try:
         r = subprocess.run(
-            ["bwrap", "--ro-bind", "/", "/", "--unshare-pid",
-             "--die-with-parent", "true"],
+            _bwrap_argv(["true"]),
             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-            timeout=10,
+            timeout=15,
         )
         _BWRAP_OK = (r.returncode == 0)
     except (OSError, subprocess.SubprocessError):
@@ -1027,24 +1056,7 @@ def _bwrap(cmd: list[str]) -> list[str]:
     """
     if os.environ.get("NXS_ISOLATE") == "0" or not bwrap_works():
         return cmd
-    home = os.path.expanduser("~")
-    for d in (LOOT, Path(home) / ".config", Path(home) / ".cache"):
-        try:
-            d.mkdir(parents=True, exist_ok=True)
-        except OSError:
-            pass
-    return [
-        "bwrap",
-        "--ro-bind", "/", "/",                       # core in sola lettura
-        "--dev", "/dev", "--proc", "/proc",
-        "--tmpfs", "/tmp",
-        "--ro-bind-try", "/tmp/.X11-unix", "/tmp/.X11-unix",
-        "--bind-try", str(LOOT), str(LOOT),          # output condiviso
-        "--bind-try", f"{home}/.config", f"{home}/.config",
-        "--bind-try", f"{home}/.cache", f"{home}/.cache",
-        "--chdir", str(LOOT),
-        "--unshare-pid", "--die-with-parent",
-    ] + cmd
+    return _bwrap_argv(cmd)
 
 
 def _x11_flags() -> list[str]:

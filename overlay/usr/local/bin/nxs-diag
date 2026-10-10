@@ -16,6 +16,31 @@ for b in openbox pcmanfm nxs-control-center nxs-panel nxs-profile nxs-tool \
 done
 
 echo
+echo "== SANDBOX / NAMESPACE =="
+_uns="$(cat /proc/sys/user/max_user_namespaces 2>/dev/null || echo 'ASSENTE')"
+printf "  %-20s %s\n" "max_user_namespaces" "$_uns"
+if command -v bwrap >/dev/null 2>&1; then
+  _err="$(bwrap --ro-bind / / --dev /dev --proc /proc --tmpfs /tmp \
+            --unshare-pid --die-with-parent true 2>&1)"
+  if [ $? -eq 0 ]; then
+    printf "  %-20s %s\n" "test bwrap" "OK (sandbox utilizzabile)"
+  else
+    printf "  %-20s %s\n" "test bwrap" "FALLITO: $_err"
+  fi
+else
+  printf "  %-20s %s\n" "test bwrap" "bwrap MANCANTE"
+fi
+if command -v podman >/dev/null 2>&1; then
+  if podman unshare true >/dev/null 2>&1; then
+    printf "  %-20s %s\n" "podman rootless" "OK (user namespace ok)"
+  else
+    printf "  %-20s %s\n" "podman rootless" "NON funziona (userns mancanti)"
+  fi
+else
+  printf "  %-20s %s\n" "podman" "non installato"
+fi
+
+echo
 echo "== PROFILO =="
 nxs-tool profile 2>/dev/null || echo "  (nxs-tool non disponibile)"
 

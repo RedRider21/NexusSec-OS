@@ -27,12 +27,17 @@ install -d -o nexus -g nexus /home/nexus/.local/share/xorg \
 # Lo alziamo qui a boot (idempotente); se il kernel non ha la voce proc
 # (userns non compilati) l'echo fallisce senza danno e resta il fallback di
 # isolation.py (tool eseguito senza sandbox).
-if [ -w /proc/sys/user/max_user_namespaces ]; then
-	cur_uns="$(cat /proc/sys/user/max_user_namespaces 2>/dev/null || echo 0)"
-	if [ "${cur_uns:-0}" -lt 15000 ] 2>/dev/null; then
-		echo 15000 > /proc/sys/user/max_user_namespaces 2>/dev/null \
-			&& echo "user namespace abilitati (max_user_namespaces=15000)"
-	fi
+UNS=/proc/sys/user/max_user_namespaces
+if [ -e "$UNS" ]; then
+	_prima="$(cat "$UNS" 2>/dev/null || echo '?')"
+	# Scrittura INCONDIZIONATA con due metodi (file + sysctl), poi rilettura:
+	# cosi' nel log si vede il valore REALE e non ci si fida di un controllo.
+	echo 15000 > "$UNS" 2>/dev/null || true
+	command -v sysctl >/dev/null 2>&1 && sysctl -w user.max_user_namespaces=15000 >/dev/null 2>&1 || true
+	_dopo="$(cat "$UNS" 2>/dev/null || echo '?')"
+	echo "userns: max_user_namespaces prima=$_prima dopo=$_dopo (atteso 15000)"
+else
+	echo "userns: $UNS ASSENTE -> kernel senza user namespace; i tool apk/pip girano senza sandbox, i container rootless non sono possibili"
 fi
 # Ping group range per il ping ICMP rootless (utile ai tool di rete senza raw).
 [ -w /proc/sys/net/ipv4/ping_group_range ] && \
