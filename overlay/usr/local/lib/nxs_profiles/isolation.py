@@ -154,6 +154,33 @@ def have(cmd: str) -> bool:
     return shutil.which(cmd) is not None
 
 
+# Cartella degli shim dei tool del catalogo (generati a boot da nxs-gen-shims,
+# in CODA al PATH): servono a lanciare un tool scritto per nome nel terminale.
+_SHIM_DIR = "/run/nxs-shims"
+
+
+def _which_real(name: str) -> str | None:
+    """which() che IGNORA gli shim di /run/nxs-shims.
+
+    Uno shim NON e' il tool installato: e' un lanciatore che richiama
+    `nxs-tool launch`. Se is_installed()/build_cmd() lo scambiassero per il
+    binario vero, (1) crederebbero il tool gia' presente e salterebbero
+    l'installazione, e (2) ESEGUIREBBERO lo shim, che richiama nxs-tool launch
+    -> ritrova lo shim -> RICORSIONE (il tool "cicla" e non parte mai). Qui lo
+    filtriamo: uno shim non conta come installazione reale.
+    """
+    if not name:
+        return None
+    p = shutil.which(name)
+    if p:
+        try:
+            if os.path.dirname(os.path.realpath(p)) == os.path.realpath(_SHIM_DIR):
+                return None
+        except OSError:
+            pass
+    return p
+
+
 def priv(cmd: list[str]) -> list[str]:
     """Anteprone doas/sudo se serve (no-op se gia' root o assenti)."""
     if os.geteuid() == 0:
@@ -233,9 +260,11 @@ def is_installed(tool: str) -> bool:
         # installato = l'ambiente condiviso esiste E contiene gia il pacchetto.
         return _image_exists(KALI_ENV) and _kali_pkg(tool) in _kali_installed_pkgs()
     if m in ("git", "go", "cargo"):
-        return have(_bin(tool)) or (LOCAL_BIN / _bin(tool)).exists()
-    # apk / pip: il comando vive nel PATH una volta installato
-    if have(_bin(tool)) or have(tool):
+        return _which_real(_bin(tool)) is not None or (LOCAL_BIN / _bin(tool)).exists()
+    # apk / pip: il comando vive nel PATH una volta installato. NB: _which_real
+    # ignora gli shim (altrimenti which(<id>) trova lo shim e il tool sembra
+    # installato quando non lo e' -> ricorsione in esecuzione).
+    if _which_real(_bin(tool)) or _which_real(tool):
         return True
     if m == "apk":
         pkg = _apk_name(tool)
@@ -1121,7 +1150,9 @@ def build_cmd(tool: str, args: list[str], interactive: bool = True,
             return None
         return _kali_run(tool, args, interactive) if m == "kali" \
             else _podman_run(tool, args, interactive)
-    exe = shutil.which(_bin(tool)) or shutil.which(tool) or shutil.which(_apk_name(tool) or "")
+    # _which_real IGNORA gli shim di /run/nxs-shims: altrimenti 'exe' sarebbe lo
+    # shim stesso, che richiama nxs-tool launch -> ricorsione infinita.
+    exe = _which_real(_bin(tool)) or _which_real(tool) or _which_real(_apk_name(tool) or "")
     if not exe:
         log(f"[!] {tool}: non installato. Usa 'nxs-tool install {tool}'.")
         return None

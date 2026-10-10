@@ -151,6 +151,16 @@ for s in local dbus udev udev-trigger networking cgroups bluetooth acpid; do
   ln -sf "/etc/init.d/$s" "$tmp/etc/runlevels/default/$s"
 done
 
+# sysctl nel runlevel BOOT (prima del 'default'/desktop): applica
+# /etc/sysctl.d/00-nexussec.conf -> user.max_user_namespaces=15000 PRIMA che
+# l'utente possa lanciare un tool. Senza questo, lo stesso settaggio fatto da
+# nexussec.start ('local', runlevel default) corre in parallelo al desktop: chi
+# lancia un tool nei primi secondi trova gli user namespace ancora a 0 e bwrap
+# fallisce (poi va, ma intanto il primo lancio e' andato senza sandbox). Lo
+# mettiamo esplicito per essere DETERMINISTICI a prescindere dal set standard.
+mkdir -p "$tmp/etc/runlevels/boot"
+ln -sf "/etc/init.d/sysctl" "$tmp/etc/runlevels/boot/sysctl"
+
 # Splash di avvio: e' un client X (nxs-boot-splash, primo autostart Openbox),
 # non un servizio OpenRC -> qui non serve nulla. Il boot testuale e' su tty12
 # (console=tty12 in mkimg), cosi' tty1 resta pulito fino allo splash.
