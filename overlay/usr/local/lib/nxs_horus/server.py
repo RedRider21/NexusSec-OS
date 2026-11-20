@@ -2098,8 +2098,10 @@ _TLE = {"ts": 0, "data": None, "try": 0}
 _TLE_LOCK = threading.Lock()
 # Gruppi CelesTrak (keyless) utili e non enormi. NB: Starlink e' escluso di
 # proposito (~6000 satelliti = troppi marker e troppa CPU di propagazione).
+# NB (2026-11): il gruppo "noaa" NON esiste piu' su CelesTrak ("GROUP=noaa not
+# found"): i satelliti NOAA stanno gia' in "weather".
 _TLE_GROUPS = ["stations", "gps-ops", "galileo", "glo-ops", "beidou",
-               "weather", "noaa", "goes", "science", "geo"]
+               "weather", "goes", "science", "geo"]
 
 
 def _tle_load_file():
@@ -2126,13 +2128,14 @@ def _tle():
     comunque l'ultima buona (i TLE degradano lenti). Lock NON bloccante: se un
     altro thread sta gia' scaricando, rispondiamo subito con quel che c'e'."""
     now = time.time()
-    if _TLE["data"] and now - _TLE["ts"] < 7200:
+    ttl = 600 if _TLE.get("partial") else 7200
+    if _TLE["data"] and now - _TLE["ts"] < ttl:
         return _TLE["data"]
     if not _TLE_LOCK.acquire(blocking=False):
         return _TLE["data"] or _tle_load_file()
     try:
         now = time.time()
-        if _TLE["data"] and now - _TLE["ts"] < 7200:
+        if _TLE["data"] and now - _TLE["ts"] < ttl:
             return _TLE["data"]
         # Backoff: dopo un fallimento non martelliamo CelesTrak per 60s.
         if not _TLE["data"] and now - _TLE["try"] < 60:
@@ -2150,26 +2153,46 @@ def _tle():
         _TLE_LOCK.release()
 
 
+def _tle_fetch_group(g):
+    """Scarica UN gruppo CelesTrak. None se fallisce (timeout/503)."""
+    try:
+        req = urllib.request.Request(
+            "https://celestrak.org/NORAD/elements/gp.php?GROUP=%s&FORMAT=tle" % g,
+            headers={"User-Agent": UA})
+        # Timeout generoso: CelesTrak e' diventato lento (gruppo "geo" ~40s,
+        # "weather" ~8s). Con 8s si perdeva mezzo catalogo (280 sat invece
+        # di ~900). Gira in background/thread, quindi non blocca la UI.
+        with _opener().open(req, timeout=60 if g == "geo" else 30) as r:
+            txt = r.read().decode("utf-8", "replace")
+    except Exception:
+        return None
+    lines = [l.rstrip() for l in txt.splitlines() if l.strip()]
+    out = []
+    for i in range(0, len(lines) - 2, 3):
+        name, l1, l2 = lines[i].strip(), lines[i + 1], lines[i + 2]
+        if l1.startswith("1 ") and l2.startswith("2 "):
+            out.append({"name": name, "l1": l1, "l2": l2, "group": g})
+    return out or None
+
+
 def _tle_fetch():
+    """Gruppi in PARALLELO (max 3 connessioni: gentile con CelesTrak). Se un
+    gruppo fallisce si RIUSA la sua copia precedente (memoria o file): prima un
+    risultato parziale finiva in cache per 2h come se fosse completo."""
+    from concurrent.futures import ThreadPoolExecutor
+    with ThreadPoolExecutor(max_workers=3) as ex:
+        res = dict(zip(_TLE_GROUPS, ex.map(_tle_fetch_group, _TLE_GROUPS)))
+    if not any(res.values()):
+        return []
+    old = {}
+    for s in (_TLE["data"] or _tle_load_file()):
+        old.setdefault(s.get("group"), []).append(s)
     out = []
     for g in _TLE_GROUPS:
-        try:
-            req = urllib.request.Request(
-                "https://celestrak.org/NORAD/elements/gp.php?GROUP=%s&FORMAT=tle" % g,
-                headers={"User-Agent": UA})
-            with _opener().open(req, timeout=8) as r:   # timeout corto: no attese lunghe
-                txt = r.read().decode("utf-8", "replace")
-        except Exception:
-            continue   # 503/timeout: salta questo gruppo
-        lines = [l.rstrip() for l in txt.splitlines() if l.strip()]
-        for i in range(0, len(lines) - 2, 3):
-            name, l1, l2 = lines[i].strip(), lines[i + 1], lines[i + 2]
-            if l1.startswith("1 ") and l2.startswith("2 "):
-                out.append({"name": name, "l1": l1, "l2": l2, "group": g})
-        time.sleep(0.25)   # gentile con CelesTrak (attenua i 503)
-        if len(out) >= 900:
-            break
-    return out
+        out.extend(res[g] if res[g] else old.get(g, []))
+    # Gruppi mancati: la cache scade presto (10 min invece di 2h) per ritentarli.
+    _TLE["partial"] = not all(res.values())
+    return out[:1200]
 
 
 # Starlink: layer separato (~6000 satelliti), scaricato SOLO se l'utente accende
