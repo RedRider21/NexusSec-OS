@@ -220,6 +220,37 @@ function intelMarker(c, p, color, fallback, kindLabel, layer) {
   return mk;
 }
 
+// Disegnatore UNICO per i layer di extra.py (formato uniforme: properties
+// t=titolo, rows=[[etichetta,valore]], links=[[etichetta,url]], c=colore,
+// r=raggio). Punti -> pallini; poligoni/linee (es. allerte NWS) -> aree.
+function renderUniform(color) {
+  return function (data, layer) {
+    let n = 0;
+    (data.features || []).forEach(f => {
+      const g = f.geometry, p = f.properties || {};
+      if (!g) return;
+      const html = popup(p.t || "",
+        (p.rows || []).map(r => [r[0], esc(r[1])]), p.links || []);
+      const col = p.c || color;
+      if (g.type === "Point") {
+        const c = g.coordinates;
+        // o = opacita' esplicita (alone senza bordo, es. aurora)
+        const st = p.o != null
+          ? { radius: p.r || 5, stroke: false, fillColor: col, fillOpacity: p.o }
+          : dot(col, p.r || 5);
+        L.circleMarker([c[1], c[0]], st)
+          .bindPopup(html, { maxWidth: 320 }).addTo(layer);
+      } else {
+        L.geoJSON(f, { style: { color: col, weight: 1.5, opacity: 0.9,
+                                 fillColor: col, fillOpacity: 0.18 } })
+          .bindPopup(html, { maxWidth: 320 }).addTo(layer);
+      }
+      n++;
+    });
+    return n;
+  };
+}
+
 const FEEDS = [
   {
     id: "quakes", nome: "Terremoti (24h)", color: "#ff5a8a",
@@ -477,6 +508,40 @@ const FEEDS = [
       return n;
     },
   },
+  // --- Layer aggiunti nel 2026-11: tutti gratuiti e senza chiave (extra.py) ---
+  { id: "gdacs", group: "Disastri e clima", nome: "Allerte disastri (GDACS)", color: "#ff9f1c",
+    desc: "UE JRC/ONU - terremoti, cicloni, alluvioni, siccità (30 gg, per gravità)",
+    render: renderUniform("#ff9f1c") },
+  { id: "events", group: "Disastri e clima", nome: "Tempeste e altri eventi", color: "#4cc9f0",
+    desc: "NASA EONET - tempeste, alluvioni, frane, polveri, ghiacci, temperature",
+    render: renderUniform("#4cc9f0") },
+  { id: "nws", group: "Disastri e clima", nome: "Allerte meteo USA", color: "#ff3b5c",
+    desc: "NOAA NWS - allerte gravi ed estreme, con l'area interessata",
+    render: renderUniform("#ff3b5c") },
+  { id: "aurora", group: "Disastri e clima", nome: "Aurora (meteo spaziale)", color: "#39ff88",
+    desc: "NOAA SWPC - probabilità di aurora ora + indice Kp",
+    render: renderUniform("#39ff88") },
+  { id: "radiation", group: "Disastri e clima", nome: "Radioattività", color: "#2ec27e",
+    desc: "Safecast - sensori in tempo reale (µSv/h), dati CC0",
+    render: renderUniform("#2ec27e") },
+  { id: "outages", group: "Cyber e Internet", nome: "Blackout Internet", color: "#ff3b5c",
+    desc: "IODA (Georgia Tech) - interruzioni e censure per Paese, ultime 24h",
+    render: renderUniform("#ff3b5c") },
+  { id: "ransomware", group: "Cyber e Internet", nome: "Attacchi ransomware", color: "#ff5ac8",
+    desc: "ransomware.live - vittime rivendicate di recente (posizione = Paese)",
+    render: renderUniform("#ff5ac8") },
+  { id: "tor", group: "Cyber e Internet", nome: "Rete Tor per Paese", color: "#b77cff",
+    desc: "Tor Metrics - relay attivi, uscite, guardie e banda (CC0)",
+    render: renderUniform("#b77cff") },
+  { id: "launches", group: "Spazio e trasporti", nome: "Lanci spaziali", color: "#ffd166",
+    desc: "TheSpaceDevs - prossimi lanci nel mondo, rampa e missione",
+    render: renderUniform("#ffd166") },
+  { id: "fireballs", group: "Spazio e trasporti", nome: "Bolidi e meteore", color: "#fff1a8",
+    desc: "NASA JPL CNEOS - meteore esplose in atmosfera, con energia",
+    render: renderUniform("#fff1a8") },
+  { id: "airports", group: "Spazio e trasporti", nome: "Aeroporti", color: "#9ad1ff",
+    desc: "OurAirports - aeroporti grandi e medi del mondo (pubblico dominio)",
+    render: renderUniform("#9ad1ff") },
 ];
 
 // ---------------------------------------------------------------------------
@@ -486,8 +551,16 @@ const listEl = document.getElementById("feed-list");
 const layers = {};   // id -> L.layerGroup
 const active = {};    // id -> bool
 
+let _lastGroup = "";
 FEEDS.forEach(fd => {
   layers[fd.id] = L.layerGroup();
+  if (fd.group && fd.group !== _lastGroup) {
+    _lastGroup = fd.group;
+    const gh = document.createElement("li");
+    gh.className = "feed-group";
+    gh.textContent = fd.group;
+    listEl.appendChild(gh);
+  }
   const li = document.createElement("li");
   li.className = "feed";
   li.dataset.id = fd.id;
@@ -500,6 +573,41 @@ FEEDS.forEach(fd => {
   li.addEventListener("click", () => toggleFeed(fd.id));
   listEl.appendChild(li);
 });
+
+// CISA KEV: elenco delle vulnerabilita' sfruttate attivamente (non e' un dato
+// da mappa). Caricato solo all'apertura del riquadro, poi ogni 3h.
+(function () {
+  const box = document.getElementById("kev-box");
+  if (!box) return;
+  let loadedAt = 0;
+  box.addEventListener("toggle", () => {
+    if (!box.open || Date.now() - loadedAt < 3 * 3600 * 1000) return;
+    const meta = document.getElementById("kev-meta");
+    const ul = document.getElementById("kev-list");
+    meta.textContent = "Caricamento...";
+    fetch("api/kev").then(r => r.json()).then(d => {
+      if (d.error) throw new Error(d.error);
+      loadedAt = Date.now();
+      meta.textContent = "Vulnerabilità di cui la CISA (agenzia USA) ha PROVE di " +
+        "sfruttamento in attacchi reali: " + d.count + " nel catalogo (agg. " + d.released +
+        "). Qui le ultime 40 AGGIUNTE, con la data di inserimento a destra: non è " +
+        "un elenco 'in uso in questo istante'. RANSOMWARE = usata in campagne ransomware " +
+        "note. Clic per la scheda completa.";
+      ul.innerHTML = "";
+      (d.items || []).forEach(v => {
+        const li = document.createElement("li");
+        li.className = "kev-item";
+        li.addEventListener("click", () => openCve(v));
+        li.innerHTML = '<span class="cve">' + esc(v.cve) + "</span> " +
+          '<span class="vp">' + esc(v.vendor) + " · " + esc(v.product) + "</span>" +
+          (v.ransomware ? '<span class="rw">RANSOMWARE</span>' : "") +
+          '<span class="dt" title="aggiunta al catalogo il">' + esc(v.added) + "</span>" +
+          '<span class="ds">' + esc(v.desc) + "</span>";
+        ul.appendChild(li);
+      });
+    }).catch(e => { meta.textContent = "CISA KEV non raggiungibile: " + (e.message || e); });
+  });
+})();
 
 function feedEl(id) { return listEl.querySelector('.feed[data-id="' + id + '"]'); }
 
@@ -589,6 +697,18 @@ const STREAM = {
   cameras: { live: false, interval: 300 },
   // Layer OSM GLOBALI (punti fissi): scaricati una volta a livello mondiale e
   // tenuti in IndexedDB (persistono tra sessioni). Refresh raro (12h).
+  // Layer di extra.py: cadenze in linea con la cache lato server.
+  gdacs:      { live: false, interval: 900 },
+  events:     { live: false, interval: 1800 },
+  nws:        { live: false, interval: 600 },
+  aurora:     { live: false, interval: 1800 },
+  radiation:  { live: false, interval: 3600 },
+  outages:    { live: false, interval: 600 },
+  ransomware: { live: false, interval: 1800 },
+  tor:        { live: false, interval: 3600 },
+  launches:   { live: false, interval: 3600 },
+  fireballs:  { live: false, interval: 21600 },
+  airports:   { live: false, interval: 604800 },
   military:  { live: false, interval: 43200 },
   hospitals: { live: false, interval: 43200 },
   strategic: { live: false, interval: 43200 },
@@ -815,6 +935,14 @@ async function pollLayer(id) {
       layers[id].clearLayers();
       cnt.textContent = "⤢"; cnt.classList.remove("err"); cnt.title = body.hint;
       feedMsg(body.hint);
+      return;
+    }
+    // Layer lento ancora in download sul server (Safecast ~100s, aeroporti):
+    // NON sovrascriviamo la cache e riproviamo fra 15s.
+    if (body.pending) {
+      cnt.textContent = "⏳"; cnt.classList.remove("err");
+      cnt.title = "in preparazione (prima volta: fino a 2 minuti)";
+      dueAt[id] = Date.now() + 15000;
       return;
     }
     await dbPut(id, body);
@@ -1244,6 +1372,11 @@ document.getElementById("recon-run").addEventListener("click", async () => {
 // ---------------------------------------------------------------------------
 // Stato (rete/Tor) dal backend
 // ---------------------------------------------------------------------------
+// Via d'uscita delle query (per i rapporti). DICHIARATA: con "use strict"
+// assegnare una variabile non dichiarata lancia ReferenceError, che finiva nel
+// catch qui sotto -> la barra mostrava SEMPRE "backend non raggiungibile"
+// anche col server attivo (bug dal 2026-09-01, trovato il 2026-11-20).
+let scanVia = "IP diretto";
 async function refreshStatus() {
   const dot = document.getElementById("status-dot");
   const txt = document.getElementById("status-txt");
@@ -2384,6 +2517,59 @@ async function openReader(url, title, src) {
   }
 }
 
+// Scheda CVE (dal riquadro CISA KEV) nella STESSA finestra del lettore news:
+// testo traducibile (paragrafi) + riquadro dati (CVSS, CWE, riferimenti) che
+// resta fisso. I riferimenti si aprono col visore/lettore interno di HORUS.
+async function openCve(v) {
+  const url = "https://nvd.nist.gov/vuln/detail/" + encodeURIComponent(v.cve);
+  document.getElementById("reader-src").textContent = "CISA KEV · NVD";
+  document.getElementById("reader-ext").href = url;
+  readerContent.hidden = false; readerBlock.hidden = true;
+  readerContent.innerHTML = '<p class="reader-loading">Carico la scheda ' + esc(v.cve) + "...</p>";
+  reader.classList.remove("expanded");
+  reader.hidden = false;
+  readerState = null; updateTrButton();
+  let n = null;
+  try {
+    const d = await (await fetch("api/cve?id=" + encodeURIComponent(v.cve))).json();
+    if (!d.error) n = d;
+  } catch (e) { /* NVD giu': resta la parte KEV */ }
+  const paras = [v.name || ""];
+  if (v.desc) paras.push(v.desc);
+  if (v.action) paras.push("Azione richiesta (CISA): " + v.action);
+  if (n && n.desc && n.desc !== v.desc) paras.push("Descrizione NVD: " + n.desc);
+  const sev = n && n.cvss ? n.cvss : null;
+  const col = !sev ? "var(--muted)" : sev.score >= 9 ? "var(--alarm)"
+    : sev.score >= 7 ? "#ff9f1c" : sev.score >= 4 ? "#ffd166" : "#2ec27e";
+  let x = '<table class="cve-tab">';
+  x += "<tr><td>Prodotto</td><td>" + esc(v.vendor) + " · " + esc(v.product) + "</td></tr>";
+  if (sev) x += '<tr><td>CVSS ' + esc(sev.version) + '</td><td><b style="color:' + col + '">' +
+    esc(sev.score) + " " + esc(sev.severity) + "</b><br><code>" + esc(sev.vector) + "</code></td></tr>";
+  x += "<tr><td>Nel catalogo KEV dal</td><td>" + esc(v.added) + "</td></tr>";
+  if (v.due) x += "<tr><td>Scadenza correzione (enti USA)</td><td>" + esc(v.due) + "</td></tr>";
+  x += "<tr><td>Usata da ransomware</td><td>" + (v.ransomware ? '<b style="color:var(--alarm)">sì, campagne note</b>' : "non nota") + "</td></tr>";
+  const cw = (n && n.cwes && n.cwes.length ? n.cwes : v.cwes) || [];
+  if (cw.length) x += "<tr><td>Debolezza</td><td>" + cw.map(esc).join(", ") + "</td></tr>";
+  if (n) x += "<tr><td>Pubblicata / aggiornata</td><td>" + esc(n.published) + " / " + esc(n.modified) + "</td></tr>";
+  x += "</table>";
+  if (n && n.refs && n.refs.length) {
+    x += '<div class="cve-refs"><b>Riferimenti</b>';
+    n.refs.forEach(r => {
+      const tg = (r.tags || []).join(", ");
+      x += '<a class="news-item" href="' + esc(r.url) + '" data-title="' + esc(v.cve) +
+        '" data-src="riferimento">' + esc(r.url) + "</a>" + (tg ? ' <span class="tg">' + esc(tg) + "</span>" : "");
+    });
+    x += "</div>";
+  } else if (!n) {
+    x += '<p class="hint">Dettagli NVD non disponibili ora (servizio lento o limite di richieste): riprova tra poco.</p>';
+  }
+  readerState = { url: url, src: "CISA KEV", date: v.added, image: "",
+    origTitle: v.cve, origParas: paras, trTitle: null, trParas: null,
+    translated: false, extraHtml: x, noOrig: true };
+  renderReader();
+  if (newsAutoTr()) translateReader(true);
+}
+
 // Disegna l'articolo nella lingua corrente (originale o tradotta).
 function renderReader() {
   if (!readerState) return;
@@ -2396,7 +2582,8 @@ function renderReader() {
   if (meta) h += '<div class="reader-by">' + esc(meta) + "</div>";
   if (st.image) h += '<img class="reader-lead" src="' + esc(st.image) + '" alt="">';
   h += paras.map(t => "<p>" + esc(t) + "</p>").join("");
-  h += '<a class="reader-orig" href="' + esc(st.url) +
+  if (st.extraHtml) h += st.extraHtml;      // scheda CVE: dati fissi
+  if (!st.noOrig) h += '<a class="reader-orig" href="' + esc(st.url) +
     '" target="_blank" rel="noopener">Leggi l\'originale &#8599;</a>';
   readerContent.innerHTML = h;
   readerContent.scrollTop = 0;

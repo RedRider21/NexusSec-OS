@@ -957,12 +957,31 @@ esattamente il ruolo di una plancia che osserva il mondo intero. Da qui il logo
 | Incendi mondiali | NASA EONET | incendi attivi (eventi aperti) |
 | Cavi sottomarini | TeleGeography | dorsali dati oceaniche |
 | Stazione ISS | wheretheiss.at | posizione attuale della ISS |
-| **Satelliti** | CelesTrak (TLE) | orbite calcolate **live nel browser** (stazioni, GPS, Galileo, GLONASS, BeiDou, meteo, NOAA, GOES, geostazionari) — ~858 oggetti curati. **Starlink** è un layer **separato opt-in** (~10 000 oggetti, spunta dedicata) |
+| **Satelliti** | CelesTrak (TLE) | orbite calcolate **live nel browser** (stazioni, GPS, Galileo, GLONASS, BeiDou, meteo, GOES, scienza, geostazionari) — ~840 oggetti curati. **Starlink** è un layer **separato opt-in** (~10 000 oggetti, spunta dedicata) |
 | **Telecamere del traffico** | reti pubbliche ufficiali (DOT) | webcam stradali **keyless**, migliaia di feed mondiali: TfL Londra (con clip video), Caltrans California (tutti i 12 distretti), Ontario 511, Digitraffic Finlandia, NZTA Nuova Zelanda, LTA Singapore |
 | **Infrastrutture militari** | Wikidata (QLever/WDQS) | basi, aeroporti e installazioni militari **mondiali** |
 | **Ospedali** | Wikidata (QLever/WDQS) | strutture sanitarie **mondiali** |
 | **Punti strategici** | Wikidata (QLever/WDQS) | infrastrutture critiche (energia, trasporti, comunicazioni) **mondiali** |
 | **Navi (AIS)** | aisstream.io | traffico marittimo mondiale **in streaming continuo** (con chiave gratuita); senza chiave, Digitraffic (Nord Europa) |
+| **Allerte disastri** | GDACS (UE JRC / ONU) | terremoti, cicloni, alluvioni, siccità, eruzioni, incendi degli ultimi 30 giorni, colorati per gravità |
+| **Tempeste e altri eventi** | NASA EONET | tempeste/cicloni, alluvioni, frane, polveri, ghiacci, temperature estreme |
+| **Allerte meteo USA** | NOAA NWS | allerte gravi ed estreme con l'area interessata (poligoni) |
+| **Aurora** | NOAA SWPC (OVATION) | probabilità di aurora in questo momento + indice Kp |
+| **Radioattività** | Safecast (CC0) | sensori in tempo reale, dose stimata in µSv/h (nessun dato personale dei volontari) |
+| **Blackout Internet** | IODA (Georgia Tech) | interruzioni e censure di Internet per Paese, ultime 24 ore |
+| **Attacchi ransomware** | ransomware.live | vittime rivendicate di recente (posizione = Paese; uso personale libero) |
+| **Rete Tor per Paese** | Tor Metrics / Onionoo (CC0) | relay attivi, di uscita e di guardia, banda |
+| **Lanci spaziali** | TheSpaceDevs Launch Library 2 | prossimi lanci mondiali con rampa, razzo e missione |
+| **Bolidi e meteore** | NASA JPL CNEOS | meteore esplose in atmosfera, con energia d'impatto |
+| **Aeroporti** | OurAirports (pubblico dominio) | aeroporti grandi e medi con voli di linea |
+
+Tutte le fonti sono **gratuite e senza chiave**; licenze verificate una per una
+(scartate PeeringDB, gpsjam e le fonti che ora richiedono registrazione).
+Il riquadro **«Vulnerabilità sfruttate ora»** (scheda Feed) mostra le ultime
+aggiunte al catalogo **CISA KEV**: vulnerabilità con **prove di sfruttamento in
+attacchi reali** (non «in uso in questo istante»), con la data di inserimento e
+il segno **RANSOMWARE** se usate in campagne note. Un clic apre la **scheda CVE
+dentro HORUS** (CVSS, debolezza CWE, riferimenti da NVD, traducibile).
 
 La **mappa nera** (Esri Dark) è quella di default; un selettore in alto a destra
 cambia vista in **satellite** (Esri), **strade** (OSM) o **chiara** (Esri).

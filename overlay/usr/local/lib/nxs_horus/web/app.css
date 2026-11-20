@@ -163,6 +163,25 @@ body {
 .feed .cnt { color: var(--accent); font-size: 11px; font-variant-numeric: tabular-nums; }
 .feed .cnt.err { color: var(--alarm); }
 .feed .swatch { width: 10px; height: 10px; border-radius: 3px; flex: 0 0 auto; }
+/* intestazioni di gruppo nell'elenco feed (layer aggiunti 2026-11) */
+.feed-group { margin: 14px 2px 6px; color: var(--muted); font-size: 10px;
+  font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+  border-bottom: 1px solid var(--border); padding-bottom: 3px; }
+
+/* ---- CISA KEV: vulnerabilita' sfruttate attivamente ---- */
+#kev-box { margin-top: 12px; border: 1px solid var(--border); border-radius: 8px;
+  background: var(--panel-2); padding: 8px 10px; }
+#kev-box summary { cursor: pointer; color: var(--text); font-weight: 600; }
+#kev-box .kev-src { color: var(--muted); font-size: 10px; font-weight: 400; margin-left: 4px; }
+#kev-list { list-style: none; margin: 6px 0 0; padding: 0; max-height: 320px; overflow-y: auto; }
+#kev-list li { padding: 6px 4px; border-top: 1px solid var(--border); font-size: 11px;
+  cursor: pointer; border-radius: 4px; }
+#kev-list li:hover { background: rgba(0,229,255,.06); }
+#kev-list .cve { color: var(--accent); font-weight: 700; text-decoration: none; }
+#kev-list .vp { color: var(--text); }
+#kev-list .dt { color: var(--muted); float: right; }
+#kev-list .rw { color: var(--alarm); font-weight: 700; margin-left: 4px; }
+#kev-list .ds { color: var(--muted); display: block; margin-top: 2px; }
 
 /* ---- Bottoni / campi ---- */
 .btn {
@@ -1021,3 +1040,12 @@ select option, select optgroup {
   border-radius: 8px; padding: 10px; margin-top: 8px;
   max-height: 42vh; overflow: auto; font-size: 13px; line-height: 1.5;
 }
+
+/* scheda CVE nel lettore */
+.cve-tab { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 12px; }
+.cve-tab td { padding: 5px 6px; border-top: 1px solid var(--border); vertical-align: top; }
+.cve-tab td:first-child { color: var(--muted); width: 38%; }
+.cve-tab code { font-size: 10px; color: var(--muted); word-break: break-all; }
+.cve-refs { margin-top: 8px; font-size: 11px; }
+.cve-refs a { display: block; margin-top: 5px; color: var(--accent); word-break: break-all; }
+.cve-refs .tg { color: var(--muted); font-size: 10px; }

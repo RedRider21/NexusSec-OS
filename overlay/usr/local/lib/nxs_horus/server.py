@@ -119,6 +119,11 @@ FEEDS = {
     },
 }
 
+# Layer aggiunti nel 2026-11 (tutti keyless e a uso libero): vedi extra.py.
+for _fid in ("gdacs", "outages", "ransomware", "tor", "aurora", "radiation",
+             "fireballs", "launches", "airports", "events", "nws"):
+    FEEDS[_fid] = {"url": "", "kind": "extra"}
+
 _DIGI_HDR = {"Digitraffic-User": "NexusSec/HORUS", "Accept-Encoding": "gzip"}
 _VESSELS = {"ts": 0, "map": {}}
 
@@ -2751,6 +2756,23 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/phone/status":
             return self._json({"up": _port_up("127.0.0.1", PHONE_PORT),
                                "port": PHONE_PORT})
+        if path == "/api/kev":
+            # Vulnerabilita' sfruttate attivamente (CISA KEV): elenco, non mappa.
+            from nxs_horus import extra
+            try:
+                return self._json(extra.get("kev", _fetch, _CONF_DIR))
+            except Exception as e:
+                return self._json({"error": "CISA KEV non raggiungibile: %s" % e}, 502)
+        if path == "/api/cve":
+            # Scheda CVE (NVD) mostrata DENTRO HORUS dal riquadro CISA KEV.
+            from nxs_horus import extra
+            q = parse_qs(urlparse(self.path).query)
+            try:
+                return self._json(extra.cve((q.get("id") or [""])[0], _fetch))
+            except ValueError as e:
+                return self._json({"error": str(e)}, 400)
+            except Exception as e:
+                return self._json({"error": "NVD non raggiungibile: %s" % e}, 502)
         if path == "/api/tle":
             q = parse_qs(urlparse(self.path).query)
             grp = (q.get("group", [""])[0] or "").lower()
@@ -2936,6 +2958,14 @@ class Handler(BaseHTTPRequestHandler):
             except Exception as e:
                 return self._json({"error": "sorgente navi non raggiungibile: %s" % e}, 502)
             return self._json(_ships_geojson(data))
+
+        # Layer aggiuntivi (extra.py): formato uniforme, cache per fonte.
+        if fd["kind"] == "extra":
+            from nxs_horus import extra
+            try:
+                return self._json(extra.get(fid, _fetch, _CONF_DIR))
+            except Exception as e:
+                return self._json({"error": "sorgente non raggiungibile: %s" % e}, 502)
 
         # Telecamere: reti ufficiali del traffico (keyless), aggregate e cache.
         if fd["kind"] == "cameras":
@@ -3194,11 +3224,19 @@ def make_server():
         port = int(os.environ.get("NXS_HORUS_PORT", "0"))
     except ValueError:
         port = 0
-    httpd = ThreadingHTTPServer(("127.0.0.1", port), Handler)
+    httpd = _HorusHTTPServer(("127.0.0.1", port), Handler)
     # Pre-carica i TLE in background: quando l'utente accende i satelliti sono
     # gia' pronti (niente attesa al primo click). Best-effort.
     threading.Thread(target=lambda: _tle(), daemon=True).start()
     return httpd, httpd.server_address[1]
+
+
+class _HorusHTTPServer(ThreadingHTTPServer):
+    # Coda di ascolto ampia: con molti layer accesi la pagina apre decine di
+    # richieste insieme; con la coda di default (5) il kernel ne RIFIUTAVA
+    # alcune e la UI mostrava "backend non raggiungibile" a caso.
+    request_queue_size = 128
+    daemon_threads = True
 
 
 def serve_in_thread():
