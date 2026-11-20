@@ -977,8 +977,8 @@ esattamente il ruolo di una plancia che osserva il mondo intero. Da qui il logo
 
 Tutte le fonti sono **gratuite e senza chiave**; licenze verificate una per una
 (scartate PeeringDB, gpsjam e le fonti che ora richiedono registrazione).
-Il riquadro **«Vulnerabilità sfruttate ora»** (scheda Feed) mostra le ultime
-aggiunte al catalogo **CISA KEV**: vulnerabilità con **prove di sfruttamento in
+Il pulsante **«Vulnerabilità sfruttate (CISA KEV)»** (scheda Feed) apre, nella
+stessa finestra flottante delle news, le ultime aggiunte al catalogo **CISA KEV**: vulnerabilità con **prove di sfruttamento in
 attacchi reali** (non «in uso in questo istante»), con la data di inserimento e
 il segno **RANSOMWARE** se usate in campagne note. Un clic apre la **scheda CVE
 dentro HORUS** (CVSS, debolezza CWE, riferimenti da NVD, traducibile).

@@ -574,40 +574,50 @@ FEEDS.forEach(fd => {
   listEl.appendChild(li);
 });
 
-// CISA KEV: elenco delle vulnerabilita' sfruttate attivamente (non e' un dato
-// da mappa). Caricato solo all'apertura del riquadro, poi ogni 3h.
-(function () {
-  const box = document.getElementById("kev-box");
-  if (!box) return;
-  let loadedAt = 0;
-  box.addEventListener("toggle", () => {
-    if (!box.open || Date.now() - loadedAt < 3 * 3600 * 1000) return;
-    const meta = document.getElementById("kev-meta");
-    const ul = document.getElementById("kev-list");
-    meta.textContent = "Caricamento...";
-    fetch("api/kev").then(r => r.json()).then(d => {
+// CISA KEV: elenco delle vulnerabilita' sfruttate attivamente. Si apre nella
+// STESSA finestra flottante delle news (sopra la mappa, trascinabile,
+// espandibile); un clic su una voce mostra la scheda CVE, "← Elenco" torna qui.
+let kevCache = null;   // { at, d }
+document.getElementById("kev-open").addEventListener("click", () => openKevList());
+async function openKevList() {
+  document.getElementById("reader-title").textContent = "Vulnerabilità sfruttate";
+  document.getElementById("reader-src").textContent = "CISA KEV";
+  document.getElementById("reader-ext").href = "https://www.cisa.gov/known-exploited-vulnerabilities-catalog";
+  readerContent.hidden = false; readerBlock.hidden = true;
+  if (reader.hidden) reader.classList.remove("expanded");
+  reader.hidden = false;
+  readerState = null; updateTrButton();
+  if (!kevCache || Date.now() - kevCache.at > 3 * 3600 * 1000) {
+    readerContent.innerHTML = '<p class="reader-loading">Carico il catalogo CISA KEV...</p>';
+    try {
+      const d = await (await fetch("api/kev")).json();
       if (d.error) throw new Error(d.error);
-      loadedAt = Date.now();
-      meta.textContent = "Vulnerabilità di cui la CISA (agenzia USA) ha PROVE di " +
-        "sfruttamento in attacchi reali: " + d.count + " nel catalogo (agg. " + d.released +
-        "). Qui le ultime 40 AGGIUNTE, con la data di inserimento a destra: non è " +
-        "un elenco 'in uso in questo istante'. RANSOMWARE = usata in campagne ransomware " +
-        "note. Clic per la scheda completa.";
-      ul.innerHTML = "";
-      (d.items || []).forEach(v => {
-        const li = document.createElement("li");
-        li.className = "kev-item";
-        li.addEventListener("click", () => openCve(v));
-        li.innerHTML = '<span class="cve">' + esc(v.cve) + "</span> " +
-          '<span class="vp">' + esc(v.vendor) + " · " + esc(v.product) + "</span>" +
-          (v.ransomware ? '<span class="rw">RANSOMWARE</span>' : "") +
-          '<span class="dt" title="aggiunta al catalogo il">' + esc(v.added) + "</span>" +
-          '<span class="ds">' + esc(v.desc) + "</span>";
-        ul.appendChild(li);
-      });
-    }).catch(e => { meta.textContent = "CISA KEV non raggiungibile: " + (e.message || e); });
+      kevCache = { at: Date.now(), d: d };
+    } catch (e) {
+      readerContent.innerHTML = '<p class="reader-loading">CISA KEV non raggiungibile: ' + esc(e.message || e) + "</p>";
+      return;
+    }
+  }
+  const d = kevCache.d;
+  let h = "<h1>Vulnerabilità sfruttate</h1>" +
+    '<div class="reader-by">CISA KEV · ' + esc(d.count) + " nel catalogo · aggiornato " + esc(d.released) + "</div>" +
+    "<p>Vulnerabilità di cui la CISA (agenzia di cybersicurezza USA) ha <b>prove di " +
+    "sfruttamento in attacchi reali</b>. Qui le <b>ultime 40 aggiunte</b> al catalogo, con la " +
+    "data di inserimento a destra: non è un elenco «in uso in questo istante». " +
+    '<span class="kev-rw">RANSOMWARE</span> = usata in campagne ransomware note.</p>' +
+    '<ul id="kev-list">';
+  (d.items || []).forEach((v, k) => {
+    h += '<li data-k="' + k + '"><span class="cve">' + esc(v.cve) + "</span> " +
+      '<span class="vp">' + esc(v.vendor) + " · " + esc(v.product) + "</span>" +
+      (v.ransomware ? '<span class="rw">RANSOMWARE</span>' : "") +
+      '<span class="dt" title="aggiunta al catalogo il">' + esc(v.added) + "</span>" +
+      '<span class="ds">' + esc(v.name) + "</span></li>";
   });
-})();
+  readerContent.innerHTML = h + "</ul>";
+  readerContent.scrollTop = 0;
+  readerContent.querySelectorAll("#kev-list li").forEach(li =>
+    li.addEventListener("click", () => openCve(d.items[+li.dataset.k])));
+}
 
 function feedEl(id) { return listEl.querySelector('.feed[data-id="' + id + '"]'); }
 
@@ -2565,7 +2575,8 @@ async function openCve(v) {
   }
   readerState = { url: url, src: "CISA KEV", date: v.added, image: "",
     origTitle: v.cve, origParas: paras, trTitle: null, trParas: null,
-    translated: false, extraHtml: x, noOrig: true };
+    translated: false, extraHtml: x, noOrig: true,
+    backHtml: '<a href="#" class="kev-back">&larr; Elenco vulnerabilità</a>' };
   renderReader();
   if (newsAutoTr()) translateReader(true);
 }
@@ -2577,7 +2588,7 @@ function renderReader() {
   const title = tr && st.trTitle != null ? st.trTitle : st.origTitle;
   const paras = tr && st.trParas ? st.trParas : st.origParas;
   document.getElementById("reader-title").textContent = title;
-  let h = "<h1>" + esc(title) + "</h1>";
+  let h = (st.backHtml || "") + "<h1>" + esc(title) + "</h1>";
   const meta = [st.src, st.date, tr ? "tradotto" : null].filter(Boolean).join(" · ");
   if (meta) h += '<div class="reader-by">' + esc(meta) + "</div>";
   if (st.image) h += '<img class="reader-lead" src="' + esc(st.image) + '" alt="">';
@@ -2787,6 +2798,7 @@ document.getElementById("webwin-expand").addEventListener("click",
   () => webwinEl.classList.toggle("expanded"));
 
 document.addEventListener("click", e => {
+  if (e.target.closest("a.kev-back")) { e.preventDefault(); openKevList(); return; }
   const lv = e.target.closest("a.live-open");
   if (lv) { e.preventDefault(); openLive(); return; }
   const a = e.target.closest("a.news-item");
@@ -2976,16 +2988,27 @@ function makeDraggable(winId, handleId) {
   const KEY = "horus.win." + winId;
   let lastPos = null, dragging = false, sx, sy, ox, oy;
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+  // Le finestre sono "absolute" DENTRO #stage (l'area mappa, che parte DOPO la
+  // barra laterale): left/top vanno espressi rispetto a #stage, NON allo
+  // schermo. Prima si misurava con getBoundingClientRect (coordinate schermo) e
+  // si limitava con window.innerWidth: al primo trascinamento la finestra
+  // saltava di 340px (la barra) a destra, usciva dallo schermo e ALLARGAVA la
+  // pagina; la posizione sbagliata restava poi salvata (bug 2026-11-20).
+  function area() {
+    const par = win.offsetParent || document.getElementById("stage") || document.body;
+    return { w: par.clientWidth || window.innerWidth, h: par.clientHeight || window.innerHeight };
+  }
   function applyPos(left, top) {
-    const w = win.offsetWidth || 200;
-    left = clamp(left, 4, Math.max(4, window.innerWidth - Math.min(w, 140) - 4));
-    top = clamp(top, 4, Math.max(4, window.innerHeight - 34));
+    const a = area(), w = win.offsetWidth || 200, h = win.offsetHeight || 120;
+    left = clamp(left, 4, Math.max(4, a.w - w - 4));       // tutta la finestra visibile
+    top = clamp(top, 4, Math.max(4, a.h - Math.min(h, 60) - 4));
     win.style.left = left + "px"; win.style.top = top + "px";
     win.style.right = "auto"; win.style.bottom = "auto";
     lastPos = { left: left, top: top };
   }
   try {
     const s = JSON.parse(localStorage.getItem(KEY) || "null");
+    // posizioni salvate dalla versione buggata: riportate dentro da applyPos
     if (s && typeof s.left === "number") { lastPos = s; if (!win.classList.contains("expanded")) applyPos(s.left, s.top); }
   } catch (e) {}
   handle.style.cursor = "move";
@@ -2993,8 +3016,8 @@ function makeDraggable(winId, handleId) {
   handle.addEventListener("pointerdown", (ev) => {
     if (win.classList.contains("expanded")) return;
     if (ev.target.closest("button, input, select, textarea, a, label")) return;
-    const r = win.getBoundingClientRect();
-    ox = r.left; oy = r.top; sx = ev.clientX; sy = ev.clientY; dragging = true;
+    ox = win.offsetLeft; oy = win.offsetTop;   // gia' relativi a #stage
+    sx = ev.clientX; sy = ev.clientY; dragging = true;
     try { handle.setPointerCapture(ev.pointerId); } catch (e) {}
     handle.style.cursor = "grabbing"; ev.preventDefault();
   });
@@ -3010,12 +3033,16 @@ function makeDraggable(winId, handleId) {
   handle.addEventListener("pointerup", end);
   handle.addEventListener("pointercancel", end);
   // Quando si espande, lascia il layout al CSS; quando si ricomprime, torna
-  // alla posizione trascinata.
+  // alla posizione trascinata. Quando la finestra diventa visibile o lo schermo
+  // cambia misura, la riportiamo dentro l'area visibile.
   new MutationObserver(() => {
     if (win.classList.contains("expanded")) {
       win.style.left = win.style.top = win.style.right = win.style.bottom = "";
-    } else if (lastPos) { applyPos(lastPos.left, lastPos.top); }
-  }).observe(win, { attributes: true, attributeFilter: ["class"] });
+    } else if (lastPos && !win.hidden) { applyPos(lastPos.left, lastPos.top); }
+  }).observe(win, { attributes: true, attributeFilter: ["class", "hidden"] });
+  window.addEventListener("resize", () => {
+    if (lastPos && !win.hidden && !win.classList.contains("expanded")) applyPos(lastPos.left, lastPos.top);
+  });
 }
 makeDraggable("reader", "reader-head");
 makeDraggable("live", "live-head");

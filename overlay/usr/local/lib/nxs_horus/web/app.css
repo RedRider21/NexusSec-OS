@@ -19,7 +19,7 @@
    avrebbe la meglio sull'attributo [hidden] del browser e mostrerebbe
    l'overlay all'avvio (si vedrebbe solo la X). Questa regola lo impedisce. */
 [hidden] { display: none !important; }
-html, body { height: 100%; margin: 0; }
+html, body { height: 100%; margin: 0; overflow: hidden; }
 body {
   background: var(--bg);
   color: var(--text);
@@ -168,12 +168,8 @@ body {
   font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
   border-bottom: 1px solid var(--border); padding-bottom: 3px; }
 
-/* ---- CISA KEV: vulnerabilita' sfruttate attivamente ---- */
-#kev-box { margin-top: 12px; border: 1px solid var(--border); border-radius: 8px;
-  background: var(--panel-2); padding: 8px 10px; }
-#kev-box summary { cursor: pointer; color: var(--text); font-weight: 600; }
-#kev-box .kev-src { color: var(--muted); font-size: 10px; font-weight: 400; margin-left: 4px; }
-#kev-list { list-style: none; margin: 6px 0 0; padding: 0; max-height: 320px; overflow-y: auto; }
+/* ---- CISA KEV: elenco nella finestra del lettore (come le news) ---- */
+#kev-list { list-style: none; margin: 8px 0 0; padding: 0; }
 #kev-list li { padding: 6px 4px; border-top: 1px solid var(--border); font-size: 11px;
   cursor: pointer; border-radius: 4px; }
 #kev-list li:hover { background: rgba(0,229,255,.06); }
@@ -300,7 +296,8 @@ body {
 .linklike:hover { text-decoration: underline; }
 
 /* ---- Area principale (mappa + iframe PhoneInfoga) ---- */
-#stage { flex: 1; position: relative; background: var(--bg); min-width: 0; }
+/* overflow hidden: nessuna finestra flottante puo' allargare la pagina */
+#stage { flex: 1; position: relative; background: var(--bg); min-width: 0; overflow: hidden; }
 #map { position: absolute; inset: 0; background: var(--bg); }
 #phone-frame { position: absolute; inset: 0; width: 100%; height: 100%;
   border: none; background: #fff; }
@@ -1049,3 +1046,5 @@ select option, select optgroup {
 .cve-refs { margin-top: 8px; font-size: 11px; }
 .cve-refs a { display: block; margin-top: 5px; color: var(--accent); word-break: break-all; }
 .cve-refs .tg { color: var(--muted); font-size: 10px; }
+.kev-back { display: inline-block; margin-bottom: 8px; color: var(--accent); font-size: 12px; text-decoration: none; }
+.kev-rw { color: var(--alarm); font-weight: 700; font-size: 11px; }
