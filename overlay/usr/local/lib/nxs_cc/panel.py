@@ -1981,8 +1981,15 @@ class Panel(Gtk.Window):
                 ico = "bluetooth-active-symbolic" if st == "conn" else "bluetooth-symbolic"
                 hb.pack_start(Gtk.Image.new_from_icon_name(ico, Gtk.IconSize.MENU),
                               False, False, 0)
+                # nome in chiaro + MAC sotto, in piccolo (come in Gestione Bluetooth)
+                tv = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
                 lab = Gtk.Label(label=name or mac); lab.set_xalign(0)
-                hb.pack_start(lab, True, True, 0)
+                tv.pack_start(lab, False, False, 0)
+                if name and name != mac:
+                    ml = Gtk.Label(label=mac); ml.set_xalign(0)
+                    ml.get_style_context().add_class("nxs-clock-date")
+                    tv.pack_start(ml, False, False, 0)
+                hb.pack_start(tv, True, True, 0)
                 if st:
                     tag = Gtk.Label(label=(_t("v.bt.connected") if st == "conn"
                                            else _t("v.bt.paired")).lower())
