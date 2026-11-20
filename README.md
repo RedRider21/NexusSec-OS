@@ -154,6 +154,14 @@ scarichi e' **volatile** (si perde al riavvio):
 E' il comportamento "monomissione/stealth" voluto. In VirtualBox dai alla VM
 **>= 2 GB di RAM** (3-4 per Forensics/Web con container).
 
+**Persistenza sulla stessa chiavetta della distro.** Una ISO scritta con `dd`
+occupa solo ~750 MB: `nxs-persist` (senza argomenti) propone PER PRIMA una piccola
+partizione `NXSDATA` nello spazio libero **dopo** la distro (dimensione a scelta,
+INVIO = tutto lo spazio libero). La distro **non viene toccata**: si aggiunge solo
+una voce alla tabella partizioni (`sfdisk --append`). Fino alla v2026.10.10 lo
+spazio libero era calcolato male sulle chiavette scritte dalla ISO e la proposta
+poteva sovrapporsi alla distro: corretto.
+
 **Con la chiavetta persistente (`NXSDATA`, `nxs-persist`)** i tool installati al
 volo **sopravvivono al riavvio**, senza complicare la live "nuda" (tutto e'
 attivo solo se `NXSDATA` e' montato):

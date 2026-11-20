@@ -308,6 +308,17 @@ ricorrenti su **musl + gcc 15**:
   (come Android/iOS), con conteggio e casella "Mostra anche i dispositivi senza
   nome"; abbinati/connessi sempre visibili. Non togliere la colonna `named`.
 
+- **Persistenza sulla chiavetta di avvio: MAI `parted` per lo spazio libero
+  (2026-11-20, bug che CANCELLAVA la distro).** La ISO ibrida (xorriso) ha in MBR
+  la partizione 1 (ISO9660) che parte dal SETTORE 0 e si sovrappone alla EFI (p2):
+  `parted` non la vede e riporta "libero" tutto da 1.6MiB -> `nxs-persist`
+  proponeva di creare NXSDATA SOPRA la distro. Fix: `free_area()` usa
+  `sfdisk -F` (+ limite inferiore = fine dell'occupato letto da /sys,
+  `_used_end_sect`), la partizione si crea con `sfdisk --append` (cambia solo la
+  nuova voce: verificato 10 byte diversi sull'immagine) e `partx -a` (il disco
+  di avvio e' in uso, partprobe fallirebbe). Dep `sfdisk`+`partx` in
+  nexussec-base. Lo spazio dopo la distro e' il candidato CONSIGLIATO (rec=2).
+
 ### Gotcha stile finestre / bytecode (2026-08-26, DURAMENTE imparati)
 
 - **`.pyc` stale nell'apkovl = codice VECCHIO eseguito.** Non committare/impac-

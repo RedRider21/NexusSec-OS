@@ -24,9 +24,16 @@
 # SICUREZZA: non tocca mai il supporto di avvio della live (ISO/EFI/modloop) ne'
 # la radice montata; ogni operazione distruttiva chiede conferma esplicita.
 #
-# NB: una chiavetta scritta con `dd` dell'ISO e' ISO9660 (sola lettura) e non ha
-# spazio libero: per la persistenza serve una SECONDA chiavetta/partizione,
-# oppure spazio non partizionato sulla stessa chiavetta (se ce n'e').
+# STESSA CHIAVETTA: una chiavetta scritta con `dd` dell'ISO occupa solo ~750MB;
+# il resto e' spazio NON partizionato. nxs-persist lo propone per primo e ci
+# crea una piccola partizione NXSDATA *dopo* la distro, senza toccarla.
+# ATTENZIONE (bug storico, 2026-11-20): la tabella MBR "ibrida" della ISO ha la
+# partizione 1 (ISO9660) che parte dal settore 0 e si sovrappone alla EFI:
+# `parted` NON la vede e segnalava come "libero" tutto da 1.6MiB in poi, CIOE'
+# SOPRA LA DISTRO -> creare li' la partizione avrebbe cancellato il sistema.
+# Per questo lo spazio libero si calcola con `sfdisk -F` (legge la tabella cosi'
+# com'e') + controllo incrociato su /sys e la partizione si aggiunge con
+# `sfdisk --append` (cambia SOLO la voce nuova della tabella, 16 byte).
 set -u
 
 priv() { if [ "$(id -u)" = 0 ]; then "$@"; \
@@ -99,11 +106,16 @@ disk_size_mib() {
 ask_size() {
 	avail="$1"
 	gib=$((avail / 1024))
+	if [ "${2:-}" = libero ]; then
+		tutto="usa tutto lo spazio LIBERO (la distro e le altre partizioni restano)"
+	else
+		tutto="usa tutto lo spazio disponibile"
+	fi
 	{
 		echo
 		echo "  Spazio disponibile: ~${avail} MiB (~${gib} GiB)."
 		echo "  Quanta parte destinare alla persistenza?"
-		echo "    - INVIO (oppure 'tutto') = usa tutto lo spazio disponibile"
+		echo "    - INVIO (oppure 'tutto') = $tutto"
 		echo "    - un valore, es.  8G   oppure  4096M   (minimo ${MINFREE_MIB} MiB)"
 		printf "  Dimensione: "
 	} >&2
@@ -167,6 +179,35 @@ status() {
 #   KIND=free  TARGET=/dev/sdX  EXTRA="s e"     (crea partizione nello spazio libero, MiB)
 # ---------------------------------------------------------------------------
 CANDF=""
+# Inizio sicuro (in settori) = fine dell'ultima partizione/area occupata del
+# disco, secondo il KERNEL (/sys). Difesa in profondita' rispetto alla tabella.
+_used_end_sect() {                       # $1 = /dev/sdX
+	b="$(basename "$1")"; m=0
+	for pd in /sys/block/"$b"/"$b"*; do
+		[ -r "$pd/start" ] && [ -r "$pd/size" ] || continue
+		e=$(( $(cat "$pd/start") + $(cat "$pd/size") ))
+		[ "$e" -gt "$m" ] && m="$e"
+	done
+	echo "$m"
+}
+
+# Area libera PIU' GRANDE di un disco gia' partizionato, in MiB allineati:
+# stampa "startMiB endMiB sizeMiB" (vuoto se nulla di utile). Usa sfdisk -F,
+# che legge correttamente anche la tabella ibrida delle ISO (vedi intestazione).
+free_area() {                            # $1 = /dev/sdX
+	command -v sfdisk >/dev/null 2>&1 || return 0
+	ue="$(_used_end_sect "$1")"
+	priv sfdisk -F "$1" 2>/dev/null | awk -v UE="$ue" -v MIN="$MINFREE_MIB" '
+		$1 ~ /^[0-9]+$/ && $2 ~ /^[0-9]+$/ {
+			s=$1; e=$2+1
+			if (s < UE) s = UE            # mai prima della fine dell occupato
+			s = int((s + 2047) / 2048)    # allinea a 1 MiB (settori da 512)
+			e = int(e / 2048)
+			if (e - s > best) { best = e - s; bs = s; be = e }
+		}
+		END { if (best >= MIN) printf "%d %d %d\n", bs, be, best }'
+}
+
 scan() {
 	CANDF="$(mktemp 2>/dev/null || echo /tmp/nxs-persist.cand.$$)"
 	: > "$CANDF"
@@ -204,10 +245,7 @@ scan() {
 	for disk in $(lsblk -rno NAME,TYPE 2>/dev/null | awk '$2=="disk"{print $1}'); do
 		dd="/dev/$disk"
 		[ "$(lsblk -rno NAME "$dd" 2>/dev/null | tail -n +2 | wc -l | tr -d ' ')" = "0" ] && continue
-		free="$(priv parted -sm "$dd" unit MiB print free 2>/dev/null | awk -F: '
-			tolower($0) ~ /free/ { s=$2; e=$3; z=$4; gsub(/MiB/,"",s); gsub(/MiB/,"",e); gsub(/MiB/,"",z);
-				if (z+0 > best+0) { best=z; bs=s; be=e; bz=z } }
-			END { if (best+0 >= MIN) printf "%s %s %d\n", bs, be, bz }' MIN="$MINFREE_MIB")"
+		free="$(free_area "$dd")"
 		[ -n "$free" ] || continue
 		# NB: usare nomi PROPRI (fst/fen/fsz). NON usare fs/e/s: is_system_dev
 		# e disk_is_system (chiamate qui sotto) impostano una variabile GLOBALE
@@ -215,11 +253,17 @@ scan() {
 		# spazio libero diventerebbe "iso9660" e la creazione partizione (proprio
 		# nel caso "spazio libero sulla stessa chiavetta") fallirebbe.
 		set -- $free; fst="$1"; fen="$2"; fsz="$3"
-		note=""; disk_is_system "$dd" && note=" (stessa chiavetta di avvio)"
 		tr_h="$(lsblk -rno TRAN "$dd" 2>/dev/null | head -1)"
 		mdl="$(dev_model "$dd")"; [ -n "$mdl" ] && mdl=" '$mdl'"
-		printf '%s|%s|%s %s|%s|%s\n' free "$dd" "$fst" "$fen" \
-			"spazio libero ~${fsz} MiB su $(human_tran "$tr_h")$mdl$note -> partizione dati (scegli tu quanta)" 0 >> "$CANDF"
+		# Spazio libero sulla STESSA chiavetta di avvio = scelta CONSIGLIATA
+		# (rec=2: in cima all'elenco): nessuna seconda chiavetta, distro intatta.
+		if disk_is_system "$dd"; then
+			printf '%s|%s|%s %s|%s|%s\n' free "$dd" "$fst" "$fen" \
+				"spazio libero ~${fsz} MiB DOPO la distro su questa chiavetta$mdl -> piccola partizione $LABEL (la distro NON viene toccata)" 2 >> "$CANDF"
+		else
+			printf '%s|%s|%s %s|%s|%s\n' free "$dd" "$fst" "$fen" \
+				"spazio libero ~${fsz} MiB su $(human_tran "$tr_h")$mdl -> partizione dati (le partizioni esistenti NON vengono toccate)" 0 >> "$CANDF"
+		fi
 	done
 }
 LABEL_NXS="$LABEL"
@@ -247,22 +291,35 @@ newpart_from_disk() {                   # $1 disco vuoto  $2 size(ALL|MiB) -> st
 
 newpart_from_free() {                   # $1 disco  $2 start(MiB)  $3 end(MiB)
 	disk="$1"; start="$2"; end="$3"
-	lbl="$(priv parted -sm "$disk" print 2>/dev/null | sed -n '2p' | cut -d: -f6)"
+	# Ricontrollo di sicurezza appena prima di scrivere: lo start deve stare
+	# DOPO tutto cio' che e' occupato (kernel), qualunque cosa dica la tabella.
+	ue="$(_used_end_sect "$disk")"
+	if [ $((start * 2048)) -lt "$ue" ]; then
+		echo "  ERRORE di sicurezza: l'inizio (${start} MiB) cade dentro un'area occupata: non scrivo nulla." >&2
+		return 1
+	fi
 	before="$(lsblk -rno NAME "$disk" 2>/dev/null | tail -n +2 | sort)"
-	if [ "$lbl" = "gpt" ]; then
-		priv parted -s -a optimal "$disk" mkpart "$LABEL" ext4 "${start}MiB" "${end}MiB" >/dev/null 2>&1
-	else
-		priv parted -s -a optimal "$disk" mkpart primary ext4 "${start}MiB" "${end}MiB" >/dev/null 2>&1
-	fi || { echo "  ERRORE: creazione partizione nello spazio libero fallita." >&2; return 1; }
-	priv partprobe "$disk" >/dev/null 2>&1 || priv partx -a "$disk" >/dev/null 2>&1 || true
+	# Copia della tabella prima di modificarla (ripristino: sfdisk DISCO < file).
+	bk="/tmp/nxs-persist-$(basename "$disk")-ptable.bak"
+	priv sfdisk -d "$disk" > "$bk" 2>/dev/null && echo "  (copia della tabella partizioni: $bk)" >&2
+	# --append aggiunge SOLO la nuova voce: le partizioni della ISO restano
+	# identiche (parted riscriverebbe la tabella e perderebbe quella ibrida).
+	# type=83 = Linux (MBR); su GPT sfdisk usa il tipo Linux filesystem.
+	lbl="$(priv sfdisk -d "$disk" 2>/dev/null | sed -n 's/^label: *//p')"
+	if [ "$lbl" = "gpt" ]; then ty="0FC63DAF-8483-4772-8E79-3D69D8477DE4"; else ty="83"; fi
+	printf 'start=%s, size=%s, type=%s\n' $((start * 2048)) $(((end - start) * 2048)) "$ty" \
+		| priv sfdisk --append --no-reread --no-tell-kernel "$disk" >/dev/null 2>&1 \
+		|| { echo "  ERRORE: creazione partizione nello spazio libero fallita." >&2; return 1; }
+	# Il disco di avvio e' IN USO: il kernel non puo' rileggere tutta la tabella
+	# (partprobe fallirebbe con "busy"); partx -a aggiunge solo le partizioni nuove.
+	priv partx -a "$disk" >/dev/null 2>&1 || priv partprobe "$disk" >/dev/null 2>&1 || true
 	sleep 1
 	after="$(lsblk -rno NAME "$disk" 2>/dev/null | tail -n +2 | sort)"
 	# differenza manuale (comm/process-substitution non affidabili su busybox ash):
 	# la nuova partizione e' quella presente in "after" ma non in "before".
 	np=""
 	for n in $after; do echo "$before" | grep -qxF "$n" || { np="/dev/$n"; break; }; done
-	[ -b "$np" ] || np="/dev/$(printf '%s\n' "$after" | tail -1)"
-	[ -b "$np" ] && echo "$np" || { echo "  ERRORE: partizione creata ma non rilevata (riavvia: nxs-persist la vedra')." >&2; return 1; }
+	[ -b "$np" ] && echo "$np" || { echo "  ERRORE: partizione creata ma non ancora vista dal sistema: riavvia e rilancia nxs-persist (la troverai pronta da formattare)." >&2; return 1; }
 }
 
 # ---------------------------------------------------------------------------
@@ -347,16 +404,18 @@ run_candidate() {
 			set -- $extra; s="$1"; e="$2"
 			avail="$(awk "BEGIN{printf \"%d\", $e - $s}" 2>/dev/null)"
 			echo
-			echo "  Spazio libero su $target: ~${avail} MiB."
-			echo "  Le partizioni esistenti su $target NON vengono toccate."
-			want="$(ask_size "$avail")" || return 1
+			echo "  Spazio libero su $target: ~${avail} MiB (dopo le partizioni esistenti)."
+			echo "  Le partizioni esistenti su $target (compresa la distro) NON vengono toccate."
+			echo "  Nome (etichetta) della partizione: $LABEL  <- predefinito, serve perche'"
+			echo "  NexusSec la riconosca e la monti da sola a ogni avvio."
+			want="$(ask_size "$avail" libero)" || return 1
 			if [ "$want" = "ALL" ]; then
 				endm="$e"
 			else
-				endm="$(awk "BEGIN{printf \"%.2f\", $s + $want}" 2>/dev/null)"
+				endm="$(awk "BEGIN{printf \"%d\", $s + $want}" 2>/dev/null)"
 			fi
-			printf "  Creo la partizione dati (%s-%s MiB) su %s. Procedo? [s/N]: " "$s" "$endm" "$target"
-			read ans; case "$ans" in s|S|si|Si|SI|y|Y) ;; *) echo "  annullato."; return 1 ;; esac
+			printf "  Creo la partizione %s (%s-%s MiB) su %s. Procedo? [S/n]: " "$LABEL" "$s" "$endm" "$target"
+			read ans; case "$ans" in ''|s|S|si|Si|SI|y|Y) ;; *) echo "  annullato."; return 1 ;; esac
 			np="$(newpart_from_free "$target" "$s" "$endm")" || return 1
 			echo "  Nuova partizione: $np"
 			do_format "$np" 1 ;;
@@ -377,9 +436,10 @@ menu() {
 		return 0
 	fi
 	echo "  Cos'e': una partizione (chiavetta o disco) etichettata NXSDATA dove"
-	echo "  NexusSec salva container, tool, reti WiFi e loot. Serve un dispositivo"
-	echo "  SCRIVIBILE: la chiavetta di avvio scritta con dd e' sola lettura, quindi"
-	echo "  di solito occorre una SECONDA chiavetta (o spazio libero su un disco)."
+	echo "  NexusSec salva container, tool, reti WiFi e loot. Se la chiavetta di"
+	echo "  avvio ha spazio libero DOPO la distro, la soluzione consigliata e' una"
+	echo "  piccola partizione li': la distro non viene toccata. In alternativa una"
+	echo "  seconda chiavetta o una partizione vuota su un disco."
 	echo
 	scan
 	n=0
@@ -400,7 +460,7 @@ menu() {
 	echo "  Dispositivi disponibili:"
 	while IFS='|' read -r kind target extra desc rec; do
 		n=$((n + 1))
-		star=""; [ "$rec" = "1" ] && star="  (consigliato)"
+		star=""; [ "$rec" -ge 1 ] 2>/dev/null && star="  (consigliato)"
 		printf "   [%d] %s  ->  %s%s\n" "$n" "$target" "$desc" "$star"
 	done < "$SORTF"
 	echo "   [0] annulla"
@@ -428,7 +488,7 @@ list_only() {
 	else
 		echo "Dispositivi candidati per la persistenza:"
 		sort -t'|' -k5,5r "$CANDF" | while IFS='|' read -r kind target extra desc rec; do
-			star=""; [ "$rec" = "1" ] && star="  (consigliato)"
+			star=""; [ "$rec" -ge 1 ] 2>/dev/null && star="  (consigliato)"
 			printf "  %-14s %s%s\n" "$target" "$desc" "$star"
 		done
 	fi
