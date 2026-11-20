@@ -299,6 +299,15 @@ ricorrenti su **musl + gcc 15**:
   `panel._tool_installed_fast`. Regola: per sapere se un tool del catalogo e'
   installato, NON usare `have()`/`which()` nudo -> usa `_which_real()`.
 
+- **Bluetooth "mostra solo MAC" (2026-11-20).** La risoluzione dei nomi in
+  `nxs-bluetooth` FUNZIONA (verificata su host BlueZ 5.64: inquiry 12s + 2o giro,
+  Alias->Name, produttore dal Company ID). Le voci "senza nome" sono dispositivi
+  BLE che NON trasmettono un nome (indirizzo casuale: iPhone/orologi/beacon):
+  nessun sistema puo' mostrarlo. Per questo `_list_devices` emette una 6a
+  colonna `named` (1/0) e pannello + Gestione Bluetooth li NASCONDONO di default
+  (come Android/iOS), con conteggio e casella "Mostra anche i dispositivi senza
+  nome"; abbinati/connessi sempre visibili. Non togliere la colonna `named`.
+
 ### Gotcha stile finestre / bytecode (2026-08-26, DURAMENTE imparati)
 
 - **`.pyc` stale nell'apkovl = codice VECCHIO eseguito.** Non committare/impac-

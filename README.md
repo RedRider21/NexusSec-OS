@@ -1080,7 +1080,7 @@ Centro di Controllo). Dettaglio completo con i sotto-comandi: manuale online.
 | | `nxs-nightlight` | filtro luce blu (Super+N) |
 | | `nxs-audio` / `nxs-brightness` | volume-microfono / luminosità |
 | | `nxs-screenshot` / `nxs-screensaver` | schermata / blocco schermo |
-| | `nxs-screens` / `nxs-wifi` / `nxs-bluetooth` | schermi / Wi-Fi / Bluetooth |
+| | `nxs-screens` / `nxs-wifi` / `nxs-bluetooth` | schermi / Wi-Fi / Bluetooth (i dispositivi che non trasmettono un nome sono nascosti di default, come su Android/iOS) |
 | Sistema/dati | `nxs-sysinfo` / `nxs-monitor` / `nxs-netinfo` | info / monitor risorse / rete |
 | | `nxs-disks` / `nxs-case` | dischi (ro, no automount) / casi forensi |
 

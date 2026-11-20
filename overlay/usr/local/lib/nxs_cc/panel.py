@@ -1970,7 +1970,11 @@ class Panel(Gtk.Window):
                 return False
             for c in devlist.get_children():
                 devlist.remove(c)
-            for mac, name, st in devs:
+            # Senza nome (BLE anonimi) nascosti, come su Android/iOS; gli
+            # abbinati/connessi si vedono sempre. Elenco completo: Gestione avanzata.
+            vis = [d for d in devs if d[3] or d[2]]
+            hidden = len(devs) - len(vis)
+            for mac, name, st, _named in vis:
                 b = Gtk.Button(); b.set_relief(Gtk.ReliefStyle.NONE)
                 b.get_style_context().add_class("nxs-menu-item")
                 hb = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
@@ -1980,12 +1984,18 @@ class Panel(Gtk.Window):
                 lab = Gtk.Label(label=name or mac); lab.set_xalign(0)
                 hb.pack_start(lab, True, True, 0)
                 if st:
-                    tag = Gtk.Label(label="connesso" if st == "conn" else "abbinato")
+                    tag = Gtk.Label(label=(_t("v.bt.connected") if st == "conn"
+                                           else _t("v.bt.paired")).lower())
                     tag.get_style_context().add_class("nxs-clock-date")
                     hb.pack_start(tag, False, False, 0)
                 b.add(hb)
                 b.connect("clicked", lambda _w, m=mac, s=st: self._bt_toggle_dev(m, s))
                 devlist.pack_start(b, False, False, 0)
+            if hidden:
+                hl = Gtk.Label(label=_t("pn.bt.hidden_unnamed") % hidden)
+                hl.set_xalign(0); hl.set_line_wrap(True)
+                hl.get_style_context().add_class("nxs-clock-date")
+                devlist.pack_start(hl, False, False, 0)
             devlist.show_all()
             return False
 
@@ -1999,7 +2009,8 @@ class Panel(Gtk.Window):
                 for line in self._run_out(["nxs-bluetooth", "scan", "12"], 45).splitlines():
                     p = line.split("\t")
                     if len(p) >= 2:
-                        devs.append((p[0], p[1], p[2] if len(p) > 2 else ""))
+                        devs.append((p[0], p[1], p[2] if len(p) > 2 else "",
+                                     not (len(p) > 5 and p[5] == "0")))
                 GLib.idle_add(lambda: (status.set_text(
                     _t("pn.bt.click_dev")
                     if devs else _t("pn.bt.nodev")), render_devs(devs)))
@@ -2022,7 +2033,8 @@ class Panel(Gtk.Window):
                 for line in self._run_out(["nxs-bluetooth", "devices"]).splitlines():
                     p = line.split("\t")
                     if len(p) >= 2:
-                        devs.append((p[0], p[1], p[2] if len(p) > 2 else ""))
+                        devs.append((p[0], p[1], p[2] if len(p) > 2 else "",
+                                     not (len(p) > 5 and p[5] == "0")))
             def apply():
                 if "bt" not in self._popups:
                     return False
@@ -2060,11 +2072,12 @@ class Panel(Gtk.Window):
             for line in self._run_out(["nxs-bluetooth", "devices"]).splitlines():
                 p = line.split("\t")
                 if len(p) >= 2:
-                    devs.append((p[0], p[1], p[2] if len(p) > 2 else ""))
+                    devs.append((p[0], p[1], p[2] if len(p) > 2 else "",
+                                     not (len(p) > 5 and p[5] == "0")))
             def apply():
                 u = getattr(self, "_bt_ui", None)
                 if u and "bt" in self._popups:
-                    conn = any(s == "conn" for _m, _n, s in devs)
+                    conn = any(d[2] == "conn" for d in devs)
                     u["status"].set_text(_t("pn.bt.connected") if conn
                                          else _t("pn.bt.noconn"))
                     u["render"](devs)

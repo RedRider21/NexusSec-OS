@@ -97,7 +97,11 @@ _vendor() {
   esac
 }
 
-# elenca i device: "mac<TAB>nome<TAB>stato(conn|paired|"")<TAB>trusted(1|0)<TAB>icona"
+# elenca i device: "mac<TAB>nome<TAB>stato(conn|paired|"")<TAB>trusted(1|0)<TAB>icona<TAB>named(1|0)"
+# named=0: il device NON ha trasmesso un nome (tipico dei BLE con indirizzo
+# casuale: iPhone, orologi, beacon). Le GUI li NASCONDONO di default, come
+# fanno Android/iOS: in un luogo affollato sono la maggioranza e riempivano
+# l'elenco di voci "senza nome" (l'impressione era "mostra solo i MAC").
 # Il NOME va preso da `info` (Alias/Name), non dalla riga `devices`: quest'ultima
 # resta il MAC (es. "XX-XX-XX-XX-XX-XX") finche' il device non ha comunicato il
 # suo nome. Alias e' il nome mostrato all'utente (Name se non rinominato).
@@ -127,8 +131,9 @@ _list_devices() {
     disp="$alias"; _is_unresolved "$disp" && disp="$rname"
     _is_unresolved "$disp" && disp="$name"
     case "$st" in conn) rank=0 ;; paired) rank=1 ;; *) rank=2 ;; esac
+    named=1
     if _is_unresolved "$disp" || [ "$disp" = "$mac" ]; then
-      rank=$((rank + 3))
+      rank=$((rank + 3)); named=0
       coda=$(echo "$mac" | cut -d: -f5-6)
       cid=$(echo "$info" | sed -n 's/.*[Mm]anufacturer[Dd]ata[. ]Key:[[:space:]]*0x\([0-9A-Fa-f]\{4\}\).*/\1/p' \
             | head -1 | tr 'A-F' 'a-f')
@@ -139,7 +144,7 @@ _list_devices() {
         disp="$ignoto (…$coda)"
       fi
     fi
-    printf '%s\t%s\t%s\t%s\t%s\t%s\n' "$rank" "$mac" "$disp" "$st" "$tr" "$ic"
+    printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$rank" "$mac" "$disp" "$st" "$tr" "$ic" "$named"
   done | sort -s -t "$(printf '\t')" -k1,1n | cut -f2-
 }
 
