@@ -983,6 +983,41 @@ attacchi reali** (non «in uso in questo istante»), con la data di inserimento 
 il segno **RANSOMWARE** se usate in campagne note. Un clic apre la **scheda CVE
 dentro HORUS** (CVSS, debolezza CWE, riferimenti da NVD, traducibile).
 
+### Viste e multi-schermo (sala operativa)
+
+HORUS può specializzare ogni finestra su un tema, da mettere su monitor diversi:
+**Completa**, **Cyber**, **Disastri e clima**, **Spazio e trasporti**,
+**Geopolitica**. Ogni vista mostra solo i suoi layer (accesi alla prima apertura)
+e ricorda le scelte separatamente.
+
+- Selettore **Vista** in cima alla barra; **⧉ nuova finestra** apre la vista
+  scelta in un'altra finestra; da terminale `nxs-horus --vista cyber`
+  (o `disastri`, `trasporti`, `geopolitica`); voci nel sottomenu HORUS del menu
+  e nelle azioni dell'icona.
+- **Un solo processo e un solo server** per tutte le finestre: se HORUS è già
+  aperto, le invocazioni successive aprono soltanto un'altra finestra, così i
+  dati si scaricano una volta sola anche con 4 schermi. Il processo termina
+  alla chiusura dell'ultima finestra.
+- **Modalità parete** (tasto **F** o pulsante «parete»): schermo intero, niente
+  menu, titolo della vista e orologio; Esc o F per uscire.
+
+**Vista Cyber.** Attaccanti reali dalla rete di honeypot **SANS ISC / DShield**
+(i 100 IP più attivi di oggi, con impulso animato, geolocalizzati con cache),
+**server di comando di botnet** (abuse.ch Feodo Tracker, CC0; quelli attivi
+pulsano), vittime **ransomware** e **blackout** di Internet. Il pannello
+«Situazione cyber» mostra il livello **INFOCON**, i contatori, le **porte più
+attaccate** con il servizio e le ultime CVE CISA KEV; in modalità parete resta
+visibile sopra la mappa. Le fonti aperte dicono **chi attacca** (i sensori-esca),
+non chi viene colpito: per questo niente archi sorgente→bersaglio inventati,
+come nelle mappe commerciali (Kaspersky, Check Point, Fortinet), che sono chiuse
+e in buona parte dimostrative. Licenza dati ISC: CC BY-NC-SA, con uso consentito
+anche per proteggere la propria rete (vietata la rivendita).
+
+**Sicurezza del server locale.** Il backend accetta solo richieste con
+`Host` 127.0.0.1/localhost (contro il DNS rebinding) e, per le POST, solo dalla
+propria origine e con corpo JSON: un sito aperto nel browser non può far
+partire di nascosto una ricognizione dal tuo IP (CSRF).
+
 La **mappa nera** (Esri Dark) è quella di default; un selettore in alto a destra
 cambia vista in **satellite** (Esri), **strade** (OSM) o **chiara** (Esri).
 

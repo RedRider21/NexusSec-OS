@@ -121,7 +121,8 @@ FEEDS = {
 
 # Layer aggiunti nel 2026-11 (tutti keyless e a uso libero): vedi extra.py.
 for _fid in ("gdacs", "outages", "ransomware", "tor", "aurora", "radiation",
-             "fireballs", "launches", "airports", "events", "nws"):
+             "fireballs", "launches", "airports", "events", "nws",
+             "attackers", "c2"):
     FEEDS[_fid] = {"url": "", "kind": "extra"}
 
 _DIGI_HDR = {"Digitraffic-User": "NexusSec/HORUS", "Accept-Encoding": "gzip"}
@@ -2745,7 +2746,31 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(data)
 
     # -- GET --
+    def _guard(self, post=False):
+        """Difesa dalle richieste di ALTRI siti aperti nel browser (2026-11-20).
+        Host: solo 127.0.0.1/localhost (blocca il DNS rebinding). POST: Origin,
+        se presente, deve essere questo server, e il corpo deve dichiararsi JSON:
+        un sito esterno non puo' inviarlo senza preflight CORS (che qui non
+        concediamo) -> niente ricognizioni lanciate di nascosto dal tuo IP (CSRF)."""
+        host = (self.headers.get("Host") or "").lower()
+        hname = host.rsplit(":", 1)[0] if not host.startswith("[") else host.split("]")[0] + "]"
+        if hname not in ("127.0.0.1", "localhost", "[::1]"):
+            self.send_error(403)
+            return False
+        if post:
+            org = self.headers.get("Origin")
+            if org and org.lower() not in ("http://" + host, "http://127.0.0.1:%s" % host.rsplit(":", 1)[-1],
+                                           "http://localhost:%s" % host.rsplit(":", 1)[-1]):
+                self.send_error(403)
+                return False
+            if not (self.headers.get("Content-Type") or "").lower().startswith("application/json"):
+                self.send_error(415)
+                return False
+        return True
+
     def do_GET(self):
+        if not self._guard():
+            return
         path = self.path.split("?", 1)[0]
         if path == "/" or path == "":
             return self._file("index.html")
@@ -2756,6 +2781,12 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/phone/status":
             return self._json({"up": _port_up("127.0.0.1", PHONE_PORT),
                                "port": PHONE_PORT})
+        if path == "/api/cyber":
+            from nxs_horus import extra
+            try:
+                return self._json(extra.get("cyber", _fetch, _CONF_DIR))
+            except Exception as e:
+                return self._json({"error": "SANS ISC non raggiungibile: %s" % e}, 502)
         if path == "/api/kev":
             # Vulnerabilita' sfruttate attivamente (CISA KEV): elenco, non mappa.
             from nxs_horus import extra
@@ -3018,7 +3049,23 @@ class Handler(BaseHTTPRequestHandler):
 
     # -- POST --
     def do_POST(self):
+        if not self._guard(post=True):
+            return
         path = self.path.split("?", 1)[0]
+        if path == "/api/open-window":
+            # Nuova finestra (vista) nello STESSO processo: dati condivisi.
+            try:
+                n = int(self.headers.get("Content-Length", 0))
+                body = json.loads(self.rfile.read(n).decode("utf-8")) if n else {}
+            except (ValueError, json.JSONDecodeError):
+                body = {}
+            vista = str(body.get("vista") or "")
+            if not re.fullmatch(r"[a-z]{0,20}", vista):
+                return self._json({"error": "vista non valida"}, 400)
+            if OPEN_WINDOW is None:
+                return self._json({"gtk": False})
+            OPEN_WINDOW(vista)
+            return self._json({"gtk": True})
         if path not in ("/api/recon", "/api/recon/install", "/api/phone/start",
                         "/api/geoint", "/api/report", "/api/settings", "/api/exif",
                         "/api/socmint", "/api/email", "/api/recorder",
@@ -3237,6 +3284,12 @@ class _HorusHTTPServer(ThreadingHTTPServer):
     # alcune e la UI mostrava "backend non raggiungibile" a caso.
     request_queue_size = 128
     daemon_threads = True
+
+
+# Gancio impostato da app.py quando HORUS gira nella sua finestra GTK: permette
+# a una seconda invocazione (o al pulsante "nuova finestra") di aprire un'altra
+# finestra NELLO STESSO processo/server. None = nessuna GUI (browser esterno).
+OPEN_WINDOW = None
 
 
 def serve_in_thread():

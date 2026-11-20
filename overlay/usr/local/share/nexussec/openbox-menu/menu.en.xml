@@ -47,7 +47,13 @@
     <item label="Terminal" icon="/usr/local/share/nexussec/menu-icons/terminal.svg"><action name="Execute"><command>nxs-terminal</command></action></item>
     <item label="NexusSec Browser" icon="/usr/local/share/nexussec/menu-icons/browser.svg"><action name="Execute"><command>nxs-browser</command></action></item>
     <item label="File manager" icon="/usr/local/share/nexussec/menu-icons/files.svg"><action name="Execute"><command>pcmanfm</command></action></item>
-    <item label="HORUS (global OSINT)" icon="/usr/local/share/nexussec/menu-icons/horus.svg"><action name="Execute"><command>nxs-horus</command></action></item>
+    <menu id="nxs-horus-views" label="HORUS (global OSINT)" icon="/usr/local/share/nexussec/menu-icons/horus.svg">
+      <item label="Complete"><action name="Execute"><command>nxs-horus</command></action></item>
+      <item label="Cyber"><action name="Execute"><command>nxs-horus --vista cyber</command></action></item>
+      <item label="Disasters and climate"><action name="Execute"><command>nxs-horus --vista disastri</command></action></item>
+      <item label="Space and transport"><action name="Execute"><command>nxs-horus --vista trasporti</command></action></item>
+      <item label="Geopolitics"><action name="Execute"><command>nxs-horus --vista geopolitica</command></action></item>
+    </menu>
     <separator/>
     <menu id="nxs-tools"/>
     <menu id="nxs-security"/>

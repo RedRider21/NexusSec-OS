@@ -232,7 +232,14 @@ function renderUniform(color) {
       const html = popup(p.t || "",
         (p.rows || []).map(r => [r[0], esc(r[1])]), p.links || []);
       const col = p.c || color;
-      if (g.type === "Point") {
+      if (g.type === "Point" && p.pulse) {
+        // Impulso animato (attaccanti, C2 attivi): marker DOM con anello CSS.
+        const c = g.coordinates, d = Math.round((p.r || 6) * 2);
+        L.marker([c[1], c[0]], { icon: L.divIcon({ className: "hz-pulse",
+            html: '<span style="--c:' + col + ";width:" + d + "px;height:" + d + 'px"></span>',
+            iconSize: [d, d] }) })
+          .bindPopup(html, { maxWidth: 320 }).addTo(layer);
+      } else if (g.type === "Point") {
         const c = g.coordinates;
         // o = opacita' esplicita (alone senza bordo, es. aurora)
         const st = p.o != null
@@ -524,12 +531,18 @@ const FEEDS = [
   { id: "radiation", group: "Disastri e clima", nome: "Radioattività", color: "#2ec27e",
     desc: "Safecast - sensori in tempo reale (µSv/h), dati CC0",
     render: renderUniform("#2ec27e") },
-  { id: "outages", group: "Cyber e Internet", nome: "Blackout Internet", color: "#ff3b5c",
+  { id: "outages", group: "Cyber e Internet", nome: "Blackout Internet", color: "#ffb000",
     desc: "IODA (Georgia Tech) - interruzioni e censure per Paese, ultime 24h",
-    render: renderUniform("#ff3b5c") },
+    render: renderUniform("#ffb000") },
   { id: "ransomware", group: "Cyber e Internet", nome: "Attacchi ransomware", color: "#ff5ac8",
     desc: "ransomware.live - vittime rivendicate di recente (posizione = Paese)",
     render: renderUniform("#ff5ac8") },
+  { id: "attackers", group: "Cyber e Internet", nome: "Attaccanti (honeypot)", color: "#ff3b5c",
+    desc: "SANS ISC DShield - i 100 IP che attaccano di più oggi, con impulso",
+    render: renderUniform("#ff3b5c") },
+  { id: "c2", group: "Cyber e Internet", nome: "Server di comando botnet", color: "#7df9ff",
+    desc: "abuse.ch Feodo Tracker - C2 di botnet (attivi pulsano), CC0",
+    render: renderUniform("#7df9ff") },
   { id: "tor", group: "Cyber e Internet", nome: "Rete Tor per Paese", color: "#b77cff",
     desc: "Tor Metrics - relay attivi, uscite, guardie e banda (CC0)",
     render: renderUniform("#b77cff") },
@@ -545,6 +558,31 @@ const FEEDS = [
 ];
 
 // ---------------------------------------------------------------------------
+// VISTE (2026-11): ogni finestra/monitor puo' specializzarsi. ?vista=cyber ecc.
+// layers = feed mostrati nell'elenco; on = accesi alla prima apertura. Ogni
+// vista ricorda i SUOI layer accesi (chiave localStorage separata).
+// ---------------------------------------------------------------------------
+const VIEWS = {
+  completa: { nome: "Completa", layers: null, on: [] },
+  cyber: { nome: "Cyber", layers: ["attackers", "c2", "ransomware", "outages", "tor", "cables"],
+    on: ["attackers", "c2", "ransomware", "outages"] },
+  disastri: { nome: "Disastri e clima", layers: ["quakes", "volcano", "fires", "gdacs", "events",
+    "nws", "aurora", "radiation"], on: ["quakes", "volcano", "gdacs", "events", "nws"] },
+  trasporti: { nome: "Spazio e trasporti", layers: ["flights", "ships", "iss", "satellites",
+    "starlink", "launches", "fireballs", "airports", "cameras", "cables"],
+    on: ["flights", "ships", "iss", "satellites", "launches"] },
+  geopolitica: { nome: "Geopolitica", layers: ["military", "strategic", "hospitals", "cables",
+    "outages", "gdacs", "ships", "ransomware"], on: ["military", "strategic", "outages", "gdacs"] },
+};
+const VISTA = (() => {
+  const v = new URLSearchParams(location.search).get("vista") || "completa";
+  return VIEWS[v] ? v : "completa";
+})();
+const VIEW = VIEWS[VISTA];
+const inView = id => !VIEW.layers || VIEW.layers.includes(id);
+const FEEDS_KEY = VISTA === "completa" ? "horus-feeds" : "horus-feeds:" + VISTA;
+
+// ---------------------------------------------------------------------------
 // UI feed
 // ---------------------------------------------------------------------------
 const listEl = document.getElementById("feed-list");
@@ -554,6 +592,7 @@ const active = {};    // id -> bool
 let _lastGroup = "";
 FEEDS.forEach(fd => {
   layers[fd.id] = L.layerGroup();
+  if (!inView(fd.id)) return;            // non fa parte di questa vista
   if (fd.group && fd.group !== _lastGroup) {
     _lastGroup = fd.group;
     const gh = document.createElement("li");
@@ -638,15 +677,20 @@ function stopFeed(id) { if (SAT_LAYERS[id]) stopSats(id); else stopLayer(id); }
 // Ricorda quali layer sono accesi, cosi' restano attivi dopo un refresh.
 function saveActive() {
   try {
-    localStorage.setItem("horus-feeds",
+    localStorage.setItem(FEEDS_KEY,
       JSON.stringify(Object.keys(active).filter(id => active[id])));
+    localStorage.setItem(FEEDS_KEY + ":init", "1");
   } catch (e) { /* storage non disponibile */ }
 }
 function restoreActive() {
   let ids = [];
-  try { ids = JSON.parse(localStorage.getItem("horus-feeds") || "[]"); } catch (e) { ids = []; }
+  try { ids = JSON.parse(localStorage.getItem(FEEDS_KEY) || "[]"); } catch (e) { ids = []; }
+  // Prima apertura di una vista specializzata: accende i suoi layer principali.
+  let init = null;
+  try { init = localStorage.getItem(FEEDS_KEY + ":init"); } catch (e) { /* */ }
+  if (!init && VIEW.on.length) ids = VIEW.on.slice();
   ids.forEach(id => {
-    if (!FEEDS.find(f => f.id === id) || active[id]) return;
+    if (!FEEDS.find(f => f.id === id) || active[id] || !feedEl(id)) return;
     active[id] = true;
     feedEl(id).classList.add("on");
     map.addLayer(layers[id]);
@@ -714,6 +758,8 @@ const STREAM = {
   aurora:     { live: false, interval: 1800 },
   radiation:  { live: false, interval: 3600 },
   outages:    { live: false, interval: 600 },
+  attackers:  { live: false, interval: 1800 },
+  c2:         { live: false, interval: 1800 },
   ransomware: { live: false, interval: 1800 },
   tor:        { live: false, interval: 3600 },
   launches:   { live: false, interval: 3600 },
@@ -3057,6 +3103,118 @@ refreshStatus();
 // se la prima chiamata avviene prima che il server sia in ascolto, si auto-corregge.
 setInterval(refreshStatus, 15000);
 restoreActive();   // riattiva i layer che erano accesi (persistono al refresh)
+
+// ---------------------------------------------------------------------------
+// VISTE: selettore, nuova finestra, modalita' "schermo da parete".
+// ---------------------------------------------------------------------------
+(function () {
+  const sel = document.getElementById("view-sel");
+  sel.value = VISTA;
+  if (VISTA !== "completa") document.title = "HORUS - " + VIEW.nome;
+  // Cambiare vista nella STESSA finestra: ricarica con ?vista=...
+  sel.addEventListener("change", () => {
+    const v = sel.value;
+    location.search = v === "completa" ? "" : "?vista=" + v;
+  });
+  // Nuova finestra: nella finestra nativa di HORUS la apre il processo (stesso
+  // server, dati condivisi); in un browser normale una nuova scheda/finestra.
+  document.getElementById("view-new").addEventListener("click", async () => {
+    const v = sel.value;
+    if (navigator.userAgent.includes("NexusSecHORUS")) {
+      try {
+        const r = await fetch("api/open-window", { method: "POST",
+          headers: { "Content-Type": "application/json" }, body: JSON.stringify({ vista: v }) });
+        if ((await r.json()).gtk) return;
+      } catch (e) { /* ripiega sotto */ }
+    }
+    window.open(location.pathname + (v === "completa" ? "" : "?vista=" + v), "_blank");
+  });
+
+  // Modalita' parete: solo mappa (+ pannello Cyber in quella vista), schermo
+  // intero, titolo e orologio. Tasto F o pulsante; Esc o F per uscire.
+  const wallName = document.getElementById("wall-name");
+  wallName.textContent = "HORUS · " + VIEW.nome.toUpperCase();
+  function setWall(on) {
+    document.body.classList.toggle("wall", on);
+    document.getElementById("wall-title").hidden = !on;
+    // Vista Cyber: in parete il pannello "Situazione cyber" resta visibile,
+    // spostato sopra la mappa (la barra laterale e' nascosta).
+    const cd = document.getElementById("cyber-dash");
+    if (VISTA === "cyber" && cd) {
+      if (on) { cd.classList.add("floating"); document.getElementById("stage").appendChild(cd); }
+      else {
+        cd.classList.remove("floating");
+        const pf = document.getElementById("panel-feeds");
+        pf.insertBefore(cd, document.getElementById("auto-ctl"));
+      }
+    }
+    try {
+      if (on && !document.fullscreenElement) document.documentElement.requestFullscreen();
+      if (!on && document.fullscreenElement) document.exitFullscreen();
+    } catch (e) { /* fullscreen non consentito: resta la modalita' parete */ }
+    setTimeout(() => map.invalidateSize(), 300);
+  }
+  document.getElementById("wall-on").addEventListener("click", () => setWall(true));
+  document.addEventListener("keydown", e => {
+    if (e.target.closest("input, textarea, select, [contenteditable]")) return;
+    if ((e.key === "f" || e.key === "F") && !e.ctrlKey && !e.altKey && !e.metaKey)
+      setWall(!document.body.classList.contains("wall"));
+    else if (e.key === "Escape" && document.body.classList.contains("wall")) setWall(false);
+  });
+  document.addEventListener("fullscreenchange", () => {
+    if (!document.fullscreenElement && document.body.classList.contains("wall")) setWall(false);
+  });
+  setInterval(() => {
+    document.getElementById("wall-clock").textContent =
+      new Date().toLocaleString([], { dateStyle: "short", timeStyle: "medium" });
+  }, 1000);
+})();
+
+// ---------------------------------------------------------------------------
+// Pannello "Situazione cyber" (solo vista Cyber): INFOCON, contatori, porte
+// piu' attaccate, ultime CVE KEV. Si aggiorna ogni 5 minuti (cache sul server).
+// ---------------------------------------------------------------------------
+const PORT_SVC = { 21: "FTP", 22: "SSH", 23: "Telnet", 25: "SMTP", 53: "DNS", 80: "HTTP",
+  81: "HTTP alt", 110: "POP3", 123: "NTP", 135: "MS RPC", 139: "NetBIOS", 143: "IMAP",
+  443: "HTTPS", 445: "SMB", 1433: "MS SQL", 1723: "PPTP", 2222: "SSH alt", 3306: "MySQL",
+  3389: "RDP", 5060: "SIP", 5432: "PostgreSQL", 5555: "ADB Android", 5900: "VNC",
+  6379: "Redis", 8080: "HTTP proxy", 8443: "HTTPS alt", 8888: "HTTP alt", 9200: "Elasticsearch",
+  27017: "MongoDB", 37215: "Huawei HG532", 52869: "UPnP" };
+async function refreshCyberDash() {
+  const j = async u => { try { return await (await fetch(u)).json(); } catch (e) { return {}; } };
+  const [cy, att, c2, rw, out, kev] = await Promise.all([j("api/cyber"),
+    j("api/feed/attackers"), j("api/feed/c2"), j("api/feed/ransomware"),
+    j("api/feed/outages"), j("api/kev")]);
+  const n = d => (d && d.features) ? d.features.length : "–";
+  document.getElementById("cd-att").textContent = n(att);
+  document.getElementById("cd-c2").textContent = (c2 && c2.features)
+    ? c2.features.filter(f => f.properties.pulse).length : "–";
+  document.getElementById("cd-rw").textContent = n(rw);
+  document.getElementById("cd-out").textContent = n(out);
+  const ic = document.getElementById("cd-infocon");
+  ic.textContent = "INFOCON " + (cy.infocon || "?").toUpperCase();
+  ic.className = "cd-infocon ic-" + (cy.infocon || "na");
+  let t = "<tr><th>Porta</th><th>Servizio</th><th>Tentativi</th><th>Sorgenti</th></tr>";
+  (cy.ports || []).forEach(p => {
+    t += "<tr><td>" + esc(p.port) + "</td><td>" + esc(PORT_SVC[p.port] || "") + "</td><td>" +
+      esc((p.records || 0).toLocaleString()) + "</td><td>" + esc((p.sources || 0).toLocaleString()) + "</td></tr>";
+  });
+  document.getElementById("cd-ports").innerHTML = t;
+  const ul = document.getElementById("cd-kev");
+  ul.innerHTML = "";
+  ((kev && kev.items) || []).slice(0, 6).forEach(v => {
+    const li = document.createElement("li");
+    li.innerHTML = '<span class="cve">' + esc(v.cve) + "</span> " + esc(v.vendor) + " · " +
+      esc(v.product) + (v.ransomware ? ' <span class="rw">RANSOMWARE</span>' : "");
+    li.addEventListener("click", () => openCve(v));
+    ul.appendChild(li);
+  });
+}
+if (VISTA === "cyber") {
+  document.getElementById("cyber-dash").hidden = false;
+  refreshCyberDash();
+  setInterval(refreshCyberDash, 300000);
+}
 
 // ---- Assistente d'indagine (IA) -------------------------------------------
 // Riusa il backend IA di NexusSec via /api/ai. Locale-first: col backend locale

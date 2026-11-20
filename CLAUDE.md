@@ -319,6 +319,25 @@ ricorrenti su **musl + gcc 15**:
   di avvio e' in uso, partprobe fallirebbe). Dep `sfdisk`+`partx` in
   nexussec-base. Lo spazio dopo la distro e' il candidato CONSIGLIATO (rec=2).
 
+- **HORUS: regole apprese il 2026-11-20 (non re-derivare).**
+  - *Multi-finestra*: `app.py` = UN processo/server, tante finestre WebKit;
+    porta in `$XDG_RUNTIME_DIR/nxs-horus-<uid>.port`; seconda invocazione ->
+    POST `/api/open-window` (gancio `server.OPEN_WINDOW`), in ripiego browser
+    apre una scheda sullo stesso server. `__main__` esce con `os._exit` (thread
+    di servizio tenevano vivo il processo). Viste: `?vista=` + `VIEWS` in app.js.
+  - *Guardia server* (`Handler._guard`): Host solo 127.0.0.1/localhost; POST
+    solo Origin propria + `Content-Type: application/json`. Ogni nuova fetch
+    POST della pagina DEVE mandare quell'header, o riceve 415.
+  - *Barre di scorrimento*: in Chrome >=121 `scrollbar-width`/`scrollbar-color`
+    fanno IGNORARE `::-webkit-scrollbar` (torna la barra di sistema con frecce):
+    le proprieta' standard stanno SOLO nel blocco `@supports (-moz-appearance)`.
+  - *Finestre trascinabili*: coordinate relative a `#stage` (offsetLeft), MAI
+    getBoundingClientRect + innerWidth (saltavano di 340px fuori schermo).
+  - *"use strict"* in app.js: ogni variabile va dichiarata (scanVia non lo era:
+    barra di stato sempre "backend non raggiungibile").
+  - *Menu Openbox*: si modifica SOLO `home/nexus/.config/openbox/menu.xml` +
+    traduzioni in `build/make-openbox-menus.py`, poi si rigenera.
+
 ### Gotcha stile finestre / bytecode (2026-08-26, DURAMENTE imparati)
 
 - **`.pyc` stale nell'apkovl = codice VECCHIO eseguito.** Non committare/impac-

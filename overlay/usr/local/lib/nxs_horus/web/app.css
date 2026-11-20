@@ -88,7 +88,7 @@ body {
   /* min-height:0 e' ESSENZIALE: senza, il flex-item cresce oltre la barra e
      #side (overflow:hidden) taglia il fondo SENZA permettere lo scroll. */
   min-height: 0;
-  scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+   }
 .panel::-webkit-scrollbar { width: 8px; }
 .panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 .panel.is-active { display: block; }
@@ -486,7 +486,7 @@ body {
   gap: 2px 20px; align-items: start;
   border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px;
   max-height: 260px; overflow-y: auto; background: var(--panel-2);
-  scrollbar-width: thin; scrollbar-color: var(--border) transparent;
+  
 }
 .src-list::-webkit-scrollbar { width: 8px; }
 .src-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
@@ -573,7 +573,7 @@ body {
   position: absolute; inset: 0; overflow-y: auto; padding: 16px 18px 22px;
   color: var(--text); line-height: 1.62; font-size: 14px;
   -webkit-user-select: text; user-select: text;
-  scrollbar-width: thin; scrollbar-color: var(--border) transparent;
+  
 }
 #reader-content::-webkit-scrollbar { width: 8px; }
 #reader-content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
@@ -746,7 +746,7 @@ body {
 }
 #corr-body {
   flex: 1; overflow-y: auto; padding: 8px 12px 14px;
-  scrollbar-width: thin; scrollbar-color: var(--border) transparent;
+  
 }
 #corr-body::-webkit-scrollbar { width: 8px; }
 #corr-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
@@ -1048,3 +1048,71 @@ select option, select optgroup {
 .cve-refs .tg { color: var(--muted); font-size: 10px; }
 .kev-back { display: inline-block; margin-bottom: 8px; color: var(--accent); font-size: 12px; text-decoration: none; }
 .kev-rw { color: var(--alarm); font-weight: 700; font-size: 11px; }
+
+/* ---- Viste (2026-11) ---- */
+#view-bar { display: flex; align-items: center; gap: 6px; padding: 6px 14px 8px;
+  border-bottom: 1px solid var(--border); font-size: 11px; color: var(--muted); }
+#view-bar select { flex: 1; min-width: 0; background: var(--panel-2); color: var(--text);
+  border: 1px solid var(--border); border-radius: 6px; padding: 4px 6px; font-size: 12px; }
+#view-bar button { background: var(--panel-2); color: var(--accent); border: 1px solid var(--border);
+  border-radius: 6px; padding: 4px 7px; font-size: 11px; cursor: pointer; white-space: nowrap; }
+#view-bar button:hover { border-color: var(--accent); }
+
+/* impulso animato (attaccanti, C2 attivi) */
+.hz-pulse { background: none; border: none; }
+.hz-pulse span { position: relative; display: block; border-radius: 50%;
+  background: var(--c); opacity: .85; box-shadow: 0 0 6px var(--c); }
+.hz-pulse span::after { content: ""; position: absolute; inset: 0; border-radius: 50%;
+  border: 2px solid var(--c); animation: hz-ring 1.8s ease-out infinite; }
+@keyframes hz-ring { from { transform: scale(1); opacity: .9; } to { transform: scale(3.2); opacity: 0; } }
+
+/* pannello Situazione cyber */
+#cyber-dash { border: 1px solid var(--border); border-radius: 8px; background: var(--panel-2);
+  padding: 10px; margin-bottom: 12px; }
+#cyber-dash .cd-head { display: flex; justify-content: space-between; align-items: center;
+  font-weight: 700; color: var(--text); margin-bottom: 8px; }
+.cd-infocon { font-size: 10px; padding: 2px 7px; border-radius: 10px; border: 1px solid var(--border); }
+.ic-green { color: #2ec27e; border-color: #2ec27e; } .ic-yellow { color: #ffd166; border-color: #ffd166; }
+.ic-orange { color: #ff9f1c; border-color: #ff9f1c; } .ic-red { color: var(--alarm); border-color: var(--alarm); }
+.cd-counts { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.cd-counts div { background: var(--bg); border-radius: 6px; padding: 6px; text-align: center; }
+.cd-counts b { display: block; color: var(--accent); font-size: 18px; }
+.cd-counts span { color: var(--muted); font-size: 10px; }
+.cd-sub { margin: 10px 0 4px; color: var(--muted); font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .06em; }
+#cd-ports { width: 100%; border-collapse: collapse; font-size: 11px; }
+#cd-ports th { color: var(--muted); font-weight: 400; text-align: left; font-size: 10px; }
+#cd-ports td, #cd-ports th { padding: 2px 4px; border-top: 1px solid var(--border); }
+#cd-kev { list-style: none; margin: 0; padding: 0; font-size: 11px; }
+#cd-kev li { padding: 4px 2px; border-top: 1px solid var(--border); cursor: pointer; }
+#cd-kev li:hover { background: rgba(0,229,255,.06); }
+#cd-kev .cve { color: var(--accent); font-weight: 700; }
+#cd-kev .rw { color: var(--alarm); font-weight: 700; font-size: 10px; }
+
+/* modalita' schermo da parete */
+body.wall #side, body.wall #side-toggle, body.wall .leaflet-control-zoom,
+body.wall .leaflet-control-layers { display: none !important; }
+#wall-title { position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+  z-index: 1200; background: rgba(5,10,20,.75); border: 1px solid var(--border);
+  border-radius: 8px; padding: 6px 14px; display: flex; gap: 16px; align-items: baseline;
+  pointer-events: none; }
+#wall-name { color: var(--accent); font-weight: 700; letter-spacing: .12em; }
+#wall-clock { color: var(--muted); font-variant-numeric: tabular-nums; font-size: 12px; }
+#cyber-dash.floating { position: absolute; top: 60px; right: 12px; width: 330px; z-index: 1150;
+  max-height: calc(100% - 110px); overflow-y: auto; background: rgba(10,26,38,.92);
+  box-shadow: 0 12px 40px rgba(0,0,0,.6); }
+
+/* ---- Barre di scorrimento (2026-11-20) ----
+   Chrome >= 121: se un elemento ha scrollbar-width/scrollbar-color, IGNORA gli
+   pseudo-elementi ::-webkit-scrollbar e disegna la barra di SISTEMA (con le
+   frecce). Quindi: stile sottile personalizzato per Chrome/WebKit (anche il
+   WebKitGTK della distro) e proprieta' standard SOLO per Firefox. */
+*::-webkit-scrollbar { width: 6px; height: 6px; background: transparent; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb { background: rgba(26,58,82,.7); border-radius: 3px; }
+*::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+*::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
+*::-webkit-scrollbar-corner { background: transparent; }
+@supports (-moz-appearance: none) {
+  * { scrollbar-width: thin; scrollbar-color: rgba(26,58,82,.8) transparent; }
+}

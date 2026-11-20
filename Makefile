@@ -51,7 +51,9 @@ logo-emblem:
 # Controlli eseguibili su qualsiasi host (CI): compila i moduli Python e
 # valida i JSON di profili/repo.
 check:
-	@python3 -m py_compile $(PYLIB)/nxs_cc/*.py $(PYLIB)/nxs_profiles/*.py && echo "py OK"
+	@python3 -m py_compile $(PYLIB)/nxs_*/*.py && echo "py OK (tutti i pacchetti nxs_*)"
+	@find $(PYLIB) -name __pycache__ -type d -exec rm -rf {} + 2>/dev/null; true
+	@command -v node >/dev/null 2>&1 && for f in $(PYLIB)/nxs_horus/web/*.js; do node --check $$f || exit 1; done && echo "JS HORUS OK" || true
 	@python3 -c "import json,glob; [json.load(open(f)) for f in glob.glob('$(SHARE)/*.json')]; print('JSON OK')"
 
 apkovl:

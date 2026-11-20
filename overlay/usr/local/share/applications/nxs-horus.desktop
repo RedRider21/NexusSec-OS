@@ -14,3 +14,36 @@ Exec=nxs-horus
 Icon=nxs-horus
 Terminal=false
 Categories=Network;Security;
+Actions=cyber;disastri;trasporti;geopolitica;
+
+[Desktop Action cyber]
+Name=HORUS - Vista Cyber
+Name[en]=HORUS - Cyber view
+Name[fr]=HORUS - Vue Cyber
+Name[es]=HORUS - Vista Cyber
+Name[de]=HORUS - Cyber-Ansicht
+Exec=nxs-horus --vista cyber
+
+[Desktop Action disastri]
+Name=HORUS - Disastri e clima
+Name[en]=HORUS - Disasters and climate
+Name[fr]=HORUS - Catastrophes et climat
+Name[es]=HORUS - Desastres y clima
+Name[de]=HORUS - Katastrophen und Klima
+Exec=nxs-horus --vista disastri
+
+[Desktop Action trasporti]
+Name=HORUS - Spazio e trasporti
+Name[en]=HORUS - Space and transport
+Name[fr]=HORUS - Espace et transports
+Name[es]=HORUS - Espacio y transporte
+Name[de]=HORUS - Raumfahrt und Verkehr
+Exec=nxs-horus --vista trasporti
+
+[Desktop Action geopolitica]
+Name=HORUS - Geopolitica
+Name[en]=HORUS - Geopolitics
+Name[fr]=HORUS - Géopolitique
+Name[es]=HORUS - Geopolítica
+Name[de]=HORUS - Geopolitik
+Exec=nxs-horus --vista geopolitica

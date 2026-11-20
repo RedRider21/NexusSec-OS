@@ -20,6 +20,20 @@
         <button id="settings-open" title="Impostazioni" aria-label="Impostazioni">&#9881;</button>
       </header>
 
+      <!-- Viste: ogni finestra/monitor puo' specializzarsi su un tema -->
+      <div id="view-bar">
+        <label for="view-sel">Vista</label>
+        <select id="view-sel">
+          <option value="completa">Completa</option>
+          <option value="cyber">Cyber</option>
+          <option value="disastri">Disastri e clima</option>
+          <option value="trasporti">Spazio e trasporti</option>
+          <option value="geopolitica">Geopolitica</option>
+        </select>
+        <button id="view-new" title="Apri questa vista in una NUOVA finestra (per un altro monitor)">&#10697; nuova finestra</button>
+        <button id="wall-on" title="Modalità schermo da parete (tasto F)">&#9974; parete</button>
+      </div>
+
       <nav id="tabs">
         <button class="tab is-active" data-panel="feeds">Feed</button>
         <button class="tab" data-panel="recon">Recon</button>
@@ -34,6 +48,24 @@
       <section class="panel is-active" id="panel-feeds">
         <p class="hint">Sorgenti pubbliche mondiali. Nessun limite regionale.
           I dati escono in HTTPS (via Tor se attivo). Il proxy gira in locale.</p>
+
+        <!-- Pannello situazione della vista Cyber (visibile solo in quella vista) -->
+        <div id="cyber-dash" hidden>
+          <div class="cd-head"><span>Situazione cyber</span>
+            <span id="cd-infocon" class="cd-infocon" title="Livello di allerta Internet (SANS ISC INFOCON)">INFOCON …</span></div>
+          <div class="cd-counts">
+            <div><b id="cd-att">–</b><span>attaccanti top</span></div>
+            <div><b id="cd-c2">–</b><span>C2 attivi</span></div>
+            <div><b id="cd-rw">–</b><span>vittime ransomware</span></div>
+            <div><b id="cd-out">–</b><span>Paesi in blackout</span></div>
+          </div>
+          <div class="cd-sub">Porte più attaccate oggi (honeypot DShield)</div>
+          <table id="cd-ports"></table>
+          <div class="cd-sub">Ultime vulnerabilità sfruttate (CISA KEV)</div>
+          <ul id="cd-kev"></ul>
+          <p class="hint">Le fonti aperte dicono <b>chi attacca</b> (sensori-esca), non chi viene
+            colpito: per questo niente archi sorgente→bersaglio inventati.</p>
+        </div>
 
         <div id="auto-ctl">
           <label class="switch">
@@ -212,6 +244,7 @@
       <button id="side-toggle" title="Nascondi il pannello"
               aria-label="Mostra o nascondi il pannello">&lsaquo;</button>
       <main id="map"></main>
+      <div id="wall-title" hidden><span id="wall-name">HORUS</span><span id="wall-clock"></span></div>
       <iframe id="phone-frame" title="PhoneInfoga" hidden></iframe>
 
       <!-- Lettore news: finestrella flottante in basso a sinistra, espandibile -->

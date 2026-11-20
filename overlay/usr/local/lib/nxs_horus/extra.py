@@ -48,7 +48,7 @@ TTL = {
     "gdacs": 900, "outages": 600, "ransomware": 1800, "tor": 3600,
     "aurora": 1800, "radiation": 3600, "fireballs": 21600,
     "launches": 3600, "airports": 7 * 86400, "events": 1800, "nws": 600,
-    "kev": 3 * 3600,
+    "kev": 3 * 3600, "attackers": 1800, "c2": 1800, "cyber": 900,
 }
 
 # Colori di gravita' condivisi.
@@ -220,7 +220,7 @@ def _outages(fetch, cd):
                      ["Fonte", "IODA - Georgia Tech"]],
             "links": [["Dashboard IODA",
                        "https://ioda.inetintel.cc.gatech.edu/country/" + code]],
-            "c": RED if ov > 1e5 else ORANGE, "r": round(r, 1)}))
+            "c": "#ffb000" if ov > 1e5 else "#ffd166", "r": round(r, 1)}))
     return _fc(feats)
 
 
@@ -569,10 +569,140 @@ def cve(cid, fetch):
     return out
 
 
+# ---------------------------------------------------------------------------
+# VISTA CYBER. Fonti aperte e senza chiave:
+#   SANS ISC / DShield: rete mondiale di honeypot -> IP che attaccano di piu'
+#     oggi, porte piu' colpite, livello di allerta (INFOCON). Licenza CC BY-NC-SA
+#     ma l'ISC dichiara ok anche l'uso commerciale per proteggere la propria
+#     rete; vietato rivendere. User-Agent generico (niente dati dell'utente).
+#   abuse.ch Feodo Tracker (CC0): server di comando (C2) di botnet.
+# NB onesto: queste fonti dicono CHI attacca, non CHI viene colpito (i bersagli
+# sono i sensori-esca): quindi niente archi "sorgente->bersaglio" inventati.
+# ---------------------------------------------------------------------------
+_ISC_HDR = {"User-Agent": "NexusSec-HORUS/1.0 (OSINT dashboard)"}
+_IPGEO = {}               # ip -> [lon, lat, citta', paese, as]  (cache su file)
+_IPGEO_NEW_MAX = 100      # massimo IP nuovi da geolocalizzare per giro
+
+
+def _ipgeo_load(cd):
+    if _IPGEO:
+        return
+    try:
+        d = json.loads((cd / "horus-ipgeo.json").read_text())
+        now = time.time()
+        _IPGEO.update({k: v for k, v in d.items() if now - v[5] < 30 * 86400})
+    except (OSError, ValueError, IndexError, TypeError):
+        pass
+
+
+def _ipgeo_save(cd):
+    try:
+        cd.mkdir(parents=True, exist_ok=True)
+        (cd / "horus-ipgeo.json").write_text(json.dumps(_IPGEO))
+    except OSError:
+        pass
+
+
+def _geolocate(ips, fetch, cd):
+    """Coordinate per una lista di IP: cache 30 giorni su file, al massimo
+    _IPGEO_NEW_MAX richieste nuove a ipwho.is per giro, 6 in parallelo (gentili
+    col servizio: gli IP piu' attivi ricorrono di giorno in giorno)."""
+    from concurrent.futures import ThreadPoolExecutor
+    _ipgeo_load(cd)
+    nuovi = [ip for ip in dict.fromkeys(ips) if ip not in _IPGEO][:_IPGEO_NEW_MAX]
+
+    def one(ip):
+        try:
+            g = fetch("https://ipwho.is/" + ip, timeout=10)
+        except Exception:      # noqa: BLE001
+            return
+        if g.get("success") and g.get("longitude") is not None:
+            c = g.get("connection") or {}
+            _IPGEO[ip] = [g["longitude"], g["latitude"], g.get("city") or "",
+                          g.get("country") or "", c.get("org") or c.get("isp") or "", time.time()]
+    if nuovi:
+        with ThreadPoolExecutor(max_workers=6) as ex:
+            list(ex.map(one, nuovi))
+        _ipgeo_save(cd)
+    return {ip: _IPGEO[ip] for ip in ips if ip in _IPGEO}
+
+
+def _attackers(fetch, cd):
+    data = fetch("https://isc.sans.edu/api/sources/attacks/100?json", headers=_ISC_HDR, timeout=40)
+    rows = [r for r in data if isinstance(r, dict) and r.get("ip")]
+    geo = _geolocate([r["ip"] for r in rows], fetch, cd)
+    mx = max([r.get("count") or 0 for r in rows] or [1])
+    feats = []
+    for r in rows:
+        g = geo.get(r["ip"])
+        if not g:
+            continue
+        lon, lat = _jitter(r["ip"], g[0], g[1], 0.05)
+        cnt = r.get("count") or 0
+        feats.append(_pt(lon, lat, {
+            "t": "Attaccante " + r["ip"],
+            "rows": [["Sensori colpiti", r.get("attacks")], ["Pacchetti/tentativi", cnt],
+                     ["Visto la prima volta", r.get("firstseen")], ["Ultima volta", r.get("lastseen")],
+                     ["Posizione", ", ".join(x for x in (g[2], g[3]) if x)], ["Rete", g[4]],
+                     ["Fonte", "SANS ISC / DShield (honeypot)"]],
+            "links": [["Scheda ISC", "https://isc.sans.edu/ipinfo/" + r["ip"]]],
+            "pulse": True, "ip": r["ip"],
+            "r": round(4 + 8 * (cnt / mx) ** 0.5, 1)}))
+    return _fc(feats)
+
+
+def _c2(fetch, cd):
+    data = fetch("https://feodotracker.abuse.ch/downloads/ipblocklist.json", timeout=40)
+    rows = [r for r in data if isinstance(r, dict) and r.get("ip_address")]
+    geo = _geolocate([r["ip_address"] for r in rows], fetch, cd)
+    cen = centroids(fetch, cd)
+    feats = []
+    for r in rows:
+        ip = r["ip_address"]
+        g = geo.get(ip)
+        if g:
+            lon, lat = g[0], g[1]
+        elif (r.get("country") or "").upper() in cen:
+            lon, lat = cen[r["country"].upper()][:2]
+        else:
+            continue
+        on = r.get("status") == "online"
+        feats.append(_pt(lon, lat, {
+            "t": "Server di comando " + (r.get("malware") or "botnet"),
+            "rows": [["Malware", r.get("malware")], ["Indirizzo", "%s:%s" % (ip, r.get("port"))],
+                     ["Stato", "ATTIVO" if on else "spento"], ["Rete", r.get("as_name")],
+                     ["Paese", r.get("country")], ["Visto dal", r.get("first_seen")],
+                     ["Ultima attività", r.get("last_online")],
+                     ["Fonte", "abuse.ch Feodo Tracker (CC0)"]],
+            "links": [["Scheda Feodo", "https://feodotracker.abuse.ch/browse/host/%s/" % ip]],
+            "pulse": on, "c": "#7df9ff" if on else GREY, "r": 7 if on else 4}))
+    return _fc(feats)
+
+
+def _cyber(fetch, cd):
+    """Riepilogo per il pannello della vista Cyber (non e' un layer)."""
+    out = {"infocon": "", "ports": []}
+    try:
+        out["infocon"] = fetch("https://isc.sans.edu/api/infocon?json", headers=_ISC_HDR,
+                               timeout=20).get("status", "")
+    except Exception:          # noqa: BLE001
+        pass
+    try:
+        tp = fetch("https://isc.sans.edu/api/topports/records/10?json", headers=_ISC_HDR, timeout=20)
+        for v in (tp.values() if isinstance(tp, dict) else tp):
+            if isinstance(v, dict) and v.get("targetport") is not None:
+                out["ports"].append({"port": v["targetport"], "records": v.get("records"),
+                                     "sources": v.get("sources"), "targets": v.get("targets")})
+    except Exception:          # noqa: BLE001
+        pass
+    return out
+
+
 BUILDERS = {"gdacs": _gdacs, "outages": _outages, "ransomware": _ransomware,
             "tor": _tor, "aurora": _aurora, "radiation": _radiation,
             "fireballs": _fireballs, "launches": _launches, "airports": _airports,
-            "events": _events, "nws": _nws, "kev": _kev}
+            "events": _events, "nws": _nws, "kev": _kev,
+            "attackers": _attackers, "c2": _c2, "cyber": _cyber}
 
 # Layer lenti: si scaricano in BACKGROUND; finche' non sono pronti si risponde
 # con l'ultima copia (o "in preparazione") invece di tenere appesa la pagina.
