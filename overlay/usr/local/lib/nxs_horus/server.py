@@ -1241,7 +1241,7 @@ def _exif_extract(raw, name="foto"):
     except Exception as e:                 # parser difensivo: mai far crashare
         out["error"] = "parser nativo: %s" % e
     # Arricchimento con exiftool (tag molto piu' ricchi), se installato.
-    tool = shutil.which("exiftool")
+    tool = _which_real("exiftool")
     if tool:
         tmp = None
         try:
@@ -1509,7 +1509,8 @@ RECON = {
 # Validatori per tipo di obiettivo. Rifiutano tutto cio' che non combacia:
 # l'input non arriva mai a una shell, ma restiamo comunque severi.
 _RE_DOMAIN = re.compile(r"^(?=.{1,253}$)([a-zA-Z0-9](-?[a-zA-Z0-9])*\.)+[a-zA-Z]{2,63}$")
-_RE_USER = re.compile(r"^[A-Za-z0-9_.\-]{1,64}$")
+# niente "-" iniziale: "--opzione" arriverebbe al tool come OPZIONE (2026-11-21)
+_RE_USER = re.compile(r"^[A-Za-z0-9_][A-Za-z0-9_.\-]{0,63}$")
 _RE_EMAIL = re.compile(r"^[A-Za-z0-9._%+\-]{1,64}@(?=.{1,253}$)([a-zA-Z0-9](-?[a-zA-Z0-9])*\.)+[a-zA-Z]{2,63}$")
 
 
@@ -1530,11 +1531,27 @@ def _valido(kind, target):
     return False
 
 
+_SHIM_DIR = "/run/nxs-shims"
+
+
+def _which_real(name):
+    """Come shutil.which ma IGNORA gli shim del catalogo (/run/nxs-shims): uno
+    shim NON e' il tool installato (regola anti fork-bomb della distro, vedi
+    isolation._which_real). Prima HORUS li scambiava per tool presenti."""
+    for d in (os.environ.get("PATH") or "").split(os.pathsep):
+        if not d or os.path.realpath(d) == _SHIM_DIR:
+            continue
+        p = os.path.join(d, name)
+        if os.path.isfile(p) and os.access(p, os.X_OK):
+            return p
+    return None
+
+
 def _bin_of(entry):
     for b in entry["bins"]:
-        p = shutil.which(b)
+        p = _which_real(b)
         if p:
-            return b
+            return p
     return None
 
 
@@ -1584,7 +1601,7 @@ PHONE_PORT = 5000
 def _phone_start_argv():
     if shutil.which("nxs-tool"):
         return ["nxs-tool", "run", "phoneinfoga"]   # gestisce il container
-    if shutil.which("phoneinfoga"):
+    if _which_real("phoneinfoga"):
         return ["phoneinfoga", "serve", "--no-open"]
     return None
 

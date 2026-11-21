@@ -77,8 +77,15 @@ def _context() -> str:
 def _iso_have(tool: str) -> bool:
     # check veloce sul PATH (no subprocess): il contesto si costruisce a ogni
     # domanda, quindi niente `apk info` per centinaia di tool.
-    import shutil
-    return shutil.which(tool) is not None
+    # NB: gli shim del catalogo (/run/nxs-shims) NON contano come installati
+    # (regola anti fork-bomb): si usa la funzione ufficiale della distro.
+    try:
+        from nxs_profiles.isolation import _which_real
+        return _which_real(tool) is not None
+    except Exception:                          # noqa: BLE001
+        import shutil
+        p = shutil.which(tool)
+        return p is not None and not p.startswith("/run/nxs-shims/")
 
 
 def _audit(prompt: str, reply: str) -> None:
