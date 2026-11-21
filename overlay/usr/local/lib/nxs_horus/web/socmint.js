@@ -176,7 +176,7 @@
       h += '<div class="soc-grp"><div class="soc-h">Gravatar</div>' +
         '<div class="grav-card">';
       if (g.thumb) h += '<img class="grav-thumb" src="' + esc(g.thumb) +
-        '?s=80" alt="" onerror="this.style.display=\'none\'">';
+        '?s=80" alt="">';
       h += '<div class="grav-info"><b>' + esc(g.name || "(senza nome)") + "</b>" +
         (g.location ? '<span class="ci-meta">' + esc(g.location) + "</span>" : "") +
         (g.profile ? '<a href="' + esc(g.profile) + '" target="_blank" rel="noopener">Profilo Gravatar &#8599;</a>' : "") +

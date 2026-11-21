@@ -2727,7 +2727,8 @@ class Handler(BaseHTTPRequestHandler):
     def _file(self, rel):
         # Sicurezza: risolvi dentro WEB, niente path traversal.
         p = (WEB / rel).resolve()
-        if not str(p).startswith(str(WEB)) or not p.is_file():
+        # dentro WEB davvero (con il separatore: "web" non deve accettare "web2/")
+        if not str(p).startswith(str(WEB.resolve()) + os.sep) or not p.is_file():
             self.send_error(404)
             return
         ctype = {
@@ -2742,6 +2743,14 @@ class Handler(BaseHTTPRequestHandler):
         # Niente cache "stantia": il browser rivalida sempre (evita di mostrare
         # una versione vecchia della UI dopo un aggiornamento).
         self.send_header("Cache-Control", "no-cache, must-revalidate")
+        if p.suffix == ".html":
+            # CSP (2026-11-21): solo gli script di HORUS stesso. I dati dei feed
+            # sono esterni e non fidati (es. OurAirports e' modificabile da
+            # chiunque): un link "javascript:" o un HTML sfuggito all'escape NON
+            # deve poter eseguire codice nella pagina che comanda le ricognizioni.
+            self.send_header("Content-Security-Policy", _CSP_PAGE)
+            self.send_header("X-Content-Type-Options", "nosniff")
+            self.send_header("Referrer-Policy", "no-referrer")
         self.end_headers()
         self.wfile.write(data)
 
@@ -2929,6 +2938,13 @@ class Handler(BaseHTTPRequestHandler):
             self.send_header("Content-Type", "text/html; charset=utf-8")
             self.send_header("Content-Length", str(len(body)))
             self.send_header("Cache-Control", "no-cache")
+            # Pagina di un ALTRO sito servita dalla nostra origine: in sandbox
+            # (origine anonima). I suoi script possono girare (mappe OSM) ma NON
+            # possono toccare la pagina di HORUS ne' usare le sue API (prima
+            # avevano pieno accesso, ricognizioni comprese). 2026-11-21.
+            self.send_header("Content-Security-Policy",
+                             "sandbox allow-scripts allow-popups "
+                             "allow-popups-to-escape-sandbox allow-forms")
             self.end_headers()
             self.wfile.write(body)
             return
@@ -3285,6 +3301,9 @@ class _HorusHTTPServer(ThreadingHTTPServer):
     request_queue_size = 128
     daemon_threads = True
 
+
+_CSP_PAGE = ("script-src 'self'; object-src 'none'; base-uri 'self'; "
+             "frame-ancestors 'self'; form-action 'self'")
 
 # Gancio impostato da app.py quando HORUS gira nella sua finestra GTK: permette
 # a una seconda invocazione (o al pulsante "nuova finestra") di aprire un'altra

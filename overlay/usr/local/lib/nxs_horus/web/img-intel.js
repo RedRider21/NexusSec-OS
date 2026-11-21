@@ -144,7 +144,7 @@
     let h = '<div class="corr-summary"><b>' + esc(d.name || "Foto") + "</b><span>" +
       "EXIF via " + esc(d.source || "nativo") + " · " + fmtSize(d.size) + "</span></div>";
     if (thumb) h += '<img class="exif-thumb" src="' + esc(thumb) + '" alt="" ' +
-      'onerror="this.style.display=\'none\'">';
+      '>';
     if (d.gps) {
       const osm = "https://www.openstreetmap.org/?mlat=" + d.gps.lat +
         "&mlon=" + d.gps.lon + "#map=15/" + d.gps.lat + "/" + d.gps.lon;

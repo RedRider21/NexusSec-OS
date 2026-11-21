@@ -2843,6 +2843,27 @@ document.getElementById("webwin-close").addEventListener("click", closeEmbed);
 document.getElementById("webwin-expand").addEventListener("click",
   () => webwinEl.classList.toggle("expanded"));
 
+// Link: solo http(s) (o blob: per gli export). I dati dei feed sono esterni e
+// non fidati: un href "javascript:"/"data:" non deve mai essere seguito.
+// (Difesa in piu' oltre alla CSP inviata dal server.) 2026-11-21.
+document.addEventListener("click", e => {
+  const a = e.target.closest("a[href]");
+  if (!a) return;
+  const h = (a.getAttribute("href") || "").trim();
+  if (h === "#" || h.startsWith("#")) return;
+  try {
+    const u = new URL(h, location.href);
+    if (!["http:", "https:", "blob:"].includes(u.protocol)) { e.preventDefault(); e.stopImmediatePropagation(); }
+  } catch (err) { e.preventDefault(); e.stopImmediatePropagation(); }
+}, true);
+// immagini che non si caricano (miniature esterne): nascoste. Sostituisce gli
+// onerror in linea, vietati dalla CSP.
+document.addEventListener("error", e => {
+  const t = e.target;
+  if (t && t.tagName === "IMG" && t.classList &&
+      (t.classList.contains("grav-thumb") || t.classList.contains("exif-thumb"))) t.style.display = "none";
+}, true);
+
 document.addEventListener("click", e => {
   if (e.target.closest("a.kev-back")) { e.preventDefault(); openKevList(); return; }
   const lv = e.target.closest("a.live-open");
