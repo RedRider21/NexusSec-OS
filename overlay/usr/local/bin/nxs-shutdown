@@ -24,6 +24,12 @@ fi
 # il processo con un BINARIO e non vede le funzioni ("exec: priv: not found"),
 # ed era il motivo per cui Spegni/Riavvia non facevano NULLA (Esci usa
 # 'exec openbox --exit', un vero binario, quindi funzionava). Niente exec qui.
+# Registro degli incarichi: i log NexusSec stanno in RAM (/tmp) e si perdono
+# allo spegnimento. Con la persistenza attiva li copiamo nel registro (punto 6).
+if [ "$ACT" != "logout" ] && mountpoint -q /var/nxs-data 2>/dev/null \
+   && command -v nxs-registro >/dev/null 2>&1; then
+  nxs-registro salva-log >/dev/null 2>&1 || true
+fi
 case "$ACT" in
   reboot) priv reboot ;;
   logout) exec openbox --exit ;;

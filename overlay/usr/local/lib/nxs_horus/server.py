@@ -3282,14 +3282,30 @@ class Handler(BaseHTTPRequestHandler):
         if not b:
             return self._json({"error": "strumento non installato (installa dal profilo OSINT)"}, 400)
         argv = entry["args"](b, target)
+        # registro degli incarichi (punto 6): anche le ricognizioni di HORUS
+        try:
+            import sys as _sys
+            if "/usr/local/lib" not in _sys.path:
+                _sys.path.insert(0, "/usr/local/lib")
+            from nxs_profiles import registro as _reg
+            _lancio = _reg.Lancio(tool, target, "horus-recon", origine="HORUS")
+            _lancio.__enter__()
+        except Exception:                               # noqa: BLE001
+            _lancio = None
         try:
             r = subprocess.run(argv, capture_output=True, text=True,
                                timeout=RECON_TIMEOUT)
             out = (r.stdout + r.stderr).strip() or "(nessun output)"
+            if _lancio:
+                _lancio.rc = r.returncode
         except subprocess.TimeoutExpired:
             out = "Tempo scaduto (%ds)." % RECON_TIMEOUT
         except OSError as e:
             out = "Errore di esecuzione: %s" % e
+        if _lancio:
+            if _lancio.rc is None:
+                _lancio.rc = out[:80]
+            _lancio.__exit__(None, None, None)
         if len(out) > OUT_MAX:
             out = out[:OUT_MAX] + "\n... (output troncato)"
         return self._json({"output": "$ %s\n\n%s" % (" ".join(argv), out)})

@@ -746,7 +746,16 @@ def launch_kali_pkg(pkg: str, binname: str = "", args_string: str = "",
     cmd += [binname or pkg] + (shlex.split(args_string) if args_string else [])
     log(f"[*] Kali: {' '.join(cmd)}")
     try:
-        subprocess.run(cmd)
+        from nxs_profiles import registro
+        reg = registro.Lancio(binname or pkg, args_string, "kali")
+    except Exception:                                   # noqa: BLE001
+        reg = None
+    try:
+        if reg:
+            with reg:
+                reg.rc = subprocess.run(cmd).returncode
+        else:
+            subprocess.run(cmd)
         return True
     except (FileNotFoundError, OSError) as e:
         log(f"[!] avvio fallito: {e}")
@@ -1197,4 +1206,13 @@ def launch(tool: str, args_string: str = "", log=print) -> bool:
         log(f"[*] {tool} non presente: lo ottengo ({_method(tool)})...")
         if not install(tool, log):
             return False
-    return run(tool, args_string, log, foreground=True)
+    # Registro degli incarichi (punto 6): orario, comando, esito, file prodotti
+    # con impronte. Se il registro non e' disponibile si lancia comunque.
+    try:
+        from nxs_profiles import registro
+    except Exception:                                   # noqa: BLE001
+        return run(tool, args_string, log, foreground=True)
+    with registro.Lancio(tool, args_string, _method(tool)) as reg:
+        ok = run(tool, args_string, log, foreground=True)
+        reg.rc = "ok" if ok else "fallito"
+    return ok

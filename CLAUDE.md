@@ -354,6 +354,12 @@ ricorrenti su **musl + gcc 15**:
   ARCH"`: se si cambia l'etichetta vanno cambiate anche quelle stringhe (lo fa
   remaster-apkovl.py), altrimenti aarch64 resta al prompt `grub>`.
   tastiera della live ITALIANA (sendkey: `/`=shift-7, `-`=slash, `>`=shift-less).
+- **Registro incarichi (punto 6, 2026-11-21)**: `nxs_profiles/registro.py`
+  (append-only JSONL concatenato da sha256, in ~/NexusSec-loot/registro/);
+  agganciato in `isolation.launch`, `launch_kali_pkg` e HORUS `_recon`. MAI far
+  fallire un lancio per il registro (try/except ovunque). CLI `nxs-registro`;
+  vista CC "Registro e log" (open_logs). `nxs-shutdown` salva i log se c'e'
+  la persistenza.
 - **Collaudo automatico: `build-alpine/collaudo-iso.py ISO [--arm ISO]`** prima di
   OGNI release (BIOS/UEFI/doas/persistenza con riavvio/chiavetta estranea/arm).
   La VM scrive gli esiti su un disco ext2 NXSTEST che lo script legge con

@@ -1710,16 +1710,106 @@ def open_autostart(_btn=None):
 # Log di sistema (viewer a schede)
 # ---------------------------------------------------------------------------
 def open_logs(_btn=None):
-    win, body = panel_window(_t("v.logs.title"), 820, 560)
+    """Registro e log (punto 6, 2026-11-21): prima scheda = REGISTRO DEGLI
+    INCARICHI (ogni strumento lanciato, con esito e impronte dei file prodotti,
+    catena verificabile); poi TUTTI i log NexusSec presenti, trovati da soli."""
+    import glob
+    win, body = panel_window(_t("v.logs.title"), 900, 600)
     nb = Gtk.Notebook()
     body.pack_start(nb, True, True, 0)
-    sources = [
-        ("autostart", "/tmp/nxs-autostart.log"),
-        ("pannello", "/tmp/nxs-panel.log"),
-        ("Xorg", os.path.expanduser("~/.local/share/xorg/Xorg.0.log")),
-        ("boot", "/var/log/nxs-boot.log"),
-    ]
+
+    # --- scheda 1: registro degli incarichi --------------------------------
+    try:
+        from nxs_profiles import registro as R
+    except Exception:                    # noqa: BLE001
+        R = None
+    pag = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
+    pag.set_border_width(8)
+    intro = Gtk.Label(label=_t("v.reg.intro"))
+    intro.set_xalign(0); intro.set_line_wrap(True)
+    intro.get_style_context().add_class("nxs-val")
+    pag.pack_start(intro, False, False, 0)
+    filtro = Gtk.SearchEntry()
+    filtro.set_placeholder_text(_t("v.reg.filter"))
+    pag.pack_start(filtro, False, False, 0)
+    store = Gtk.ListStore(str, str, str, str, str, str, str)
+    vista = Gtk.TreeView(model=store)
+    for k, titolo in enumerate((_t("v.reg.c_time"), _t("v.reg.c_tool"), _t("v.reg.c_cmd"),
+                                _t("v.reg.c_result"), _t("v.reg.c_dur"), _t("v.reg.c_net"),
+                                _t("v.reg.c_files"))):
+        cell = Gtk.CellRendererText()
+        col = Gtk.TreeViewColumn(titolo, cell, text=k)
+        col.set_resizable(True)
+        vista.append_column(col)
+    sw = Gtk.ScrolledWindow(); sw.set_vexpand(True); sw.add(vista)
+    pag.pack_start(sw, True, True, 0)
+    stato = Gtk.Label(label=""); stato.set_xalign(0); stato.set_line_wrap(True)
+    stato.set_selectable(True)
+    stato.get_style_context().add_class("nxs-val")
+    pag.pack_start(stato, False, False, 0)
+
+    def carica(*_a):
+        store.clear()
+        if R is None:
+            stato.set_text(_t("v.reg.unavailable")); return
+        f = filtro.get_text().strip().lower()
+        n = 0
+        for v in reversed([x for x in R.voci() if x.get("evento") == "fine"]):
+            fp = v.get("file_prodotti") or []
+            riga = (v.get("locale", ""), v.get("strumento", ""), v.get("comando", ""),
+                    str(v.get("esito", "")), "%s s" % v.get("durata_s", ""),
+                    v.get("rete", ""), ", ".join(x.get("file", "") for x in fp))
+            if f and f not in " ".join(riga).lower():
+                continue
+            store.append(list(riga)); n += 1
+        stato.set_text(_t("v.reg.count") % (n, str(R.FILE)))
+
+    def verifica(_b):
+        ok, msg = R.verifica()
+        ok2, msg2 = R.verifica_file()
+        stato.set_text(("%s %s\n%s %s" % (_t("v.reg.chain"), "; ".join(msg),
+                                           _t("v.reg.files"), "; ".join(msg2[:6]))))
+
+    def esporta(_b):
+        ch = Gtk.FileChooserDialog(title=_t("v.reg.export"), transient_for=win,
+                                   action=Gtk.FileChooserAction.SAVE)
+        ch.add_buttons(_t("v.cancel"), Gtk.ResponseType.CANCEL, _t("v.save"), Gtk.ResponseType.OK)
+        ch.set_current_name("registro-incarichi.html")
+        r = ch.run(); dest = ch.get_filename(); ch.destroy()
+        if r == Gtk.ResponseType.OK and dest:
+            stato.set_text(_t("v.reg.exported") % R.esporta_html(dest))
+
+    def salva(_b):
+        d = R.salva_log()
+        stato.set_text(_t("v.reg.saved") % d if d else _t("v.reg.nothing"))
+
+    def cartella(_b):
+        R.DIR.mkdir(parents=True, exist_ok=True)
+        run_bg(["pcmanfm", str(R.DIR)] if have("pcmanfm") else ["xdg-open", str(R.DIR)])
+
+    bar = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+    for etich, icona, fn in ((_t("v.reg.refresh"), "view-refresh", carica),
+                             (_t("v.reg.verify"), "security-high", verifica),
+                             (_t("v.reg.export"), "document-save", esporta),
+                             (_t("v.reg.save_logs"), "document-save-as", salva),
+                             (_t("v.reg.folder"), "folder-open", cartella)):
+        b = icon_button(etich, icona)
+        b.connect("clicked", fn)
+        b.set_sensitive(R is not None or fn is carica)
+        bar.pack_start(b, False, False, 0)
+    pag.pack_start(bar, False, False, 0)
+    filtro.connect("search-changed", carica)
+    nb.append_page(pag, Gtk.Label(label=_t("v.reg.tab")))
+    carica()
+
+    # --- schede successive: TUTTI i log NexusSec presenti ------------------
+    sources = [("boot", "/var/log/nxs-boot.log"),
+               ("Xorg", os.path.expanduser("~/.local/share/xorg/Xorg.0.log"))]
+    for p in sorted(glob.glob("/tmp/nxs-*.log")):
+        sources.append((os.path.basename(p)[4:-4], p))
     for label, path in sources:
+        if not os.path.isfile(path):
+            continue
         sw = Gtk.ScrolledWindow()
         tv = Gtk.TextView()
         tv.set_editable(False); tv.set_monospace(True); tv.set_left_margin(6)

@@ -923,6 +923,30 @@ Con RAM abbondante resta quasi inattivo. Configurato in `/etc/local.d/zram.start
 > Nota (live): le modifiche a scorciatoie/sfondo/impostazioni valgono per la
 > sessione; persistono al riavvio solo con la **persistenza dati** (NXSDATA).
 
+## Registro degli incarichi
+
+Ogni strumento lanciato da NexusSec (menu, terminale, ricognizioni di HORUS,
+pacchetti Kali) lascia una traccia in `~/NexusSec-loot/registro/registro-incarichi.jsonl`:
+orario **UTC** e locale, strumento, comando, esito, durata, profilo, modalità di
+rete (normale o anonima via Tor) e **impronte SHA-256 dei file prodotti** in
+`NexusSec-loot`. Le righe sono **concatenate** (ognuna contiene l'impronta della
+precedente): una riga modificata o tolta viene segnalata dalla verifica, e la
+verifica dei file dice se un risultato è stato alterato dopo il lancio. Con la
+persistenza il registro sopravvive ai riavvii e, allo spegnimento, vi vengono
+copiati anche i log NexusSec (che altrimenti stanno in RAM).
+
+- **Centro di Controllo → Registro e log**: elenco filtrabile dei lanci, verifica
+  d'integrità, esportazione HTML da allegare alla relazione, salvataggio dei log,
+  e una scheda per ogni log NexusSec presente.
+- Da terminale: `nxs-registro` (elenco), `nxs-registro verifica`,
+  `nxs-registro verifica-file`, `nxs-registro esporta rapporto.html`,
+  `nxs-registro salva-log`.
+- Per la parte forense resta la **catena di custodia** di ogni caso in `nxs-case`.
+
+Nota onesta: la catena rende evidenti le modifiche fatte "a mano"; chi ha pieno
+accesso alla chiavetta potrebbe riscriverla per intero. Per una prova forte,
+esporta il rapporto e conservane l'impronta fuori dalla chiavetta.
+
 ## Sicurezza, anonimato e anti-forensics
 
 Tutto è **opt-in** e reversibile: la live resta comoda, ma con un clic diventa
