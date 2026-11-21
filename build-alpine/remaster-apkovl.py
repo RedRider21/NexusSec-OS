@@ -76,6 +76,7 @@ def main(argv):
 
     with open(dst, "r+b") as f:
         found = []                         # (offset_record, lba, size)
+        old_label = ""
         vd = 16
         while True:
             f.seek(vd * SECTOR)
@@ -100,6 +101,8 @@ def main(argv):
                         found.append((off, lba, size))
                 # etichetta del volume (32 byte a-characters / UCS-2 Joliet)
                 vid = d[40:72]
+                if typ == 1:
+                    old_label = vid.decode("ascii", "replace").strip()
                 o = (old_d.encode("utf-16-be") if joliet else old_d.encode())
                 n = (new_d.encode("utf-16-be") if joliet else new_d.encode())
                 if o in vid:
@@ -130,6 +133,26 @@ def main(argv):
             f.write(struct.pack("<I", len(data)) + struct.pack(">I", len(data)))
         print("apkovl sostituito: LBA %d, %d -> %d byte, %d record aggiornati"
               % (lba, old_size, len(data), len(found)))
+
+        # GRUB EFI ha una configurazione INCORPORATA che trova il supporto per
+        # ETICHETTA: search --no-floppy --set=root --label "alpine-nexussec
+        # 261010 aarch64". Cambiando la data nell'etichetta del volume, su
+        # aarch64 GRUB si fermava al prompt (verificato in QEMU 2026-11-21).
+        # Aggiorniamo anche quelle stringhe (stessa lunghezza, testo in chiaro
+        # nell'immagine EFI e nella sua copia).
+        import mmap
+        vecchia = b'--label "' + old_label.encode()
+        nuova = b'--label "' + old_label.replace(old_d, new_d, 1).encode()
+        mm = mmap.mmap(f.fileno(), 0)
+        n_grub = 0
+        pos = mm.find(vecchia)
+        while pos != -1:
+            mm[pos:pos + len(nuova)] = nuova
+            n_grub += 1
+            pos = mm.find(vecchia, pos + len(nuova))
+        mm.flush()
+        mm.close()
+        print("ricerche GRUB per etichetta aggiornate: %d" % n_grub)
     return 0
 
 

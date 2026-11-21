@@ -349,6 +349,10 @@ ricorrenti su **musl + gcc 15**:
   pacchetti NexusSec) estratto dalla ISO della STESSA arch (il RPi ha un repo
   suo). RPi: `mcopy -o -i img@@1M` nella FAT + rigenerare il tar.gz. Collaudo:
   QEMU BIOS/UEFI (OVMF) + chiavetta USB virtuale (`-device usb-storage`),
+  aarch64 con qemu-system-aarch64 + AAVMF (lento, ~15 min). ATTENZIONE: il
+  GRUB EFI ha una config INCORPORATA `search --label "alpine-nexussec DATA
+  ARCH"`: se si cambia l'etichetta vanno cambiate anche quelle stringhe (lo fa
+  remaster-apkovl.py), altrimenti aarch64 resta al prompt `grub>`.
   tastiera della live ITALIANA (sendkey: `/`=shift-7, `-`=slash, `>`=shift-less).
 - **Permessi dell'apkovl (2026-11-21)**: generato su un host con umask 002 i
   file uscivano scrivibili dal gruppo e **doas rifiutava doas.conf** -> nessun
