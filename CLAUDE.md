@@ -370,6 +370,11 @@ ricorrenti su **musl + gcc 15**:
   ESATTO (ioctl LOOP_SET_STATUS64 con sizelimit: il losetup di busybox non lo
   sa fare) o la partizione stessa se il disco non e' montato per intero. Usato
   da nxs-persist (mkfs/LUKS/mount), nexussec.start e nxs-unlock-data.
+- **Persistenza legata alla chiavetta di avvio (2026-11-21)**: `nexussec.start`
+  monta la NXSDATA in chiaro solo via `nxs_pick_nxsdata` (nxs-persist-setup.sh):
+  deve stare sul disco di `nxs_boot_disk` (ricavato dal file del modloop);
+  altrove solo LUKS; `nxs_persist=any` in cmdline per l'eccezione. Le ignorate
+  finiscono in `/run/nxs/persist-ignored`. Collaudato con chiavetta estranea.
 - **Mai chiamare funzioni interattive dentro `while read ... done < FILE`**: le
   loro `read` leggono il file (nxs-persist faceva cosi': risposte casuali).
 - **Gestore dischi**: `model.motivo_sistema(node)` ('live'/'persist'/'mount')

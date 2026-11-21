@@ -197,6 +197,15 @@ una voce alla tabella partizioni (`sfdisk --append`). Fino alla v2026.10.10 lo
 spazio libero era calcolato male sulle chiavette scritte dalla ISO e la proposta
 poteva sovrapporsi alla distro: corretto.
 
+**Sicurezza della persistenza.** All'avvio la live monta da sola una `NXSDATA`
+**in chiaro solo se sta sulla chiavetta da cui si è avviata**: una chiavetta
+altrui preparata con la stessa etichetta viene ignorata (altrimenti i programmi
+nel suo `~/.local` girerebbero col tuo utente). Su un **altro** disco la
+persistenza si usa solo **cifrata** (LUKS: la passphrase è la prova che è tua).
+`nxs-persist` propone la cifratura **di default** (INVIO = sì) e avvisa se crei
+una persistenza in chiaro fuori dalla chiavetta di avvio. Eccezione voluta:
+parametro di avvio `nxs_persist=any`.
+
 **Con la chiavetta persistente (`NXSDATA`, `nxs-persist`)** i tool installati al
 volo **sopravvivono al riavvio**, senza complicare la live "nuda" (tutto e'
 attivo solo se `NXSDATA` e' montato):
