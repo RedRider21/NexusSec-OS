@@ -23,8 +23,9 @@ already_mounted() { mountpoint -q /var/nxs-data 2>/dev/null; }
 do_login() {
 	already_mounted && exit 0
 	# se esiste una NXSDATA in chiaro, la gestisce gia' il boot: niente da fare
-	# (nxs-findlabel, non blkid: quello di busybox usciva SEMPRE 0 -> niente sblocco)
-	if /usr/local/bin/nxs-findlabel NXSDATA >/dev/null 2>&1; then exit 0; fi
+	# Una NXSDATA in chiaro AMMESSA e' gia' stata montata dal boot (already_mounted
+	# sopra). NON si esce solo perche' "esiste una NXSDATA": una chiavetta altrui
+	# con quell'etichetta bloccherebbe lo sblocco della tua persistenza cifrata.
 	dev="$(command -v nxs_find_luks >/dev/null 2>&1 && nxs_find_luks || true)"
 	[ -n "$dev" ] || exit 0        # nessuna persistenza cifrata: esci
 	# sulla chiavetta di avvio serve un loop esatto (vedi nxs-partdev)

@@ -104,3 +104,61 @@ nxs_find_luks() {
 	# lsblk via nxs-findlabel: il blkid di busybox ignora -t/-o (vedi l'helper)
 	/usr/local/bin/nxs-findlabel NXSCRYPT crypto_LUKS 2>/dev/null || true
 }
+
+# ---------------------------------------------------------------------------
+# PERSISTENZA LEGATA AL SUPPORTO DI AVVIO (2026-11-21)
+# Prima si montava QUALUNQUE disco con etichetta NXSDATA: una chiavetta altrui
+# preparata con quell'etichetta, inserita all'avvio, sarebbe diventata la "tua"
+# persistenza (e i programmi nel suo ~/.local sarebbero partiti col tuo utente).
+# Regola: una NXSDATA IN CHIARO si monta da sola SOLO se sta sul disco da cui
+# si e' avviata la live; altrove serve la persistenza CIFRATA (la passphrase e'
+# la prova che e' tua). Eccezione voluta: parametro di avvio nxs_persist=any.
+# ---------------------------------------------------------------------------
+
+# Disco "padre" di un device (/dev/sda1 -> /dev/sda; un disco intero resta se
+# stesso). Vuoto se non determinabile.
+nxs_parent_disk() {
+	_d="$(readlink -f "$1" 2>/dev/null)"; [ -b "$_d" ] || return 0
+	_n="$(basename "$_d")"
+	if [ -e "/sys/class/block/$_n/partition" ]; then
+		echo "/dev/$(basename "$(readlink -f "/sys/class/block/$_n/..")")"
+	else
+		echo "$_d"
+	fi
+}
+
+# Disco da cui si e' avviata la live: quello che contiene il modloop (vive
+# SEMPRE sul supporto di avvio: /media/<dev>/boot/modloop-*). Su un sistema
+# installato (niente modloop su /media) e' il disco della radice.
+nxs_boot_disk() {
+	_src=""
+	for _bf in /sys/block/loop*/loop/backing_file; do
+		[ -r "$_bf" ] || continue
+		case "$(cat "$_bf" 2>/dev/null)" in
+			*/boot/modloop-*)
+				_src="$(findmnt -no SOURCE -T "$(cat "$_bf")" 2>/dev/null | head -1)"
+				break ;;
+		esac
+	done
+	[ -n "$_src" ] || _src="$(findmnt -no SOURCE / 2>/dev/null | head -1)"
+	case "$_src" in /dev/*) nxs_parent_disk "$_src" ;; esac
+}
+
+# Sceglie la NXSDATA in chiaro da montare: SOLO sul disco di avvio (o ovunque
+# con nxs_persist=any). Stampa il device; vuoto se non ce n'e' una ammessa.
+# Se ne trova di NON ammesse, lo scrive su stderr (finisce nel log di avvio).
+nxs_pick_nxsdata() {
+	_boot="$(nxs_boot_disk)"
+	_any=""; grep -qw "nxs_persist=any" /proc/cmdline 2>/dev/null && _any=1
+	_ok=""
+	for _p in $(lsblk -rpno NAME,LABEL 2>/dev/null | awk '$2=="NXSDATA"{print $1}'); do
+		case "$_p" in /dev/mapper/*|/dev/loop*) continue ;; esac
+		if [ -n "$_any" ] || [ "$(nxs_parent_disk "$_p")" = "$_boot" ]; then
+			[ -n "$_ok" ] || _ok="$_p"
+		else
+			echo "persistenza: IGNORATA la NXSDATA in chiaro su $_p (non e' sulla chiavetta di avvio $_boot: per usarla altrove serve la persistenza cifrata)" >&2
+			mkdir -p /run/nxs 2>/dev/null && echo "$_p" >> /run/nxs/persist-ignored 2>/dev/null
+		fi
+	done
+	echo "$_ok"
+}

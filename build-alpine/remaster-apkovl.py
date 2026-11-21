@@ -51,6 +51,48 @@ def _records(f, lba, size):
     return out
 
 
+def _tutte_le_estensioni(f):
+    """LBA di inizio di tutti i file/cartelle del descrittore primario."""
+    f.seek(16 * SECTOR)
+    pvd = f.read(SECTOR)
+    root = pvd[156:190]
+    out, viste = [], set()
+
+    def walk(lba, size):
+        if lba in viste:
+            return
+        viste.add(lba)
+        for off, rec in _records(f, lba, size):
+            nm = rec[33:33 + rec[32]]
+            if nm in (b"\x00", b"\x01"):
+                continue
+            l = struct.unpack("<I", rec[2:6])[0]
+            sz = struct.unpack("<I", rec[10:14])[0]
+            out.append(l)
+            if rec[25] & 2:
+                walk(l, sz)
+    walk(struct.unpack("<I", root[2:6])[0], struct.unpack("<I", root[10:14])[0])
+    return out, struct.unpack("<I", pvd[80:84])[0]
+
+
+def _capacita(f, lba, size):
+    """Spazio REALE disponibile per l'apkovl (2026-11-21). Prima si usava la
+    dimensione attuale del file: a ogni remaster lo spazio si restringeva fino
+    a non bastare piu'. Ora: dall'inizio dell'apkovl fino al file successivo
+    oppure al primo settore OCCUPATO dopo il file (in fondo alla ISO c'e' la
+    GPT di riserva), con 16 settori di margine, mai oltre il volume."""
+    est, vol = _tutte_le_estensioni(f)
+    fine_attuale = lba + (size + SECTOR - 1) // SECTOR
+    limite = min([e for e in est if e > lba] + [vol])
+    for sett in range(fine_attuale, limite):
+        f.seek(sett * SECTOR)
+        if any(f.read(SECTOR)):
+            limite = sett
+            break
+    limite = max(fine_attuale, limite - 16)
+    return (limite - lba) * SECTOR
+
+
 def _name(rec, joliet):
     n = rec[33:33 + rec[32]]
     try:
@@ -121,18 +163,21 @@ def main(argv):
             return 1
         lba = found[0][1]
         old_size = found[0][2]
-        capacity = ((old_size + SECTOR - 1) // SECTOR) * SECTOR
+        capacity = _capacita(f, lba, old_size)
         if len(data) > capacity:
             print("il nuovo apkovl (%d byte) non entra nello spazio del vecchio (%d byte)"
                   % (len(data), capacity))
             return 1
         f.seek(lba * SECTOR)
-        f.write(data + b"\0" * (capacity - len(data)))
+        # azzera SOLO la vecchia estensione (oltre c'e' riempimento gia' vuoto)
+        old_cap = ((old_size + SECTOR - 1) // SECTOR) * SECTOR
+        f.write(data + b"\0" * max(0, old_cap - len(data)))
         for off, _l, _s in found:
             f.seek(off + 10)
             f.write(struct.pack("<I", len(data)) + struct.pack(">I", len(data)))
-        print("apkovl sostituito: LBA %d, %d -> %d byte, %d record aggiornati"
-              % (lba, old_size, len(data), len(found)))
+        print("apkovl sostituito: LBA %d, %d -> %d byte, %d record aggiornati "
+              "(spazio disponibile %d byte, margine %d)"
+              % (lba, old_size, len(data), len(found), capacity, capacity - len(data)))
 
         # GRUB EFI ha una configurazione INCORPORATA che trova il supporto per
         # ETICHETTA: search --no-floppy --set=root --label "alpine-nexussec

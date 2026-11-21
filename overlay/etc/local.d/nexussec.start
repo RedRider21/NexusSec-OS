@@ -106,7 +106,10 @@ fi
 command -v lbu >/dev/null 2>&1 && lbu include /var/lib/bluetooth 2>/dev/null || true
 
 [ -f /usr/local/lib/nxs-persist-setup.sh ] && . /usr/local/lib/nxs-persist-setup.sh
-NXSDATA="$(findfs LABEL=NXSDATA 2>/dev/null || /usr/local/bin/nxs-findlabel NXSDATA 2>/dev/null || true)"
+# Solo la NXSDATA in chiaro sulla CHIAVETTA DI AVVIO (vedi nxs_pick_nxsdata):
+# una chiavetta estranea con la stessa etichetta non deve diventare la tua
+# persistenza. Altrove serve quella cifrata (nxs_find_luks, sblocco al login).
+NXSDATA="$(command -v nxs_pick_nxsdata >/dev/null 2>&1 && nxs_pick_nxsdata || true)"
 NXSLUKS="$(command -v nxs_find_luks >/dev/null 2>&1 && nxs_find_luks || true)"
 if [ -n "$NXSDATA" ]; then
 	# Persistenza IN CHIARO: montabile al boot senza interazione.

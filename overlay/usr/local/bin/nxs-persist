@@ -42,6 +42,8 @@ priv() { if [ "$(id -u)" = 0 ]; then "$@"; \
 
 LABEL=NXSDATA
 CRYPTLABEL=NXSCRYPT
+# funzioni condivise (disco di avvio, scelta della NXSDATA ammessa)
+[ -f /usr/local/lib/nxs-persist-setup.sh ] && . /usr/local/lib/nxs-persist-setup.sh
 
 # lsblk da utente non vede filesystem ed etichette (nella live udev non li
 # registra e i dischi non sono leggibili da nexus): senza, NXSDATA o le ISO non
@@ -65,7 +67,14 @@ _root_src="$(findmnt -no SOURCE / 2>/dev/null || true)"
 # gia' presente una persistenza NexusSec? (NXSDATA in chiaro o LUKS NXSCRYPT)
 has_nxsdata() {
 	# NB: niente blkid (busybox: ignora -L/-t ed esce 0 -> falso "gia' configurata")
-	/usr/local/bin/nxs-findlabel "$LABEL" >/dev/null 2>&1 && return 0
+	mountpoint -q /var/nxs-data 2>/dev/null && return 0
+	# in chiaro: conta SOLO quella sulla chiavetta di avvio (le altre la live le
+	# ignora per sicurezza, quindi non sono "la tua" persistenza)
+	if command -v nxs_pick_nxsdata >/dev/null 2>&1; then
+		[ -n "$(nxs_pick_nxsdata 2>/dev/null)" ] && return 0
+	else
+		/usr/local/bin/nxs-findlabel "$LABEL" >/dev/null 2>&1 && return 0
+	fi
 	/usr/local/bin/nxs-findlabel "$CRYPTLABEL" crypto_LUKS >/dev/null 2>&1 && return 0
 	return 1
 }
@@ -153,8 +162,21 @@ ask_size() {
 # status
 # ---------------------------------------------------------------------------
 status() {
-	dev="$(/usr/local/bin/nxs-findlabel "$LABEL" 2>/dev/null || true)"
+	# in chiaro: SOLO quella ammessa (sulla chiavetta di avvio). Le altre la
+	# live le ignora di proposito: dirlo chiaramente, non "riavvia per attivarla".
+	if command -v nxs_pick_nxsdata >/dev/null 2>&1; then
+		dev="$(nxs_pick_nxsdata 2>/dev/null)"
+	else
+		dev="$(/usr/local/bin/nxs-findlabel "$LABEL" 2>/dev/null || true)"
+	fi
 	cdev="$(/usr/local/bin/nxs-findlabel "$CRYPTLABEL" crypto_LUKS 2>/dev/null || true)"
+	if mountpoint -q /var/nxs-data 2>/dev/null && [ -z "$dev" ] && [ -z "$cdev" ]; then
+		dev="$(findmnt -no SOURCE /var/nxs-data 2>/dev/null | head -1)"
+	fi
+	if [ -z "$dev" ] && [ -s /run/nxs/persist-ignored ]; then
+		echo "Nota: ignorata per sicurezza la NXSDATA in chiaro su $(tr '\n' ' ' < /run/nxs/persist-ignored)"
+		echo "  (non sta sulla chiavetta di avvio: altrove si usa solo quella CIFRATA)."
+	fi
 	if [ -n "$dev" ]; then
 		echo "Persistenza: partizione $LABEL (in chiaro) su $dev"
 	elif [ -n "$cdev" ]; then
@@ -242,8 +264,11 @@ scan() {
 			# disco intero vuoto (nessuna partizione) e non di sistema
 			nparts="$(lsblk -rno NAME "$NAME" 2>/dev/null | tail -n +2 | wc -l | tr -d ' ')"
 			tr_h="$(human_tran "$TRAN")"
-			# niente dischi minuscoli (es. lettore floppy fd0 da 4K delle VM)
-			if [ "$nparts" = "0" ] && ! disk_is_system "$NAME" && [ -z "$MOUNTPOINT" ] \
+			# niente dischi minuscoli (es. lettore floppy fd0 da 4K delle VM) e
+			# niente dischi con un filesystem DIRETTAMENTE sopra (senza tabella
+			# partizioni): NON sono vuoti (2026-11-21: una chiavetta altrui era
+			# proposta come "vuota, consigliata" -> formattarla ne cancellava i dati)
+			if [ "$nparts" = "0" ] && [ -z "$FSTYPE" ] && ! disk_is_system "$NAME" && [ -z "$MOUNTPOINT" ] \
 			   && [ "$(disk_size_mib "$NAME")" -ge "$MINFREE_MIB" ]; then
 				rec=0; [ "$RM" = "1" ] || [ "$TRAN" = "usb" ] && rec=1
 				mdl="$(dev_model "$NAME")"; [ -n "$mdl" ] && mdl=" '$mdl'"
@@ -355,8 +380,24 @@ do_format() {
 	fi
 	enc=""
 	if command -v cryptsetup >/dev/null 2>&1; then
-		printf "  Cifrare la partizione con LUKS? (consigliato: protegge loot e dati) [s/N]: "
+		# Cifratura PROPOSTA di default (INVIO = si'): protegge loot e dati e,
+		# su un disco diverso dalla chiavetta di avvio, e' l'unico modo perche'
+		# la persistenza venga usata (vedi nxs_pick_nxsdata).
+		printf "  Cifrare la partizione con LUKS? (consigliato: protegge loot e dati;\n"
+		printf "  ti verra' chiesta la passphrase a ogni avvio) [S/n]: "
 		read enc
+		case "$enc" in ''|s|S|si|Si|SI|y|Y) enc=s ;; *) enc=n ;; esac
+	fi
+	if [ "$enc" != s ] && command -v nxs_boot_disk >/dev/null 2>&1 \
+	   && [ "$(nxs_parent_disk "$part")" != "$(nxs_boot_disk)" ]; then
+		echo
+		echo "  ATTENZIONE: $part NON e' sulla chiavetta di avvio. Per sicurezza la live"
+		echo "  monta da sola solo la persistenza in chiaro che sta sulla chiavetta di"
+		echo "  avvio: questa verra' IGNORATA agli avvii (salvo il parametro di avvio"
+		echo "  nxs_persist=any). Su un altro disco usa la persistenza CIFRATA."
+		printf "  Procedo lo stesso in chiaro? [s/N]: "
+		read ans
+		case "$ans" in s|S|si|Si|SI|y|Y) ;; *) echo "  annullato."; return 1 ;; esac
 	fi
 	priv umount "$part" 2>/dev/null || true
 	# Partizione sulla chiavetta di avvio: il disco intero e' montato dalla
