@@ -26,6 +26,8 @@ import re
 import shutil
 import subprocess
 
+from nxs_disks import model
+
 try:
     from nxs_i18n import t as _t
 except Exception:                # noqa: BLE001
@@ -81,7 +83,22 @@ def mount_rw(node):
     return _monta(node, scrittura=True)
 
 
+# Tipo da passare a mount: in NexusSec /bin/mount e' quello di BUSYBOX, che senza
+# -t prova solo i filesystem gia' caricati nel kernel -> "Invalid argument" su
+# ext4/vfat/exfat appena avviata la live. Con -t il kernel carica il modulo.
+_TIPO_MOUNT = {"ntfs": "ntfs3", "msdos": "vfat"}
+
+
+def _blocco_sistema(node):
+    """Messaggio d'errore se il dispositivo e' di sistema, altrimenti ''."""
+    m = model.motivo_sistema(node)
+    return _t("mnt.sys_" + m) if m else ""
+
+
 def _monta(node, scrittura):
+    blk = _blocco_sistema(node)
+    if blk:
+        return (False, blk)
     if node.mounted:
         return (True, _t("mnt.already_mounted") % node.mountpoint)
     if node.is_swap:
@@ -101,7 +118,8 @@ def _monta(node, scrittura):
         return (False, _t("mnt.mkdir_fail") % (punto, msg))
 
     opz = ("rw," if scrittura else "ro,") + _OPZIONI_BASE
-    ok, msg = _priv(["mount", "-o", opz, node.path, punto])
+    ok, msg = _priv(["mount", "-t", _TIPO_MOUNT.get(node.fstype, node.fstype),
+                     "-o", opz, node.path, punto])
     if ok:
         return (True, punto)
 
@@ -120,6 +138,9 @@ def smonta(node):
     """Smonta. Rimuove anche la cartella se l'avevamo creata noi."""
     if not node.mounted:
         return (True, _t("mnt.not_mounted"))
+    blk = _blocco_sistema(node)
+    if blk:
+        return (False, blk)
     ok, msg = _priv(["umount", node.mountpoint])
     if not ok:
         return (False, msg or _t("mnt.umount_fail"))
@@ -141,6 +162,12 @@ def write_protect(path, attiva):
     Scavalcandolo si creerebbero due meccanismi che non si vedono a vicenda.
     Il fallback su blockdev resta per il caso in cui nxs-writeblock manchi.
     """
+    # Mai mettere in sola lettura il disco della live o della persistenza: la
+    # live smetterebbe di poter scrivere i suoi dati (blocco a livello di disco).
+    if attiva:
+        blk = _blocco_sistema(model.find(model.list_devices(), path))
+        if blk:
+            return (False, blk)
     if shutil.which("nxs-writeblock"):
         ok, msg = _priv(["nxs-writeblock", "lock" if attiva else "unlock", path])
         if ok:

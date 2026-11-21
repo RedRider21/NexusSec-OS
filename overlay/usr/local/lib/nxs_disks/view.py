@@ -184,12 +184,17 @@ def open_disks(_btn=None):
                 GLib.idle_add(mostra)
             threading.Thread(target=leggi_smart, daemon=True).start()
 
-        montabile = n.mountable and not n.mounted and not ctx["busy"]
+        # Dispositivi di sistema (live, persistenza): si guardano, non si toccano.
+        sis = model.motivo_sistema(n)
+        if sis and not ctx["busy"]:
+            stato.set_text(_t("mnt.sys_" + sis))
+        montabile = n.mountable and not n.mounted and not ctx["busy"] and not sis
         b_ro.set_sensitive(montabile)
         b_rw.set_sensitive(montabile)
-        b_um.set_sensitive(n.mounted and not ctx["busy"])
+        b_um.set_sensitive(n.mounted and not ctx["busy"] and not sis)
         b_apri.set_sensitive(n.mounted)
-        b_prot.set_sensitive(n.is_disk and not ctx["busy"])
+        b_prot.set_sensitive(n.is_disk and not ctx["busy"]
+                             and (not sis or model.protetto_in_scrittura(n.path)))
         b_img.set_sensitive(not ctx["busy"])
         b_prot.set_label(_t("dk.unlock_write") if model.protetto_in_scrittura(n.path)
                          else _t("dk.lock_write"))
@@ -266,8 +271,12 @@ def open_disks(_btn=None):
         ch.destroy()
         if r != Gtk.ResponseType.OK or not dest:
             return
+        # percorsi QUOTATI: un nome file con spazi (o caratteri di shell) non
+        # deve spezzare ne' alterare il comando.
+        import shlex
         cmd = ("doas dd if=%s of=%s bs=4M conv=noerror,sync status=progress; "
-               "echo; echo 'Premi Invio per chiudere'; read x" % (n.path, dest))
+               "echo; echo 'Premi Invio per chiudere'; read x"
+               % (shlex.quote(n.path), shlex.quote(dest)))
         if have("lxterminal"):
             run_bg(["lxterminal", "-e", cmd])
         else:

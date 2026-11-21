@@ -13,7 +13,39 @@ import sys
 from nxs_disks import model
 
 
+def _spazio_libero_sfdisk(disco):
+    """Spazio libero via `sfdisk -F` (in settori da 512 byte). Preferito a
+    parted: parted NON vede la partizione ISO ibrida che parte dal settore 0
+    e segnala come "libero" lo spazio SOPRA la ISO (bug che cancellava la
+    distro in nxs-persist, 2026-11-20). None se sfdisk non c'e'/fallisce."""
+    try:
+        r = subprocess.run(["sfdisk", "-F", disco], capture_output=True, text=True,
+                           timeout=15)
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if r.returncode != 0:
+        return None
+    liberi = []
+    for riga in r.stdout.splitlines():
+        campi = riga.split()
+        if len(campi) >= 3 and campi[0].isdigit() and campi[1].isdigit():
+            s, e = int(campi[0]), int(campi[1])
+            ini = ((s * 512 + 1048575) // 1048576) * 1048576    # allinea a 1 MiB
+            fin = (e + 1) * 512 - 1
+            dim = fin - ini + 1
+            if dim >= 2 * 1024 ** 3:
+                liberi.append((ini, fin, dim))
+    return liberi
+
+
 def _spazio_libero(disco):
+    liberi = _spazio_libero_sfdisk(disco)
+    if liberi is not None:
+        return liberi
+    return _spazio_libero_parted(disco)
+
+
+def _spazio_libero_parted(disco):
     """Blocchi di spazio NON allocato su un disco, via parted.
 
     Ritorna [(inizio, fine, dimensione)] come stringhe cosi' come le riporta
@@ -88,6 +120,11 @@ def elenco_partizioni_installabili():
         if n.fstype in ("vfat",) and (n.label or "").upper() in ("SYSTEM", "EFI", "ESP"):
             continue
         if n.mountpoint in ("/", "/boot", "/boot/efi"):
+            continue
+        # Montata (in uso: formattarla la corromperebbe), persistenza NexusSec
+        # (NXSDATA/NXSCRYPT, magari in uso via loop) o sul disco della live:
+        # MAI proporla come destinazione da formattare (2026-11-21).
+        if n.mounted or model.motivo_sistema(n):
             continue
         fuori.append("%s\t%s\t%s\t%s\t%s"
                      % (n.path, model.human(n.size), n.fstype or "-",

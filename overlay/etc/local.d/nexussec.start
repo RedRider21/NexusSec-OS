@@ -106,13 +106,17 @@ fi
 command -v lbu >/dev/null 2>&1 && lbu include /var/lib/bluetooth 2>/dev/null || true
 
 [ -f /usr/local/lib/nxs-persist-setup.sh ] && . /usr/local/lib/nxs-persist-setup.sh
-NXSDATA="$(findfs LABEL=NXSDATA 2>/dev/null || blkid -L NXSDATA 2>/dev/null || true)"
+NXSDATA="$(findfs LABEL=NXSDATA 2>/dev/null || /usr/local/bin/nxs-findlabel NXSDATA 2>/dev/null || true)"
 NXSLUKS="$(command -v nxs_find_luks >/dev/null 2>&1 && nxs_find_luks || true)"
 if [ -n "$NXSDATA" ]; then
 	# Persistenza IN CHIARO: montabile al boot senza interazione.
 	echo "persistenza: NXSDATA su $NXSDATA -> monto /var/nxs-data"
 	mkdir -p /var/nxs-data
-	mountpoint -q /var/nxs-data || mount "$NXSDATA" /var/nxs-data
+	# nxs-partdev: se NXSDATA sta sulla chiavetta di avvio (disco intero montato
+	# dalla live -> partizioni non montabili direttamente) usa un loop esatto.
+	_nxsdev="$(/usr/local/bin/nxs-partdev "$NXSDATA" 2>/dev/null || echo "$NXSDATA")"
+	modprobe ext4 2>/dev/null || true
+	mountpoint -q /var/nxs-data || mount -t ext4 "$_nxsdev" /var/nxs-data
 	command -v nxs_persist_setup >/dev/null 2>&1 && nxs_persist_setup
 	echo "persistenza ATTIVA: podman graphroot + stato tool + loot su disco"
 elif [ -n "$NXSLUKS" ]; then

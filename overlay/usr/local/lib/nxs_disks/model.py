@@ -40,6 +40,21 @@ def _run(args, timeout=15):
         return ""
 
 
+def _lsblk(args):
+    """lsblk con privilegi quando servono. Nella live il database di udev NON ha
+    filesystem/etichette dei dischi e un utente normale non puo' leggerli: lsblk
+    da utente mostra tutto "(nessuno)" -> niente montaggi, niente NXSDATA
+    (verificato in VM 2026-11-21). `doas -n` (mai una richiesta di password:
+    se non e' permesso fallisce subito) esegue lsblk da root, che e' SOLA
+    LETTURA; altrimenti si ripiega su lsblk normale."""
+    import os
+    if os.geteuid() != 0 and shutil.which("doas"):
+        out = _run(["doas", "-n", "lsblk"] + args)
+        if out:
+            return out
+    return _run(["lsblk"] + args)
+
+
 def have(prog):
     return shutil.which(prog) is not None
 
@@ -148,9 +163,9 @@ def list_devices(include_loop=False):
     include_loop: normalmente i loop device (il modloop della live, gli
     squashfs) sono rumore e vengono esclusi.
     """
-    out = _run(["lsblk", "-J", "-b", "-o", _COLS])
+    out = _lsblk(["-J", "-b", "-o", _COLS])
     if not out:
-        out = _run(["lsblk", "-J", "-b", "-o", _COLS_FALLBACK])
+        out = _lsblk(["-J", "-b", "-o", _COLS_FALLBACK])
     if not out:
         return []
     try:
@@ -234,6 +249,53 @@ def uso(mountpoint):
     tot = st.f_blocks * st.f_frsize
     lib = st.f_bavail * st.f_frsize
     return (tot - lib, tot)
+
+
+# --- dispositivi DI SISTEMA (2026-11-21) ---------------------------------
+# Cose che il gestore dischi NON deve toccare (smontare, proteggere in
+# scrittura, montare una seconda volta, proporre all'installatore):
+#   - il supporto di avvio della live: l'init lo monta sotto /media/<dev>
+#     (i montaggi fatti da NOI stanno invece sotto /media/nxs/);
+#   - la persistenza NexusSec (etichette NXSDATA / NXSCRYPT), che puo' essere
+#     in uso tramite un loop (nxs-partdev) e quindi risultare "non montata";
+#   - radice, /boot e il modloop.
+NXS_LABELS = ("NXSDATA", "NXSCRYPT")
+_SYS_MP = ("/", "/boot", "/boot/efi", "/.modloop", "/var/nxs-data")
+
+
+def mountpoint_di_sistema(mp):
+    if not mp:
+        return False
+    if mp in _SYS_MP or mp.startswith("/var/nxs-data/") or mp.startswith("/.modloop"):
+        return True
+    return mp.startswith("/media/") and not mp.startswith("/media/nxs/")
+
+
+def _radice(node):
+    while node.parent is not None:
+        node = node.parent
+    return node
+
+
+def motivo_sistema(node):
+    """Stringa vuota se il dispositivo si puo' toccare, altrimenti il motivo:
+    'live' (chiavetta/disco di avvio della live), 'persist' (persistenza
+    NexusSec), 'mount' (montaggio di sistema). Sola lettura, nessun effetto."""
+    if node is None:
+        return ""
+    if node.label in NXS_LABELS:
+        return "persist"
+    if mountpoint_di_sistema(node.mountpoint):
+        return "mount"
+    disco = _radice(node)
+    tutti = flatten([disco])
+    live = any(mountpoint_di_sistema(n.mountpoint) and n.label not in NXS_LABELS
+               for n in tutti)
+    if live:
+        return "live"
+    if node.is_disk and any(n.label in NXS_LABELS for n in tutti):
+        return "persist"
+    return ""
 
 
 def protetto_in_scrittura(path):

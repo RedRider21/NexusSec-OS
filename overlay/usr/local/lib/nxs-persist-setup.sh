@@ -101,8 +101,6 @@ nxs_persist_creds() {
 # Cerca la partizione dati CIFRATA (LUKS2 con label NXSCRYPT). Stampa il device
 # del container LUKS, vuoto se assente.
 nxs_find_luks() {
-	blkid -t TYPE=crypto_LUKS 2>/dev/null | while IFS=: read -r dev _rest; do
-		lbl="$(blkid -o value -s LABEL "$dev" 2>/dev/null)"
-		[ "$lbl" = "NXSCRYPT" ] && { echo "$dev"; break; }
-	done
+	# lsblk via nxs-findlabel: il blkid di busybox ignora -t/-o (vedi l'helper)
+	/usr/local/bin/nxs-findlabel NXSCRYPT crypto_LUKS 2>/dev/null || true
 }

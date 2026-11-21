@@ -1,0 +1,106 @@
+#!/usr/bin/env python3
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
+"""nxs-partdev PARTIZIONE - stampa un dispositivo su cui si possono fare
+mkfs / cryptsetup / mount di quella partizione.
+
+PERCHE' (2026-11-21): la live monta l'INTERO disco di avvio (la ISO ibrida e'
+ISO9660 a partire dal settore 0, e nlplug-findfs monta /dev/sdX, non sdX1). Il
+kernel allora VIETA l'uso esclusivo di qualunque partizione di quel disco
+(EBUSY): mkfs.ext4 rifiuta ("apparently in use by the system"), mount e
+cryptsetup falliscono. Per questo la persistenza NXSDATA sulla STESSA
+chiavetta della distro non poteva funzionare.
+
+Soluzione: un dispositivo LOOP sul disco intero con offset e lunghezza ESATTI
+della partizione (un loop non chiede l'uso esclusivo del disco). Il loop si
+crea con le ioctl del kernel (LOOP_SET_FD + LOOP_SET_STATUS64 con
+lo_sizelimit): il losetup di busybox non sa limitare la lunghezza e quello di
+util-linux non e' nella base. Se un loop identico esiste gia' lo riusa.
+
+Se il disco della partizione NON e' montato per intero, stampa la partizione
+stessa (nessun loop). Uscita 0 = dispositivo stampato, 1 = errore.
+"""
+import fcntl
+import glob
+import os
+import struct
+import sys
+
+LOOP_SET_FD = 0x4C00
+LOOP_CLR_FD = 0x4C01
+LOOP_SET_STATUS64 = 0x4C04
+LOOP_CTL_GET_FREE = 0x4C82
+# struct loop_info64 (linux/loop.h): 5 u64, 4 u32, 64+64+32 byte, 2 u64
+INFO64 = "=QQQQQIIII64s64s32sQQ"
+
+
+def _read(p):
+    with open(p) as f:
+        return f.read().strip()
+
+
+def _whole_mounted(whole):
+    with open("/proc/mounts") as f:
+        return any(line.split()[0] == whole for line in f if line.strip())
+
+
+def main():
+    if len(sys.argv) != 2:
+        print(__doc__.strip().splitlines()[0], file=sys.stderr)
+        return 1
+    dev = os.path.realpath(sys.argv[1])
+    name = os.path.basename(dev)
+    sysd = "/sys/class/block/" + name
+    if not os.path.exists(sysd + "/partition"):
+        print(dev)                        # non e' una partizione: va bene cosi'
+        return 0
+    whole = "/dev/" + os.path.basename(os.path.realpath(sysd + "/.."))
+    if not _whole_mounted(whole):
+        print(dev)                        # disco libero: si usa la partizione
+        return 0
+    start = int(_read(sysd + "/start")) * 512
+    size = int(_read(sysd + "/size")) * 512
+
+    # Loop gia' creato per questa stessa zona? Riusalo.
+    for lp in sorted(glob.glob("/sys/block/loop*/loop")):
+        try:
+            if (os.path.realpath(_read(lp + "/backing_file")) == whole
+                    and int(_read(lp + "/offset")) == start
+                    and int(_read(lp + "/sizelimit")) == size):
+                print("/dev/" + lp.split("/")[3])
+                return 0
+        except (OSError, ValueError):
+            continue
+
+    try:
+        ctl = os.open("/dev/loop-control", os.O_RDWR)
+        num = fcntl.ioctl(ctl, LOOP_CTL_GET_FREE)
+        os.close(ctl)
+        loop = "/dev/loop%d" % num
+        lfd = os.open(loop, os.O_RDWR)
+        bfd = os.open(whole, os.O_RDWR)    # NON esclusivo: e' tutto il punto
+        fcntl.ioctl(lfd, LOOP_SET_FD, bfd)
+        info = struct.pack(INFO64, 0, 0, 0, start, size, 0, 0, 0, 0,
+                           os.path.basename(whole).encode()[:63], b"", b"", 0, 0)
+        try:
+            fcntl.ioctl(lfd, LOOP_SET_STATUS64, info)
+        except OSError:
+            fcntl.ioctl(lfd, LOOP_CLR_FD, 0)   # mai lasciare un loop sull'intero disco
+            raise
+        os.close(bfd)
+        os.close(lfd)
+    except OSError as e:
+        print("nxs-partdev: impossibile creare il loop per %s: %s" % (dev, e), file=sys.stderr)
+        return 1
+    # verifica: la lunghezza del loop deve coincidere con la partizione
+    got = int(_read("/sys/block/loop%d/size" % num)) * 512
+    if got != size:
+        print("nxs-partdev: lunghezza del loop errata (%d invece di %d)" % (got, size),
+              file=sys.stderr)
+        return 1
+    print(loop)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

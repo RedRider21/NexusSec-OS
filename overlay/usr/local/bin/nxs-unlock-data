@@ -23,9 +23,12 @@ already_mounted() { mountpoint -q /var/nxs-data 2>/dev/null; }
 do_login() {
 	already_mounted && exit 0
 	# se esiste una NXSDATA in chiaro, la gestisce gia' il boot: niente da fare
-	if blkid -L NXSDATA >/dev/null 2>&1; then exit 0; fi
+	# (nxs-findlabel, non blkid: quello di busybox usciva SEMPRE 0 -> niente sblocco)
+	if /usr/local/bin/nxs-findlabel NXSDATA >/dev/null 2>&1; then exit 0; fi
 	dev="$(command -v nxs_find_luks >/dev/null 2>&1 && nxs_find_luks || true)"
 	[ -n "$dev" ] || exit 0        # nessuna persistenza cifrata: esci
+	# sulla chiavetta di avvio serve un loop esatto (vedi nxs-partdev)
+	dev="$(priv /usr/local/bin/nxs-partdev "$dev" 2>/dev/null || echo "$dev")"
 	echo
 	echo "==============================================================="
 	echo "  Persistenza cifrata NexusSec rilevata su $dev"
@@ -42,7 +45,7 @@ do_login() {
 	done
 	[ -e "/dev/mapper/$MAP" ] || exit 0
 	priv mkdir -p /var/nxs-data
-	priv mount "/dev/mapper/$MAP" /var/nxs-data 2>/dev/null || {
+	priv modprobe ext4 2>/dev/null; priv mount -t ext4 "/dev/mapper/$MAP" /var/nxs-data 2>/dev/null || {
 		echo "  Errore nel montare la persistenza."; exit 0; }
 	# setup (cartelle, storage podman, link) come al boot
 	priv sh -c '. /usr/local/lib/nxs-persist-setup.sh; nxs_persist_setup' 2>/dev/null || true

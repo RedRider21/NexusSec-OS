@@ -13,6 +13,11 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 OVERLAY="${NXS_OVERLAY:-$SCRIPT_DIR/../overlay}"
 
 cleanup() { rm -rf "$tmp"; }
+# Permessi indipendenti dall'host (2026-11-21): con l'umask 002 di molte distro
+# desktop (Mint/Ubuntu) i file creati qui uscivano scrivibili dal gruppo e doas
+# RIFIUTAVA /etc/doas.d/doas.conf ("writable by group or other") -> nessun
+# comando da amministratore funzionava nella live. Vedi anche chmod go-w sotto.
+umask 022
 tmp="$(mktemp -d)"
 trap cleanup EXIT
 
@@ -50,9 +55,15 @@ find "$tmp" -type f \( -name '*.pyc' -o -name '*.pyo' \) -delete 2>/dev/null || 
 # niente agetty (loop "can't run /sbin/agetty"). nexussec-base tira tutto lo
 # stack desktop. I sec-profile-* NON vanno qui: si installano on-demand.
 mkdir -p "$tmp/etc/apk"
+# sfdisk+partx: servono a nxs-persist per creare la persistenza DOPO la distro
+# sulla chiavetta di avvio (2026-11-20). Sono gia' dep di nexussec-base dalla
+# r14, ma li elenchiamo anche qui: cosi' li installano pure le ISO rimasterizzate
+# (remaster-apkovl.py) che hanno ancora la r13 (pacchetti gia' sul media).
 cat > "$tmp/etc/apk/world" <<'EOF'
 alpine-base
 nexussec-base
+sfdisk
+partx
 EOF
 
 # 2) Utente nexus + gruppi (in apkovl si scrivono i file, niente adduser).
@@ -180,6 +191,10 @@ cat > "$tmp/etc/hosts" <<EOF
 127.0.0.1	localhost localhost.localdomain $HOSTNAME
 ::1		localhost localhost.localdomain $HOSTNAME
 EOF
+
+# 5bis) Nessun file dell'overlay deve essere scrivibile da gruppo/altri: i
+# sorgenti copiati dal checkout git ereditano i permessi dell'host (umask 002).
+chmod -R go-w "$tmp"
 
 # 6) Pacchetto apkovl: STDOUT-safe e file nella CWD (convenzione mkimage).
 #    Include solo le dir presenti (var c'e' se incorporiamo il repo nexussec).

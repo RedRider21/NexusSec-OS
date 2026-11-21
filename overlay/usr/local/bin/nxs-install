@@ -37,6 +37,17 @@ conferma_percorso() {
 # il ciclo sotto) lo script terminava dopo ogni scelta e nxs-term CHIUDEVA il
 # terminale di colpo: l'utente che sceglieva "mostra dischi" non vedeva nulla e
 # sembrava un errore. Ora le azioni informative tornano al menu.
+# lsblk da utente non vede filesystem ed etichette (nella live udev non li
+# registra e i dischi non sono leggibili da nexus): senza, NXSDATA o le ISO non
+# si riconoscerebbero. Se non siamo root, lsblk passa da `doas -n` (SOLA
+# LETTURA; -n = mai una richiesta di password: se non e' consentito, si usa
+# lsblk normale). 2026-11-21.
+_LSBLK_BIN="$(command -v lsblk 2>/dev/null || echo lsblk)"
+if [ "$(id -u)" != 0 ] && command -v doas >/dev/null 2>&1 \
+   && doas -n "$_LSBLK_BIN" -d -o NAME >/dev/null 2>&1; then
+  lsblk() { doas -n "$_LSBLK_BIN" "$@"; }
+fi
+
 pausa() { printf "\n  Premi Invio per tornare al menu..."; read _ 2>/dev/null; }
 
 # Un disco e' il SUPPORTO DI AVVIO della live (da NON offrire mai): ha una

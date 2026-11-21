@@ -98,6 +98,10 @@ button:hover { border-color: #00e5ff; background-color: #12202e; }
 button:active, button:checked { background-color: #00e5ff; color: #050a14; }
 button.nxs-primary { background-color: #00334a; border-color: #00e5ff; color: #00e5ff; }
 button.nxs-primary:hover { background-color: #00475f; }
+/* Pulsanti DISATTIVATI riconoscibili (2026-11-21): prima un pulsante primario
+   disattivato (es. "Monta sola lettura" sulla persistenza) sembrava cliccabile. */
+button:disabled, button.nxs-primary:disabled { opacity: 0.4; }
+button.nxs-primary:disabled { background-color: #0a1a26; border-color: #1a3a52; color: #5a8a9a; }
 entry {
   background-color: #070f1a; color: #c8f5ff;
   border: 1px solid #17293a; border-radius: 9px; caret-color: #00e5ff; padding: 6px 12px;

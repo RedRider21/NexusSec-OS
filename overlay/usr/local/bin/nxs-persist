@@ -42,6 +42,17 @@ priv() { if [ "$(id -u)" = 0 ]; then "$@"; \
 
 LABEL=NXSDATA
 CRYPTLABEL=NXSCRYPT
+
+# lsblk da utente non vede filesystem ed etichette (nella live udev non li
+# registra e i dischi non sono leggibili da nexus): senza, NXSDATA o le ISO non
+# si riconoscerebbero. Se non siamo root, lsblk passa da `doas -n` (SOLA
+# LETTURA; -n = mai una richiesta di password: se non e' consentito, si usa
+# lsblk normale). 2026-11-21.
+_LSBLK_BIN="$(command -v lsblk 2>/dev/null || echo lsblk)"
+if [ "$(id -u)" != 0 ] && command -v doas >/dev/null 2>&1 \
+   && doas -n "$_LSBLK_BIN" -d -o NAME >/dev/null 2>&1; then
+	lsblk() { doas -n "$_LSBLK_BIN" "$@"; }
+fi
 MINFREE_MIB=200          # spazio libero minimo utile per una partizione dati
 
 # ---------------------------------------------------------------------------
@@ -53,14 +64,10 @@ _root_src="$(findmnt -no SOURCE / 2>/dev/null || true)"
 
 # gia' presente una persistenza NexusSec? (NXSDATA in chiaro o LUKS NXSCRYPT)
 has_nxsdata() {
-	findfs LABEL=$LABEL >/dev/null 2>&1 && return 0
-	blkid -L $LABEL >/dev/null 2>&1 && return 0
-	command -v cryptsetup >/dev/null 2>&1 || return 1
-	found=1
-	for d in $(blkid -t TYPE=crypto_LUKS -o device 2>/dev/null); do
-		[ "$(blkid -o value -s LABEL "$d" 2>/dev/null)" = "$CRYPTLABEL" ] && found=0
-	done
-	return $found
+	# NB: niente blkid (busybox: ignora -L/-t ed esce 0 -> falso "gia' configurata")
+	/usr/local/bin/nxs-findlabel "$LABEL" >/dev/null 2>&1 && return 0
+	/usr/local/bin/nxs-findlabel "$CRYPTLABEL" crypto_LUKS >/dev/null 2>&1 && return 0
+	return 1
 }
 
 is_system_dev() {                       # $1 = /dev/... (partizione o disco)
@@ -146,12 +153,8 @@ ask_size() {
 # status
 # ---------------------------------------------------------------------------
 status() {
-	dev="$(findfs LABEL=$LABEL 2>/dev/null || blkid -L $LABEL 2>/dev/null || true)"
-	cdev=""
-	command -v cryptsetup >/dev/null 2>&1 && \
-		cdev="$(blkid -t TYPE=crypto_LUKS 2>/dev/null | while IFS=: read -r d _r; do
-			[ "$(blkid -o value -s LABEL "$d" 2>/dev/null)" = "$CRYPTLABEL" ] && { echo "$d"; break; }
-		done)"
+	dev="$(/usr/local/bin/nxs-findlabel "$LABEL" 2>/dev/null || true)"
+	cdev="$(/usr/local/bin/nxs-findlabel "$CRYPTLABEL" crypto_LUKS 2>/dev/null || true)"
 	if [ -n "$dev" ]; then
 		echo "Persistenza: partizione $LABEL (in chiaro) su $dev"
 	elif [ -n "$cdev" ]; then
@@ -220,9 +223,16 @@ scan() {
 		part)
 			is_system_dev "$NAME" && continue
 			[ "$LABEL" = "$LABEL_NXS" ] && continue   # gia' NXSDATA: gestita a parte
+			# Troppo piccola per servire (es. 1.4M): mai proporla.
+			[ "$(disk_size_mib "$NAME")" -lt "$MINFREE_MIB" ] && continue
+			# Partizioni della CHIAVETTA DI AVVIO: mai proporle da formattare
+			# (2026-11-21: veniva proposta la EFI della distro, 1.4M vfat ->
+			# formattarla rendeva la chiavetta non avviabile in UEFI). Sulla
+			# chiavetta di avvio si usa solo lo spazio libero DOPO la distro.
+			[ -n "$PKNAME" ] && disk_is_system "/dev/${PKNAME#/dev/}" && continue
 			rec=0; [ "$RM" = "1" ] || [ "$TRAN" = "usb" ] && rec=1
 			libera="con dati"; [ -z "$FSTYPE" ] && libera="vuota"
-			mdl=""; [ -n "$PKNAME" ] && mdl="$(dev_model "/dev/$PKNAME")"
+			mdl=""; [ -n "$PKNAME" ] && mdl="$(dev_model "/dev/${PKNAME#/dev/}")"
 			d="partizione $SIZE, ${FSTYPE:-nessun fs}, $libera"
 			[ -n "$LABEL" ] && d="$d, etichetta '$LABEL'"
 			[ -n "$mdl" ] && d="$d [su $mdl]"
@@ -232,7 +242,9 @@ scan() {
 			# disco intero vuoto (nessuna partizione) e non di sistema
 			nparts="$(lsblk -rno NAME "$NAME" 2>/dev/null | tail -n +2 | wc -l | tr -d ' ')"
 			tr_h="$(human_tran "$TRAN")"
-			if [ "$nparts" = "0" ] && ! disk_is_system "$NAME" && [ -z "$MOUNTPOINT" ]; then
+			# niente dischi minuscoli (es. lettore floppy fd0 da 4K delle VM)
+			if [ "$nparts" = "0" ] && ! disk_is_system "$NAME" && [ -z "$MOUNTPOINT" ] \
+			   && [ "$(disk_size_mib "$NAME")" -ge "$MINFREE_MIB" ]; then
 				rec=0; [ "$RM" = "1" ] || [ "$TRAN" = "usb" ] && rec=1
 				mdl="$(dev_model "$NAME")"; [ -n "$mdl" ] && mdl=" '$mdl'"
 				printf '%s|%s||%s|%s\n' disk "$NAME" "$tr_h$mdl $SIZE, vuoto -> creo una partizione (scegli tu quanta)" "$rec" >> "$CANDF"
@@ -347,23 +359,32 @@ do_format() {
 		read enc
 	fi
 	priv umount "$part" 2>/dev/null || true
+	# Partizione sulla chiavetta di avvio: il disco intero e' montato dalla
+	# live e il kernel vieta l'uso esclusivo delle sue partizioni (mkfs:
+	# "apparently in use"). nxs-partdev da' un loop ESATTO sulla partizione.
+	use="$(priv /usr/local/bin/nxs-partdev "$part")" || {
+		echo "  ERRORE: non riesco a preparare $part (vedi messaggio sopra)."; return 1; }
+	[ "$use" != "$part" ] && echo "  (la chiavetta di avvio e' in uso: lavoro su $part tramite $use)"
+	# il mount di busybox SENZA -t non riconosce ext4 se il modulo non e'
+	# ancora caricato ("Invalid argument"): carichiamolo e indichiamo il tipo.
+	priv modprobe ext4 2>/dev/null || true
 	case "$enc" in
 		s|S|si|Si|SI|y|Y)
 			echo "  cryptsetup luksFormat (scegli una passphrase robusta) ..."
-			priv cryptsetup luksFormat --type luks2 --label "$CRYPTLABEL" "$part" || {
+			priv cryptsetup luksFormat --type luks2 --label "$CRYPTLABEL" "$use" || {
 				echo "  ERRORE: luksFormat fallito."; return 1; }
 			echo "  Sblocco per la prima formattazione (reinserisci la passphrase) ..."
-			priv cryptsetup open "$part" nxsdata || { echo "  ERRORE: apertura LUKS fallita."; return 1; }
+			priv cryptsetup open "$use" nxsdata || { echo "  ERRORE: apertura LUKS fallita."; return 1; }
 			echo "  mkfs.ext4 -L $LABEL /dev/mapper/nxsdata ..."
 			priv mkfs.ext4 -F -L "$LABEL" /dev/mapper/nxsdata || { echo "  ERRORE: mkfs fallito."; return 1; }
 			priv mkdir -p /var/nxs-data
-			priv mount /dev/mapper/nxsdata /var/nxs-data || { echo "  ERRORE: mount fallito."; return 1; }
+			priv mount -t ext4 /dev/mapper/nxsdata /var/nxs-data || { echo "  ERRORE: mount fallito."; return 1; }
 			CRYPTED=1 ;;
 		*)
 			echo "  mkfs.ext4 -L $LABEL $part ..."
-			priv mkfs.ext4 -F -L "$LABEL" "$part" || { echo "  ERRORE: mkfs fallito."; return 1; }
+			priv mkfs.ext4 -F -L "$LABEL" "$use" || { echo "  ERRORE: mkfs fallito."; return 1; }
 			priv mkdir -p /var/nxs-data
-			priv mount "$part" /var/nxs-data || { echo "  ERRORE: mount fallito."; return 1; }
+			priv mount -t ext4 "$use" /var/nxs-data || { echo "  ERRORE: mount fallito."; return 1; }
 			CRYPTED=0 ;;
 	esac
 	for d in containers nxs-state loot apk-cache tool-state local; do
@@ -470,12 +491,17 @@ menu() {
 	case "$sel" in ''|*[!0-9]*) echo "  annullato."; rm -f "$CANDF" "$SORTF"; return 0 ;; esac
 	[ "$sel" = "0" ] && { echo "  annullato."; rm -f "$CANDF" "$SORTF"; return 0; }
 	[ "$sel" -gt "$n" ] 2>/dev/null && { echo "  scelta non valida."; rm -f "$CANDF" "$SORTF"; return 1; }
-	i=0
-	while IFS='|' read -r kind target extra desc rec; do
-		i=$((i + 1))
-		[ "$i" = "$sel" ] && { run_candidate "$kind" "$target" "$extra"; break; }
-	done < "$SORTF"
+	# La riga scelta si legge PRIMA e run_candidate gira FUORI dal ciclo: prima
+	# era chiamata dentro "while read ... done < $SORTF", quindi le sue domande
+	# (dimensione, conferma, LUKS) leggevano le righe del FILE invece della
+	# tastiera -> "valore non valido" e scelte casuali (bug trovato 2026-11-21).
+	line="$(sed -n "${sel}p" "$SORTF")"
 	rm -f "$CANDF" "$SORTF" 2>/dev/null
+	kind="$(printf '%s' "$line" | cut -d'|' -f1)"
+	target="$(printf '%s' "$line" | cut -d'|' -f2)"
+	extra="$(printf '%s' "$line" | cut -d'|' -f3)"
+	[ -n "$kind" ] && [ -n "$target" ] || { echo "  scelta non valida."; return 1; }
+	run_candidate "$kind" "$target" "$extra" < /dev/tty
 }
 
 # ---------------------------------------------------------------------------

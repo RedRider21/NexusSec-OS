@@ -1,0 +1,28 @@
+#!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
+# nxs-findlabel ETICHETTA [TIPO_FS] - stampa il primo dispositivo che ha quella
+# etichetta (e, se indicato, quel tipo di filesystem: es. crypto_LUKS).
+# Esce 0 se lo trova, 1 se no.
+#
+# PERCHE' NON blkid (2026-11-21): in Alpine /sbin/blkid e' l'applet di BUSYBOX,
+# che IGNORA -L/-t/-o: non stampa nulla ed esce comunque 0. Cosi' `blkid -L
+# NXSDATA && ...` era SEMPRE vero: nxs-persist diceva "persistenza gia'
+# configurata" senza esserlo, e nxs-unlock-data usciva senza mai chiedere la
+# passphrase LUKS. lsblk (util-linux) invece legge davvero etichetta e tipo.
+lbl="${1:-}"; ty="${2:-}"
+[ -n "$lbl" ] || { echo "uso: nxs-findlabel ETICHETTA [TIPO_FS]" >&2; exit 2; }
+# Da utente normale lsblk NON vede etichette e filesystem (nella live udev non
+# li registra e i dischi non sono leggibili): serve root. `doas -n` non chiede
+# mai la password; se non e' consentito si prova comunque da utente.
+LSBLK="lsblk"
+[ "$(id -u)" != 0 ] && command -v doas >/dev/null 2>&1 \
+  && doas -n lsblk -d -o NAME >/dev/null 2>&1 && LSBLK="doas -n lsblk"
+$LSBLK -Ppno NAME,LABEL,FSTYPE 2>/dev/null | while read -r line; do
+	NAME=""; LABEL=""; FSTYPE=""
+	eval "$line" 2>/dev/null || continue
+	[ "$LABEL" = "$lbl" ] || continue
+	[ -z "$ty" ] || [ "$FSTYPE" = "$ty" ] || continue
+	echo "$NAME"
+	break
+done | grep . 
