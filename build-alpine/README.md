@@ -11,6 +11,14 @@ e' con **bubblewrap**.
 > + privilegi). Non e' eseguibile su una distro generica senza questi
 > strumenti. Gli sfondi (`make wallpaper`) si generano ovunque (ImageMagick).
 
+## Aggiornamento rapido senza scaricare nulla (remaster)
+
+Per i normali aggiornamenti (overlay: pannello, HORUS, script) NON serve
+ricostruire: `remaster-apkovl.py` sostituisce solo l'apkovl dentro l'ultima ISO
+(avvio, kernel e pacchetti restano identici). Procedura completa nel README
+principale, sezione *Build > Aggiornare le immagini senza scaricare nulla*.
+Scrittura su chiavetta con verifica: `sudo ./build-alpine/write-usb.sh`.
+
 ## Componenti
 
 ```

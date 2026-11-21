@@ -16,6 +16,41 @@ Dimensioni: **ISO ~0.7 GB** (kernel linux-lts + desktop GTK + Podman + browser
 webkit2gtk preinstallato); a regime con un profilo attivo ~400-600 MB in RAM
 (contro i ~4 GB di Kali, ~2.2 GB di Parrot).
 
+## Novità — v2026.11.21
+
+- **Persistenza sulla stessa chiavetta della distro, funzionante e collaudata**
+  (creazione, scrittura, riavvio, dati ritrovati). `nxs-persist` propone per
+  prima una piccola partizione `NXSDATA` nello spazio **dopo** la distro (nome
+  predefinito, dimensione a scelta, INVIO conferma) e la distro non viene
+  toccata. Corretti cinque difetti che la rendevano impossibile o pericolosa:
+  spazio libero calcolato sopra la distro, falsa «persistenza già configurata»,
+  domande che non leggevano la tastiera, partizione EFI della chiavetta proposta
+  da formattare, e il disco della live montato per intero che impediva di
+  formattare e montare le sue partizioni (ora si usa un loop esatto,
+  `nxs-partdev`).
+- **Persistenza cifrata (LUKS)**: la passphrase ora viene chiesta davvero al
+  login (prima il controllo usciva sempre subito).
+- **`doas` funzionante** anche nelle immagini rigenerate: i file di
+  configurazione hanno ora permessi indipendenti dal PC che crea l'immagine.
+- **Gestore dischi più sicuro**: la chiavetta della live e la persistenza si
+  vedono ma non si possono smontare, montare due volte o proteggere in
+  scrittura (la finestra spiega perché); l'installatore non propone più di
+  formattare partizioni montate o la persistenza; filesystem ed etichette sono
+  visibili anche da utente; il montaggio non fallisce più su ext4/vfat appena
+  avviata la live.
+- **HORUS**: 13 nuovi layer gratuiti e senza chiave, **viste** specializzate per
+  più monitor (Cyber, Disastri, Trasporti, Geopolitica) con modalità parete,
+  vulnerabilità sfruttate (CISA KEV) con scheda CVE, protezione del server
+  locale contro le richieste di altri siti.
+- **Bluetooth**: nome **e** MAC di ogni dispositivo; quelli che non trasmettono
+  un nome sono nascosti di default.
+- **`write-usb.sh`** più sicuro: propone per prima la ISO adatta al PC, riconosce
+  schede SD/NVMe, elenca anche le chiavette USB «non rimovibili», protegge il
+  disco di sistema anche con root cifrata.
+
+Tre immagini (x86_64, aarch64, Raspberry Pi) nella
+[release più recente](https://github.com/RedRider21/NexusSec-OS/releases).
+
 ## Novità — v2026.10.10
 
 Release di **stabilità**, dopo le prove su VM:
@@ -1157,6 +1192,42 @@ completi in [`build-alpine/README.md`](build-alpine/README.md):
 4. `mkimage.sh --profile nexussec` — costruisce `out/nexussec-*.iso` (~150-200 MB),
    iniettando l'apkovl generato da `build-alpine/genapkovl-nexussec.sh`.
 5. Test: `qemu-system-x86_64 -m 2048 -cdrom out/nexussec-*.iso -boot d`.
+
+### Aggiornare le immagini senza scaricare nulla (remaster)
+
+Tra una versione e l'altra cambia quasi solo l'**overlay** (pannello, HORUS,
+script `nxs-*`): kernel, initramfs, modloop e i ~630 pacchetti in `apks/`
+restano validi. `build-alpine/remaster-apkovl.py` aggiorna una ISO esistente
+sostituendo **solo** il suo `nexussec.apkovl.tar.gz` dentro l'immagine e la
+data nell'etichetta: settori di avvio (MBR/GPT ibridi), El Torito, kernel e
+pacchetti restano identici byte per byte. Nessun download, nessun container.
+
+```sh
+# apkovl = overlay attuale + repository dei pacchetti NexusSec della ISO di partenza
+7z e -o/tmp/vecchio OLD.iso nexussec.apkovl.tar.gz
+mkdir -p /tmp/ovl && cp -a overlay/. /tmp/ovl/
+tar xzf /tmp/vecchio/nexussec.apkovl.tar.gz -C /tmp/ovl var
+(cd /tmp/out && NXS_OVERLAY=/tmp/ovl NXS_REPO_ROOT=$PWD/.. sh build-alpine/genapkovl-nexussec.sh nexussec)
+python3 build-alpine/remaster-apkovl.py OLD.iso alpine-nexussec-AAMMGG-ARCH.iso \
+        /tmp/out/nexussec.apkovl.tar.gz VECCHIADATA NUOVADATA
+```
+
+Il nuovo apkovl deve stare nello spazio del vecchio (lo script lo controlla).
+Per l'immagine Raspberry l'apkovl si sostituisce nella partizione FAT con
+`mcopy -o -i immagine.img@@1M nexussec.apkovl.tar.gz ::/` (mtools, senza root),
+usando il repository dei pacchetti dell'immagine Raspberry stessa.
+
+### Scrivere la ISO su chiavetta (con verifica)
+
+```sh
+sudo ./build-alpine/write-usb.sh            # chiede ISO e chiavetta da elenchi
+sudo ./build-alpine/write-usb.sh out/alpine-nexussec-261121-x86_64.iso /dev/sdX
+```
+
+Propone per prima la ISO dell'architettura del PC, mostra solo i dischi
+rimovibili/USB, rifiuta partizioni e il disco del sistema in uso, chiede di
+scrivere `SI` in maiuscolo, scrive con `dd` e alla fine **rilegge la chiavetta e
+confronta lo SHA-256** con la ISO: «OK: la chiavetta e' identica alla ISO».
 
 ### Immagini, architetture e release
 

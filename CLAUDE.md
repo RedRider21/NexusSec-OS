@@ -109,7 +109,9 @@ lo starfield usa `-threshold 99.75%` (solo lo 0.25% piu' luminoso = stella); con
 
 ## Build
 
-Su host NON-Alpine si usa **`build-alpine/build-in-container.sh`** (serve solo
+**Aggiornamenti normali: REMASTER locale** (vedi gotcha "ISO in LOCALE" e
+README > Build). Build completa da zero solo se cambiano kernel/pacchetti:
+su host NON-Alpine si usa **`build-alpine/build-in-container.sh`** (serve solo
 podman/docker): compila i meta-pacchetti con `abuild` e crea l'ISO con
 `mkimage` dentro un container `alpine:edge` **detached** (`nexussec-build`),
 output in `out/`. Su Alpine si puo' usare direttamente abuild + mkimage
@@ -337,6 +339,38 @@ ricorrenti su **musl + gcc 15**:
     barra di stato sempre "backend non raggiungibile").
   - *Menu Openbox*: si modifica SOLO `home/nexus/.config/openbox/menu.xml` +
     traduzioni in `build/make-openbox-menus.py`, poi si rigenera.
+
+- **ISO in LOCALE senza scaricare nulla = REMASTER (2026-11-21, regola utente).**
+  NON rifare la build in container (riscarica ~1,5 GB per arch). Si parte
+  dall'ultima ISO in `out/` e `build-alpine/remaster-apkovl.py` sostituisce SOLO
+  `nexussec.apkovl.tar.gz` dentro l'estensione del vecchio file + la data
+  nell'etichetta (avvio ibrido xorriso intatto; genisoimage/isohybrid
+  cambierebbero MBR/GPT). L'apkovl va generato con l'overlay + `var/` (repo
+  pacchetti NexusSec) estratto dalla ISO della STESSA arch (il RPi ha un repo
+  suo). RPi: `mcopy -o -i img@@1M` nella FAT + rigenerare il tar.gz. Collaudo:
+  QEMU BIOS/UEFI (OVMF) + chiavetta USB virtuale (`-device usb-storage`),
+  tastiera della live ITALIANA (sendkey: `/`=shift-7, `-`=slash, `>`=shift-less).
+- **Permessi dell'apkovl (2026-11-21)**: generato su un host con umask 002 i
+  file uscivano scrivibili dal gruppo e **doas rifiutava doas.conf** -> nessun
+  comando root nella live. `genapkovl` ora fa `umask 022` + `chmod -R go-w`.
+- **`/sbin/blkid` e' BUSYBOX**: ignora `-L/-t/-o`, non stampa nulla ed esce 0
+  (`blkid -L X && ...` SEMPRE vero). Usare `nxs-findlabel ETICHETTA [TIPO]`
+  (lsblk). `/bin/mount` e' busybox: SEMPRE `-t <fs>` (senza, ext4/vfat danno
+  "Invalid argument" finche' il modulo non e' caricato).
+- **lsblk da utente nella live NON vede FSTYPE/LABEL** (udev non li registra,
+  dischi non leggibili da nexus): `nxs_disks.model._lsblk`, `nxs-findlabel`,
+  `nxs-persist`, `nxs-install` usano `doas -n lsblk` (sola lettura) da utente.
+- **La live monta l'INTERO disco di avvio** (`/dev/sda` a /media/sda, a volte
+  sda1): il kernel vieta l'uso esclusivo delle sue partizioni (mkfs "apparently
+  in use", mount/cryptsetup EBUSY). `nxs-partdev PART` restituisce un loop
+  ESATTO (ioctl LOOP_SET_STATUS64 con sizelimit: il losetup di busybox non lo
+  sa fare) o la partizione stessa se il disco non e' montato per intero. Usato
+  da nxs-persist (mkfs/LUKS/mount), nexussec.start e nxs-unlock-data.
+- **Mai chiamare funzioni interattive dentro `while read ... done < FILE`**: le
+  loro `read` leggono il file (nxs-persist faceva cosi': risposte casuali).
+- **Gestore dischi**: `model.motivo_sistema(node)` ('live'/'persist'/'mount')
+  blocca smonta/monta/protezione/installatore su live e persistenza. Spazio
+  libero con `sfdisk -F` (parted solo ripiego).
 
 ### Gotcha stile finestre / bytecode (2026-08-26, DURAMENTE imparati)
 
