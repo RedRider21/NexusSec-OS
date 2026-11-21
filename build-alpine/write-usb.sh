@@ -34,7 +34,12 @@ if [ -z "$ISO" ]; then
   OLDIFS=$IFS; IFS='
 '
   set --
-  for f in $(ls -1t "$REPO_ROOT"/out/alpine-nexussec-*.iso ./out/alpine-nexussec-*.iso ./*.iso 2>/dev/null); do
+  # Ordine: piu' recenti prima, ma quelle dell'architettura di QUESTO PC in
+  # testa (prima x86_64 e aarch64 della stessa data comparivano in ordine
+  # casuale e con INVIO si poteva scrivere quella sbagliata).
+  HOSTARCH="$(uname -m)"
+  LIST="$(ls -1t "$REPO_ROOT"/out/alpine-nexussec-*.iso ./out/alpine-nexussec-*.iso ./*.iso 2>/dev/null)"
+  for f in $(printf '%s\n' "$LIST" | grep -- "-$HOSTARCH\.iso$"; printf '%s\n' "$LIST" | grep -v -- "-$HOSTARCH\.iso$"); do
     dup=0
     for g in "$@"; do [ "$g" = "$f" ] && dup=1 && break; done
     [ "$dup" = 0 ] && set -- "$@" "$f"
@@ -48,7 +53,8 @@ if [ -z "$ISO" ]; then
     i=0
     for f in "$@"; do
       i=$((i+1))
-      printf "  %d) %s  (%s)\n" "$i" "$f" "$(numfmt --to=iec "$(stat -c %s "$f")" 2>/dev/null || echo '?')"
+      case "$f" in *-"$HOSTARCH".iso) nota="  <- adatta a questo PC ($HOSTARCH)" ;; *) nota="" ;; esac
+      printf "  %d) %s  (%s)%s\n" "$i" "$f" "$(numfmt --to=iec "$(stat -c %s "$f")" 2>/dev/null || echo '?')" "$nota"
     done
     printf "Scegli il numero [1]: "
     read -r SEL
@@ -72,9 +78,9 @@ ISO_SIZE="$(stat -c %s "$ISO")"
 # --- risoluzione DEVICE ---
 DEV="${2:-}"
 if [ -z "$DEV" ]; then
-  echo "Dischi RIMOVIBILI rilevati:"
-  # RM=1 -> rimovibile; mostra nome, dimensione, modello
-  lsblk -dno NAME,SIZE,RM,MODEL 2>/dev/null | awk '$3==1{printf "  /dev/%s  %s  %s\n",$1,$2,$4}'
+  echo "Dischi RIMOVIBILI / USB rilevati:"
+  # RM=1 (rimovibile) OPPURE collegato via USB: molte chiavette/SSD USB hanno RM=0
+  lsblk -dpno NAME,SIZE,RM,TRAN,MODEL 2>/dev/null | awk '$3==1 || $4=="usb" {m=""; for(i=5;i<=NF;i++) m=m" "$i; printf "  %s  %s %s\n",$1,$2,m}'
   echo
   printf "Device di destinazione (es. /dev/sda): "
   read -r DEV
@@ -82,14 +88,24 @@ fi
 
 # --- controlli di sicurezza ---
 [ -b "$DEV" ] || { echo "«$DEV» non e' un device a blocchi." >&2; exit 1; }
-case "$DEV" in
-  *[0-9]) echo "«$DEV» sembra una PARTIZIONE. Indica il disco INTERO (es. /dev/sda)." >&2; exit 1;;
-esac
+# Il TIPO lo dice lsblk (prima si guardava se il nome finiva con un numero:
+# cosi' /dev/mmcblk0 e /dev/nvme0n1, dischi interi, venivano rifiutati).
+if [ "$(lsblk -dno TYPE "$DEV" 2>/dev/null)" != "disk" ]; then
+  echo "«$DEV» non e' un disco intero (e' una partizione o altro). Indica il disco INTERO (es. /dev/sdb)." >&2
+  exit 1
+fi
 # non scrivere sul disco che ospita la root del sistema
-ROOTSRC="$(findmnt -no SOURCE / 2>/dev/null || true)"
-case "$ROOTSRC" in
-  "$DEV"|"$DEV"[0-9]*) echo "RIFIUTO: «$DEV» ospita la root del sistema in uso." >&2; exit 1;;
-esac
+# (risale anche LUKS/LVM: con root cifrata SOURCE e' /dev/mapper/..., non il disco)
+DEVREAL="$(readlink -f "$DEV")"
+for MP in / /boot /boot/efi /home; do
+  SRC="$(findmnt -no SOURCE "$MP" 2>/dev/null || true)"
+  [ -n "$SRC" ] || continue
+  for D in $(lsblk -nspo NAME,TYPE "$SRC" 2>/dev/null | awk '$2=="disk"{print $1}' | sed 's/^[^/]*//'); do
+    if [ "$(readlink -f "$D")" = "$DEVREAL" ]; then
+      echo "RIFIUTO: «$DEV» ospita $MP del sistema in uso." >&2; exit 1
+    fi
+  done
+done
 RM="$(lsblk -dno RM "$DEV" 2>/dev/null || echo 0)"
 MODEL="$(lsblk -dno MODEL "$DEV" 2>/dev/null || true)"
 SIZE="$(lsblk -dno SIZE "$DEV" 2>/dev/null || true)"
