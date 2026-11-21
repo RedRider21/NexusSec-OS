@@ -1226,6 +1226,22 @@ Per l'immagine Raspberry l'apkovl si sostituisce nella partizione FAT con
 `mcopy -o -i immagine.img@@1M nexussec.apkovl.tar.gz ::/` (mtools, senza root),
 usando il repository dei pacchetti dell'immagine Raspberry stessa.
 
+### Collaudo automatico prima di ogni release
+
+```sh
+build-alpine/collaudo-iso.py out/alpine-nexussec-AAMMGG-x86_64.iso \
+      [--arm out/alpine-nexussec-AAMMGG-aarch64.iso] [--solo bios,uefi,persist]
+```
+
+Avvia la ISO in QEMU (nessun download: qemu, OVMF/AAVMF del PC) e verifica da
+sola: avvio **BIOS** e **UEFI** fino al desktop, **doas** funzionante,
+**persistenza** su una chiavetta USB virtuale (creata dopo la distro, file
+scritto, riavvio, ritrovata montata col file), **chiavetta estranea** con
+`NXSDATA` ignorata e, con `--arm`, avvio **aarch64** (lento, ~15 min). La live
+scrive gli esiti su un piccolo disco virtuale che lo script rilegge: niente
+interpretazione di schermate (che restano comunque salvate). Esce con 0 se
+tutte le prove sono OK.
+
 ### Scrivere la ISO su chiavetta (con verifica)
 
 ```sh

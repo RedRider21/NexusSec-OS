@@ -354,6 +354,10 @@ ricorrenti su **musl + gcc 15**:
   ARCH"`: se si cambia l'etichetta vanno cambiate anche quelle stringhe (lo fa
   remaster-apkovl.py), altrimenti aarch64 resta al prompt `grub>`.
   tastiera della live ITALIANA (sendkey: `/`=shift-7, `-`=slash, `>`=shift-less).
+- **Collaudo automatico: `build-alpine/collaudo-iso.py ISO [--arm ISO]`** prima di
+  OGNI release (BIOS/UEFI/doas/persistenza con riavvio/chiavetta estranea/arm).
+  La VM scrive gli esiti su un disco ext2 NXSTEST che lo script legge con
+  debugfs. Primo giro 2026-11-21: tutto OK.
 - **Permessi dell'apkovl (2026-11-21)**: generato su un host con umask 002 i
   file uscivano scrivibili dal gruppo e **doas rifiutava doas.conf** -> nessun
   comando root nella live. `genapkovl` ora fa `umask 022` + `chmod -R go-w`.
