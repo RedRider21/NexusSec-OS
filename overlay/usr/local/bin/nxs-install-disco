@@ -23,7 +23,7 @@ export LC_ALL=C
 
 GRUBD=/usr/local/share/nexussec/grub-disco
 SYS_MB=1536
-DISCO="" PASSFILE="" SI="" MNT=/run/nxs-install
+DISCO="" PASSFILE="" SI="" CONTROLLA="" MNT=/run/nxs-install
 
 die() { echo "ERRORE: $*" >&2; exit 1; }
 passo() { echo "PASSO $1/7 $2"; }
@@ -77,26 +77,34 @@ while [ $# -gt 0 ]; do
 		--si) SI=1; shift ;;
 		--sys-mb) SYS_MB="$2"; shift 2 ;;
 		--dischi) dischi; exit 0 ;;
+		--controlla) CONTROLLA=1; shift ;;
 		-h|--help) sed -n '4,24p' "$0"; exit 0 ;;
 		*) die "opzione sconosciuta: $1" ;;
 	esac
 done
 
+# controlli del supporto di avvio (anche senza root: li usa l'installatore
+# grafico prima di proporre l'installazione)
+controlla_media() {
+	[ "$(uname -m)" = x86_64 ] || die "per ora l'installazione su disco e' solo per PC x86_64."
+	for f in mbr.bin core.img BOOTX64.EFI; do
+		[ -f "$GRUBD/$f" ] || die "manca $GRUBD/$f"
+	done
+	M="$(media_dir)" || die "supporto di avvio non trovato."
+	[ -f "$M/nxs-rootfs.squashfs" ] || die "questa chiavetta non contiene il sistema pronto (nxs-rootfs.squashfs): serve la ISO fast-boot."
+	for f in boot/vmlinuz-lts boot/initramfs-lts boot/modloop-lts; do
+		[ -f "$M/$f" ] || die "manca $M/$f"
+	done
+}
+if [ -n "$CONTROLLA" ]; then controlla_media; echo "PRONTO"; exit 0; fi
+
 [ "$(id -u)" = 0 ] || exec doas "$0" ${DISCO:+--disco "$DISCO"} ${PASSFILE:+--passfile "$PASSFILE"} ${SI:+--si} --sys-mb "$SYS_MB"
-[ "$(uname -m)" = x86_64 ] || die "per ora l'installazione su disco e' solo per PC x86_64."
 for c in sfdisk mkfs.vfat mkfs.ext4 cryptsetup lsblk sha256sum; do
 	command -v "$c" >/dev/null 2>&1 || die "manca il comando $c"
 done
-for f in mbr.bin core.img BOOTX64.EFI; do
-	[ -f "$GRUBD/$f" ] || die "manca $GRUBD/$f"
-done
 
 passo 1 "controlli"
-M="$(media_dir)" || die "supporto di avvio non trovato."
-[ -f "$M/nxs-rootfs.squashfs" ] || die "questa chiavetta non contiene il sistema pronto (nxs-rootfs.squashfs): serve la ISO fast-boot."
-for f in boot/vmlinuz-lts boot/initramfs-lts boot/modloop-lts; do
-	[ -f "$M/$f" ] || die "manca $M/$f"
-done
+controlla_media
 [ -n "$DISCO" ] || die "indica il disco: --disco /dev/... (elenco: --dischi)"
 DISCO="$(readlink -f "$DISCO")"
 dischi | cut -f1 | grep -qx "$DISCO" || die "$DISCO non e' installabile (disco di avvio, in uso, troppo piccolo o non e' un disco)."

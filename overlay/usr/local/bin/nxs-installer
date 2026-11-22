@@ -1,0 +1,8 @@
+#!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
+# nxs-installer - installatore GRAFICO di NexusSec su disco (sopra
+# nxs-install-disco). Log: /tmp/nxs-installer.log (GUI) e
+# /tmp/nxs-install-disco.log (installazione).
+exec env GTK_IM_MODULE=gtk-im-context-simple PYTHONPATH=/usr/local/lib \
+	python3 -m nxs_installer "$@" >>/tmp/nxs-installer.log 2>&1
