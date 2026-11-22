@@ -302,6 +302,17 @@ footer{border-top:1px solid var(--line);padding:24px 0 60px;color:var(--muted);f
   it stays almost idle. It is <em>best-effort</em>: if the kernel lacks the
   <code>zram</code> module, boot continues with no consequences
   (script <code>/etc/local.d/zram.start</code>).</span></div>
+  <div class="note"><strong><span data-lang="it">Splash di avvio (dalla v2026.11.22).</span><span data-lang="en">Boot splash (since v2026.11.22).</span></strong> <span data-lang="it">Al posto del
+  testo che scorre compare l'immagine NexusSec fino al desktop: subito con UEFI,
+  con BIOS e nelle macchine virtuali appena il driver video è caricato. Se lo
+  schermo grafico non c'è, l'avvio resta testuale come prima (mai nero); se
+  serve la passphrase dei dati o il login, la splash si fa da parte. Per
+  vedere i messaggi aggiungi <code>splash=no</code> alla riga di avvio.</span><span data-lang="en">Instead of
+  scrolling text the NexusSec image is shown until the desktop: right away with
+  UEFI, with BIOS and in virtual machines as soon as the video driver is
+  loaded. Without a graphical screen the boot stays text-based as before (never
+  black); when the data passphrase or a login is needed the splash steps aside.
+  To see the messages add <code>splash=no</code> to the boot line.</span></div>
   <div class="note"><strong><span data-lang="it">Fast-boot (dalla v2026.11.22).</span><span data-lang="en">Fast-boot (since v2026.11.22).</span></strong> <span data-lang="it">La ISO
   x86_64 contiene il sistema <strong>già installato</strong> in un unico file
   compresso (<code>nxs-rootfs.squashfs</code>) invece di ~600 pacchetti da
