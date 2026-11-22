@@ -2,8 +2,8 @@
 
 Distro Linux live x86_64 per la **cybersecurity**, basata su **Alpine Linux**
 (musl, `apk`, OpenRC — niente systemd), desktop **Openbox** con **pannello e
-Centro di Controllo nativi in Python (GTK3)**, tema **NexusSec-Core** (cyan su
-nero).
+Centro di Controllo nativi in Python (GTK3)**, finestre in stile **macOS scuro**
+nel colore del profilo (o il classico **NexusSec-Core**, cyan su nero).
 
 L'idea centrale: invece dell'approccio monolitico di Kali/Parrot (600+ tool
 preinstallati), NexusSec e' **modulare e a profili dinamici**. All'avvio scegli
@@ -15,6 +15,40 @@ sistema base.
 Dimensioni: **ISO ~0.7 GB** (kernel linux-lts + desktop GTK + Podman + browser
 webkit2gtk preinstallato); a regime con un profilo attivo ~400-600 MB in RAM
 (contro i ~4 GB di Kali, ~2.2 GB di Parrot).
+
+## Novità — v2026.11.22
+
+- **Installazione su disco sicura (immutabile), con installatore grafico.**
+  Icona *Installa su disco* → procedura guidata: controllo della chiavetta,
+  scelta del disco (quello di avvio e quelli in uso non compaiono), passphrase,
+  riepilogo con conferma esplicita, avanzamento a passi. Funziona **senza
+  Internet** (copia il sistema già pronto della chiavetta) e avvia sia i PC con
+  **BIOS** sia quelli **UEFI**. Sul disco: il **sistema in sola lettura**
+  (torna sempre pulito a ogni avvio), uno slot di riserva per gli aggiornamenti
+  futuri e una **parte dati cifrata (LUKS)** con home, strumenti scaricati,
+  container, loot e reti salvate, sbloccata con la passphrase all'accensione.
+  Le impronte dei file copiati vengono verificate. Da terminale:
+  `nxs-install-disco --disco /dev/sdX`. Il vecchio installatore di Alpine
+  (`setup-disk`) senza rete si fermava subito: resta solo come opzione per
+  esperti.
+- **ISO x86_64 «fast-boot»**: il sistema è già installato in un unico file
+  compresso, invece di ~600 pacchetti da installare a ogni avvio. ISO più
+  piccola (~690 MB) e **circa 700 MB di RAM in più liberi** a desktop pronto (VM
+  da 4 GB: 3,1 GB disponibili contro 2,4). Con almeno 4 GB di RAM il sistema
+  compresso viene copiato in RAM all'avvio (programmi veloci e chiavetta
+  libera); `nxs_toram=yes|no` per forzare.
+- **Temi finestre in stile macOS** (chiaro e scuro, predefinito lo scuro):
+  pulsanti a semaforo a sinistra con il simbolo al passaggio del mouse, titolo
+  centrato, angoli arrotondati e ombre, nel **colore del profilo** attivo.
+  Bordi e angoli afferrabili per il ridimensionamento (il puntatore mostra le
+  frecce). Gli angoli arrotondati funzionano anche nelle VM senza
+  accelerazione 3D (il compositor passa da solo alla modalità software).
+- **Registro degli incarichi**: ogni strumento lanciato lascia una traccia
+  concatenata con impronte SHA-256 dei file prodotti (vedi
+  [Registro degli incarichi](#registro-degli-incarichi)).
+- **Collaudo automatico** esteso: installazione su disco con riavvio dal disco
+  in BIOS e UEFI, tempo fino al desktop e RAM libera.
+- Logo del progetto e materiali grafici in `branding/`.
 
 ## Novità — v2026.11.21
 
@@ -137,12 +171,17 @@ Il set di strumenti per categoria e' allineato a Kali/Parrot
 
 ### Aspetto coordinato: temi finestre + prompt
 
-- **Temi finestre coordinati col profilo.** Oltre al default `NexusSec-Core`
-  (HUD scuro, fisso) puoi scegliere due famiglie che seguono in automatico il
-  **colore del profilo attivo**: **Retro** (flat chiaro, derivato dal tema
-  "1977") e **Cards** (stile "scheda" iOS, barra del titolo a tinta piena).
-  Selezione da *Centro di Controllo → Aspetto coordinato* o `nxs-theme set
-  <core|retro|cards>`. Sono temi Openbox **statici** generati per profilo
+- **Temi finestre coordinati col profilo.** Il predefinito è **macOS scuro**
+  (`mac-scuro`; c'è anche `mac`, chiaro): semafori a sinistra, titolo
+  centrato, angoli arrotondati via picom, tinta del profilo attivo. Le altre
+  famiglie: `NexusSec-Core` (HUD scuro, fisso), **Retro** (flat chiaro,
+  derivato dal tema "1977") e **Cards** (stile "scheda" iOS, barra del titolo a
+  tinta piena), tutte nel **colore del profilo attivo**. Selezione da *Centro
+  di Controllo → Aspetto coordinato* o `nxs-theme set
+  <mac-scuro|mac|core|retro|cards>`. I temi macOS si rigenerano con
+  `build/make-mac-themes.py` (Openbox accetta per i pulsanti solo maschere a
+  1 bit: niente sfumature, per questo a bassa risoluzione i cerchi appaiono
+  un po' squadrati). Sono temi Openbox **statici** generati per profilo
   (`make themes`); si puo' anche usare un tema Openbox qualsiasi con `raw:<nome>`
   (inclusi gli originali `1977-*` preinstallati).
 - **Prompt del terminale commutabile.** `default` (una riga, accent NexusSec),
@@ -1205,6 +1244,8 @@ Centro di Controllo). Dettaglio completo con i sotto-comandi: manuale online.
 | | `nxs-harden` | hardening del sistema installato |
 | | `nxs-users` | gestione utenti (password via stdin) |
 | | `nxs-persist` / `nxs-unlock-data` | persistenza dati (anche LUKS) |
+| | `nxs-installer` | installatore **grafico** su disco (sistema in sola lettura + dati cifrati) |
+| | `nxs-install-disco` | lo stesso da terminale (`--dischi`, `--disco /dev/sdX`, `--controlla`) |
 | Desktop | `nxs-recorder` | registratore vocale (spettro/onda) |
 | e media | `nxs-clipboard` | gestore appunti con cronologia (Super+V) |
 | | `nxs-nightlight` | filtro luce blu (Super+N) |
@@ -1250,18 +1291,35 @@ Per l'immagine Raspberry l'apkovl si sostituisce nella partizione FAT con
 `mcopy -o -i immagine.img@@1M nexussec.apkovl.tar.gz ::/` (mtools, senza root),
 usando il repository dei pacchetti dell'immagine Raspberry stessa.
 
+### ISO «fast-boot» (sistema pre-installato) senza scaricare nulla
+
+```sh
+build-alpine/fastboot-locale.sh BASE.iso APKOVL alpine-nexussec-AAMMGG-x86_64.iso x86_64
+```
+
+Dalla ISO di base (quella con `apks/`) installa i pacchetti in un container
+**senza rete**, applica l'overlay, comprime tutto in `nxs-rootfs.squashfs`,
+accoda all'initramfs l'init modificato (`fastboot-init-patch.py`) e rigenera la
+ISO con `xorriso -boot_image any replay` (avvio BIOS/UEFI identico). Spazio
+temporaneo ~2,5 GB, cancellato alla fine. La ISO di base resta in
+`out/base/` per le ricostruzioni.
+
 ### Collaudo automatico prima di ogni release
 
 ```sh
 build-alpine/collaudo-iso.py out/alpine-nexussec-AAMMGG-x86_64.iso \
-      [--arm out/alpine-nexussec-AAMMGG-aarch64.iso] [--solo bios,uefi,persist]
+      [--arm out/alpine-nexussec-AAMMGG-aarch64.iso] [--solo bios,uefi,persist,disco]
 ```
 
 Avvia la ISO in QEMU (nessun download: qemu, OVMF/AAVMF del PC) e verifica da
 sola: avvio **BIOS** e **UEFI** fino al desktop, **doas** funzionante,
 **persistenza** su una chiavetta USB virtuale (creata dopo la distro, file
 scritto, riavvio, ritrovata montata col file), **chiavetta estranea** con
-`NXSDATA` ignorata e, con `--arm`, avvio **aarch64** (lento, ~15 min). La live
+`NXSDATA` ignorata, **installazione su disco** (`disco`: installa senza rete,
+riavvia dal disco in BIOS e UEFI, sblocca la parte dati, controlla desktop,
+dati montati e sistema in sola lettura) e, con `--arm`, avvio **aarch64**
+(lento, ~15 min). Per ogni avvio riporta anche i secondi fino al desktop e la
+RAM disponibile. La live
 scrive gli esiti su un piccolo disco virtuale che lo script rilegge: niente
 interpretazione di schermate (che restano comunque salvate). Esce con 0 se
 tutte le prove sono OK.
@@ -1280,7 +1338,9 @@ confronta lo SHA-256** con la ISO: «OK: la chiavetta e' identica alla ISO».
 
 ### Immagini, architetture e release
 
-- **ISO x86_64** (PC/laptop Intel/AMD, BIOS + UEFI): l'immagine di riferimento.
+- **ISO x86_64** (PC/laptop Intel/AMD, BIOS + UEFI): l'immagine di riferimento,
+  in formato **fast-boot** (sistema pre-installato) e con l'**installazione su
+  disco** grafica.
 - **ISO ARM64 (aarch64)** — **solo-UEFI**. Fa boot dove c'è un firmware **UEFI
   ARM standard**: VM ARM con QEMU/EDK2, **UTM/Parallels su Mac Apple Silicon**,
   e hardware ARM con UEFI conforme (SBSA). **Non** fa boot sugli SBC (Raspberry
@@ -1328,7 +1388,11 @@ NexusSec-OS/
 - Catalogo allineato per categoria a **Kali/Parrot**.
 - Build via `abuild` + `mkimage` (scaffold completo; richiede Alpine).
 - **TinyCore rimosso** (deb2tcz, apt-shim, pipeline `.tcz`/isolinux): superato.
-- **Agente AI Python** al cuore del sistema: prossimo step.
+- **Agente AI Python**: Fase 1 (consulente) fatta.
+- **Installazione su disco immutabile** (primo passo fatto): prossimi passi
+  `nxs-pkg` (pacchetti in più persistenti e firmati), firma + dm-verity del
+  sistema, aggiornamenti A/B con ritorno automatico, home intera persistente,
+  versione aarch64.
 
 ## Ecosistema NexusSec
 
