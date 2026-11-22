@@ -2764,6 +2764,8 @@ class Panel(Gtk.Window):
                 b.set_tooltip_text(title)
                 b.get_style_context().add_class("nxs-task")
                 b.connect("clicked", self._on_task, wid)
+                # tasto destro: menu della finestra come in MATE (2026-11-22)
+                b.connect("button-press-event", self._on_task_press, wid)
                 # (False, False): larghezza naturale quando c'è spazio; sotto
                 # pressione GtkBox li comprime fra minimo e naturale, cosi' la
                 # tasklist (che occupa il centro, pack True) assorbe il deficit e
@@ -2786,6 +2788,57 @@ class Panel(Gtk.Window):
                 run_bg(["xdotool", "windowminimize", str(int(wid, 16))])
         else:
             run_bg(["wmctrl", "-i", "-a", wid])
+
+    def _on_task_press(self, btn, ev, wid):
+        """Menu della finestra col tasto DESTRO sul suo pulsante della barra:
+        riduci/ripristina, massimizza, sempre in primo piano, sposta su un
+        altro desktop, chiudi (wmctrl/xdotool, come il clic sinistro)."""
+        if ev.button != 3:
+            return False
+        dec = str(int(wid, 16))
+        menu = Gtk.Menu()
+
+        def voce(testo, cmd):
+            it = Gtk.MenuItem(label=testo)
+            it.connect("activate", lambda *_: run_bg(cmd))
+            menu.append(it)
+
+        visibile = True
+        try:
+            out = subprocess.run(["xdotool", "search", "--onlyvisible", "--class", ""],
+                                 capture_output=True, text=True, timeout=2).stdout.split()
+            visibile = dec in out
+        except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
+            pass
+        if visibile:
+            voce(_t("pn.task.minimize"), ["xdotool", "windowminimize", dec])
+        else:
+            voce(_t("pn.task.restore"), ["wmctrl", "-i", "-a", wid])
+        voce(_t("pn.task.maximize"),
+             ["wmctrl", "-i", "-r", wid, "-b", "toggle,maximized_vert,maximized_horz"])
+        voce(_t("pn.task.above"), ["wmctrl", "-i", "-r", wid, "-b", "toggle,above"])
+        count, cur = _wmctrl_desktops()
+        if count and count > 1:
+            sub = Gtk.Menu()
+            for i in range(count):
+                it = Gtk.MenuItem(label=_t("pn.task.desktop_n", n=i + 1))
+                it.set_sensitive(i != cur)
+                it.connect("activate", lambda _w, n=i: run_bg(
+                    ["wmctrl", "-i", "-r", wid, "-t", str(n)]))
+                sub.append(it)
+            mv = Gtk.MenuItem(label=_t("pn.task.move_to"))
+            mv.set_submenu(sub)
+            menu.append(mv)
+        menu.append(Gtk.SeparatorMenuItem())
+        voce(_t("pn.task.close"), ["wmctrl", "-i", "-c", wid])
+        menu.show_all()
+        # il suggerimento del pulsante coprirebbe le voci in basso del menu
+        btn.set_has_tooltip(False)
+        menu.connect("deactivate", lambda *_: GLib.timeout_add(
+            300, lambda: (btn.set_has_tooltip(True), False)[1]))
+        menu.attach_to_widget(btn, None)
+        menu.popup_at_widget(btn, Gdk.Gravity.NORTH_WEST, Gdk.Gravity.SOUTH_WEST, ev)
+        return True
 
     # --- orologio ---
     def _tick_clock(self):
