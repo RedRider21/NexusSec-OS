@@ -14,11 +14,17 @@ Icona *Installa su disco* → procedura guidata (controllo della chiavetta, scel
 Sistema già installato in un unico file compresso invece di ~600 pacchetti da installare a ogni avvio: ISO più piccola (~690 MB) e circa **700 MB di RAM in più** liberi a desktop pronto. Con almeno 4 GB di RAM il sistema compresso viene copiato in RAM all'avvio (`nxs_toram=yes|no` per forzare).
 
 #### Finestre in stile macOS
-Predefinito «macOS scuro» (c'è anche il chiaro) nel colore del profilo: semafori a sinistra, titolo centrato, angoli arrotondati e ombre anche nelle VM senza 3D, bordi e angoli afferrabili per ridimensionare.
+Predefinito «macOS scuro» (c'è anche il chiaro) nel colore del profilo: semafori a sinistra, titolo centrato, icona del programma a destra (logo NexusSec sulle nostre finestre), bordi e angoli afferrabili per ridimensionare. Angoli arrotondati e ombre solo con una scheda video vera: nelle macchine virtuali il compositor resta spento (con l'OpenGL software rendeva bianche le finestre in VirtualBox e nere HORUS e il browser).
+
+#### Splash di avvio vera
+L'immagine NexusSec dall'accensione al desktop al posto del testo che scorre (subito con UEFI; con BIOS e nelle VM appena il driver video è caricato). Senza schermo grafico l'avvio resta testuale come prima; se serve la passphrase o il login la splash si fa da parte. `splash=no` la disattiva.
+
+#### Terminale e barra
+Logo del terminale più grande a due toni con versione, profilo, rete, stato dei dati e colori dei profili. Barra in basso come in MATE: tasto destro sul pulsante di una finestra (riduci/ripristina, massimizza, sempre in primo piano, sposta su un altro desktop, chiudi) e solo le finestre del desktop corrente.
 
 #### Altro
 - Registro degli incarichi con impronte SHA-256 (`nxs-registro`, *Registro e log*).
-- Collaudo automatico esteso all'installazione su disco (BIOS e UEFI), con tempo di avvio e RAM libera.
+- Collaudo automatico esteso all'installazione su disco (BIOS e UEFI), con tempo di avvio e RAM libera, e all'usabilità (programmi principali, strumento dal catalogo, profilo, lingua, finestre web, errori nei log); verifica anche in una VirtualBox vera.
 - Logo e materiali grafici in `branding/`.
 - Repository ripulito (file di lavoro e prototipi superati).
 

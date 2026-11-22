@@ -41,13 +41,30 @@ webkit2gtk preinstallato); a regime con un profilo attivo ~400-600 MB in RAM
   pulsanti a semaforo a sinistra con il simbolo al passaggio del mouse, titolo
   centrato, angoli arrotondati e ombre, nel **colore del profilo** attivo.
   Bordi e angoli afferrabili per il ridimensionamento (il puntatore mostra le
-  frecce). Gli angoli arrotondati funzionano anche nelle VM senza
-  accelerazione 3D (il compositor passa da solo alla modalità software).
+  frecce); l'icona del programma a destra nella barra del titolo (il logo
+  NexusSec sulle finestre NexusSec). Angoli arrotondati e ombre solo con una
+  **scheda video vera** (Intel, AMD, NVIDIA/nouveau): nelle macchine virtuali
+  il compositor resta spento e le finestre sono squadrate (con l'OpenGL
+  software rendeva bianche le finestre in VirtualBox e nere HORUS e il browser).
+- **Splash di avvio vera**: al posto del testo che scorre, l'immagine NexusSec
+  dall'accensione al desktop (subito con UEFI; con BIOS e nelle VM appena il
+  driver video è caricato). Senza schermo grafico l'avvio resta testuale come
+  prima, mai nero; se serve la passphrase dei dati o il login la splash si fa
+  da parte. `splash=no` la disattiva. Edizione aggiornata da sola.
+- **Terminale**: logo più grande a due toni (esagono nel colore del profilo, N
+  chiara) con versione, profilo, rete (normale/anonima), stato dei dati
+  (persistenza/installato) e i colori dei cinque profili.
+- **Barra in basso come in MATE**: tasto destro sul pulsante di una finestra
+  (riduci/ripristina, massimizza, sempre in primo piano, sposta su un altro
+  desktop, chiudi); la barra mostra solo le finestre del desktop corrente.
 - **Registro degli incarichi**: ogni strumento lanciato lascia una traccia
   concatenata con impronte SHA-256 dei file prodotti (vedi
   [Registro degli incarichi](#registro-degli-incarichi)).
 - **Collaudo automatico** esteso: installazione su disco con riavvio dal disco
-  in BIOS e UEFI, tempo fino al desktop e RAM libera.
+  in BIOS e UEFI, tempo fino al desktop e RAM libera, e **usabilità** (apre i
+  programmi principali, installa uno strumento dal catalogo, cambia profilo e
+  lingua, controlla che le finestre web non siano vuote e cerca errori nei
+  log); verifica anche in una VirtualBox vera.
 - Logo del progetto e materiali grafici in `branding/`.
 
 ## Novità — v2026.11.21
@@ -1308,14 +1325,16 @@ temporaneo ~2,5 GB, cancellato alla fine. La ISO di base resta in
 
 ```sh
 build-alpine/collaudo-iso.py out/alpine-nexussec-AAMMGG-x86_64.iso \
-      [--arm out/alpine-nexussec-AAMMGG-aarch64.iso] [--solo bios,uefi,persist,disco]
+      [--arm out/alpine-nexussec-AAMMGG-aarch64.iso] [--solo bios,uefi,persist,disco,usabilita]
 ```
 
 Avvia la ISO in QEMU (nessun download: qemu, OVMF/AAVMF del PC) e verifica da
 sola: avvio **BIOS** e **UEFI** fino al desktop, **doas** funzionante,
 **persistenza** su una chiavetta USB virtuale (creata dopo la distro, file
 scritto, riavvio, ritrovata montata col file), **chiavetta estranea** con
-`NXSDATA` ignorata, **installazione su disco** (`disco`: installa senza rete,
+`NXSDATA` ignorata, **usabilità** (`usabilita`: programmi principali, nmap dal
+catalogo, profilo, lingua, finestre web non vuote, errori nei log),
+**installazione su disco** (`disco`: installa senza rete,
 riavvia dal disco in BIOS e UEFI, sblocca la parte dati, controlla desktop,
 dati montati e sistema in sola lettura) e, con `--arm`, avvio **aarch64**
 (lento, ~15 min). Per ogni avvio riporta anche i secondi fino al desktop e la
