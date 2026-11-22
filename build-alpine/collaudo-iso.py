@@ -139,8 +139,13 @@ def _cmd_esito(righe_shell):
             "doas umount /mnt/t\n" % righe_shell)
 
 
+# Misure (2026-11-22, confronto fast-boot): secondi dall'accensione all'avvio
+# del pannello (= desktop pronto; campo 22 di /proc/PID/stat, in centesimi di
+# secondo) e memoria (free -m) a desktop pronto.
 _CONTROLLI_BASE = ("echo DESKTOP-OK; doas true && echo DOAS-OK || echo DOAS-KO; "
-                   "nxs-persist status")
+                   "nxs-persist status; P=$(pgrep -f nxs_cc.panel | head -1); "
+                   "echo PANNELLO-CS $(cut -d' ' -f22 /proc/$P/stat); free -m; "
+                   "grep -c nxs-ram /proc/mounts | sed 's/^/RAMCOPY /'")
 
 
 def _qemu_x86(iso_o_disco, uefi, cartella, nome, dischi=(), usb_boot=False):
@@ -175,6 +180,17 @@ def prova_avvio(iso, uefi, cartella):
     vm.chiudi()
     out = _leggi_risultati(ris)
     esiti = {nome: "DESKTOP-OK" in out, "doas": "DOAS-OK" in out}
+    for riga in out.splitlines():
+        if riga.startswith("PANNELLO-CS"):
+            try:
+                print("  [%s] desktop pronto dopo %.0f s dall'accensione"
+                      % (nome, int(riga.split()[1]) / 100.0))
+            except (IndexError, ValueError):
+                pass
+        if riga.startswith("Mem:"):
+            c = riga.split()
+            print("  [%s] RAM: totale %s MB, usata %s MB, disponibile %s MB"
+                  % (nome, c[1], c[2], c[-1]))
     return esiti, out
 
 

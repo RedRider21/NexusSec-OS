@@ -113,6 +113,7 @@ rm -f "$OUT"
 ls -l "$ISO" "$OUT" | awk '{printf "  %s: %.0f MB\n", $9, $5/1048576}'
 
 echo "[fastboot] pulizia..."
+chmod -R u+w "$W" 2>/dev/null || true
 podman unshare rm -rf "$W/rootfs"
 rm -rf "$W/repo" "$W/nxsrepo" "$W/initpatch" "$W/initramfs.orig" "$W/initramfs.new" \
        "$W/init.cpio.gz" "$W/nxs-rootfs.squashfs" "$W/apkovl.tar.gz" "$W/apk.log"
