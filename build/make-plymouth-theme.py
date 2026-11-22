@@ -342,19 +342,7 @@ def make_scene():
         scene.alpha_composite(im, (cx - w // 2, int(H * yfrac) - h // 2))
     scene = scene.convert("RGB")
     scene.save(OUT / "scene.png")
-    # immagine della splash di AVVIO (fbsplash, sul framebuffer prima di X):
-    # 1280x720 (~2,7 MB nella ISO invece di 6) con i bordi sfumati a nero, cosi'
-    # su schermi piu' grandi, dove fbsplash la centra su nero, non si vede il
-    # bordo dell'immagine. Va nella radice del supporto (fastboot-locale.sh).
-    fb = scene.resize((1280, 720), Image.LANCZOS)
-    m = Image.new("L", fb.size, 0)
-    md = ImageDraw.Draw(m)
-    for i in range(60):
-        v = int(255 * (i / 59.0) ** 1.4)
-        md.rectangle([i, i, fb.width - 1 - i, fb.height - 1 - i], outline=v)
-    md.rectangle([60, 60, fb.width - 61, fb.height - 61], fill=255)
-    nero = Image.new("RGB", fb.size, (0, 0, 0))
-    Image.composite(fb, nero, m).save(ROOT / "build-alpine" / "fbsplash.ppm")
+    # NB: l'immagine di avvio (fbsplash.ppm) ora la fa build/make-bootsplash.py
 
 
 def main():

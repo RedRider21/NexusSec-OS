@@ -1,7 +1,8 @@
 #!/sbin/openrc-run
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
-# nxs-splash - splash grafica di avvio quando il framebuffer arriva DOPO
+# nxs-splash - avvia l'ANIMAZIONE della splash (logo che pulsa + barra,
+# nxs_cc/fbanim.py) e, se il framebuffer arriva DOPO
 # l'initramfs (PC con BIOS, VirtualBox, VMware: lo schermo grafico nasce solo
 # quando udev carica il driver video). Se la splash e' gia' partita
 # dall'initramfs (UEFI) non fa nulla. Senza framebuffer non fa NULLA: l'avvio
@@ -15,7 +16,11 @@ depend() {
 
 start() {
 	grep -qw "splash=no" /proc/cmdline && return 0
-	pgrep -x fbsplash >/dev/null 2>&1 && return 0
+	# gia' partita dall'initramfs (UEFI): aggiungo solo l'animazione
+	if pgrep -x fbsplash >/dev/null 2>&1; then
+		_anima
+		return 0
+	fi
 	i=0
 	while [ ! -e /dev/fb0 ] && [ "$i" -lt 15 ]; do sleep 0.2; i=$((i + 1)); done
 	[ -e /dev/fb0 ] || return 0
@@ -27,5 +32,13 @@ start() {
 	echo "IMG_ALIGN=CM" > /run/nxs-fbsplash.cfg
 	ebegin "Splash NexusSec"
 	setsid fbsplash -T 16 -s "$img" -i /run/nxs-fbsplash.cfg >/dev/null 2>&1 &
+	sleep 0.3
+	_anima
 	eend 0
+}
+
+# logo che pulsa + barra di avanzamento sul framebuffer (nxs_cc/fbanim.py)
+_anima() {
+	command -v python3 >/dev/null 2>&1 || return 0
+	setsid python3 /usr/local/lib/nxs_cc/fbanim.py >/dev/null 2>&1 &
 }
