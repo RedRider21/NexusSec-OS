@@ -110,6 +110,16 @@ def _x_partito():
     return os.path.exists("/tmp/.X0-lock")
 
 
+def _vt_attiva():
+    """La console a schermo (tty16 = la splash). Se l'utente o il sistema
+    passano a un'altra console (passphrase, login, Ctrl+Alt+F1) smettiamo di
+    disegnare: il framebuffer e' condiviso e copriremmo il testo."""
+    try:
+        return open("/sys/class/tty/tty0/active").read().strip()
+    except OSError:
+        return "tty16"
+
+
 def main():
     try:
         fd = os.open("/dev/fb0", os.O_RDWR)
@@ -142,7 +152,8 @@ def main():
     t0 = time.time()
     i = 0
     while True:
-        if _x_partito() or os.path.exists(STOP) or time.time() - t0 > 180:
+        if _x_partito() or os.path.exists(STOP) or time.time() - t0 > 180 \
+                or _vt_attiva() != "tty16":
             break
         if lx >= 0 and ly >= 0:
             scrivi(lx, ly, frames[i % len(frames)], fw)
