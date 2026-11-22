@@ -31,6 +31,31 @@ NXS_PREBUILT=
 for _nxsf in "$ROOT"/media/*/nxs-rootfs.squashfs; do
 	[ -f "$_nxsf" ] && NXS_PREBUILT="$_nxsf" && break
 done
+# Copia IN RAM del solo squashfs (compresso, ~310 MB): poi nessuna lettura
+# dalla chiavetta durante l'uso e i file si scompattano al volo dalla RAM.
+# Automatica con >= 4 GB (MemTotal >= ~3,5 GB); parametro di avvio
+# nxs_toram=yes|no per forzare. Se la copia non riesce si usa la chiavetta.
+if [ -n "$NXS_PREBUILT" ]; then
+	_nxs_ram=auto
+	case " $(cat /proc/cmdline) " in
+		*" nxs_toram=yes "*|*" nxs_toram=1 "*) _nxs_ram=yes ;;
+		*" nxs_toram=no "*|*" nxs_toram=0 "*) _nxs_ram=no ;;
+	esac
+	_nxs_mem=$(awk '/^MemTotal:/{print $2}' /proc/meminfo)
+	if [ "$_nxs_ram" = yes ] || { [ "$_nxs_ram" = auto ] && [ "${_nxs_mem:-0}" -ge 3500000 ]; }; then
+		_nxs_kb=$(( $(wc -c < "$NXS_PREBUILT") / 1024 + 16384 ))
+		mkdir -p /media/nxs-ram
+		ebegin "NexusSec: copio il sistema in RAM ($((_nxs_kb / 1024)) MB)"
+		if $MOCK mount -t tmpfs -o size=${_nxs_kb}k,mode=0755 nxs-ram /media/nxs-ram \
+		   && cp "$NXS_PREBUILT" /media/nxs-ram/nxs-rootfs.squashfs; then
+			NXS_PREBUILT=/media/nxs-ram/nxs-rootfs.squashfs
+			eend 0
+		else
+			$MOCK umount /media/nxs-ram 2>/dev/null
+			eend 1 "copia in RAM non riuscita: uso la chiavetta"
+		fi
+	fi
+fi
 if [ -n "$NXS_PREBUILT" ]; then
 	ebegin "NexusSec: monto il root pre-costruito (squashfs + overlay)"
 	$MOCK modprobe -q squashfs 2>/dev/null
