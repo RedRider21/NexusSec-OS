@@ -81,7 +81,9 @@ ROSSO_H, GIALLO_H, VERDE_H = "#e0443e", "#dea123", "#1aab29"
 def themerc(n, v):
     return f"""# {n} - tema finestre in stile macOS per NexusSec OS (generato da
 # build/make-mac-themes.py: modificare quello, non questo file).
-border.width: 1
+# 3 px: bordo afferrabile per il ridimensionamento (Openbox mostra le frecce
+# sopra bordi e angoli); colorato come la barra, cosi' resta discreto
+border.width: 3
 padding.width: 8
 padding.height: 5
 window.handle.width: 5
@@ -89,8 +91,8 @@ window.client.padding.width: 0
 window.client.padding.height: 0
 menu.overlap: 0
 
-window.active.border.color: {v['bordo_a']}
-window.inactive.border.color: {v['bordo_i']}
+window.active.border.color: {v['tit_a2']}
+window.inactive.border.color: {v['tit_i']}
 window.active.title.separator.color: {v['bordo_a']}
 window.inactive.title.separator.color: {v['bordo_i']}
 window.active.client.color: {v['client']}
