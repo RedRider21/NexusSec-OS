@@ -84,7 +84,7 @@ def themerc(n, v):
 border.width: 1
 padding.width: 8
 padding.height: 5
-window.handle.width: 0
+window.handle.width: 5
 window.client.padding.width: 0
 window.client.padding.height: 0
 menu.overlap: 0
