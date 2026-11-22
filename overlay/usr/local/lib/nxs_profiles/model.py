@@ -773,14 +773,27 @@ def _manage_picom(enable: bool) -> None:
     except (FileNotFoundError, OSError):
         running = False
     if enable and not running:
-        try:
-            cmd = ["picom", "-b"]
+        # Prima GLX (piu' fluido); se muore subito (VM senza accelerazione 3D,
+        # driver senza OpenGL) si riparte col backend software xrender, che fa
+        # comunque angoli arrotondati e ombre (2026-11-22: nella VM dell'utente
+        # le finestre restavano squadrate perche' picom GLX non partiva).
+        def _avvia():
+            import time
+            base = ["picom"]
             if PICOM_CONF.is_file():
-                cmd += ["--config", str(PICOM_CONF)]
-            subprocess.Popen(cmd, stdout=subprocess.DEVNULL,
-                             stderr=subprocess.DEVNULL)
-        except (FileNotFoundError, OSError):
-            pass
+                base += ["--config", str(PICOM_CONF)]
+            for extra in ([], ["--backend", "xrender", "--no-vsync"]):
+                try:
+                    p = subprocess.Popen(base + extra, stdout=subprocess.DEVNULL,
+                                         stderr=subprocess.DEVNULL,
+                                         start_new_session=True)
+                except (FileNotFoundError, OSError):
+                    return
+                time.sleep(2.5)
+                if p.poll() is None:
+                    return              # sta girando
+        import threading
+        threading.Thread(target=_avvia, daemon=False).start()
     elif not enable and running:
         try:
             subprocess.run(["pkill", "-x", "picom"],
