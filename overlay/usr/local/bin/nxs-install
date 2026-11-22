@@ -186,7 +186,19 @@ case "$ans" in
      disk="$(sed -n "${n}p" /tmp/nxs-dischi.$$ 2>/dev/null | cut -f1)"; rm -f /tmp/nxs-dischi.$$
      case "$n" in ''|0|*[!0-9]*) disk="" ;; esac
      [ -n "$disk" ] || { echo "  Annullato."; pausa; continue; }
-     exec priv nxs-install-disco --disco "$disk" ;;
+     # NON exec: a fine lavoro (riuscito o no) la finestra deve restare aperta
+     # con l'esito leggibile; tutto finisce anche nel log (2026-11-22: la
+     # finestra spariva e l'utente non vedeva l'errore)
+     LOG=/tmp/nxs-install-disco.log
+     priv nxs-install-disco --disco "$disk" 2>&1 | tee "$LOG"
+     echo
+     if grep -q INSTALLAZIONE-OK "$LOG"; then
+       echo "  Installazione COMPLETATA. Spegni, togli la chiavetta e riaccendi."
+     else
+       echo "  Installazione NON completata: il messaggio d'errore e' qui sopra"
+       echo "  (copia completa in $LOG)."
+     fi
+     pausa; continue ;;
 
   1) exec priv setup-alpine ;;
 
