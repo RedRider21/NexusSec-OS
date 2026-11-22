@@ -2740,8 +2740,11 @@ class Panel(Gtk.Window):
     def _refresh_tasks(self):
         self._refresh_pager()
         own = self._own_xids()
+        _n, cur = _wmctrl_desktops()
+        # solo le finestre del desktop CORRENTE (come MATE): una finestra
+        # spostata su un altro desktop sparisce dalla barra (2026-11-22)
         wins = [(wid, d, t) for (wid, d, t) in _wmctrl_list()
-                if _xid_int(wid) not in own]
+                if _xid_int(wid) not in own and (cur < 0 or d == str(cur))]
         active = _active_window()
         sig = tuple((w, t) for w, _d, t in wins)
         if sig != self._last_sig:
@@ -2815,7 +2818,8 @@ class Panel(Gtk.Window):
         else:
             voce(_t("pn.task.restore"), ["wmctrl", "-i", "-a", wid])
         voce(_t("pn.task.maximize"),
-             ["wmctrl", "-i", "-r", wid, "-b", "toggle,maximized_vert,maximized_horz"])
+             ["sh", "-c", "wmctrl -i -a %s; wmctrl -i -r %s -b "
+              "toggle,maximized_vert,maximized_horz" % (wid, wid)])
         voce(_t("pn.task.above"), ["wmctrl", "-i", "-r", wid, "-b", "toggle,above"])
         count, cur = _wmctrl_desktops()
         if count and count > 1:
