@@ -68,6 +68,7 @@ THEME_FAMILIES = ("core", "retro", "cards", "mac", "mac-scuro")
 # un font neutro (come su Mac) e picom per angoli arrotondati + ombre.
 _MAC_THEMES = {"mac": "NexusSec-Mac", "mac-scuro": "NexusSec-Mac-Scuro"}
 _LEFT_FAMILIES = ("cards", "mac", "mac-scuro")
+DEFAULT_THEME_FAMILY = "mac-scuro"
 # font del titolo finestre: quello della distro e quello "neutro" stile Mac
 OB_TITLE_FONT_DEFAULT = "Chakra Petch"
 OB_TITLE_FONT_MAC = "DejaVu Sans"
@@ -659,14 +660,15 @@ def _darken(hex_color: str, factor: float = 0.32) -> str:
 
 
 def theme_family() -> str:
-    """Famiglia tema finestre scelta (~/.config/nxs/theme). Default: 'core'."""
+    """Famiglia tema finestre scelta (~/.config/nxs/theme). Default (dal
+    2026-11-22, scelta dell'utente): 'mac-scuro', nel colore del profilo."""
     try:
         v = THEME_FAMILY_FILE.read_text().strip()
         if v:
             return v
     except OSError:
         pass
-    return "core"
+    return DEFAULT_THEME_FAMILY
 
 
 def set_theme_family(fam: str) -> None:
@@ -699,8 +701,12 @@ def resolve_ob_theme(family: str | None = None, key: str | None = None) -> str:
         name = family[4:].strip()
         return name if _theme_installed(name) else "NexusSec-Core"
     if family in _MAC_THEMES:
-        name = _MAC_THEMES[family]
-        return name if _theme_installed(name) else "NexusSec-Core"
+        # variante nel colore del PROFILO, poi quella base, poi la neutra
+        pre = _MAC_THEMES[family]
+        for name in ("%s-%s" % (pre, key), pre + "-base", pre):
+            if _theme_installed(name):
+                return name
+        return "NexusSec-Core"
     if family == "retro":
         cand = "NexusSec-Retro-%s" % key
     elif family == "cards":

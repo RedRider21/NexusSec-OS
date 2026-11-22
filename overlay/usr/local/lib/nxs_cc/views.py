@@ -2853,20 +2853,18 @@ def open_window_style(_btn=None):
 
 
 _THEME_FAMILIES = [
+    ("mac-scuro", _t("v.ac.mac_dark"),
+     _t("v.ac.mac_dark_desc")),
+    ("mac", _t("v.ac.mac"),
+     _t("v.ac.mac_desc")),
     ("core",  _t("v.ac.core"),
      _t("v.ac.core_desc")),
     ("retro", _t("v.ac.retro"),
      _t("v.ac.retro_desc")),
     ("cards", _t("v.ac.cards"),
      _t("v.ac.cards_desc")),
-    ("mac", _t("v.ac.mac"),
-     _t("v.ac.mac_desc")),
-    ("mac-scuro", _t("v.ac.mac_dark"),
-     _t("v.ac.mac_dark_desc")),
-    ("raw:NexusSec-Arc-Dark", _t("v.ac.arc_dark"),
-     _t("v.ac.arc_dark_desc")),
-    ("raw:NexusSec-Arc-Light", _t("v.ac.arc_light"),
-     _t("v.ac.arc_light_desc")),
+
+
 ]
 _PROMPT_STYLES = [
     ("default", _t("v.ac.prompt_one"),

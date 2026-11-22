@@ -167,7 +167,7 @@ menu.items.bg.color: {v['client']}
 menu.items.text.color: {v['testo_a']}
 menu.items.disabled.text.color: {v['testo_i']}
 menu.items.active.bg: flat solid
-menu.items.active.bg.color: #2f7cf6
+menu.items.active.bg.color: {v.get('menu_hl', '#2f7cf6')}
 menu.items.active.text.color: #ffffff
 menu.separator.color: {v['bordo_i']}
 
@@ -177,15 +177,52 @@ osd.bg: flat solid
 osd.bg.color: {v['client']}
 osd.label.text.color: {v['testo_a']}
 osd.hilight.bg: flat solid
-osd.hilight.bg.color: #2f7cf6
+osd.hilight.bg.color: {v.get('menu_hl', '#2f7cf6')}
 osd.unhilight.bg: flat solid
 osd.unhilight.bg.color: {v['bordo_i']}
 """
 
 
+def _rgb(h):
+    h = h.lstrip("#")
+    return tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
+
+
+def mix(a, b, t):
+    """Colore a mescolato con b: t=0 -> b, t=1 -> a."""
+    ra, rb = _rgb(a), _rgb(b)
+    return "#%02x%02x%02x" % tuple(round(x * t + y * (1 - t)) for x, y in zip(ra, rb))
+
+
+def varianti_profilo():
+    """Una variante chiara e una scura per OGNI profilo (colori da
+    profiles.json): tinta leggera della barra, bordo, titolo e voce evidenziata
+    dei menu nel colore del profilo. I semafori restano rosso/giallo/verde."""
+    import json
+    pj = os.path.join(QUI, "..", "overlay", "usr", "local", "share", "nexussec", "profiles.json")
+    d = json.load(open(pj))
+    prof = {k: v["accent"] for k, v in (d.get("profiles", d)).items()
+            if isinstance(v, dict) and v.get("accent")}
+    out = {}
+    for k, acc in prof.items():
+        s = dict(VARIANTI["NexusSec-Mac-Scuro"])
+        s.update(tit_a1=mix(acc, "#3b3b3d", 0.16), tit_a2=mix(acc, "#323234", 0.08),
+                 bordo_a=mix(acc, "#1f1f21", 0.55), testo_a=mix(acc, "#ffffff", 0.45),
+                 menu_hl=mix(acc, "#1f1f21", 0.75))
+        out["NexusSec-Mac-Scuro-" + k] = s
+        c = dict(VARIANTI["NexusSec-Mac"])
+        c.update(tit_a1=mix(acc, "#ececec", 0.10), tit_a2=mix(acc, "#dcdcdc", 0.05),
+                 bordo_a=mix(acc, "#b4b4b4", 0.45), testo_a=mix(acc, "#3a3a3a", 0.40),
+                 menu_hl=mix(acc, "#ffffff", 0.85))
+        out["NexusSec-Mac-" + k] = c
+    return out
+
+
 def main():
     base = cerchio()
-    for n, v in VARIANTI.items():
+    tutte = dict(VARIANTI)
+    tutte.update(varianti_profilo())
+    for n, v in tutte.items():
         d = os.path.join(DEST, n, "openbox-3")
         os.makedirs(d, exist_ok=True)
         for b in ("close", "iconify", "max", "max_toggled"):

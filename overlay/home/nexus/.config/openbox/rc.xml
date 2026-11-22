@@ -49,8 +49,8 @@
 </placement>
 
 <theme>
-  <name>NexusSec-Core</name>
-  <titleLayout>NLIMC</titleLayout>
+  <name>NexusSec-Mac-Scuro-base</name>
+  <titleLayout>CIML</titleLayout>
   <!--
       available characters are NDSLIMC, each can occur at most once.
       N: window icon
@@ -64,7 +64,7 @@
   <keepBorder>yes</keepBorder>
   <animateIconify>yes</animateIconify>
   <font place="ActiveWindow">
-    <name>Chakra Petch</name>
+    <name>DejaVu Sans</name>
     <size>9</size>
     <!-- font size in points -->
     <weight>bold</weight>
@@ -73,7 +73,7 @@
     <!-- 'italic' or 'normal' -->
   </font>
   <font place="InactiveWindow">
-    <name>Chakra Petch</name>
+    <name>DejaVu Sans</name>
     <size>9</size>
     <!-- font size in points -->
     <weight>bold</weight>
