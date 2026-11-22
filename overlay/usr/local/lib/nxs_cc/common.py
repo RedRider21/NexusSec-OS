@@ -354,6 +354,12 @@ def apply_css() -> None:
     # skin "profile" non e' un file: niente provider -> resta base+accent.
     apply_panel_theme_live()
     _install_paneltheme_monitor()
+    # Icona predefinita di TUTTE le finestre NexusSec: il logo (esagono + N).
+    # Openbox la mostra nella barra del titolo, a destra (titleLayout ...N).
+    try:
+        Gtk.Window.set_default_icon_from_file("/usr/local/share/nexussec/nxs-logo-64.png")
+    except Exception:                    # noqa: BLE001
+        pass
     _css_done = True
 
 

@@ -75,7 +75,7 @@ OB_TITLE_FONT_MAC = "DejaVu Sans"
 # titleLayout di Openbox: default = pulsanti a DESTRA (N=icona, L=titolo, I/M/C);
 # Cards (macOS) = pulsanti a SINISTRA (C=chiudi, I=minimizza, M=massimizza, L).
 OB_TITLELAYOUT_DEFAULT = "NLIMC"
-OB_TITLELAYOUT_LEFT = "CIML"
+OB_TITLELAYOUT_LEFT = "CIMLN"     # N = icona del programma, a destra (2026-11-22)
 # Compositor per gli angoli arrotondati: attivo SOLO con la famiglia Cards.
 PICOM_CONF = HOME / ".config" / "picom.conf"
 
