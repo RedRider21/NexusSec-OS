@@ -294,6 +294,67 @@ def prova_installa(iso, cartella):
     return esiti, out
 
 
+def prova_disco(iso, cartella):
+    """Installazione IMMUTABILE (nxs-install-disco, 2026-11-22) da ISO fast-boot,
+    senza rete, su disco virtuale da 12 GB; poi avvio DAL DISCO in BIOS e in
+    UEFI, passphrase dei dati al login, controlli (desktop, dati montati,
+    sistema in sola lettura)."""
+    disco = os.path.join(cartella, "disco-install.img")
+    with open(disco, "wb") as f:
+        f.truncate(12 * 1024 ** 3)
+    ris = _disco_risultati(cartella, "disco")
+    argv = _qemu_x86(iso, False, cartella, "disco", dischi=[ris])
+    argv = [x for x in argv if x not in ("-nic", "user,model=virtio-net-pci")]
+    argv += ["-nic", "none", "-drive", "if=virtio,format=raw,file=%s" % disco]
+    vm = VM("disco", argv, cartella)
+    time.sleep(ATTESA_BOOT)
+    vm.terminale()
+    vm.scrivi("clear; echo provaprova > /tmp/pp; doas nxs-install-disco --disco /dev/vda "
+              "--passfile /tmp/pp --si >/tmp/inst.log 2>&1; tail -4 /tmp/inst.log\n")
+    time.sleep(240)
+    vm.schermata("installato")
+    vm.scrivi(_cmd_esito("cat /tmp/inst.log; lsblk -o NAME,SIZE,FSTYPE,LABEL /dev/vda"))
+    time.sleep(10)
+    vm.chiudi()
+    out = "--- installazione ---\n" + _leggi_risultati(ris)
+    esiti = {"disco-inst": "INSTALLAZIONE-OK" in out}
+    for modo in ("bios", "uefi"):
+        r2 = _disco_risultati(cartella, "disco-" + modo)
+        a2 = ["qemu-system-x86_64", "-enable-kvm", "-m", "4096", "-smp", "2",
+              "-vga", "std", "-nic", "none", "-device", "qemu-xhci",
+              "-drive", "if=virtio,format=raw,file=%s" % disco,
+              "-drive", "if=none,id=r,format=raw,file=%s" % r2,
+              "-device", "usb-storage,drive=r,removable=on"]
+        if modo == "uefi":
+            vars_ = os.path.join(cartella, "disco-uefi.vars")
+            shutil.copy(OVMF_VARS, vars_)
+            a2 += ["-drive", "if=pflash,format=raw,readonly=on,file=%s" % OVMF_CODE,
+                   "-drive", "if=pflash,format=raw,file=%s" % vars_]
+        vm = VM("d" + modo, a2, cartella)
+        time.sleep(90)
+        vm.schermata("passphrase")
+        vm.scrivi("provaprova\n")
+        time.sleep(ATTESA_BOOT - 60)
+        vm.schermata("desktop")
+        vm.terminale()
+        vm.scrivi(_cmd_esito(_CONTROLLI_BASE + "; mountpoint -q /var/nxs-data && echo DATI-MONTATI; "
+                             "findmnt -no SOURCE,FSTYPE,OPTIONS /media/root-ro; "
+                             "doas touch /media/root-ro/x 2>/dev/null || echo SISTEMA-SOLA-LETTURA; "
+                             "cat /proc/cmdline"))
+        time.sleep(8)
+        vm.schermata("esito")
+        vm.chiudi()
+        o = _leggi_risultati(r2)
+        out += "\n--- avvio dal disco %s ---\n%s" % (modo, o)
+        esiti["disco-" + modo] = "DESKTOP-OK" in o and "DATI-MONTATI" in o \
+            and "SISTEMA-SOLA-LETTURA" in o
+    try:
+        os.remove(disco)
+    except OSError:
+        pass
+    return esiti, out
+
+
 def prova_arm(iso, cartella):
     ris = _disco_risultati(cartella, "arm")
     vars_ = os.path.join(cartella, "arm.vars")
@@ -343,6 +404,8 @@ def main():
         e, o = prova_avvio(a.iso, True, cartella); esiti.update(e); log.append(("UEFI", o))
     if "persist" in solo:
         e, o = prova_persistenza(a.iso, cartella); esiti.update(e); log.append(("PERSISTENZA", o))
+    if "disco" in solo:
+        e, o = prova_disco(a.iso, cartella); esiti.update(e); log.append(("DISCO", o))
     if "installa" in solo:
         e, o = prova_installa(a.iso, cartella); esiti.update(e); log.append(("INSTALLA", o))
     if a.arm:

@@ -1,0 +1,217 @@
+#!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
+# nxs-install-disco - installa NexusSec su disco in modo IMMUTABILE (2026-11-22)
+#
+# Il disco diventa una "chiavetta con persistenza dentro il PC":
+#   1  BIOS boot  2 MiB    core GRUB per i PC senza UEFI (settore 2048 fisso)
+#   2  NXSEFI     256 MiB  GRUB UEFI + grub.cfg (menu di avvio)
+#   3  NXS_SYS_A  ext4     IL SISTEMA: nxs-rootfs.squashfs + kernel + moduli,
+#                          montato in SOLA LETTURA a ogni avvio
+#   4  NXS_SYS_B  ext4     vuota: servira' per gli aggiornamenti A/B
+#   5  NXSCRYPT   LUKS2    dati (ext4 NXSDATA): home/.local, container,
+#                          strumenti, stato, loot. Si sblocca al login.
+# Nessun pacchetto viene scaricato: si copia il sistema GIA' PRONTO della
+# chiavetta (ISO fast-boot) e il GRUB preparato in /usr/local/share/nexussec/
+# grub-disco (build/make-grub-disco.py).
+#
+# Uso:  nxs-install-disco --disco /dev/sdX [--passfile FILE] [--si] [--sys-mb N]
+#       nxs-install-disco --dischi        (elenco dei dischi installabili)
+# Le righe "PASSO n/7 ..." servono all'installatore grafico.
+set -eu
+export LC_ALL=C
+
+GRUBD=/usr/local/share/nexussec/grub-disco
+SYS_MB=1536
+DISCO="" PASSFILE="" SI="" MNT=/run/nxs-install
+
+die() { echo "ERRORE: $*" >&2; exit 1; }
+passo() { echo "PASSO $1/7 $2"; }
+
+[ -f /usr/local/lib/nxs-persist-setup.sh ] && . /usr/local/lib/nxs-persist-setup.sh
+
+# supporto di avvio (chiavetta): cartella che contiene boot/modloop-*
+media_dir() {
+	for _bf in /sys/block/loop*/loop/backing_file; do
+		[ -r "$_bf" ] || continue
+		case "$(cat "$_bf")" in
+			*/boot/modloop-*) dirname "$(dirname "$(cat "$_bf")")"; return 0 ;;
+		esac
+	done
+	for _d in /media/*; do
+		[ -f "$_d/nxs-rootfs.squashfs" ] && { echo "$_d"; return 0; }
+	done
+	return 1
+}
+
+# Dischi su cui si puo' installare: interi, scrivibili, >= 8 GB, non quello di
+# avvio, senza partizioni montate. Una riga: DEVICE<TAB>GB<TAB>MODELLO
+dischi() {
+	_boot="$(command -v nxs_boot_disk >/dev/null 2>&1 && nxs_boot_disk || true)"
+	lsblk -dnpbo NAME,TYPE,RO,SIZE,MODEL 2>/dev/null | while read -r n t ro sz model; do
+		[ "$t" = disk ] && [ "$ro" = 0 ] || continue
+		case "$n" in /dev/loop*|/dev/zram*|/dev/ram*|/dev/sr*) continue ;; esac
+		[ "$n" = "$_boot" ] && continue
+		[ "$sz" -ge 8000000000 ] 2>/dev/null || continue
+		lsblk -nro MOUNTPOINT "$n" 2>/dev/null | grep -q . && continue
+		printf '%s\t%s\t%s\n' "$n" "$((sz / 1000000000))" "${model:-disco}"
+	done
+}
+
+part() {
+	case "$DISCO" in *[0-9]) echo "${DISCO}p$1" ;; *) echo "${DISCO}$1" ;; esac
+}
+
+pulisci() {
+	umount "$MNT/a" 2>/dev/null || true
+	umount "$MNT/efi" 2>/dev/null || true
+	cryptsetup close nxsinst 2>/dev/null || true
+	[ -n "${KEYF:-}" ] && rm -f "$KEYF"
+	return 0
+}
+
+while [ $# -gt 0 ]; do
+	case "$1" in
+		--disco) DISCO="$2"; shift 2 ;;
+		--passfile) PASSFILE="$2"; shift 2 ;;
+		--si) SI=1; shift ;;
+		--sys-mb) SYS_MB="$2"; shift 2 ;;
+		--dischi) dischi; exit 0 ;;
+		-h|--help) sed -n '4,24p' "$0"; exit 0 ;;
+		*) die "opzione sconosciuta: $1" ;;
+	esac
+done
+
+[ "$(id -u)" = 0 ] || exec doas "$0" ${DISCO:+--disco "$DISCO"} ${PASSFILE:+--passfile "$PASSFILE"} ${SI:+--si} --sys-mb "$SYS_MB"
+[ "$(uname -m)" = x86_64 ] || die "per ora l'installazione su disco e' solo per PC x86_64."
+for c in sfdisk mkfs.vfat mkfs.ext4 cryptsetup lsblk sha256sum; do
+	command -v "$c" >/dev/null 2>&1 || die "manca il comando $c"
+done
+for f in mbr.bin core.img BOOTX64.EFI; do
+	[ -f "$GRUBD/$f" ] || die "manca $GRUBD/$f"
+done
+
+passo 1 "controlli"
+M="$(media_dir)" || die "supporto di avvio non trovato."
+[ -f "$M/nxs-rootfs.squashfs" ] || die "questa chiavetta non contiene il sistema pronto (nxs-rootfs.squashfs): serve la ISO fast-boot."
+for f in boot/vmlinuz-lts boot/initramfs-lts boot/modloop-lts; do
+	[ -f "$M/$f" ] || die "manca $M/$f"
+done
+[ -n "$DISCO" ] || die "indica il disco: --disco /dev/... (elenco: --dischi)"
+DISCO="$(readlink -f "$DISCO")"
+dischi | cut -f1 | grep -qx "$DISCO" || die "$DISCO non e' installabile (disco di avvio, in uso, troppo piccolo o non e' un disco)."
+need=$(( SYS_MB * 2 + 300 + 2048 ))
+size_mb=$(( $(lsblk -dnbo SIZE "$DISCO") / 1048576 ))
+[ "$size_mb" -gt "$need" ] || die "disco troppo piccolo ($size_mb MB)."
+[ "$(du -m "$M/nxs-rootfs.squashfs" "$M/boot/modloop-lts" | awk '{s+=$1} END{print s+64}')" -lt "$SYS_MB" ] \
+	|| die "lo slot di sistema da $SYS_MB MB non basta: usa --sys-mb piu' grande."
+
+if [ -z "$SI" ]; then
+	echo
+	echo "  Contenuto ATTUALE di $DISCO (verra' CANCELLATO TUTTO):"
+	lsblk -o NAME,SIZE,FSTYPE,LABEL "$DISCO"
+	echo
+	printf "  Per confermare scrivi il percorso del disco (%s): " "$DISCO"
+	read -r ok
+	[ "$ok" = "$DISCO" ] || die "non confermato: il disco non e' stato toccato."
+fi
+trap pulisci EXIT INT TERM
+
+passo 2 "partizioni"
+# firme vecchie (filesystem, LUKS, RAID) azzerate: wipefs se c'e', altrimenti
+# i primi 4 MiB di ogni partizione (bastano per tutte le firme comuni)
+for p in $(lsblk -lnpo NAME "$DISCO" | tail -n +2); do
+	if command -v wipefs >/dev/null 2>&1; then wipefs -aq "$p" 2>/dev/null || true
+	else dd if=/dev/zero of="$p" bs=1M count=4 2>/dev/null || true; fi
+done
+dd if=/dev/zero of="$DISCO" bs=1M count=4 conv=notrunc 2>/dev/null
+sfdisk -q --wipe always "$DISCO" <<EOF
+label: gpt
+start=2048, size=4096, type=21686148-6453-6F6E-744E-656564454649, name=nxs-bios
+size=256MiB, type=C12A7328-F81F-11D2-BA4B-00A0C93EC93B, name=NXSEFI
+size=${SYS_MB}MiB, type=0FC63DAF-8483-4772-8E79-3D69D8477DE4, name=NXS_SYS_A
+size=${SYS_MB}MiB, type=0FC63DAF-8483-4772-8E79-3D69D8477DE4, name=NXS_SYS_B
+type=0FC63DAF-8483-4772-8E79-3D69D8477DE4, name=NXSDATA
+EOF
+command -v partx >/dev/null 2>&1 && partx -u "$DISCO" 2>/dev/null || true
+blockdev --rereadpt "$DISCO" 2>/dev/null || true
+command -v mdev >/dev/null 2>&1 && mdev -s 2>/dev/null || true
+i=0
+while [ ! -b "$(part 5)" ] && [ $i -lt 20 ]; do sleep 1; i=$((i + 1)); done
+[ -b "$(part 5)" ] || die "le partizioni nuove non compaiono ($(part 5))."
+
+passo 3 "avvio (GRUB)"
+dd if="$GRUBD/mbr.bin" of="$DISCO" bs=440 count=1 conv=notrunc 2>/dev/null
+dd if="$GRUBD/core.img" of="$DISCO" bs=512 seek=2048 conv=notrunc 2>/dev/null
+mkfs.vfat -F 32 -n NXSEFI "$(part 2)" >/dev/null
+mkfs.ext4 -q -F -L NXS_SYS_A "$(part 3)"
+mkfs.ext4 -q -F -L NXS_SYS_B "$(part 4)"
+
+passo 4 "copia del sistema"
+mkdir -p "$MNT/a" "$MNT/efi"
+mount -t ext4 "$(part 3)" "$MNT/a"
+mkdir -p "$MNT/a/boot"
+for f in boot/vmlinuz-lts boot/initramfs-lts boot/modloop-lts nxs-rootfs.squashfs; do
+	echo "  copio $f"
+	cp "$M/$f" "$MNT/a/$f"
+done
+cp "$M/nexussec.apkovl.tar.gz" "$MNT/a/" 2>/dev/null || true
+cp "$M/.alpine-release" "$MNT/a/" 2>/dev/null || true
+printf 'slot=A\ninstallato=%s\norigine=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+	"$(cat /etc/nexussec-release 2>/dev/null || cat "$M/.alpine-release" 2>/dev/null)" > "$MNT/a/nxs-slot"
+sync
+
+passo 5 "verifica delle impronte"
+for f in boot/vmlinuz-lts boot/initramfs-lts boot/modloop-lts nxs-rootfs.squashfs; do
+	a="$(sha256sum "$M/$f" | cut -d' ' -f1)"
+	b="$(sha256sum "$MNT/a/$f" | cut -d' ' -f1)"
+	[ "$a" = "$b" ] || die "copia ROVINATA: $f (impronta diversa)."
+	echo "$b  $f" >> "$MNT/a/SHA256SUMS"
+done
+UA="$(lsblk -no UUID "$(part 3)")"
+umount "$MNT/a"
+
+mount -t vfat "$(part 2)" "$MNT/efi"
+mkdir -p "$MNT/efi/EFI/BOOT" "$MNT/efi/grub"
+cp "$GRUBD/BOOTX64.EFI" "$MNT/efi/EFI/BOOT/BOOTX64.EFI"
+CMD="modules=loop,squashfs,sd-mod,usb-storage,ext4,nvme,ahci blacklist=sdhci,sdhci_pci,sdhci_acpi,mmc_block,mmc_core vt.global_cursor_default=0 cgroup_no_v1=all page_poison=1 nxs_installed=1"
+cat > "$MNT/efi/grub/grub.cfg" <<EOF
+# NexusSec OS installato (nxs-install-disco). Slot A = sistema attivo.
+set timeout=3
+set default=0
+menuentry "NexusSec OS" {
+	search --no-floppy --fs-uuid --set=root $UA
+	linux /boot/vmlinuz-lts $CMD nxs_toram=no
+	initrd /boot/initramfs-lts
+}
+menuentry "NexusSec OS (sistema copiato in RAM)" {
+	search --no-floppy --fs-uuid --set=root $UA
+	linux /boot/vmlinuz-lts $CMD nxs_toram=yes
+	initrd /boot/initramfs-lts
+}
+EOF
+sync
+umount "$MNT/efi"
+
+passo 6 "partizione dati cifrata"
+KEYF=""
+if [ -n "$PASSFILE" ]; then
+	KEYF="$(mktemp)"; chmod 600 "$KEYF"
+	tr -d '\n' < "$PASSFILE" > "$KEYF"
+	cryptsetup luksFormat -q --type luks2 --label NXSCRYPT --key-file "$KEYF" "$(part 5)"
+	cryptsetup open --key-file "$KEYF" "$(part 5)" nxsinst
+else
+	echo "  Scegli la passphrase dei dati (te la chiedera' a ogni accensione):"
+	cryptsetup luksFormat -q -y --type luks2 --label NXSCRYPT "$(part 5)"
+	cryptsetup open "$(part 5)" nxsinst
+fi
+mkfs.ext4 -q -F -L NXSDATA /dev/mapper/nxsinst
+cryptsetup close nxsinst
+
+passo 7 "fatto"
+echo
+echo "  NexusSec e' installato su $DISCO."
+echo "  Togli la chiavetta e riavvia: all'accensione ti verra' chiesta la"
+echo "  passphrase dei dati. Il sistema resta in sola lettura; i tuoi dati,"
+echo "  gli strumenti scaricati e le impostazioni stanno nella parte cifrata."
+echo "INSTALLAZIONE-OK"

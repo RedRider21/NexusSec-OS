@@ -154,8 +154,10 @@ echo "==============================================================="
 echo "  NexusSec OS - installazione su disco / persistenza"
 echo "==============================================================="
 echo
-echo "  A) INSTALLA SU DISCO (persistenza completa e automatica)"
-echo "     1) guidata      setup-alpine: configurazione completa"
+echo "  A) INSTALLA SU DISCO"
+echo "     0) NexusSec     CONSIGLIATA: sistema in sola lettura + dati cifrati,"
+echo "                     senza rete, dalla chiavetta fast-boot (nxs-install-disco)"
+echo "     1) guidata      setup-alpine: configurazione completa (richiede rete)"
 echo "     2) disco intero installa prendendo TUTTO il disco"
 echo "     3) a fianco     installa in una partizione, lascia il resto"
 echo
@@ -172,6 +174,19 @@ case "$ans" in
   d) echo "  Dischi e partizioni (sola lettura, niente viene montato):"; echo
      elenco_dischi || echo "  (impossibile leggere i dischi)"
      pausa; continue ;;
+
+  0) echo "  Dischi su cui si puo' installare (il disco di avvio e quelli in uso"
+     echo "  non compaiono):"; echo
+     nxs-install-disco --dischi > /tmp/nxs-dischi.$$ 2>/dev/null || true
+     if [ ! -s /tmp/nxs-dischi.$$ ]; then
+       rm -f /tmp/nxs-dischi.$$; echo "  Nessun disco adatto (servono almeno 8 GB, non in uso)."; pausa; continue
+     fi
+     awk -F'\t' '{printf "     %d) %-14s %4s GB  %s\n", NR, $1, $2, $3}' /tmp/nxs-dischi.$$
+     printf "\n  Numero del disco (0 = annulla): "; read n
+     disk="$(sed -n "${n}p" /tmp/nxs-dischi.$$ 2>/dev/null | cut -f1)"; rm -f /tmp/nxs-dischi.$$
+     case "$n" in ''|0|*[!0-9]*) disk="" ;; esac
+     [ -n "$disk" ] || { echo "  Annullato."; pausa; continue; }
+     exec priv nxs-install-disco --disco "$disk" ;;
 
   1) exec priv setup-alpine ;;
 
