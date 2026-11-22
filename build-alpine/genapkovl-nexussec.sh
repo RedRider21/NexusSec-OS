@@ -183,6 +183,9 @@ ln -sf "/etc/init.d/sysctl" "$tmp/etc/runlevels/boot/sysctl"
 # garantisce il bit exec, quindi lo forziamo qui.
 chmod +x "$tmp"/etc/local.d/*.start 2>/dev/null || true
 echo "$HOSTNAME" > "$tmp/etc/hostname"
+# versione della distro (fetch del terminale, splash, registro): NXS_VERSION
+# dall'ambiente (es. v2026.11.22), altrimenti la data della build
+echo "NexusSec OS ${NXS_VERSION:-v$(date -u +%Y.%m.%d)}" > "$tmp/etc/nexussec-release"
 
 # /etc/hosts: l'hostname DEVE risolvere a 127.0.0.1, altrimenti startx/xauth
 # costruiscono il display "<hostname>:0" e falliscono con
