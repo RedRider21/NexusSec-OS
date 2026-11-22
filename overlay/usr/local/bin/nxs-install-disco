@@ -144,8 +144,15 @@ passo 3 "avvio (GRUB)"
 dd if="$GRUBD/mbr.bin" of="$DISCO" bs=440 count=1 conv=notrunc 2>/dev/null
 dd if="$GRUBD/core.img" of="$DISCO" bs=512 seek=2048 conv=notrunc 2>/dev/null
 mkfs.vfat -F 32 -n NXSEFI "$(part 2)" >/dev/null
-mkfs.ext4 -q -F -L NXS_SYS_A "$(part 3)"
-mkfs.ext4 -q -F -L NXS_SYS_B "$(part 4)"
+# GRUB 2.06 non conosce metadata_csum_seed/orphan_file (attivi di default
+# con e2fsprogs >= 1.47): con quelli il disco "non ha filesystem" per GRUB
+# e l'avvio si ferma al menu (collaudo 2026-11-22). Si spengono sugli slot.
+sysfs() {
+	mkfs.ext4 -q -F -O ^metadata_csum_seed,^orphan_file -L "$1" "$2" 2>/dev/null \
+		|| mkfs.ext4 -q -F -L "$1" "$2"
+}
+sysfs NXS_SYS_A "$(part 3)"
+sysfs NXS_SYS_B "$(part 4)"
 
 passo 4 "copia del sistema"
 mkdir -p "$MNT/a" "$MNT/efi"
