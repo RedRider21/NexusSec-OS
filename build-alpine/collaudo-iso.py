@@ -237,6 +237,63 @@ def prova_persistenza(iso, cartella):
     return esiti, out
 
 
+def prova_installa(iso, cartella):
+    """Installazione su disco (2026-11-22): la live installa con setup-disk -m sys
+    su un disco virtuale da 8 GB, SENZA RETE (deve bastare la chiavetta), poi si
+    controlla dalla live cosa c'e' sul disco e infine si riavvia DAL DISCO."""
+    disco = os.path.join(cartella, "disco-install.img")
+    with open(disco, "wb") as f:
+        f.truncate(8 * 1024 ** 3)
+    ris = _disco_risultati(cartella, "installa")
+    argv = _qemu_x86(iso, False, cartella, "installa", dischi=[ris])
+    argv = [x for x in argv if x not in ("-nic", "user,model=virtio-net-pci")]
+    argv += ["-nic", "none", "-drive", "if=virtio,format=raw,file=%s" % disco]
+    vm = VM("installa", argv, cartella)
+    time.sleep(ATTESA_BOOT)
+    vm.terminale()
+    t0 = time.time()
+    vm.scrivi("clear; doas sh -c 'ERASE_DISKS=/dev/vda setup-disk -m sys /dev/vda "
+              ">/tmp/inst.log 2>&1 && echo INST-OK >>/tmp/inst.log "
+              "|| echo INST-KO >>/tmp/inst.log'; echo FATTO\n")
+    time.sleep(420)
+    vm.schermata("dopo-install")
+    vm.scrivi(_cmd_esito(
+        "tail -12 /tmp/inst.log; lsblk -o NAME,SIZE,FSTYPE /dev/vda; "
+        "doas mkdir -p /mnt/i; doas mount -t ext4 /dev/vda3 /mnt/i; "
+        "doas test -f /mnt/i/usr/local/bin/nxs-install && echo NXS-PRESENTE "
+        "|| echo NXS-ASSENTE; doas test -d /mnt/i/usr/local/lib/nxs_cc "
+        "&& echo PANNELLO-PRESENTE || echo PANNELLO-ASSENTE; "
+        "doas test -d /mnt/i/home/nexus && echo HOME-PRESENTE || echo HOME-ASSENTE; "
+        "doas grep -c nexus /mnt/i/etc/passwd; doas du -sh /mnt/i; doas umount /mnt/i"))
+    time.sleep(15)
+    vm.chiudi()
+    out1 = _leggi_risultati(ris)
+    # riavvio dal disco installato (niente ISO)
+    ris2 = _disco_risultati(cartella, "dal-disco")
+    argv2 = ["qemu-system-x86_64", "-enable-kvm", "-m", "4096", "-smp", "2",
+             "-vga", "std", "-nic", "none", "-device", "qemu-xhci",
+             "-drive", "if=virtio,format=raw,file=%s" % disco, "-boot", "c",
+             "-drive", "if=none,id=r,format=raw,file=%s" % ris2,
+             "-device", "usb-storage,drive=r,removable=on"]
+    vm = VM("daldisco", argv2, cartella)
+    time.sleep(ATTESA_BOOT)
+    vm.schermata("desktop")
+    vm.terminale()
+    vm.scrivi(_cmd_esito(_CONTROLLI_BASE))
+    time.sleep(8)
+    vm.schermata("esito")
+    vm.chiudi()
+    out2 = _leggi_risultati(ris2)
+    try:
+        os.remove(disco)
+    except OSError:
+        pass
+    out = out1 + "\n--- avvio dal disco ---\n" + out2
+    esiti = {"install": "INST-OK" in out1, "inst-nxs": "NXS-PRESENTE" in out1
+             and "PANNELLO-PRESENTE" in out1, "daldisco": "DESKTOP-OK" in out2}
+    return esiti, out
+
+
 def prova_arm(iso, cartella):
     ris = _disco_risultati(cartella, "arm")
     vars_ = os.path.join(cartella, "arm.vars")
@@ -286,6 +343,8 @@ def main():
         e, o = prova_avvio(a.iso, True, cartella); esiti.update(e); log.append(("UEFI", o))
     if "persist" in solo:
         e, o = prova_persistenza(a.iso, cartella); esiti.update(e); log.append(("PERSISTENZA", o))
+    if "installa" in solo:
+        e, o = prova_installa(a.iso, cartella); esiti.update(e); log.append(("INSTALLA", o))
     if a.arm:
         e, o = prova_arm(a.arm, cartella); esiti.update(e); log.append(("ARM", o))
     with open(os.path.join(cartella, "rapporto.txt"), "w") as f:
@@ -296,7 +355,7 @@ def main():
         print("  %-10s %s" % (k, "OK" if v else "KO"))
     print("\nSchermate e rapporto in: %s" % cartella)
     # i dischi grandi non servono piu'
-    for g in ("chiavetta.img", "estranea.img"):
+    for g in ("chiavetta.img", "estranea.img", "disco-install.img"):
         try:
             os.remove(os.path.join(cartella, g))
         except OSError:
