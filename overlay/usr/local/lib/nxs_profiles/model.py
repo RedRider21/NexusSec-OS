@@ -762,6 +762,20 @@ def _picom_wanted() -> bool:
         return False
 
 
+def _virtualbox() -> bool:
+    """True se gira in VirtualBox: li' picom (anche GLX con l'accelerazione 3D)
+    rende le finestre bianche/opache (2026-09-08 con Cards, 2026-11-22 con i
+    temi macOS). In VirtualBox quindi niente compositor."""
+    for f in ("/sys/class/dmi/id/sys_vendor", "/sys/class/dmi/id/product_name"):
+        try:
+            v = open(f).read().strip().lower()
+        except OSError:
+            continue
+        if "innotek" in v or "virtualbox" in v:
+            return True
+    return False
+
+
 def _manage_picom(enable: bool) -> None:
     """Compositor per gli angoli arrotondati dello stile Cards. Avvia picom se
     serve (e non gira gia'), lo ferma altrimenti. Best-effort: se picom non c'e'
@@ -772,28 +786,19 @@ def _manage_picom(enable: bool) -> None:
                                  stderr=subprocess.DEVNULL).returncode == 0
     except (FileNotFoundError, OSError):
         running = False
-    if enable and not running:
-        # Prima GLX (piu' fluido); se muore subito (VM senza accelerazione 3D,
-        # driver senza OpenGL) si riparte col backend software xrender, che fa
-        # comunque angoli arrotondati e ombre (2026-11-22: nella VM dell'utente
-        # le finestre restavano squadrate perche' picom GLX non partiva).
-        def _avvia():
-            import time
-            base = ["picom"]
+    if enable and not running and not _virtualbox():
+        # SOLO backend GLX (picom.conf). NIENTE ripiego software xrender:
+        # in VirtualBox disegnava le finestre tutte BIANCHE (segnalato
+        # dall'utente il 2026-11-22, v2026.11.22). Se GLX non parte, niente
+        # compositor: finestre squadrate ma funzionanti.
+        try:
+            cmd = ["picom", "-b"]
             if PICOM_CONF.is_file():
-                base += ["--config", str(PICOM_CONF)]
-            for extra in ([], ["--backend", "xrender", "--no-vsync"]):
-                try:
-                    p = subprocess.Popen(base + extra, stdout=subprocess.DEVNULL,
-                                         stderr=subprocess.DEVNULL,
-                                         start_new_session=True)
-                except (FileNotFoundError, OSError):
-                    return
-                time.sleep(2.5)
-                if p.poll() is None:
-                    return              # sta girando
-        import threading
-        threading.Thread(target=_avvia, daemon=False).start()
+                cmd += ["--config", str(PICOM_CONF)]
+            subprocess.Popen(cmd, stdout=subprocess.DEVNULL,
+                             stderr=subprocess.DEVNULL)
+        except (FileNotFoundError, OSError):
+            pass
     elif not enable and running:
         try:
             subprocess.run(["pkill", "-x", "picom"],
