@@ -433,6 +433,26 @@ ricorrenti su **musl + gcc 15**:
   "Aspetto coordinato". Nota: alcune busybox espandono male `\u`/`\h` nel PS1 →
   `shrc` incorpora utente/host calcolati una volta e lascia dinamico solo `\w`.
 
+### Gotcha fast-boot / installazione su disco / temi (2026-11-22, collaudati)
+
+- **ISO x86_64 = fast-boot** (`build-alpine/fastboot-locale.sh` dalla ISO base
+  con `apks/`, tenuta in `out/base/`). Senza `apks/` l'installer di Alpine
+  (`setup-disk`) NON funziona: usare `nxs-install-disco` / `nxs-installer`.
+- `setup-disk -m sys` offline si ferma subito (manca `syslinux` in apks/).
+- **GRUB del disco** precostruito sul PC (`build/make-grub-disco.py`, grub 2.06
+  Ubuntu): in UEFI serve il modulo **`linuxefi`**; le ext4 degli slot vanno
+  create con `-O ^metadata_csum_seed,^orphan_file` (GRUB 2.06 non le legge).
+  Core BIOS nella partizione BIOS boot che inizia al settore **2048**.
+- Il disco installato si avvia come la live (init patchato + squashfs nello
+  slot `NXS_SYS_A`, `nxs_installed=1 nxs_toram=no`); dati = LUKS `NXSCRYPT`
+  con ext4 `NXSDATA` (stessa persistenza della chiavetta, sblocco al login).
+- Immagini ARM: l'apkovl NON deve contenere `grub-disco` (spazio della ISO).
+- **Openbox 3.6.1 di Alpine ignora i pulsanti PNG**: solo maschere xbm a 1
+  bit (temi macOS da `build/make-mac-themes.py`). Bordo 3 px + maniglia 5 px
+  servono per ridimensionare. picom GLX muore nelle VM senza 3D: ripiego
+  automatico su `--backend xrender` (model._manage_picom).
+- Collaudo: `build-alpine/collaudo-iso.py ISO --solo bios,uefi,persist,disco`.
+
 ## Vincoli (Alpine)
 
 - **musl libc** (Alpine), **non** glibc. Attenzione ai binari pensati per glibc
