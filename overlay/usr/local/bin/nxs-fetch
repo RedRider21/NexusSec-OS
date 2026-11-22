@@ -3,8 +3,8 @@
 # Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
 # nxs-fetch - riepilogo di sistema con il logo NexusSec (stile neofetch), in
 # shell PURA (busybox ash): nessun pacchetto extra, poche centinaia di byte.
-# Il logo (esagono + N a nodi, come il badge NexusSec) e' a DUE TONI: esagono
-# nel colore del profilo attivo, N chiara (truecolor ANSI, 2026-11-22). Commutabile: nxs-fetch on|off.
+# Il logo (esagono + N a nodi, come il badge NexusSec) e' colorato con l'ACCENT
+# del profilo attivo (truecolor ANSI). Commutabile: nxs-fetch on|off.
 #
 #   nxs-fetch              stampa il riepilogo
 #   nxs-fetch on|off       mostra/nasconde il fetch all'apertura del terminale
@@ -116,28 +116,12 @@ done
 [ -n "$BL" ] && riga "$BL"
 INFO="${INFO%$nl}"
 
-# --- logo a due toni (build/make-logo-fetch.py) -------------------------------
-# Ogni cifra esadecimale = due pixel (sopra*4+sotto): 0 vuoto, 1 accent del
-# profilo, 2 chiaro (la N), 3 accent tenue. Si stampano a mezzi blocchi con
-# colori truecolor; senza terminale (pipe) o senza file: vecchio logo/minimo.
-LOGOFILE="${NXS_SHARE:-/usr/local/share/nexussec}/logo-fetch.txt"
-if [ -n "$Z" ] && [ -r "$LOGOFILE" ]; then
-  LOGO="$(awk -v a="$R;$G;$B" -v m="$((R*45/100));$((G*45/100));$((B*45/100))" '
-    BEGIN { c[1]=a; c[2]="200;245;255"; c[3]=m; E=sprintf("%c",27) }
-    { o=""; for (i=1;i<=length($0);i++) {
-        v=index("0123456789abcdef", substr($0,i,1))-1; t=int(v/4); b=v%4
-        if (t==0 && b==0) o=o " "
-        else if (b==0) o=o E "[38;2;" c[t] "m▀" E "[0m"
-        else if (t==0) o=o E "[38;2;" c[b] "m▄" E "[0m"
-        else if (t==b) o=o E "[38;2;" c[t] "m█" E "[0m"
-        else o=o E "[38;2;" c[t] ";48;2;" c[b] "m▀" E "[0m"
-      } print o }' "$LOGOFILE")"
-  PAD="                              "
-else
-  LOGO="$(cat "${NXS_SHARE:-/usr/local/share/nexussec}/logo-emblem.txt" 2>/dev/null)"
-  [ -n "$LOGO" ] || LOGO="   [ NexusSec ]   "
-  PAD="                        "
-fi
+# --- logo: silhouette dell'emblema a mezzi blocchi (build/make-logo-emblem.py),
+# nel colore del profilo. Il logo "grosso" a due toni del 2026-11-22 e' stato
+# tolto su richiesta: questo e' piu' fine. Righe larghe esattamente 24 colonne.
+PAD="                        "
+LOGO="$(cat "${NXS_SHARE:-/usr/local/share/nexussec}/logo-emblem.txt" 2>/dev/null)"
+[ -n "$LOGO" ] || LOGO="     [ NexusSec ]       "
 
 # --- stampa affiancata: logo a sinistra + info a destra -----------------------
 echo
