@@ -762,17 +762,24 @@ def _picom_wanted() -> bool:
         return False
 
 
-def _virtualbox() -> bool:
-    """True se gira in VirtualBox: li' picom (anche GLX con l'accelerazione 3D)
-    rende le finestre bianche/opache (2026-09-08 con Cards, 2026-11-22 con i
-    temi macOS). In VirtualBox quindi niente compositor."""
-    for f in ("/sys/class/dmi/id/sys_vendor", "/sys/class/dmi/id/product_name"):
+# Driver DRM delle schede video VERE con accelerazione 3D. Solo con queste si
+# avvia il compositor (angoli arrotondati, ombre). Nelle VM (vmwgfx di
+# VirtualBox/VMware, bochs/qxl/cirrus di QEMU) e senza driver (simpledrm,
+# vesa) l'OpenGL e' software (llvmpipe): picom rendeva le finestre BIANCHE
+# (VirtualBox) e quelle del motore web (HORUS, browser) NERE (QEMU), anche con
+# WEBKIT_DISABLE_COMPOSITING_MODE. Collaudo 2026-11-22.
+_GPU_3D = ("i915", "xe", "amdgpu", "radeon", "nouveau")
+
+
+def _gpu_3d() -> bool:
+    """True se c'e' una scheda video vera con driver 3D (vedi _GPU_3D)."""
+    import glob
+    for d in glob.glob("/sys/class/drm/card[0-9]*/device/driver"):
         try:
-            v = open(f).read().strip().lower()
+            if os.path.basename(os.readlink(d)) in _GPU_3D:
+                return True
         except OSError:
             continue
-        if "innotek" in v or "virtualbox" in v:
-            return True
     return False
 
 
@@ -786,11 +793,11 @@ def _manage_picom(enable: bool) -> None:
                                  stderr=subprocess.DEVNULL).returncode == 0
     except (FileNotFoundError, OSError):
         running = False
-    if enable and not running and not _virtualbox():
+    if enable and not running and not _gpu_3d():
+        return                          # VM o nessun driver 3D: niente compositor
+    if enable and not running:
         # SOLO backend GLX (picom.conf). NIENTE ripiego software xrender:
-        # in VirtualBox disegnava le finestre tutte BIANCHE (segnalato
-        # dall'utente il 2026-11-22, v2026.11.22). Se GLX non parte, niente
-        # compositor: finestre squadrate ma funzionanti.
+        # in VirtualBox disegnava le finestre tutte BIANCHE (v2026.11.22).
         try:
             cmd = ["picom", "-b"]
             if PICOM_CONF.is_file():

@@ -355,6 +355,82 @@ def prova_disco(iso, cartella):
     return esiti, out
 
 
+# Programmi aperti dal collaudo di usabilita': (nome, comando, attesa in s)
+_APP = [("centro-controllo", "nxs-control-center", 12), ("horus", "nxs-horus", 30),
+        ("browser", "nxs-browser", 25), ("dischi", "nxs-disks", 12),
+        ("installatore", "nxs-installer", 12), ("profili", "nxs-profile", 12),
+        ("sistema", "nxs-sysinfo", 10), ("monitor", "nxs-monitor", 10),
+        ("editor", "nxs-editor", 10), ("file", "pcmanfm", 8)]
+
+
+def prova_usabilita(iso, cartella):
+    """Collaudo di USABILITA' (2026-11-22): quello che fa un utente nei primi
+    minuti. Apre ogni programma principale (foto di ciascuno), cambia profilo,
+    installa e avvia uno strumento dal catalogo (nmap: SCARICA pochi MB dai
+    repository Alpine dentro la VM, che poi sparisce), cambia lingua e alla
+    fine cerca gli errori Python nei log. Le schermate restano da guardare."""
+    ris = _disco_risultati(cartella, "usabilita")
+    vm = VM("usa", _qemu_x86(iso, False, cartella, "usa", dischi=[ris]), cartella)
+    time.sleep(ATTESA_BOOT)
+    vm.schermata("00-desktop")
+
+    def apri(nome, comando, attesa):
+        vm.terminale()
+        vm.scrivi("setsid %s >/tmp/u-%s.log 2>&1 & sleep 1; exit\n" % (comando, nome))
+        time.sleep(attesa)
+        vm.schermata(nome)
+        vm.cmd("sendkey alt-f4")
+        time.sleep(3)
+
+    for nome, comando, attesa in _APP:
+        apri(nome, comando, attesa)
+    vm.terminale()
+    vm.scrivi("nxs-tool profile pentest >/tmp/u-profilo.log 2>&1; exit\n")
+    time.sleep(15)
+    vm.schermata("profilo-pentest")
+    apri("cc-pentest", "nxs-control-center", 12)
+    vm.terminale()
+    vm.scrivi("clear; nxs-tool install nmap >/tmp/u-nmap.log 2>&1; nmap -V\n")
+    time.sleep(120)
+    vm.schermata("nmap")
+    vm.cmd("sendkey alt-f4")
+    time.sleep(3)
+    vm.terminale()
+    vm.scrivi("nxs-lang set en; exit\n")
+    time.sleep(4)
+    apri("cc-inglese", "nxs-control-center", 12)
+    vm.terminale()
+    vm.scrivi("nxs-lang set it; nxs-tool profile base >/dev/null 2>&1; exit\n")
+    time.sleep(10)
+    vm.terminale()
+    vm.scrivi(_cmd_esito("echo DESKTOP-OK; nmap -V | head -1; grep -l Traceback /tmp/u-*.log "
+                         "/tmp/nxs-*.log 2>/dev/null | sed s/^/ERRORI-IN:/; "
+                         "tail -3 /tmp/u-nmap.log; cat /tmp/u-profilo.log | tail -2"), pausa=0.08)
+    time.sleep(10)
+    vm.chiudi()
+    out = _leggi_risultati(ris)
+    esiti = {"usab-nmap": "Nmap version" in out, "usab-log": "ERRORI-IN:" not in out
+             and "DESKTOP-OK" in out}
+    # finestre del motore web (HORUS, browser): una finestra tutta nera o tutta
+    # bianca ha pochissimi colori (compositor + OpenGL software, 2026-11-22)
+    for nome in ("horus", "browser"):
+        esiti["usab-" + nome] = _colori_centro(
+            os.path.join(cartella, "usa-%s.ppm" % nome)) > 40
+    return esiti, out
+
+
+def _colori_centro(ppm):
+    """Numero di colori diversi al centro della schermata (0 se illeggibile)."""
+    try:
+        from PIL import Image
+        im = Image.open(ppm).convert("RGB")
+        w, h = im.size
+        c = im.crop((w // 4, h // 4, 3 * w // 4, 3 * h // 4))
+        return len(c.getcolors(maxcolors=1 << 20) or [])
+    except Exception:                      # noqa: BLE001
+        return 0
+
+
 def prova_arm(iso, cartella):
     ris = _disco_risultati(cartella, "arm")
     vars_ = os.path.join(cartella, "arm.vars")
@@ -404,6 +480,8 @@ def main():
         e, o = prova_avvio(a.iso, True, cartella); esiti.update(e); log.append(("UEFI", o))
     if "persist" in solo:
         e, o = prova_persistenza(a.iso, cartella); esiti.update(e); log.append(("PERSISTENZA", o))
+    if "usabilita" in solo:
+        e, o = prova_usabilita(a.iso, cartella); esiti.update(e); log.append(("USABILITA", o))
     if "disco" in solo:
         e, o = prova_disco(a.iso, cartella); esiti.update(e); log.append(("DISCO", o))
     if "installa" in solo:

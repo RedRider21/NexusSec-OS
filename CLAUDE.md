@@ -450,8 +450,9 @@ ricorrenti su **musl + gcc 15**:
 - **Openbox 3.6.1 di Alpine ignora i pulsanti PNG**: solo maschere xbm a 1
   bit (temi macOS da `build/make-mac-themes.py`). Bordo 3 px + maniglia 5 px
   servono per ridimensionare. picom: SOLO GLX; MAI ripiego `--backend
-  xrender` (in VirtualBox finestre BIANCHE e a scatti, v2026.11.22) e in
-  VirtualBox niente compositor (`model._virtualbox`). Verificare in una
+  xrender` (in VirtualBox finestre BIANCHE e a scatti, v2026.11.22); picom
+  parte SOLO con GPU vera (`model._gpu_3d`: i915/xe/amdgpu/radeon/nouveau),
+  perche' con OpenGL software (QEMU) HORUS e browser (WebKit) diventano NERI. Verificare in una
   VirtualBox vera (VBoxManage, VM temporanea `nxs-collaudo-tmp`).
 - Collaudo: `build-alpine/collaudo-iso.py ISO --solo bios,uefi,persist,disco`.
 
