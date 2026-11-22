@@ -24,6 +24,8 @@ print(m.theme_family(), "->", m.resolve_ob_theme())'
     echo "core    tema HUD scuro fisso (predefinito)"
     echo "retro   flat chiaro (1977), segue il colore del profilo"
     echo "cards   scheda iOS (header colorato), segue il colore del profilo"
+    echo "mac        stile macOS chiaro (semafori a sinistra, angoli arrotondati)"
+    echo "mac-scuro  stile macOS scuro"
     echo "raw:<nome>  un tema Openbox installato, fisso (vedi: nxs-theme themes)"
     ;;
   themes)
@@ -37,7 +39,7 @@ for d in (m.HOME/".themes", m.HOME/".local"/"share"/"themes", pathlib.Path("/usr
     except OSError: pass'
     ;;
   set)
-    [ -n "${2:-}" ] || { echo "uso: nxs-theme set <core|retro|cards|raw:NOME>" >&2; exit 2; }
+    [ -n "${2:-}" ] || { echo "uso: nxs-theme set <core|retro|cards|mac|mac-scuro|raw:NOME>" >&2; exit 2; }
     python3 -c 'import sys, nxs_profiles.model as m
 fam=sys.argv[1]
 if not (fam in m.THEME_FAMILIES or fam.startswith("raw:")):
