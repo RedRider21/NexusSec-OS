@@ -171,6 +171,7 @@ for f in boot/vmlinuz-lts boot/initramfs-lts boot/modloop-lts nxs-rootfs.squashf
 	cp "$M/$f" "$MNT/a/$f"
 done
 cp "$M/nexussec.apkovl.tar.gz" "$MNT/a/" 2>/dev/null || true
+cp "$M/fbsplash.ppm" "$MNT/a/" 2>/dev/null || true      # splash di avvio
 cp "$M/.alpine-release" "$MNT/a/" 2>/dev/null || true
 printf 'slot=A\ninstallato=%s\norigine=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
 	"$(cat /etc/nexussec-release 2>/dev/null || cat "$M/.alpine-release" 2>/dev/null)" > "$MNT/a/nxs-slot"
@@ -189,7 +190,7 @@ umount "$MNT/a"
 mount -t vfat "$(part 2)" "$MNT/efi"
 mkdir -p "$MNT/efi/EFI/BOOT" "$MNT/efi/grub"
 cp "$GRUBD/BOOTX64.EFI" "$MNT/efi/EFI/BOOT/BOOTX64.EFI"
-CMD="modules=loop,squashfs,sd-mod,usb-storage,ext4,nvme,ahci blacklist=sdhci,sdhci_pci,sdhci_acpi,mmc_block,mmc_core vt.global_cursor_default=0 cgroup_no_v1=all page_poison=1 nxs_installed=1"
+CMD="modules=loop,squashfs,sd-mod,usb-storage,ext4,nvme,ahci blacklist=sdhci,sdhci_pci,sdhci_acpi,mmc_block,mmc_core vt.global_cursor_default=0 cgroup_no_v1=all page_poison=1 loglevel=3 nxs_installed=1"
 cat > "$MNT/efi/grub/grub.cfg" <<EOF
 # NexusSec OS installato (nxs-install-disco). Slot A = sistema attivo.
 set timeout=3

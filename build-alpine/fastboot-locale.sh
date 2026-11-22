@@ -103,12 +103,27 @@ chmod 755 "$W/initpatch/init"
 ( cd "$W/initpatch" && echo init | cpio -o --quiet -H newc -R 0:0 | gzip -9n > "$W/init.cpio.gz" )
 cat "$W/initramfs.orig" "$W/init.cpio.gz" > "$W/initramfs.new"
 
+# riga di avvio: loglevel=3 (il kernel stampa solo gli errori: meno testo prima
+# della splash; senza framebuffer i messaggi dell'avvio restano visibili come
+# prima). Vale per syslinux (BIOS) e GRUB (UEFI).
+"$XORRISO" -osirrox on -indev "$ISO" -extract /boot/syslinux/syslinux.cfg "$W/syslinux.cfg" \
+  -extract /boot/grub/grub.cfg "$W/grub.cfg" >/dev/null 2>&1
+chmod u+w "$W/syslinux.cfg" "$W/grub.cfg"
+grep -q "loglevel=" "$W/syslinux.cfg" || sed -i 's|^\(APPEND .*\)$|\1 loglevel=3|' "$W/syslinux.cfg"
+grep -q "loglevel=" "$W/grub.cfg" || sed -i 's|^\(linux[[:space:]].*\)$|\1 loglevel=3|' "$W/grub.cfg"
+SPLASH="$REPO/build-alpine/fbsplash.ppm"     # da build/make-plymouth-theme.py
+MAPSPLASH=""
+if [ -f "$SPLASH" ]; then MAPSPLASH="-map $SPLASH /fbsplash.ppm"
+else echo "[fastboot] ATTENZIONE: manca $SPLASH, niente splash di avvio"; fi
+
 echo "[fastboot] 6/6 nuova ISO (xorriso replay: avvio identico)..."
 rm -f "$OUT"
 "$XORRISO" -indev "$ISO" -outdev "$OUT" -boot_image any replay \
   -rm_r /apks -- \
   -map "$W/nxs-rootfs.squashfs" /nxs-rootfs.squashfs \
   -map "$W/initramfs.new" /$INITRD \
+  -map "$W/syslinux.cfg" /boot/syslinux/syslinux.cfg -map "$W/grub.cfg" /boot/grub/grub.cfg \
+  $MAPSPLASH \
   -map "$OVL" /nexussec.apkovl.tar.gz 2>&1 | grep -E "completed|FAILURE|SORRY" || true
 ls -l "$ISO" "$OUT" | awk '{printf "  %s: %.0f MB\n", $9, $5/1048576}'
 
@@ -116,6 +131,7 @@ echo "[fastboot] pulizia..."
 chmod -R u+w "$W" 2>/dev/null || true
 podman unshare rm -rf "$W/rootfs"
 rm -rf "$W/repo" "$W/nxsrepo" "$W/initpatch" "$W/initramfs.orig" "$W/initramfs.new" \
-       "$W/init.cpio.gz" "$W/nxs-rootfs.squashfs" "$W/apkovl.tar.gz" "$W/apk.log"
+       "$W/init.cpio.gz" "$W/nxs-rootfs.squashfs" "$W/apkovl.tar.gz" "$W/apk.log" \
+       "$W/syslinux.cfg" "$W/grub.cfg"
 rmdir "$W" 2>/dev/null || true
 echo "[fastboot] FATTO: $OUT"

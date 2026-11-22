@@ -29,7 +29,8 @@ from gi.repository import Gtk, Gdk, GdkPixbuf, GLib  # noqa: E402
 ASSETS = os.environ.get("NXS_SPLASH_DIR", "/usr/local/share/nexussec/splash")
 
 DURATION_MS = 6500      # durata visibile (poi fade-out e chiusura)
-FADE_IN_MS = 550
+# 0: subentra senza stacco alla splash di avvio (fbsplash, stessa grafica)
+FADE_IN_MS = 0
 FADE_OUT_MS = 650
 STEP_MS = 33            # ~30 fps
 HARD_TIMEOUT_MS = 9500  # rete di sicurezza: chiude comunque

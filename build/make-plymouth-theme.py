@@ -18,6 +18,8 @@ from __future__ import annotations
 import math
 from pathlib import Path
 
+import os
+
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -269,7 +271,11 @@ def make_texts():
     _text_png("PENTEST   ·   FORENSICS   ·   OSINT   ·   WEB       ALPINE LINUX EDGE",
               _font(FONT_MONO, 20), DIM, "footer.png",
               glow_radius=0, tracking=4, pad=24)
-    _text_png("edition 2026.08", _font(FONT_MONO, 18), BORDER, "version.png",
+    # edizione = versione della release (NXS_VERSION, es. v2026.11.22; senza:
+    # data di oggi), in DIM e non piu' BORDER: prima era quasi illeggibile
+    import datetime
+    ver = os.environ.get("NXS_VERSION") or datetime.date.today().strftime("v%Y.%m.%d")
+    _text_png("edition " + ver.lstrip("v"), _font(FONT_MONO, 20), DIM, "version.png",
               glow_radius=0, tracking=3, pad=18)
 
 
@@ -336,7 +342,19 @@ def make_scene():
         scene.alpha_composite(im, (cx - w // 2, int(H * yfrac) - h // 2))
     scene = scene.convert("RGB")
     scene.save(OUT / "scene.png")
-    scene.save(ROOT / "build-alpine" / "fbsplash.ppm")
+    # immagine della splash di AVVIO (fbsplash, sul framebuffer prima di X):
+    # 1280x720 (~2,7 MB nella ISO invece di 6) con i bordi sfumati a nero, cosi'
+    # su schermi piu' grandi, dove fbsplash la centra su nero, non si vede il
+    # bordo dell'immagine. Va nella radice del supporto (fastboot-locale.sh).
+    fb = scene.resize((1280, 720), Image.LANCZOS)
+    m = Image.new("L", fb.size, 0)
+    md = ImageDraw.Draw(m)
+    for i in range(60):
+        v = int(255 * (i / 59.0) ** 1.4)
+        md.rectangle([i, i, fb.width - 1 - i, fb.height - 1 - i], outline=v)
+    md.rectangle([60, 60, fb.width - 61, fb.height - 61], fill=255)
+    nero = Image.new("RGB", fb.size, (0, 0, 0))
+    Image.composite(fb, nero, m).save(ROOT / "build-alpine" / "fbsplash.ppm")
 
 
 def main():

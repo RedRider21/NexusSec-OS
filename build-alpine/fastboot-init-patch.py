@@ -26,7 +26,23 @@ def repl(old, new, why):
 
 # --- 1) sysroot: overlay(squashfs ro + tmpfs) se c'e' nxs-rootfs.squashfs ------
 old1 = '$MOCK mount -t tmpfs -o "$rootflags" tmpfs "$sysroot"'
-new1 = '''# NexusSec fast-boot: root GIA' pronto in squashfs -> overlay ro+tmpfs
+new1 = '''# NexusSec SPLASH VERA (2026-11-22): appena il supporto e' montato, se c'e'
+# un framebuffer (/dev/fb0: UEFI/GOP via simpledrm) e l'immagine fbsplash.ppm,
+# la mostriamo SUBITO su una VT dedicata (16, modo grafico: il testo non la
+# copre), PRIMA della copia in RAM. Senza framebuffer NON si fa nulla: l'avvio
+# resta testuale ESATTAMENTE come prima (mai schermo nero). splash=no la
+# disattiva. Resta a schermo finche' X non prende la sua VT.
+NXS_SPLASH=
+if [ -e /dev/fb0 ] && ! grep -qw "splash=no" /proc/cmdline; then
+	for _nxsi in "$ROOT"/media/*/fbsplash.ppm; do
+		[ -f "$_nxsi" ] || continue
+		echo "IMG_ALIGN=CM" > /tmp/nxs-fbsplash.cfg
+		setsid fbsplash -T 16 -s "$_nxsi" -i /tmp/nxs-fbsplash.cfg >/dev/null 2>&1 &
+		NXS_SPLASH=1
+		break
+	done
+fi
+# NexusSec fast-boot: root GIA' pronto in squashfs -> overlay ro+tmpfs
 NXS_PREBUILT=
 for _nxsf in "$ROOT"/media/*/nxs-rootfs.squashfs; do
 	[ -f "$_nxsf" ] && NXS_PREBUILT="$_nxsf" && break
@@ -71,6 +87,16 @@ else
 	$MOCK mount -t tmpfs -o "$rootflags" tmpfs "$sysroot"
 fi'''
 s = repl(old1, new1, "sysroot overlay")
+
+# --- 1b) splash di Alpine: NON una seconda volta, e mai senza framebuffer --
+#   (lo start di Alpine non controlla /dev/fb0: senza framebuffer resterebbe
+#   una VT vuota = schermo nero). Se la condizione e' falsa Alpine mette
+#   KOPT_splash=no e non scrive piu' nella fifo (che non esisterebbe).
+old1b = '''if [ -n "$fbsplash" ] && [ -e "$fbsplash" ]; then
+	ebegin "Starting bootsplash"'''
+new1b = '''if [ -z "$NXS_SPLASH" ] && [ -e /dev/fb0 ] && [ -n "$fbsplash" ] && [ -e "$fbsplash" ]; then
+	ebegin "Starting bootsplash"'''
+s = repl(old1b, new1b, "splash Alpine con controllo framebuffer")
 
 # --- 2) NON scompattare l'apkovl sul root pre-costruito (il suo apk --initdb
 #        svuoterebbe il db pacchetti dell'overlay) ------------------------------
