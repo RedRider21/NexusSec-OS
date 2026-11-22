@@ -302,6 +302,20 @@ footer{border-top:1px solid var(--line);padding:24px 0 60px;color:var(--muted);f
   it stays almost idle. It is <em>best-effort</em>: if the kernel lacks the
   <code>zram</code> module, boot continues with no consequences
   (script <code>/etc/local.d/zram.start</code>).</span></div>
+  <div class="note"><strong><span data-lang="it">Fast-boot (dalla v2026.11.22).</span><span data-lang="en">Fast-boot (since v2026.11.22).</span></strong> <span data-lang="it">La ISO
+  x86_64 contiene il sistema <strong>già installato</strong> in un unico file
+  compresso (<code>nxs-rootfs.squashfs</code>) invece di ~600 pacchetti da
+  installare a ogni avvio: la ISO è più piccola e a desktop pronto restano
+  <strong>circa 700 MB di RAM in più</strong>. Con almeno 4 GB di RAM il file
+  compresso viene copiato in RAM all'avvio (programmi veloci, chiavetta
+  libera); il parametro di avvio <code>nxs_toram=no</code> lo evita,
+  <code>nxs_toram=yes</code> lo forza.</span><span data-lang="en">The x86_64
+  ISO ships the system <strong>already installed</strong> in a single compressed
+  file (<code>nxs-rootfs.squashfs</code>) instead of ~600 packages installed at
+  every boot: the ISO is smaller and about <strong>700 MB more RAM</strong> is
+  free once the desktop is up. With at least 4 GB of RAM the compressed file is
+  copied to RAM at boot (fast programs, stick free); the boot parameter
+  <code>nxs_toram=no</code> skips it, <code>nxs_toram=yes</code> forces it.</span></div>
 </section>
 
 <section id="profili">
@@ -592,10 +606,34 @@ footer{border-top:1px solid var(--line);padding:24px 0 60px;color:var(--muted);f
       container storage, configuration, loot and the apk cache are redirected to it.
       <span class="tag">destructive operation</span> — it asks for explicit
       confirmation before formatting.</span></li>
-    <li><span data-lang="it"><strong>Installazione su disco</strong>: <code>setup-disk</code> installa
-      NexusSec in modo permanente e abilita automaticamente la persistenza.</span><span data-lang="en"><strong>Disk installation</strong>: <code>setup-disk</code> installs
-      NexusSec permanently and enables persistence automatically.</span></li>
+    <li><span data-lang="it"><strong>Installazione su disco</strong> (dalla v2026.11.22): icona
+      <em>Installa su disco</em> sul desktop (<code>nxs-installer</code>). Procedura
+      guidata: controllo della chiavetta, scelta del disco (quello di avvio e quelli
+      in uso non compaiono), passphrase dei dati, riepilogo con conferma esplicita
+      della cancellazione, avanzamento a passi. Non serve Internet: viene copiato il
+      sistema già pronto della chiavetta, poi le impronte dei file copiati sono
+      verificate. Avvia PC con <strong>BIOS</strong> e <strong>UEFI</strong>.</span><span data-lang="en"><strong>Disk installation</strong> (since v2026.11.22): the
+      <em>Install to disk</em> desktop icon (<code>nxs-installer</code>). A guided
+      procedure: stick check, disk choice (the boot disk and disks in use are not
+      listed), data passphrase, summary with explicit erase confirmation, step-by-step
+      progress. No Internet needed: the ready-made system on the stick is copied and
+      the copied files are verified by hash. Boots <strong>BIOS</strong> and
+      <strong>UEFI</strong> PCs.</span></li>
   </ol>
+  <p data-lang="it">Il disco installato è <strong>immutabile</strong>: il sistema sta in una
+  partizione in <strong>sola lettura</strong> e torna pulito a ogni avvio; i tuoi dati,
+  gli strumenti scaricati (container, pip, pacchetti dei menu), il loot e le reti
+  salvate stanno in una partizione <strong>cifrata LUKS</strong> sbloccata con la
+  passphrase all'accensione. Una seconda partizione di sistema è riservata agli
+  aggiornamenti futuri (A/B). Da terminale: <code>nxs-install-disco --dischi</code>
+  (elenco) e <code>nxs-install-disco --disco /dev/sdX</code>.</p>
+  <p data-lang="en">The installed disk is <strong>immutable</strong>: the system lives in a
+  <strong>read-only</strong> partition and is clean at every boot; your data, downloaded
+  tools (containers, pip, menu packages), loot and saved networks live in a
+  <strong>LUKS-encrypted</strong> partition unlocked with the passphrase at power-on. A
+  second system partition is reserved for future (A/B) updates. From a terminal:
+  <code>nxs-install-disco --dischi</code> (list) and
+  <code>nxs-install-disco --disco /dev/sdX</code>.</p>
   <div class="note warn"><span data-lang="it">La persistenza formatta una partizione: assicurati di aver
   scelto il disco giusto. <code>nxs-persist status</code> mostra lo stato senza
   toccare nulla.</span><span data-lang="en">Persistence formats a partition: make sure you have
@@ -906,7 +944,9 @@ nxs-tool kali &lt;pkg&gt;         # esegue un pacchetto Kali qualsiasi (containe
 nxs-tool kali-list          # tool installati nell'ambiente Kali condiviso
 
 nxs-profile                 # selettore grafico dei profili
-nxs-persist status          # stato della persistenza su disco</code></pre>
+nxs-persist status          # stato della persistenza su disco
+nxs-installer               # installazione su disco (grafica)
+nxs-install-disco --dischi  # dischi su cui si puo' installare</code></pre>
   <pre data-lang="en"><code>nxs-tool profiles           # list the profiles
 nxs-tool profile pentest    # activate a profile
 nxs-tool list               # list the profile's tools
