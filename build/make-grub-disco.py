@@ -42,7 +42,9 @@ COMUNI = ["part_gpt", "part_msdos", "fat", "ext2", "search", "search_label",
           "gzio", "loadenv", "sleep", "reboot", "halt", "ls", "cat", "true",
           "minicmd", "gfxterm", "font"]
 PC = COMUNI + ["biosdisk", "vbe", "vga", "video_bochs", "video_cirrus"]
-EFI = COMUNI + ["efi_gop", "efi_uga", "all_video"]
+# Ubuntu: in UEFI "linux" passa la mano a linuxefi (patch Debian/Ubuntu):
+# senza questo modulo il kernel non si carica (collaudo 2026-11-22)
+EFI = COMUNI + ["efi_gop", "efi_uga", "all_video", "linuxefi"]
 
 
 def mkimage(fmt, out, mods, cfg):
