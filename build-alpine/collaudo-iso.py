@@ -87,7 +87,7 @@ class VM:
         time.sleep(0.3)
         s.close()
 
-    def scrivi(self, testo):
+    def scrivi(self, testo, pausa=0.06):
         s = socket.socket(socket.AF_UNIX)
         s.connect(self.mon)
         time.sleep(0.2)
@@ -95,16 +95,16 @@ class VM:
         for ch in testo:
             k = _TASTI.get(ch) or (("shift-" + ch.lower()) if ch.isupper() else ch)
             s.send(("sendkey %s\n" % k).encode())
-            time.sleep(0.06)
+            time.sleep(pausa)
         time.sleep(0.5)
         s.close()
 
     def schermata(self, etichetta):
         self.cmd("screendump %s" % os.path.join(self.dir, "%s-%s.ppm" % (self.nome, etichetta)))
 
-    def terminale(self):
+    def terminale(self, attesa=6):
         self.cmd("sendkey meta_l-t")
-        time.sleep(6)
+        time.sleep(attesa)
 
     def chiudi(self):
         self.cmd("quit")
@@ -238,8 +238,10 @@ def prova_arm(iso, cartella):
     vm = VM("arm", argv, cartella)
     time.sleep(ATTESA_ARM)
     vm.schermata("desktop")
-    vm.terminale()
-    vm.scrivi(_cmd_esito("echo DESKTOP-OK; uname -m"))
+    # ARM e' EMULATA (lenta): il terminale ci mette molto ad aprirsi e i tasti
+    # mandati troppo presto andavano persi (comando monco -> falso KO, 2026-11-22)
+    vm.terminale(attesa=45)
+    vm.scrivi(_cmd_esito("echo DESKTOP-OK; uname -m"), pausa=0.2)
     time.sleep(20)
     vm.schermata("esito")
     vm.chiudi()
