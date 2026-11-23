@@ -302,17 +302,19 @@ footer{border-top:1px solid var(--line);padding:24px 0 60px;color:var(--muted);f
   it stays almost idle. It is <em>best-effort</em>: if the kernel lacks the
   <code>zram</code> module, boot continues with no consequences
   (script <code>/etc/local.d/zram.start</code>).</span></div>
-  <div class="note"><strong><span data-lang="it">Splash di avvio (dalla v2026.11.22).</span><span data-lang="en">Boot splash (since v2026.11.22).</span></strong> <span data-lang="it">Al posto del
-  testo che scorre compare l'immagine NexusSec fino al desktop: subito con UEFI,
-  con BIOS e nelle macchine virtuali appena il driver video è caricato. Se lo
-  schermo grafico non c'è, l'avvio resta testuale come prima (mai nero); se
-  serve la passphrase dei dati o il login, la splash si fa da parte. Per
-  vedere i messaggi aggiungi <code>splash=no</code> alla riga di avvio.</span><span data-lang="en">Instead of
-  scrolling text the NexusSec image is shown until the desktop: right away with
-  UEFI, with BIOS and in virtual machines as soon as the video driver is
-  loaded. Without a graphical screen the boot stays text-based as before (never
-  black); when the data passphrase or a login is needed the splash steps aside.
-  To see the messages add <code>splash=no</code> to the boot line.</span></div>
+  <div class="note"><strong><span data-lang="it">Avvio rapido e copia in RAM (dalla v2026.11.23).</span><span data-lang="en">Fast boot and copy to RAM (since v2026.11.23).</span></strong> <span data-lang="it">All'avvio scorre il
+  testo di Linux, poi compare la splash animata e il desktop. A desktop pronto,
+  in sottofondo e a bassa priorità, il sistema si copia in RAM e viene
+  scambiato a caldo: un fumetto al centro dello schermo avvisa che la chiavetta
+  si può togliere (o che va lasciata, se la persistenza è su di essa). Serve RAM
+  sufficiente (in pratica da 4 GB). Parametri di avvio: <code>nxs_toram=yes</code>
+  copia già all'avvio, <code>nxs_toram=no</code> non copia mai.</span><span data-lang="en">At boot the Linux
+  text scrolls, then the animated splash and the desktop appear. Once the
+  desktop is ready the system is copied to RAM in the background at low priority
+  and swapped in live: a notice in the middle of the screen says you can remove
+  the stick (or must keep it, if the persistence lives on it). Needs enough RAM
+  (about 4 GB). Boot parameters: <code>nxs_toram=yes</code> copies at boot,
+  <code>nxs_toram=no</code> never copies.</span></div>
   <div class="note"><strong><span data-lang="it">Fast-boot (dalla v2026.11.22).</span><span data-lang="en">Fast-boot (since v2026.11.22).</span></strong> <span data-lang="it">La ISO
   x86_64 contiene il sistema <strong>già installato</strong> in un unico file
   compresso (<code>nxs-rootfs.squashfs</code>) invece di ~600 pacchetti da
@@ -325,8 +327,7 @@ footer{border-top:1px solid var(--line);padding:24px 0 60px;color:var(--muted);f
   file (<code>nxs-rootfs.squashfs</code>) instead of ~600 packages installed at
   every boot: the ISO is smaller and about <strong>700 MB more RAM</strong> is
   free once the desktop is up. With at least 4 GB of RAM the compressed file is
-  copied to RAM at boot (fast programs, stick free); the boot parameter
-  <code>nxs_toram=no</code> skips it, <code>nxs_toram=yes</code> forces it.</span></div>
+  copied to RAM in the background after boot (see below).</span></div>
 </section>
 
 <section id="profili">
@@ -1050,8 +1051,8 @@ nxs-persist status          # disk persistence status</code></pre>
       <tr><td class="k">nxs-screensaver</td><td><span data-lang="it">Salvaschermo animato (GTK3 + Cairo). Accetta il nome dell'animazione, es. <code>nxs-screensaver nebula</code>.</span><span data-lang="en">Animated screensaver (GTK3 + Cairo). Accepts the animation name, e.g. <code>nxs-screensaver nebula</code>.</span></td></tr>
       <tr><td class="k">nxs-screensaver-idle</td><td><span data-lang="it">Avvia il salvaschermo dopo N minuti di inattività (<code>xautolock</code>).<br><code>start</code> · <code>stop</code> · <code>restart</code> — configurazione in <code>~/.config/nxs/screensaver.conf</code></span><span data-lang="en">Starts the screensaver after N minutes of inactivity (<code>xautolock</code>).<br><code>start</code> · <code>stop</code> · <code>restart</code> — configuration in <code>~/.config/nxs/screensaver.conf</code></span></td></tr>
       <tr><td class="k">nxs-lxappearance</td><td><span data-lang="it">Configuratore del tema GTK (wrapper di <code>lxappearance</code>).</span><span data-lang="en">GTK theme configurator (wrapper for <code>lxappearance</code>).</span></td></tr>
-      <tr><td class="k">nxs-theme</td><td><span data-lang="it"><strong>Famiglia del tema finestre</strong> (decorazione Openbox).<br><code>get</code> · <code>list</code> · <code>themes</code> elenca i temi Openbox installati · <code>set core|retro|cards</code> (seguono il colore del profilo) · <code>set raw:NOME</code> un tema qualsiasi, fisso (es. <code>raw:NexusSec-Arc-Dark</code>) · <code>apply</code>. Anche da <strong>Aspetto coordinato</strong>.</span><span data-lang="en"><strong>Window theme family</strong> (Openbox decoration).<br><code>get</code> · <code>list</code> · <code>themes</code> lists installed Openbox themes · <code>set core|retro|cards</code> (follow the profile's color) · <code>set raw:NAME</code> any fixed theme (e.g. <code>raw:NexusSec-Arc-Dark</code>) · <code>apply</code>. Also from <strong>Coordinated appearance</strong>.</span></td></tr>
-      <tr><td class="k">nxs-panel-theme</td><td><span data-lang="it"><strong>Skin del pannello</strong> (colori di barra, menu e popup), indipendente dal profilo.<br><code>list</code> (segna l'attiva con *) · <code>get</code> · <code>set &lt;id&gt;</code> — id: hud, dark, light, nord, solarized, matrix, amber, contrast, black, white (riavvia il pannello). Anche da <strong>Aspetto coordinato</strong>.</span><span data-lang="en"><strong>Panel skin</strong> (bar, menu and popup colors), independent of the profile.<br><code>list</code> (marks the active one with *) · <code>get</code> · <code>set &lt;id&gt;</code> — id: hud, dark, light, nord, solarized, matrix, amber, contrast, black, white (restarts the panel). Also from <strong>Coordinated appearance</strong>.</span></td></tr>
+      <tr><td class="k">nxs-theme</td><td><span data-lang="it"><strong>Famiglia del tema finestre</strong> (decorazione Openbox).<br><code>get</code> · <code>list</code> · <code>themes</code> elenca i temi Openbox installati · <code>set mac-scuro|mac|core|retro|cards</code> (seguono il colore del profilo; predefinito <code>mac-scuro</code>) · <code>set raw:NOME</code> un tema qualsiasi, fisso (es. <code>raw:1977-Black</code>) · <code>apply</code>. Anche da <strong>Aspetto coordinato</strong>.</span><span data-lang="en"><strong>Window theme family</strong> (Openbox decoration).<br><code>get</code> · <code>list</code> · <code>themes</code> lists installed Openbox themes · <code>set mac-scuro|mac|core|retro|cards</code> (follow the profile's color; default <code>mac-scuro</code>) · <code>set raw:NAME</code> any fixed theme (e.g. <code>raw:1977-Black</code>) · <code>apply</code>. Also from <strong>Coordinated appearance</strong>.</span></td></tr>
+      <tr><td class="k">nxs-panel-theme</td><td><span data-lang="it"><strong>Skin</strong> (colori di barra, menu, popup e dell'interno delle finestre NexusSec), indipendente dal profilo; da <strong>Aspetto coordinato</strong> cambia insieme anche tema delle finestre, sfondo e icone.<br><code>list</code> (segna l'attiva con *) · <code>get</code> · <code>set &lt;id&gt;</code> — id: hud, dark, light, nord, solarized, matrix, amber, contrast, black, white (riavvia il pannello). Anche da <strong>Aspetto coordinato</strong>.</span><span data-lang="en"><strong>Skin</strong> (colors of the bar, menus, popups and the inside of NexusSec windows), independent of the profile; from <strong>Coordinated appearance</strong> it also changes window theme, wallpaper and icons.<br><code>list</code> (marks the active one with *) · <code>get</code> · <code>set &lt;id&gt;</code> — id: hud, dark, light, nord, solarized, matrix, amber, contrast, black, white (restarts the panel). Also from <strong>Coordinated appearance</strong>.</span></td></tr>
       <tr><td class="k">nxs-wallpaper</td><td><span data-lang="it"><strong>Sfondo del desktop</strong> come voce a sé, indipendente da profilo e skin.<br><code>list</code> · <code>get</code> · <code>set &lt;id|percorso&gt;</code> (es. <code>skin-hud</code>, <code>skin-black</code>, o un file) · <code>reset</code> torna allo sfondo del profilo. Anche da Centro di Controllo → <strong>Sfondo</strong>.</span><span data-lang="en"><strong>Desktop wallpaper</strong> as its own entry, independent of profile and skin.<br><code>list</code> · <code>get</code> · <code>set &lt;id|path&gt;</code> (e.g. <code>skin-hud</code>, <code>skin-black</code>, or a file) · <code>reset</code> back to the profile's wallpaper. Also from the Control Center → <strong>Wallpaper</strong>.</span></td></tr>
       <tr><td class="k">nxs-viewer</td><td><span data-lang="it"><strong>Visualizzatore di immagini</strong>: si apre col doppio clic su un'immagine; zoom, adatta, ruota, scorrimento tra le immagini della cartella, imposta come sfondo.</span><span data-lang="en"><strong>Image viewer</strong>: opens with a double click on an image; zoom, fit, rotate, browse the images in the folder, set as wallpaper.</span></td></tr>
       <tr><td class="k">nxs-prompt</td><td><span data-lang="it"><strong>Stile del prompt</strong> del terminale.<br><code>get</code> · <code>list</code> · <code>set default|parrot|plain</code> (vale sui nuovi terminali). Cornici e nome utente prendono il <strong>colore del profilo</strong> attivo.</span><span data-lang="en"><strong>Terminal prompt style</strong>.<br><code>get</code> · <code>list</code> · <code>set default|parrot|plain</code> (applies to new terminals). Frames and user name take the active <strong>profile color</strong>.</span></td></tr>
