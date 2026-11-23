@@ -133,6 +133,10 @@ class Selector(Gtk.Window):
         self._clean.set_tooltip_text(
             _t("sel.clean_tip"))
         bar.pack_start(self._clean, False, False, 0)
+        self._keep = Gtk.CheckButton(label=_t("sel.keep_look"))
+        self._keep.set_tooltip_text(_t("sel.keep_look_tip"))
+        self._keep.set_active(model.keep_look())
+        bar.pack_start(self._keep, False, False, 0)
         cancel = Gtk.Button(label=_t("v.cancel"))
         cancel.connect("clicked", lambda *_: self.destroy())
         bar.pack_start(cancel, False, False, 0)
@@ -203,6 +207,7 @@ class Selector(Gtk.Window):
         self.hint.set_text(_t("sel.profile_hint") % d.get("name", key))
 
     def _on_apply(self, _btn):
+        model.set_keep_look(self._keep.get_active())
         model.activate_profile(self._selected,
                                clean_previous=self._clean.get_active())
         # Riavvia il pannello cosi' l'accent del profilo viene ricaricato e il

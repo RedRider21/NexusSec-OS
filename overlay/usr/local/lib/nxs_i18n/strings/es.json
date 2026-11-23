@@ -843,6 +843,8 @@
   "sel.clean": "Limpiar el perfil anterior",
   "sel.clean_tip": "Misión única: elimina el metapaquete del perfil anterior (apk del)",
   "sel.eyebrow": "NEXUSSEC OS  ·  PERFIL OPERATIVO",
+  "sel.keep_look": "Mantener mi aspecto",
+  "sel.keep_look_tip": "Cambia solo menús y herramientas del perfil: colores, ventanas, fondo e iconos se quedan como los elegiste.",
   "sel.ntools": "%d herramientas",
   "sel.profile_hint": "Perfil: %s",
   "sel.subtitle": "El menú y el fondo se adaptan al perfil elegido",

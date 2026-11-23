@@ -843,6 +843,8 @@
   "sel.clean": "Pulisci profilo precedente",
   "sel.clean_tip": "Monomissione: rimuove il meta-pacchetto del profilo precedente (apk del)",
   "sel.eyebrow": "NEXUSSEC OS  ·  PROFILO OPERATIVO",
+  "sel.keep_look": "Mantieni il mio aspetto",
+  "sel.keep_look_tip": "Cambia solo menu e strumenti del profilo: colori, finestre, sfondo e icone restano come li hai scelti.",
   "sel.ntools": "%d strumenti",
   "sel.profile_hint": "Profilo: %s",
   "sel.subtitle": "Il menu e lo sfondo si adattano al profilo scelto",

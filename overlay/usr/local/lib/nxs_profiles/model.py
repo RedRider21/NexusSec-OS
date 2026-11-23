@@ -696,7 +696,7 @@ def resolve_ob_theme(family: str | None = None, key: str | None = None) -> str:
     if family is None:
         family = theme_family()
     if key is None:
-        key = current_profile()
+        key = look_profile()
     if family.startswith("raw:"):
         name = family[4:].strip()
         return name if _theme_installed(name) else "NexusSec-Core"
@@ -824,7 +824,7 @@ def tint_menu_icons(key: str | None = None) -> bool:
     (menu-icons-<profilo>/, generata al build; base = menu-icons/). Tocca SOLO i
     percorsi delle nostre icone, quindi vale anche per un menu personalizzato.
     True se il file e' cambiato (serve un reconfigure di Openbox)."""
-    k = key or current_profile()
+    k = key or look_profile()
     dest = MENU_ICONS + ("-" + k if k != "base" else "")
     if not os.path.isdir(dest):
         dest = MENU_ICONS
@@ -865,7 +865,7 @@ def icon_theme_name(key: str | None = None) -> str:
     """Nome del tema icone tinto per il profilo (NexusSec-<Profilo>).
     I temi sono pre-generati al build da build/make-icons.py ed ereditano
     NexusSec-Core/nuoveXT2/Adwaita per la copertura completa."""
-    k = key or current_profile()
+    k = key or look_profile()
     return "NexusSec-" + (k[:1].upper() + k[1:])
 
 
@@ -973,6 +973,43 @@ def _forensic_writeblock(key: str, log=print) -> None:
         pass
 
 
+# "Mantieni il mio aspetto" (richiesta utente 2026-11-23): se attivo, il cambio
+# profilo cambia SOLO menu e strumenti; colori, finestre, sfondo e icone restano
+# quelli del profilo/skin in uso quando l'opzione e' stata attivata
+# (LOOK_PROFILE_FILE), anche ai riavvii.
+KEEP_LOOK_FILE = CONF_DIR / "keep-look"
+LOOK_PROFILE_FILE = CONF_DIR / "look-profile"
+
+
+def keep_look() -> bool:
+    return KEEP_LOOK_FILE.exists()
+
+
+def set_keep_look(on: bool) -> None:
+    CONF_DIR.mkdir(parents=True, exist_ok=True)
+    try:
+        if on:
+            if not keep_look():
+                LOOK_PROFILE_FILE.write_text(current_profile() + "\n")
+            KEEP_LOOK_FILE.write_text("1\n")
+        else:
+            KEEP_LOOK_FILE.unlink()
+    except OSError:
+        pass
+
+
+def look_profile() -> str:
+    """Profilo che decide l'ASPETTO: quello corrente, o quello 'congelato'."""
+    if keep_look():
+        try:
+            k = LOOK_PROFILE_FILE.read_text().strip()
+            if k in profiles():
+                return k
+        except OSError:
+            pass
+    return current_profile()
+
+
 def _aspetto_segue_profilo() -> None:
     try:
         (CONF_DIR / "panel-theme").write_text("profile\n")
@@ -1020,6 +1057,11 @@ def activate_profile(key: str, clean_previous: bool = False, log=print) -> bool:
     # riporta l'ASPETTO al profilo, anche se prima c'era una skin fissa
     # dell'Aspetto coordinato: barra "segui il profilo", sfondo del profilo,
     # finestre macOS scuro nel colore del profilo (le altre famiglie restano).
+    if keep_look():
+        # solo menu e strumenti: l'aspetto resta com'e'
+        set_current(key)
+        _forensic_writeblock(key, log)
+        return True
     _aspetto_segue_profilo()
     set_current(key)
     # Tema icone PRIMA dello sfondo: set_icon_theme(refresh) riavvia pcmanfm
@@ -1037,7 +1079,7 @@ def activate_profile(key: str, clean_previous: bool = False, log=print) -> bool:
 def apply_current() -> dict:
     """Riapplica sfondo + accent del profilo gia' corrente (uso all'avvio,
     senza reinstallare nulla)."""
-    key = current_profile()
+    key = look_profile()
     # Sincronizza il tema icone col profilo (senza refresh: a boot pcmanfm
     # parte gia' col tema scritto qui/nel default; lo switch a caldo avviene
     # quando l'utente cambia profilo via activate_profile).
@@ -1045,8 +1087,8 @@ def apply_current() -> dict:
     set_wallpaper(wallpaper_path(key))
     write_accent_css(key)
     set_window_theme(key)          # bordi/decorazioni finestra col profilo
-    _forensic_writeblock(key)
-    return profile_data(key)
+    _forensic_writeblock(current_profile())
+    return profile_data(current_profile())
 
 
 # Compatibilita': il selettore chiama apply_profile.

@@ -843,6 +843,8 @@
   "sel.clean": "Clean previous profile",
   "sel.clean_tip": "Single-mission: removes the previous profile's meta-package (apk del)",
   "sel.eyebrow": "NEXUSSEC OS  ·  OPERATIONAL PROFILE",
+  "sel.keep_look": "Keep my look",
+  "sel.keep_look_tip": "Change only the profile's menus and tools: colours, windows, wallpaper and icons stay as you chose them.",
   "sel.ntools": "%d tools",
   "sel.profile_hint": "Profile: %s",
   "sel.subtitle": "The menu and wallpaper adapt to the chosen profile",
