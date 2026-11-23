@@ -186,6 +186,26 @@ fi
 # Altrimenti su tty1 serve la passphrase o il login testuale: la splash si
 # chiude subito e si torna a tty1. Col desktop: si chiude quando X e' partito
 # (X prende tty1), comunque entro 90 s (se X non parte, torna il testo).
+# Torna alla console di TESTO in modo leggibile: le console restano in modo
+# GRAFICO dopo fbsplash (schermo nero in UEFI, pezzi di logo in BIOS: la
+# richiesta della passphrase non si leggeva, collaudo 2026-11-23). Rimette
+# tty1/tty16 in modo testo (KDSETMODE KD_TEXT), pulisce il framebuffer e passa
+# a tty1, che il kernel ridisegna da capo.
+nxs_splash_testo() {
+	python3 - <<'PYEOF' 2>/dev/null
+import fcntl, os
+for t in ("/dev/tty16", "/dev/tty1"):
+    try:
+        fd = os.open(t, os.O_RDWR)
+        fcntl.ioctl(fd, 0x4B3A, 0)      # KDSETMODE, KD_TEXT
+        os.close(fd)
+    except OSError:
+        pass
+PYEOF
+	cat /dev/zero > /dev/fb0 2>/dev/null
+	chvt 2 2>/dev/null; chvt 1
+}
+
 # NB: fbsplash disegna l'immagine e TERMINA: la splash e' "attiva" se la VT
 # 16 e' a schermo (o se gira l'animazione), non se esiste il processo
 # fbsplash (bug 2026-11-23: la passphrase restava nascosta dietro la splash).
@@ -196,9 +216,10 @@ if [ "$(cat /sys/class/tty/tty0/active 2>/dev/null)" = tty16 ] || \
 		( i=0
 		  while [ "$i" -lt 90 ] && ! pgrep -x Xorg >/dev/null 2>&1; do sleep 1; i=$((i + 1)); done
 		  sleep 4; : > /run/nxs-splash.stop; pkill -x fbsplash
-		  pgrep -x Xorg >/dev/null 2>&1 || chvt 1 ) &
+		  pgrep -x Xorg >/dev/null 2>&1 || nxs_splash_testo ) &
 	else
-		: > /run/nxs-splash.stop; pkill -x fbsplash; sleep 0.3; chvt 1
+		: > /run/nxs-splash.stop; pkill -x fbsplash; sleep 0.5
+		nxs_splash_testo
 	fi
 fi
 

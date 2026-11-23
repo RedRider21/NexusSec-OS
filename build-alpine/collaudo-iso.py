@@ -333,6 +333,7 @@ def prova_disco(iso, cartella):
         vm = VM("d" + modo, a2, cartella)
         time.sleep(90)
         vm.schermata("passphrase")
+        leggibile = _testo_visibile(os.path.join(cartella, "d%s-passphrase.ppm" % modo))
         vm.scrivi("provaprova\n")
         time.sleep(ATTESA_BOOT - 60)
         vm.schermata("desktop")
@@ -348,6 +349,9 @@ def prova_disco(iso, cartella):
         out += "\n--- avvio dal disco %s ---\n%s" % (modo, o)
         esiti["disco-" + modo] = "DESKTOP-OK" in o and "DATI-MONTATI" in o \
             and "SISTEMA-SOLA-LETTURA" in o
+        # la richiesta della passphrase deve LEGGERSI (2026-11-23: con la splash
+        # lo schermo restava nero e il collaudo passava scrivendo alla cieca)
+        esiti["pass-" + modo] = leggibile
     try:
         os.remove(disco)
     except OSError:
@@ -417,6 +421,18 @@ def prova_usabilita(iso, cartella):
         esiti["usab-" + nome] = _colori_centro(
             os.path.join(cartella, "usa-%s.ppm" % nome)) > 40
     return esiti, out
+
+
+def _testo_visibile(ppm):
+    """True se la schermata contiene testo di console (pixel grigi/bianchi:
+    il logo della splash e' ciano, quindi non conta)."""
+    try:
+        from PIL import Image
+        im = Image.open(ppm).convert("RGB").resize((400, 250))
+        n = sum(1 for r, g, b in im.getdata() if min(r, g, b) > 110 and max(r, g, b) - min(r, g, b) < 25)
+        return n > 150
+    except Exception:                      # noqa: BLE001
+        return False
 
 
 def _colori_centro(ppm):
