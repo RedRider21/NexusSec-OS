@@ -2898,12 +2898,29 @@ def _coordina_con_skin(tid):
             m.set_theme_family("mac" if chiara else "mac-scuro")
     except Exception:                       # noqa: BLE001
         pass
+    # icone del desktop e del menu nel colore della skin (tema icone piu'
+    # vicino al suo accento); "Segui il profilo" = icone del profilo
+    try:
+        import re as _re
+        acc = None
+        p = _pt.css_path(tid) if tid != "profile" else None
+        if p:
+            mm = _re.search(r"\.nxs-panel button image \{ color:(#[0-9a-fA-F]{6})", open(p).read())
+            acc = mm.group(1) if mm else None
+        if acc:
+            m.set_icon_theme(name=m.icon_theme_for_color(acc), refresh=True)
+        else:
+            m.set_icon_theme(refresh=True)
+    except Exception:                       # noqa: BLE001
+        pass
     sf = "/usr/local/share/nexussec/wallpapers/skin-%s.png" % tid
     try:
+        # dopo il riavvio di pcmanfm (icone): lo sfondo si imposta solo con
+        # pcmanfm --desktop gia' attivo, altrimenti al primo colpo non cambiava
         if os.path.isfile(sf):
-            subprocess.Popen(["nxs-wallpaper", "set", sf])
+            subprocess.Popen(["sh", "-c", 'sleep 2; nxs-wallpaper set "$0"', sf])
         elif tid == "profile":
-            subprocess.Popen(["nxs-wallpaper", "reset"])
+            subprocess.Popen(["sh", "-c", "sleep 2; nxs-wallpaper reset"])
     except OSError:
         pass
 

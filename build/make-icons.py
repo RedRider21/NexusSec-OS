@@ -31,6 +31,9 @@ PROFILES = {
     "forensics": ("NexusSec-Forensics", "#ffb000"),
     "osint":     ("NexusSec-Osint",     "#23d18b"),
     "web":       ("NexusSec-Web",       "#a06bff"),
+    # non e' un profilo: per le SKIN a dominante blu (Chiaro, Grigio scuro,
+    # Nord) dell'Aspetto coordinato (2026-11-23)
+    "blu":       ("NexusSec-Blu",       "#1a73e8"),
 }
 
 SIZES = [16, 22, 24, 32, 48, 64, 128, 256]

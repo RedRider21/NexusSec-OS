@@ -900,10 +900,36 @@ def _replace_line(path: Path, prefix: str, newline: str) -> None:
     _os.replace(str(tmp), str(path))
 
 
-def set_icon_theme(key: str | None = None, refresh: bool = False) -> str:
-    """Imposta il tema icone GTK2/GTK3 sul profilo (icone tinte con l'accent).
+# Temi icone disponibili e loro colore (build/make-icons.py): la skin
+# dell'Aspetto coordinato prende quello col colore piu' vicino al suo accento.
+ICON_THEMES = {"NexusSec-Base": "#00e5ff", "NexusSec-Pentest": "#ff3b5c",
+               "NexusSec-Forensics": "#ffb000", "NexusSec-Osint": "#23d18b",
+               "NexusSec-Web": "#a06bff", "NexusSec-Blu": "#1a73e8"}
+
+
+def icon_theme_for_color(hexcol: str) -> str:
+    """Tema icone installato col colore piu' vicino a hexcol."""
+    def rgb(h):
+        h = h.lstrip("#")
+        return [int(h[i:i + 2], 16) for i in (0, 2, 4)]
+    c = rgb(hexcol)
+    best, dist = "NexusSec-Base", 1e9
+    for name, col in ICON_THEMES.items():
+        if not any((d / name).is_dir() for d in (Path("/usr/local/share/icons"),
+                                                   HOME / ".icons")):
+            continue
+        dd = sum((a - b) ** 2 for a, b in zip(c, rgb(col)))
+        if dd < dist:
+            best, dist = name, dd
+    return best
+
+
+def set_icon_theme(key: str | None = None, refresh: bool = False,
+                   name: str | None = None) -> str:
+    """Imposta il tema icone GTK2/GTK3 sul profilo (icone tinte con l'accent),
+    o il tema 'name' se dato (skin dell'Aspetto coordinato).
     Con refresh=True riavvia il desktop pcmanfm per ricaricarle a caldo."""
-    theme = icon_theme_name(key)
+    theme = name or icon_theme_name(key)
     _replace_line(HOME / ".config" / "gtk-3.0" / "settings.ini",
                   "gtk-icon-theme-name", f"gtk-icon-theme-name={theme}")
     _replace_line(HOME / ".gtkrc-2.0",
@@ -947,6 +973,22 @@ def _forensic_writeblock(key: str, log=print) -> None:
         pass
 
 
+def _aspetto_segue_profilo() -> None:
+    try:
+        (CONF_DIR / "panel-theme").write_text("profile\n")
+    except OSError:
+        pass
+    try:
+        WALLPAPER_CONF.unlink()
+    except OSError:
+        pass
+    try:
+        if theme_family() == "mac":
+            THEME_FAMILY_FILE.write_text("mac-scuro\n")
+    except OSError:
+        pass
+
+
 def activate_profile(key: str, clean_previous: bool = False, log=print) -> bool:
     """Attiva un profilo: installa il meta-pacchetto apk, poi applica
     sfondo + accent e salva lo stato.
@@ -974,6 +1016,11 @@ def activate_profile(key: str, clean_previous: bool = False, log=print) -> bool:
     else:
         log("[*] apk non disponibile (dev/host): salto l'installazione tool.")
 
+    # VINCE L'ULTIMA SCELTA (decisione utente 2026-11-23): scegliere un profilo
+    # riporta l'ASPETTO al profilo, anche se prima c'era una skin fissa
+    # dell'Aspetto coordinato: barra "segui il profilo", sfondo del profilo,
+    # finestre macOS scuro nel colore del profilo (le altre famiglie restano).
+    _aspetto_segue_profilo()
     set_current(key)
     # Tema icone PRIMA dello sfondo: set_icon_theme(refresh) riavvia pcmanfm
     # --desktop, e set_wallpaper ne ha bisogno attivo per disegnare lo sfondo.
