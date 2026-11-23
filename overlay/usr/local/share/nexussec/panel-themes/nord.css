@@ -72,3 +72,41 @@ entry.nxs-menu-search:focus { border-color:#88c0d0; }
 .nxs-popup calendar.header, .nxs-popup calendar.button,
 .nxs-popup calendar.highlight { color:#88c0d0; }
 .nxs-popup calendar:indeterminate { color:#81a1c1; }
+
+/* --- interno delle finestre NexusSec (coordinazione) ---
+   Tutto e' limitato a window:not(.nxs-panel): la barra e il suo menu hanno le
+   loro regole sopra (in GTK3 la priorita' del foglio vince sulla specificita',
+   una regola generica qui coprirebbe i colori della barra). */
+window:not(.nxs-panel), dialog { background-color:#2e3440; color:#eceff4; }
+window:not(.nxs-panel) .nxs-headerbar { background-color:#2e3440; color:#eceff4; border-bottom:1px solid #88c0d0; }
+window:not(.nxs-panel) .nxs-headerbar label.title { color:#88c0d0; }
+window:not(.nxs-panel) .nxs-headerbar label.subtitle { color:#81a1c1; }
+window:not(.nxs-panel) .nxs-footer { background-color:#2e3440; color:#81a1c1; border-top:1px solid #4c566a; }
+window:not(.nxs-panel) .nxs-section { color:#88c0d0; border-bottom:1px solid #4c566a; }
+window:not(.nxs-panel) .nxs-key, window:not(.nxs-panel) .nxs-card-title, window:not(.nxs-panel) frame > label { color:#88c0d0; }
+window:not(.nxs-panel) .nxs-val, window:not(.nxs-panel) radiobutton, window:not(.nxs-panel) checkbutton, window:not(.nxs-panel) combobox { color:#eceff4; }
+window:not(.nxs-panel) .nxs-tile, window:not(.nxs-panel) .nxs-card { background-color:#3b4252; color:#eceff4; border:1px solid #4c566a; }
+window:not(.nxs-panel) .nxs-tile label { color:#eceff4; }
+window:not(.nxs-panel) .nxs-tile:hover { background-color:rgba(136,192,208,0.14); border-color:#88c0d0; }
+window:not(.nxs-panel) .nxs-tile-badge { background-color:rgba(136,192,208,0.14); }
+window:not(.nxs-panel) .nxs-tile-badge image, window:not(.nxs-panel) spinner { color:#88c0d0; }
+window:not(.nxs-panel) textview, window:not(.nxs-panel) textview text, window:not(.nxs-panel) treeview { background-color:#3b4252; color:#eceff4; caret-color:#88c0d0; }
+window:not(.nxs-panel) treeview:selected { background-color:rgba(136,192,208,0.24); color:#eceff4; }
+window:not(.nxs-panel) treeview header button { background-color:#2e3440; color:#88c0d0; border-bottom:1px solid #4c566a; }
+window:not(.nxs-panel) button { background-color:#3b4252; color:#eceff4; border:1px solid #4c566a; }
+window:not(.nxs-panel) button:hover { background-color:rgba(136,192,208,0.14); border-color:#88c0d0; }
+window:not(.nxs-panel) button:active, window:not(.nxs-panel) button:checked { background-color:#88c0d0; color:#2e3440; }
+window:not(.nxs-panel) button.nxs-primary { background-color:rgba(136,192,208,0.24); border-color:#88c0d0; color:#88c0d0; }
+window:not(.nxs-panel) button.nxs-menu-item { background-color:transparent; border-color:transparent; }
+window:not(.nxs-panel) button.nxs-menu-item:hover { background-color:rgba(136,192,208,0.14); }
+window:not(.nxs-panel) entry { background-color:#3b4252; color:#eceff4; border:1px solid #4c566a; caret-color:#88c0d0; }
+window:not(.nxs-panel) entry:focus { border-color:#88c0d0; }
+window:not(.nxs-panel) progressbar > trough, window:not(.nxs-panel) switch { background-color:#3b4252; border:1px solid #4c566a; }
+window:not(.nxs-panel) progressbar > trough > progress, window:not(.nxs-panel) levelbar block.filled, window:not(.nxs-panel) switch:checked slider { background-color:#88c0d0; }
+window:not(.nxs-panel) switch:checked { background-color:rgba(136,192,208,0.24); border-color:#88c0d0; }
+window:not(.nxs-panel) switch slider { background-color:#81a1c1; }
+window:not(.nxs-panel) notebook header { background-color:#2e3440; }
+window:not(.nxs-panel) notebook tab { color:#81a1c1; }
+window:not(.nxs-panel) notebook tab:checked { color:#88c0d0; background-color:#3b4252; box-shadow: inset 0 -2px #88c0d0; }
+window:not(.nxs-panel) frame > border { border:1px solid #4c566a; }
+/* tono: scuro */

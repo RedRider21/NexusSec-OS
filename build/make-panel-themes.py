@@ -181,10 +181,64 @@ def _rgba(hexcol, alpha):
     return "rgba(%d,%d,%d,%.2f)" % (r, g, b, alpha)
 
 
+# COORDINAZIONE (2026-11-23): la skin colora anche l'INTERNO di tutte le
+# finestre NexusSec (Centro di Controllo, sessione, popup Wi-Fi/Bluetooth/
+# audio, installatore, ...), non solo barra e menu. Stesse classi del CSS base
+# (nxs_cc/common.py), a priorita' piu' alta.
+CONTENUTO = """
+/* --- interno delle finestre NexusSec (coordinazione) ---
+   Tutto e' limitato a window:not(.nxs-panel): la barra e il suo menu hanno le
+   loro regole sopra (in GTK3 la priorita' del foglio vince sulla specificita',
+   una regola generica qui coprirebbe i colori della barra). */
+window:not(.nxs-panel), dialog {{ background-color:{win}; color:{text}; }}
+window:not(.nxs-panel) .nxs-headerbar {{ background-color:{bg}; color:{text}; border-bottom:1px solid {accent}; }}
+window:not(.nxs-panel) .nxs-headerbar label.title {{ color:{accent}; }}
+window:not(.nxs-panel) .nxs-headerbar label.subtitle {{ color:{dim}; }}
+window:not(.nxs-panel) .nxs-footer {{ background-color:{win}; color:{dim}; border-top:1px solid {border}; }}
+window:not(.nxs-panel) .nxs-section {{ color:{accent}; border-bottom:1px solid {border}; }}
+window:not(.nxs-panel) .nxs-key, window:not(.nxs-panel) .nxs-card-title, window:not(.nxs-panel) frame > label {{ color:{accent}; }}
+window:not(.nxs-panel) .nxs-val, window:not(.nxs-panel) radiobutton, window:not(.nxs-panel) checkbutton, window:not(.nxs-panel) combobox {{ color:{text}; }}
+window:not(.nxs-panel) .nxs-tile, window:not(.nxs-panel) .nxs-card {{ background-color:{card}; color:{text}; border:1px solid {border}; }}
+window:not(.nxs-panel) .nxs-tile label {{ color:{text}; }}
+window:not(.nxs-panel) .nxs-tile:hover {{ background-color:{hover}; border-color:{accent}; }}
+window:not(.nxs-panel) .nxs-tile-badge {{ background-color:{hover}; }}
+window:not(.nxs-panel) .nxs-tile-badge image, window:not(.nxs-panel) spinner {{ color:{accent}; }}
+window:not(.nxs-panel) textview, window:not(.nxs-panel) textview text, window:not(.nxs-panel) treeview {{ background-color:{card}; color:{text}; caret-color:{accent}; }}
+window:not(.nxs-panel) treeview:selected {{ background-color:{active}; color:{text}; }}
+window:not(.nxs-panel) treeview header button {{ background-color:{bg}; color:{accent}; border-bottom:1px solid {border}; }}
+window:not(.nxs-panel) button {{ background-color:{card}; color:{text}; border:1px solid {border}; }}
+window:not(.nxs-panel) button:hover {{ background-color:{hover}; border-color:{accent}; }}
+window:not(.nxs-panel) button:active, window:not(.nxs-panel) button:checked {{ background-color:{accent}; color:{on_accent}; }}
+window:not(.nxs-panel) button.nxs-primary {{ background-color:{active}; border-color:{accent}; color:{accent}; }}
+window:not(.nxs-panel) button.nxs-menu-item {{ background-color:transparent; border-color:transparent; }}
+window:not(.nxs-panel) button.nxs-menu-item:hover {{ background-color:{hover}; }}
+window:not(.nxs-panel) entry {{ background-color:{card}; color:{text}; border:1px solid {border}; caret-color:{accent}; }}
+window:not(.nxs-panel) entry:focus {{ border-color:{accent}; }}
+window:not(.nxs-panel) progressbar > trough, window:not(.nxs-panel) switch {{ background-color:{card}; border:1px solid {border}; }}
+window:not(.nxs-panel) progressbar > trough > progress, window:not(.nxs-panel) levelbar block.filled, window:not(.nxs-panel) switch:checked slider {{ background-color:{accent}; }}
+window:not(.nxs-panel) switch:checked {{ background-color:{active}; border-color:{accent}; }}
+window:not(.nxs-panel) switch slider {{ background-color:{dim}; }}
+window:not(.nxs-panel) notebook header {{ background-color:{bg}; }}
+window:not(.nxs-panel) notebook tab {{ color:{dim}; }}
+window:not(.nxs-panel) notebook tab:checked {{ color:{accent}; background-color:{card}; box-shadow: inset 0 -2px {accent}; }}
+window:not(.nxs-panel) frame > border {{ border:1px solid {border}; }}
+"""
+
+
+def _luce(hexcol):
+    h = hexcol.lstrip("#")
+    r, g, b = (int(h[i:i + 2], 16) for i in (0, 2, 4))
+    return (0.299 * r + 0.587 * g + 0.114 * b) / 255.0
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     for tid, p in THEMES.items():
-        css = TEMPLATE.format(
+        chiara = _luce(p["bg"]) > 0.5
+        win = p.get("win") or p["bg"]
+        card = p.get("card") or (p["pop"] if chiara else p["pop"])
+        css = (TEMPLATE + CONTENUTO + "/* tono: %s */\n" % ("chiaro" if chiara else "scuro")).format(
+            win=win, card=card,
             name=p["name"], bg=p["bg"], pop=p["pop"], border=p["border"],
             text=p["text"], dim=p["dim"], accent=p["accent"],
             on_accent=p["on_accent"], brand=p["brand"],

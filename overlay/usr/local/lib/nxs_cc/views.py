@@ -2876,6 +2876,38 @@ _PROMPT_STYLES = [
 ]
 
 
+def _coordina_con_skin(tid):
+    """Tema delle finestre e sfondo abbinati alla skin scelta: macOS chiaro
+    con le skin chiare, macOS scuro con quelle scure (solo se la famiglia in
+    uso e' macOS: Core/Retro/Cards restano una scelta a parte); sfondo
+    wallpapers/skin-<id>.png se esiste. "Segui il profilo" = macOS scuro e
+    sfondo del profilo."""
+    try:
+        import nxs_profiles.model as m
+    except Exception:                       # noqa: BLE001
+        return
+    chiara = False
+    try:
+        from nxs_cc import paneltheme as _pt
+        p = _pt.css_path(tid)
+        chiara = bool(p) and "/* tono: chiaro */" in open(p).read()
+    except Exception:                       # noqa: BLE001
+        pass
+    try:
+        if m.theme_family() in ("mac", "mac-scuro"):
+            m.set_theme_family("mac" if chiara else "mac-scuro")
+    except Exception:                       # noqa: BLE001
+        pass
+    sf = "/usr/local/share/nexussec/wallpapers/skin-%s.png" % tid
+    try:
+        if os.path.isfile(sf):
+            subprocess.Popen(["nxs-wallpaper", "set", sf])
+        elif tid == "profile":
+            subprocess.Popen(["nxs-wallpaper", "reset"])
+    except OSError:
+        pass
+
+
 def open_appearance(_btn=None):
     """Aspetto COORDINATO col profilo: famiglia del tema finestre + stile del
     prompt del terminale. Le famiglie Retro/Cards seguono il colore del profilo
@@ -2975,6 +3007,13 @@ def open_appearance(_btn=None):
     row_pt.pack_start(pt_combo, True, True, 0)
     body.pack_start(row_pt, False, False, 0)
 
+    # COORDINAZIONE (2026-11-23): con la skin cambiano anche il tema delle
+    # finestre (macOS chiaro/scuro) e lo sfondo abbinato. L'interno delle
+    # finestre NexusSec lo colora gia' la skin stessa (panel-themes/*.css).
+    pt_coord = Gtk.CheckButton(label=_t("v.pt.coord"))
+    pt_coord.set_active(True)
+    body.pack_start(pt_coord, False, False, 0)
+
     pt_status = Gtk.Label(label=""); pt_status.set_xalign(0)
     pt_status.get_style_context().add_class("nxs-val")
     body.pack_start(pt_status, False, False, 0)
@@ -2987,6 +3026,8 @@ def open_appearance(_btn=None):
             return
         tid = pt_ids[i]
         _pt.set_theme(tid)                 # il pannello si ricolora a caldo;
+        if pt_coord.get_active():
+            _coordina_con_skin(tid)
         try:                              # riavvio comunque per sicurezza.
             panelcfg.restart_panel()
         except Exception:                 # noqa: BLE001
