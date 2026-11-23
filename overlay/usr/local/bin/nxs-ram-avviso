@@ -1,0 +1,64 @@
+#!/usr/bin/env python3
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
+"""nxs-ram-avviso - fumetto al centro dello schermo quando nxs-toram ha finito
+di copiare il sistema in RAM ("ora puoi togliere la chiavetta"). Aspetta
+/run/nxs-toram.state fino a 15 minuti; si chiude da solo dopo 10 s o con un
+clic. Se la copia non e' avvenuta non mostra nulla."""
+import os
+import sys
+import time
+
+STATE = "/run/nxs-toram.state"
+
+
+def main():
+    t0 = time.time()
+    while not os.path.exists(STATE):
+        if time.time() - t0 > 900:
+            return 0
+        time.sleep(3)
+    stato = open(STATE).read().strip()
+    if not stato.startswith("ok"):
+        return 0
+    sys.path.insert(0, "/usr/local/lib")
+    import gi
+    gi.require_version("Gtk", "3.0")
+    from gi.repository import Gtk, GLib
+    try:
+        from nxs_cc.common import apply_css
+        apply_css()
+    except Exception:                       # noqa: BLE001
+        pass
+    try:
+        from nxs_i18n import t as _t
+    except ImportError:
+        def _t(k, **_kw):
+            return k
+    win = Gtk.Window(type=Gtk.WindowType.POPUP)
+    win.set_position(Gtk.WindowPosition.CENTER)
+    win.set_keep_above(True)
+    box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
+    box.get_style_context().add_class("nxs-card")
+    box.set_margin_top(18); box.set_margin_bottom(18)
+    box.set_margin_start(26); box.set_margin_end(26)
+    tit = Gtk.Label()
+    tit.set_markup("<span size='large' weight='bold'>%s</span>"
+                   % GLib.markup_escape_text(_t("ram.done")))
+    tit.get_style_context().add_class("nxs-key")
+    msg = Gtk.Label(label=_t("ram.persist") if stato == "ok-persist" else _t("ram.remove"))
+    msg.set_line_wrap(True); msg.set_max_width_chars(46)
+    msg.get_style_context().add_class("nxs-val")
+    box.pack_start(tit, False, False, 0)
+    box.pack_start(msg, False, False, 0)
+    ev = Gtk.EventBox(); ev.add(box)
+    ev.connect("button-press-event", lambda *_: Gtk.main_quit())
+    win.add(ev)
+    win.show_all()
+    GLib.timeout_add_seconds(10, Gtk.main_quit)
+    Gtk.main()
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

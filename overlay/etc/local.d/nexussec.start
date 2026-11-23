@@ -223,4 +223,14 @@ if [ "$(cat /sys/class/tty/tty0/active 2>/dev/null)" = tty16 ] || \
 	fi
 fi
 
+# --- Copia del sistema in RAM IN SOTTOFONDO (2026-11-23) -------------------
+# Avvio rapido dalla chiavetta; a desktop pronto nxs-toram copia sistema e
+# moduli in RAM a bassa priorita' e li scambia a caldo; poi il fumetto
+# nxs-ram-avviso dice che la chiavetta si puo' togliere.
+if [ -x /usr/local/bin/nxs-toram ]; then
+	( i=0
+	  while [ "$i" -lt 180 ] && ! pgrep -x Xorg >/dev/null 2>&1; do sleep 1; i=$((i + 1)); done
+	  sleep 20; /usr/local/bin/nxs-toram >/var/log/nxs-toram.log 2>&1 ) &
+fi
+
 echo "stato: openbox=$(command -v openbox) feh=$(command -v feh) podman=$(command -v podman)"

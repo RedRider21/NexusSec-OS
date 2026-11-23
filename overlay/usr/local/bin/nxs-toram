@@ -1,0 +1,126 @@
+#!/usr/bin/env python3
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
+"""nxs-toram - copia il sistema in RAM IN SOTTOFONDO, a desktop avviato.
+
+L'avvio resta rapido (il sistema si legge dalla chiavetta); intanto, a bassa
+priorita', copiamo in RAM il sistema compresso (nxs-rootfs.squashfs) e i moduli
+del kernel (modloop) e poi SCAMBIAMO a caldo il file dietro ai loro dispositivi
+loop (ioctl LOOP_CHANGE_FD: ammesso per i loop in sola lettura e file della
+stessa dimensione). I programmi aperti non se ne accorgono; da quel momento la
+chiavetta non serve piu' (salvo la persistenza su di essa).
+
+Solo sulla live da chiavetta/CD con abbastanza RAM (disponibile > copie + 1 GB);
+mai sul disco installato. Esito in /run/nxs-toram.state (letto dal fumetto
+nxs-ram-avviso): "ok", "ok-persist" (persistenza sulla chiavetta: non toglierla)
+oppure "no:<motivo>". Ogni errore lascia tutto com'era.
+"""
+import fcntl
+import filecmp
+import glob
+import os
+import shutil
+import subprocess
+import sys
+import time
+
+STATE = "/run/nxs-toram.state"
+RAM = "/media/nxs-ram"
+LOOP_CHANGE_FD = 0x4C06
+
+
+def esito(s):
+    try:
+        with open(STATE, "w") as f:
+            f.write(s + "\n")
+    except OSError:
+        pass
+
+
+def loop_di(suffisso):
+    """(dispositivo loop, file) il cui file di appoggio finisce per suffisso."""
+    for bf in glob.glob("/sys/block/loop*/loop/backing_file"):
+        try:
+            f = open(bf).read().strip()
+        except OSError:
+            continue
+        if f.endswith(suffisso) and not f.startswith(RAM):
+            ro = open(os.path.join(os.path.dirname(os.path.dirname(bf)), "ro")).read().strip()
+            return "/dev/" + bf.split("/")[3], f, ro == "1"
+    return None
+
+
+def mem_disponibile():
+    for r in open("/proc/meminfo"):
+        if r.startswith("MemAvailable:"):
+            return int(r.split()[1]) * 1024
+    return 0
+
+
+def main():
+    if os.geteuid() != 0:
+        return 1
+    if "nxs_installed=1" in open("/proc/cmdline").read().split() or \
+            "nxs_toram=no" in open("/proc/cmdline").read().split():
+        return 0
+    voci = [v for v in (loop_di("/nxs-rootfs.squashfs"), loop_di("/boot/modloop-lts")) if v]
+    if not voci:
+        esito("no:gia-in-ram-o-non-live")
+        return 0
+    if not all(v[2] for v in voci):
+        esito("no:loop-non-in-sola-lettura")
+        return 0
+    tot = sum(os.path.getsize(v[1]) for v in voci)
+    if mem_disponibile() < tot + 1024 ** 3:
+        esito("no:ram-insufficiente")
+        return 0
+    try:
+        os.nice(19)
+        subprocess.run(["ionice", "-c", "3", "-p", str(os.getpid())],
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except Exception:                                  # noqa: BLE001
+        pass
+    os.makedirs(RAM, exist_ok=True)
+    if not os.path.ismount(RAM):
+        r = subprocess.run(["mount", "-t", "tmpfs", "-o",
+                            "size=%dk,mode=0755" % (tot // 1024 + 32768), "nxs-ram", RAM])
+        if r.returncode != 0:
+            esito("no:tmpfs")
+            return 0
+    fatti = 0
+    for dev, f, _ro in voci:
+        dst = os.path.join(RAM, os.path.basename(f))
+        try:
+            shutil.copyfile(f, dst)
+            if not filecmp.cmp(f, dst, shallow=False):  # copia verificata
+                raise OSError("copia diversa")
+            nf = os.open(dst, os.O_RDONLY)
+            lf = os.open(dev, os.O_RDONLY)
+            fcntl.ioctl(lf, LOOP_CHANGE_FD, nf)
+            os.close(lf)
+            os.close(nf)
+            fatti += 1
+        except OSError as e:
+            try:
+                os.remove(dst)
+            except OSError:
+                pass
+            esito("no:%s" % e)
+            return 0
+    # persistenza sulla stessa chiavetta? allora non va tolta
+    persist = False
+    try:
+        src = subprocess.run(["findmnt", "-no", "SOURCE", "/var/nxs-data"],
+                             capture_output=True, text=True).stdout.strip()
+        media = [l.split()[0] for l in open("/proc/mounts") if " /media/" in l
+                 and l.split()[0].startswith("/dev/sd")]
+        persist = bool(src) and any(os.path.basename(src)[:3] == os.path.basename(m)[:3]
+                                    for m in media)
+    except Exception:                                  # noqa: BLE001
+        pass
+    esito("ok-persist" if persist else "ok")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -32,6 +32,8 @@ RELOGIN=""
 
 # 1) SPLASH per prima, in background; ne teniamo il PID come "cancello".
 SPLASH_PID=""
+# fumetto "sistema caricato in RAM" (nxs-toram, avviato da nexussec.start)
+command -v nxs-ram-avviso >/dev/null 2>&1 && nxs-ram-avviso &
 if [ -z "$RELOGIN" ] && command -v nxs-boot-splash >/dev/null 2>&1; then
   nxs-boot-splash &
   SPLASH_PID=$!

@@ -52,7 +52,10 @@ done
 # Automatica con >= 4 GB (MemTotal >= ~3,5 GB); parametro di avvio
 # nxs_toram=yes|no per forzare. Se la copia non riesce si usa la chiavetta.
 if [ -n "$NXS_PREBUILT" ]; then
-	_nxs_ram=auto
+	# 2026-11-23: di default NIENTE copia qui (rallentava l'avvio da chiavetta):
+	# la fa nxs-toram IN SOTTOFONDO a desktop avviato. nxs_toram=yes la forza
+	# qui come prima.
+	_nxs_ram=no
 	case " $(cat /proc/cmdline) " in
 		*" nxs_toram=yes "*|*" nxs_toram=1 "*) _nxs_ram=yes ;;
 		*" nxs_toram=no "*|*" nxs_toram=0 "*) _nxs_ram=no ;;
