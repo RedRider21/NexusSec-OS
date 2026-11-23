@@ -171,8 +171,9 @@ done
 # mettiamo esplicito per essere DETERMINISTICI a prescindere dal set standard.
 mkdir -p "$tmp/etc/runlevels/boot"
 ln -sf "/etc/init.d/sysctl" "$tmp/etc/runlevels/boot/sysctl"
-# splash grafica quando il framebuffer arriva dopo l'initramfs (BIOS/VM)
-ln -sf "/etc/init.d/nxs-splash" "$tmp/etc/runlevels/boot/nxs-splash"
+# splash sul framebuffer (servizio nxs-splash): SPENTA di default, vedi
+# fastboot-locale.sh (NXS_FBSPLASH=1 per riprovarla)
+[ "${NXS_FBSPLASH:-0}" = 1 ] && ln -sf "/etc/init.d/nxs-splash" "$tmp/etc/runlevels/boot/nxs-splash"
 
 # Splash di avvio: e' un client X (nxs-boot-splash, primo autostart Openbox),
 # non un servizio OpenRC -> qui non serve nulla. Il boot testuale e' su tty12

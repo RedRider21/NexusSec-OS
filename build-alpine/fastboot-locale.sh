@@ -113,7 +113,10 @@ grep -q "loglevel=" "$W/syslinux.cfg" || sed -i 's|^\(APPEND .*\)$|\1 loglevel=3
 grep -q "loglevel=" "$W/grub.cfg" || sed -i 's|^\(linux[[:space:]].*\)$|\1 loglevel=3|' "$W/grub.cfg"
 SPLASH="$REPO/build-alpine/fbsplash.ppm"     # da build/make-plymouth-theme.py
 MAPSPLASH=""
-if [ -f "$SPLASH" ]; then MAPSPLASH="-map $SPLASH /fbsplash.ppm"
+# splash sul framebuffer dall'avvio: SPENTA di default (2026-11-23: in
+# VirtualBox EFI schermo nero per ~25 s; l'utente preferisce il testo di avvio
+# e poi la splash sotto X). Si riaccende con NXS_FBSPLASH=1.
+if [ "${NXS_FBSPLASH:-0}" = 1 ] && [ -f "$SPLASH" ]; then MAPSPLASH="-map $SPLASH /fbsplash.ppm"
 else echo "[fastboot] ATTENZIONE: manca $SPLASH, niente splash di avvio"; fi
 
 echo "[fastboot] 6/6 nuova ISO (xorriso replay: avvio identico)..."
