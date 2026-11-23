@@ -5,6 +5,24 @@ dai vecchi `out/RELEASE_NOTES_AAMMGG.md`.)
 
 ---
 
+## v2026.11.23
+
+Correzioni e rifiniture della v2026.11.22 dopo le prove su chiavetta e in VirtualBox.
+
+#### Aspetto coordinato completo
+La skin colora barra, menu e l'interno di tutte le finestre NexusSec (contrasti verificati per ogni skin); con la casella *Coordina* cambiano anche tema delle finestre (macOS chiaro/scuro), sfondo e icone del desktop. Vince l'ultima scelta: cambiando profilo l'aspetto torna al profilo; nella scelta del profilo la casella «Mantieni il mio aspetto» cambia solo menu e strumenti.
+
+#### Avvio
+- Avvio rapido dalla chiavetta; a desktop pronto il sistema si copia in RAM in sottofondo e si scambia a caldo, poi un fumetto dice che la chiavetta si può togliere.
+- Testo di avvio e poi la splash animata (la splash grafica dall'accensione è stata tolta: in VirtualBox EFI dava schermo nero e poteva coprire la passphrase).
+
+#### Correzioni
+- Finestre bianche in VirtualBox e HORUS/browser neri nelle VM: il compositor parte solo con una scheda video vera.
+- Pulsante verde del tema macOS a finestra massimizzata (era un cerchio nero).
+- Barra: menu col tasto destro come in MATE e solo le finestre del desktop corrente.
+
+---
+
 ## v2026.11.22
 
 #### Installazione su disco sicura, con installatore grafico
@@ -15,9 +33,6 @@ Sistema già installato in un unico file compresso invece di ~600 pacchetti da i
 
 #### Finestre in stile macOS
 Predefinito «macOS scuro» (c'è anche il chiaro) nel colore del profilo: semafori a sinistra, titolo centrato, icona del programma a destra (logo NexusSec sulle nostre finestre), bordi e angoli afferrabili per ridimensionare. Angoli arrotondati e ombre solo con una scheda video vera: nelle macchine virtuali il compositor resta spento (con l'OpenGL software rendeva bianche le finestre in VirtualBox e nere HORUS e il browser).
-
-#### Splash di avvio vera
-L'immagine NexusSec dall'accensione al desktop al posto del testo che scorre (subito con UEFI; con BIOS e nelle VM appena il driver video è caricato). Senza schermo grafico l'avvio resta testuale come prima; se serve la passphrase o il login la splash si fa da parte. `splash=no` la disattiva.
 
 #### Terminale e barra
 Logo del terminale più grande a due toni con versione, profilo, rete, stato dei dati e colori dei profili. Barra in basso come in MATE: tasto destro sul pulsante di una finestra (riduci/ripristina, massimizza, sempre in primo piano, sposta su un altro desktop, chiudi) e solo le finestre del desktop corrente.

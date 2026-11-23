@@ -454,7 +454,25 @@ ricorrenti su **musl + gcc 15**:
   parte SOLO con GPU vera (`model._gpu_3d`: i915/xe/amdgpu/radeon/nouveau),
   perche' con OpenGL software (QEMU) HORUS e browser (WebKit) diventano NERI. Verificare in una
   VirtualBox vera (VBoxManage, VM temporanea `nxs-collaudo-tmp`).
-- Collaudo: `build-alpine/collaudo-iso.py ISO --solo bios,uefi,persist,disco`.
+- Collaudo: `build-alpine/collaudo-iso.py ISO --solo bios,uefi,persist,disco,usabilita`
+  (controlla anche che la richiesta della passphrase sia LEGGIBILE).
+- **Splash sul framebuffer dall'accensione: SPENTA** (2026-11-23): in VirtualBox
+  EFI schermo nero ~25 s e la VT 16 copriva la passphrase. Codice tenuto
+  (fbanim.py, nxs-splash, init patch) ma attivo solo con `NXS_FBSPLASH=1` in
+  build. Avvio = testo (loglevel=3) + splash X animata (bootsplash.py).
+- **Copia in RAM in sottofondo** (`nxs-toram`, da nexussec.start dopo X):
+  copia squashfs + modloop in /media/nxs-ram e LOOP_CHANGE_FD; fumetto
+  `nxs-ram-avviso` (stato in /run/nxs-toram.state). Init: niente copia di
+  default (nxs_toram=yes la forza).
+- **Aspetto coordinato**: le skin (build/make-panel-themes.py) colorano anche
+  l'interno delle finestre con regole `window:not(.nxs-panel) ...` (in GTK3 la
+  priorita' del foglio vince sulla specificita': mai regole generiche che
+  tocchino la barra). `views._coordina_con_skin`: famiglia mac chiaro/scuro,
+  icone (`model.icon_theme_for_color`, tema NexusSec-Blu), sfondo dopo 2 s.
+  Vince l'ultima scelta (`model._aspetto_segue_profilo` in activate_profile);
+  `keep-look`/`look-profile` = "Mantieni il mio aspetto".
+- Apkovl ARM/RPi: escludere `grub-disco`, `icons/NexusSec-Blu`, `splash/pulse.bin`
+  (spazio della ISO aarch64: ~12,8 MB disponibili).
 
 ## Vincoli (Alpine)
 

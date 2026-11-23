@@ -16,7 +16,7 @@ Dimensioni: **ISO ~0.7 GB** (kernel linux-lts + desktop GTK + Podman + browser
 webkit2gtk preinstallato); a regime con un profilo attivo ~400-600 MB in RAM
 (contro i ~4 GB di Kali, ~2.2 GB di Parrot).
 
-## Novità — v2026.11.22
+## Novità — v2026.11.23 (comprende la v2026.11.22)
 
 - **Installazione su disco sicura (immutabile), con installatore grafico.**
   Icona *Installa su disco* → procedura guidata: controllo della chiavetta,
@@ -34,9 +34,14 @@ webkit2gtk preinstallato); a regime con un profilo attivo ~400-600 MB in RAM
 - **ISO x86_64 «fast-boot»**: il sistema è già installato in un unico file
   compresso, invece di ~600 pacchetti da installare a ogni avvio. ISO più
   piccola (~690 MB) e **circa 700 MB di RAM in più liberi** a desktop pronto (VM
-  da 4 GB: 3,1 GB disponibili contro 2,4). Con almeno 4 GB di RAM il sistema
-  compresso viene copiato in RAM all'avvio (programmi veloci e chiavetta
-  libera); `nxs_toram=yes|no` per forzare.
+  da 4 GB: 3,1 GB disponibili contro 2,4).
+- **Avvio rapido + copia in RAM in sottofondo**: il sistema parte leggendo
+  dalla chiavetta; a desktop pronto, a bassa priorità, sistema e moduli vengono
+  copiati in RAM e scambiati «a caldo» (i programmi aperti non se ne accorgono).
+  Poi un fumetto al centro dello schermo avvisa che la chiavetta si può
+  togliere (o che va lasciata, se la persistenza è su di essa). Solo con RAM
+  sufficiente (in pratica da 4 GB); `nxs_toram=yes` copia già all'avvio,
+  `nxs_toram=no` non copia mai.
 - **Temi finestre in stile macOS** (chiaro e scuro, predefinito lo scuro):
   pulsanti a semaforo a sinistra con il simbolo al passaggio del mouse, titolo
   centrato, angoli arrotondati e ombre, nel **colore del profilo** attivo.
@@ -46,14 +51,20 @@ webkit2gtk preinstallato); a regime con un profilo attivo ~400-600 MB in RAM
   **scheda video vera** (Intel, AMD, NVIDIA/nouveau): nelle macchine virtuali
   il compositor resta spento e le finestre sono squadrate (con l'OpenGL
   software rendeva bianche le finestre in VirtualBox e nere HORUS e il browser).
-- **Splash di avvio vera**: al posto del testo che scorre, l'immagine NexusSec
-  dall'accensione al desktop (subito con UEFI; con BIOS e nelle VM appena il
-  driver video è caricato). Senza schermo grafico l'avvio resta testuale come
-  prima, mai nero; se serve la passphrase dei dati o il login la splash si fa
-  da parte. `splash=no` la disattiva. Edizione aggiornata da sola.
-- **Terminale**: logo più grande a due toni (esagono nel colore del profilo, N
-  chiara) con versione, profilo, rete (normale/anonima), stato dei dati
-  (persistenza/installato) e i colori dei cinque profili.
+  A finestra massimizzata il pulsante verde mostra il simbolo di ripristino.
+- **Aspetto coordinato completo**: la skin scelta in *Centro di Controllo →
+  Aspetto coordinato* colora barra, menu **e l'interno di tutte le finestre
+  NexusSec** (Centro di Controllo, sessione, Wi-Fi, Bluetooth…, contrasti
+  verificati per ogni skin) e, con la casella *Coordina* (attiva), cambia anche
+  tema delle finestre (macOS chiaro/scuro), **sfondo** e **icone** del desktop.
+  **Vince l'ultima scelta**: cambiando profilo l'aspetto torna al profilo;
+  nella scelta del profilo la casella **«Mantieni il mio aspetto»** cambia solo
+  menu e strumenti.
+- **Avvio**: il testo di Linux che scorre (meno messaggi del kernel), poi la
+  splash animata con l'edizione aggiornata da sola, poi il desktop. Mai
+  schermo nero; la richiesta della passphrase dei dati resta sempre visibile.
+- **Terminale**: logo NexusSec con versione, profilo, rete (normale/anonima),
+  stato dei dati (persistenza/installato) e i colori dei cinque profili.
 - **Barra in basso come in MATE**: tasto destro sul pulsante di una finestra
   (riduci/ripristina, massimizza, sempre in primo piano, sposta su un altro
   desktop, chiudi); la barra mostra solo le finestre del desktop corrente.
