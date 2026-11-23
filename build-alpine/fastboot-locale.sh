@@ -49,6 +49,7 @@ mkdir -p "$W"
 echo "[fastboot] cartella di lavoro: $W"
 
 echo "[fastboot] 1/6 estraggo i pacchetti dalla ISO..."
+chmod -R u+w "$W/repo" "$W/nxsrepo" 2>/dev/null || true   # resti in sola lettura di un giro interrotto
 rm -rf "$W/repo" "$W/nxsrepo"; mkdir -p "$W/repo" "$W/nxsrepo"
 "$XORRISO" -osirrox on -indev "$ISO" -extract /apks "$W/repo/apks" >/dev/null 2>&1
 tar xzf "$OVL" -C "$W/nxsrepo" var/lib/nexussec-repo
