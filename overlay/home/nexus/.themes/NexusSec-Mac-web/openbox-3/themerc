@@ -65,6 +65,9 @@ window.active.button.max.pressed.image.color: #1aab29
 window.active.button.max.toggled.unpressed.image.color: #28c840
 window.active.button.max.toggled.hover.image.color: #1aab29
 window.active.button.max.toggled.pressed.image.color: #1aab29
+window.active.button.toggled.unpressed.image.color: #28c840
+window.active.button.toggled.hover.image.color: #1aab29
+window.active.button.toggled.pressed.image.color: #1aab29
 window.active.button.desk.unpressed.image.color: #cdcdcd
 window.active.button.shade.unpressed.image.color: #cdcdcd
 

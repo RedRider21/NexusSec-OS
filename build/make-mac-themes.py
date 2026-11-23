@@ -146,6 +146,9 @@ window.active.button.max.pressed.image.color: {VERDE_H}
 window.active.button.max.toggled.unpressed.image.color: {VERDE}
 window.active.button.max.toggled.hover.image.color: {VERDE_H}
 window.active.button.max.toggled.pressed.image.color: {VERDE_H}
+window.active.button.toggled.unpressed.image.color: {VERDE}
+window.active.button.toggled.hover.image.color: {VERDE_H}
+window.active.button.toggled.pressed.image.color: {VERDE_H}
 window.active.button.desk.unpressed.image.color: {v['inattivo']}
 window.active.button.shade.unpressed.image.color: {v['inattivo']}
 
