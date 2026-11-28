@@ -309,8 +309,11 @@ def prova_disco(iso, cartella):
     vm = VM("disco", argv, cartella)
     time.sleep(ATTESA_BOOT)
     vm.terminale()
-    vm.scrivi("clear; echo provaprova > /tmp/pp; doas nxs-install-disco --disco /dev/vda "
-              "--passfile /tmp/pp --si >/tmp/inst.log 2>&1; tail -4 /tmp/inst.log\n")
+    # 2026-11-28: password utente DIVERSA dalla passphrase (passo 6a); qui si
+    # installa anche dopo la copia in RAM in sottofondo (bug vmlinuz-lts)
+    vm.scrivi("clear; echo provaprova > /tmp/pp; echo utente99 > /tmp/up; doas nxs-install-disco "
+              "--disco /dev/vda --passfile /tmp/pp --utentefile /tmp/up --si >/tmp/inst.log 2>&1; "
+              "tail -4 /tmp/inst.log; cat /run/nxs-toram.state\n")
     time.sleep(240)
     vm.schermata("installato")
     vm.scrivi(_cmd_esito("cat /tmp/inst.log; lsblk -o NAME,SIZE,FSTYPE,LABEL /dev/vda"))
@@ -341,6 +344,7 @@ def prova_disco(iso, cartella):
         vm.scrivi(_cmd_esito(_CONTROLLI_BASE + "; mountpoint -q /var/nxs-data && echo DATI-MONTATI; "
                              "findmnt -no SOURCE,FSTYPE,OPTIONS /media/root-ro; "
                              "doas touch /media/root-ro/x 2>/dev/null || echo SISTEMA-SOLA-LETTURA; "
+                             "doas getent shadow nexus root | cut -c1-9; "
                              "cat /proc/cmdline"))
         time.sleep(8)
         vm.schermata("esito")
@@ -349,6 +353,8 @@ def prova_disco(iso, cartella):
         out += "\n--- avvio dal disco %s ---\n%s" % (modo, o)
         esiti["disco-" + modo] = "DESKTOP-OK" in o and "DATI-MONTATI" in o \
             and "SISTEMA-SOLA-LETTURA" in o
+        # passo 6a: password dell'installatore applicata (sha512) e root bloccato
+        esiti["pw-" + modo] = "nexus:$6$" in o and "root:!" in o
         # la richiesta della passphrase deve LEGGERSI (2026-11-23: con la splash
         # lo schermo restava nero e il collaudo passava scrivendo alla cieca)
         esiti["pass-" + modo] = leggibile
