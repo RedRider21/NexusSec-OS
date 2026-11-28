@@ -82,6 +82,14 @@ def main():
         for n in ("boot/vmlinuz-lts", "boot/initramfs-lts"):
             if os.path.isfile(os.path.join(radice, n)):
                 extra.append(os.path.join(radice, n))
+        # anche i file piccoli della radice (.alpine-release, apkovl): senza,
+        # il disco installato dalla copia in RAM non veniva riconosciuto
+        # all'avvio ("Mounting boot media: failed", collaudo 2026-11-28)
+        for n in sorted(os.listdir(radice)):
+            f = os.path.join(radice, n)
+            if os.path.isfile(f) and not n.endswith(".squashfs") \
+                    and os.path.getsize(f) < 64 * 1024 * 1024:
+                extra.append(f)
     tot = sum(os.path.getsize(v[1]) for v in voci) + sum(os.path.getsize(f) for f in extra)
     if mem_disponibile() < tot + 1024 ** 3:
         esito("no:ram-insufficiente")

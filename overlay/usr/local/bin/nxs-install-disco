@@ -44,7 +44,8 @@ media_dir() {
 		esac
 	done
 	for _d in /media/*; do
-		[ -f "$_d/nxs-rootfs.squashfs" ] && [ -f "$_d/boot/vmlinuz-lts" ] && { echo "$_d"; return 0; }
+		[ -f "$_d/nxs-rootfs.squashfs" ] && [ -f "$_d/boot/vmlinuz-lts" ] && \
+			[ -f "$_d/.alpine-release" ] && { echo "$_d"; return 0; }
 	done
 	return 1
 }
@@ -100,7 +101,9 @@ controlla_media() {
 	done
 	M="$(media_dir)" || die "supporto di avvio non trovato."
 	[ -f "$M/nxs-rootfs.squashfs" ] || die "questa chiavetta non contiene il sistema pronto (nxs-rootfs.squashfs): serve la ISO fast-boot."
-	for f in boot/vmlinuz-lts boot/initramfs-lts boot/modloop-lts; do
+	# .alpine-release e l'apkovl servono all'avvio per riconoscere il disco:
+	# senza, il sistema installato si ferma con "Mounting boot media: failed"
+	for f in boot/vmlinuz-lts boot/initramfs-lts boot/modloop-lts .alpine-release nexussec.apkovl.tar.gz; do
 		[ -f "$M/$f" ] || die "manca $M/$f"
 	done
 }
@@ -178,9 +181,9 @@ for f in boot/vmlinuz-lts boot/initramfs-lts boot/modloop-lts nxs-rootfs.squashf
 	echo "  copio $f"
 	cp "$M/$f" "$MNT/a/$f"
 done
-cp "$M/nexussec.apkovl.tar.gz" "$MNT/a/" 2>/dev/null || true
+cp "$M/nexussec.apkovl.tar.gz" "$MNT/a/"                 # servono entrambi per
+cp "$M/.alpine-release" "$MNT/a/"                        # riconoscere il disco
 cp "$M/fbsplash.ppm" "$MNT/a/" 2>/dev/null || true      # splash di avvio
-cp "$M/.alpine-release" "$MNT/a/" 2>/dev/null || true
 printf 'slot=A\ninstallato=%s\norigine=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
 	"$(cat /etc/nexussec-release 2>/dev/null || cat "$M/.alpine-release" 2>/dev/null)" > "$MNT/a/nxs-slot"
 sync
