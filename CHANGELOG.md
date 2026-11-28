@@ -5,14 +5,14 @@ dai vecchi `out/RELEASE_NOTES_AAMMGG.md`.)
 
 ---
 
-## Prossima versione (in preparazione)
+## v2026.11.28
 
 #### Sicurezza
 - **Password dell'utente scelta durante l'installazione su disco** (nuova pagina dell'installatore; di serie è la stessa passphrase dei dati). Sul sistema installato non c'è più `nexus/nexus`: la password vale per l'accesso, la console e il blocco schermo, ne viene salvato solo l'hash dentro la parte cifrata e si applica dopo lo sblocco. Cambiandola da *Gestione utenti* resta anche dopo il riavvio.
 - **Root bloccato**: prima aveva la password vuota e da Ctrl+Alt+F2 chiunque entrava come amministratore (live e installato). Si amministra con `doas`.
 
 #### Correzioni
-- Installazione su disco dopo la copia in RAM: l'installatore non trovava più il kernel ("manca …/vmlinuz-lts"). Ora la copia in RAM porta con sé anche kernel e initramfs, e si può installare anche dopo aver tolto la chiavetta.
+- Installazione su disco dopo la copia in RAM: l'installatore non trovava più il kernel ("manca …/vmlinuz-lts") e, corretto quello, il disco installato non si avviava ("Mounting boot media: failed": mancavano `.alpine-release` e l'apkovl). Ora la copia in RAM porta con sé tutto il necessario, l'installatore si rifiuta di partire se manca qualcosa, e si può installare anche dopo aver tolto la chiavetta. Collaudo dell'installazione: BIOS e UEFI OK, password applicata, root bloccato.
 - Logo nel terminale (`nxs-fetch`): mostrava sempre «profilo base».
 - `nxs-editor --help` mostrava il nome interno del testo invece della frase.
 

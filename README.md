@@ -16,6 +16,27 @@ Dimensioni: **ISO ~0.7 GB** (kernel linux-lts + desktop GTK + Podman + browser
 webkit2gtk preinstallato); a regime con un profilo attivo ~400-600 MB in RAM
 (contro i ~4 GB di Kali, ~2.2 GB di Parrot).
 
+## Novità — v2026.11.28
+
+- **Password dell'utente scelta durante l'installazione su disco.** Nuova
+  pagina dell'installatore grafico (di serie è la stessa passphrase dei dati,
+  una sola parola da ricordare). Sul sistema installato non esiste più
+  `nexus/nexus`: la password vale per l'accesso, la console (Ctrl+Alt+F2) e lo
+  sblocco dello schermo. Viene salvato solo il suo hash, dentro la parte
+  cifrata, e si applica dopo lo sblocco dei dati; cambiandola da *Gestione
+  utenti* resta anche dopo il riavvio. Da terminale:
+  `nxs-install-disco --disco /dev/sdX --utentefile FILE`.
+- **Root bloccato.** Prima aveva la password vuota: da Ctrl+Alt+F2 chiunque
+  entrava come amministratore, sia sulla live sia sul sistema installato. Ora
+  si amministra solo con `doas`.
+- **Installazione su disco dopo la copia in RAM.** Se il sistema si era già
+  copiato in RAM (dopo il fumetto «puoi togliere la chiavetta»), l'installatore
+  non trovava il kernel e, in un secondo caso, il disco installato non si
+  avviava («Mounting boot media: failed»). Ora la copia in RAM porta con sé
+  tutto il necessario: si può installare anche dopo aver tolto la chiavetta.
+- Logo nel terminale (`nxs-fetch`): mostra il profilo davvero attivo (prima
+  sempre «base»); `nxs-editor --help` corretto.
+
 ## Novità — v2026.11.23 (comprende la v2026.11.22)
 
 - **Installazione su disco sicura (immutabile), con installatore grafico.**
