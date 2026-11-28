@@ -60,10 +60,14 @@ else
   pkgs="?"
 fi
 prof=""
-[ -r "${HOME}/.config/nxs/profile" ] && prof="$(cat "${HOME}/.config/nxs/profile" 2>/dev/null)"
-if [ -z "$prof" ] && [ -r /etc/sec_os/state.json ]; then
-  prof=$(grep -oE '"(profile|key)"[ ]*:[ ]*"[^"]*"' /etc/sec_os/state.json 2>/dev/null | head -1 | sed 's/.*"\([^"]*\)"$/\1/')
-fi
+# stesso ordine di nxs_profiles.model.current_profile: prima state.json, poi
+# il file dell'utente; entrambi possono essere {"active_profile": "..."}
+for _pf in /etc/sec_os/state.json "${HOME}/.config/nxs/profile"; do
+  [ -r "$_pf" ] || continue
+  prof=$(sed -n 's/.*"active_profile"[ ]*:[ ]*"\([^"]*\)".*/\1/p' "$_pf" 2>/dev/null | head -1)
+  [ -z "$prof" ] && ! grep -q '{' "$_pf" 2>/dev/null && prof="$(head -1 "$_pf" | tr -d ' \t')"
+  [ -n "$prof" ] && break
+done
 prof="${prof:-base}"
 # rete e dati: le due cose che contano sul campo
 if [ -e /run/nxs-anon.on ]; then rete="anonima (Tor, kill-switch)"; else rete="normale"; fi
