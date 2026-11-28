@@ -646,6 +646,18 @@ footer{border-top:1px solid var(--line);padding:24px 0 60px;color:var(--muted);f
   second system partition is reserved for future (A/B) updates. From a terminal:
   <code>nxs-install-disco --dischi</code> (list) and
   <code>nxs-install-disco --disco /dev/sdX</code>.</p>
+  <div class="note"><strong><span data-lang="it">Password dell'utente (dalla v2026.11.28).</span><span data-lang="en">User password (since v2026.11.28).</span></strong>
+  <span data-lang="it">L'installatore chiede anche la password dell'utente (di serie è la
+  stessa passphrase dei dati). Sul sistema installato non esiste <code>nexus/nexus</code>:
+  la password vale per l'accesso, la console (Ctrl+Alt+F2) e lo sblocco dello schermo, e
+  si applica dopo lo sblocco dei dati (ne viene salvato solo l'hash, nella parte cifrata).
+  Si cambia da <em>Impostazioni → Gestione utenti</em> e resta anche dopo il riavvio.
+  L'utente <code>root</code> è bloccato: si amministra con <code>doas</code>.</span><span data-lang="en">The installer also asks for the user password (by default the same
+  passphrase as the data). The installed system has no <code>nexus/nexus</code>: the
+  password is used to log in, for the console (Ctrl+Alt+F2) and to unlock the screen, and
+  it is applied after the data is unlocked (only its hash is stored, in the encrypted
+  part). Change it from <em>Settings → User management</em>; it survives reboots. The
+  <code>root</code> account is locked: administration goes through <code>doas</code>.</span></div>
   <div class="note warn"><span data-lang="it">La persistenza formatta una partizione: assicurati di aver
   scelto il disco giusto. <code>nxs-persist status</code> mostra lo stato senza
   toccare nulla.</span><span data-lang="en">Persistence formats a partition: make sure you have
