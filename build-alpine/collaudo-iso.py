@@ -592,7 +592,13 @@ def prova_doaspw(iso, cartella):
     vm.terminale()
     vm.scrivi("setsid sh -c 'doas lsblk -d -o NAME > /tmp/r4 2>&1; echo RC=$? >> /tmp/r4' < /dev/null & exit\n")
     time.sleep(6)
+    # per scrivere gli esiti (doas mount) torna doas senza password: da un
+    # terminale vero doas chiede la password sul terminale stesso
     vm.terminale()
+    vm.scrivi("doas nxs-harden doas nopass\n")
+    time.sleep(4)
+    vm.scrivi("prova99\n")
+    time.sleep(4)
     vm.scrivi(_cmd_esito("for f in 1 2 3 4; do echo == r$f; cat /tmp/r$f; done"), pausa=0.08)
     time.sleep(8)
     vm.chiudi()
