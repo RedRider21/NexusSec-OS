@@ -5,6 +5,22 @@ dai vecchi `out/RELEASE_NOTES_AAMMGG.md`.)
 
 ---
 
+## Prossima versione (in preparazione)
+
+#### Modalità anonima (confronto con AnonSurf 6 di Parrot)
+- **Le connessioni aperte prima dell'attivazione non escono più in chiaro**: fuori da Tor non passa nulla (resta solo il rinnovo DHCP); le vecchie connessioni TCP ricevono un reset e le app si ricollegano via Tor. Collaudo: una connessione aperta prima mandava 8 byte al PC, dopo l'attivazione 0.
+- **Nuova identità** (`nxs-anon newnym`, pulsante nel pannello): circuiti Tor nuovi.
+- **Verifica anonimato** (`nxs-anon check`, pulsante nel pannello): uscita reale da Tor con l'IP visibile, DNS dentro Tor, kill-switch, connessioni precedenti chiuse, risoluzione nomi, IPv6 bloccato.
+- **Anonimo a ogni avvio** (Centro di Controllo): parte appena i dati sono montati (anche dopo lo sblocco della parte cifrata).
+- **Bridge obfs4/webtunnel** per le reti che bloccano Tor (Centro di Controllo → *Bridge Tor…*; il trasporto `lyrebird` si installa al primo uso).
+- Se un altro Tor usa già la porta 9050 (browser, HORUS), la modalità anonima ora parte lo stesso.
+
+#### Correzioni
+- Il firewall (`nxs-firewall`, anche all'avvio) cancellava le regole della modalità anonima lasciando Tor acceso: il traffico sarebbe uscito in chiaro. Ora non le tocca finché l'anonimato è attivo.
+- Spegnendo la modalità anonima lo script si interrompeva prima di togliere le proprie regole (mascherato dal firewall che veniva ricaricato).
+
+---
+
 ## v2026.11.28
 
 #### Sicurezza

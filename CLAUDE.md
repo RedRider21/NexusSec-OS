@@ -481,6 +481,16 @@ ricorrenti su **musl + gcc 15**:
   bloccato ovunque** (prima vuoto: login root da tty2 senza password). doas
   resta nopass: con password le azioni grafiche senza terminale (spegni,
   dischi, HORUS) fallirebbero -> serve prima un askpass grafico (passo 6a-bis).
+- **Modalita' anonima `nxs-anon` (2026-11-28, al livello di AnonSurf 6)**: in
+  OUTPUT del kill-switch NIENTE `ct state established accept` (le connessioni
+  aperte prima uscivano in chiaro): esce solo l'utente tor + loopback + DHCP,
+  il TCP resto -> `reject with tcp reset`. ControlPort 9052 + cookie per
+  `newnym`; `check`; `boot on` (flag in ~/.config/nxs/anon-boot, applicato da
+  `nxs_persist_setup`); bridge in ~/.config/nxs/tor-bridges (lyrebird a
+  richiesta). `nxs-firewall` NON tocca nulla se esiste /run/nxs-anon.on (prima
+  il suo flush all'avvio cancellava il kill-switch). pkill nel root-script:
+  pattern `[t]or -f ...` (il testo dello script e' nell'argv di sh -c).
+  Collaudo: `collaudo-iso.py ISO --solo anon` (serve rete nella VM).
 - Apkovl ARM/RPi: escludere `grub-disco`, `icons/NexusSec-Blu`, `splash/pulse.bin`
   (spazio della ISO aarch64: ~12,8 MB disponibili).
 
