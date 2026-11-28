@@ -46,7 +46,7 @@ adduser -D -h /home/nexus -s /bin/sh -u 1000 nexus 2>/dev/null || true
 for g in wheel video input audio cdrom dialout netdev kvm tty usb; do
     addgroup nexus "$g" 2>/dev/null || true
 done
-passwd -d root 2>/dev/null || true
+passwd -l root 2>/dev/null || true   # root bloccato: si amministra con doas
 passwd -d nexus 2>/dev/null || true
 # servizi standard di boot (nel prebuilt li impostiamo noi: nessun init live)
 for s in devfs dmesg mdev hwdrivers modloop; do rc-update add "$s" sysinit 2>/dev/null || true; done

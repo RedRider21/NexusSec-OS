@@ -74,7 +74,7 @@ podman run --rm --network none --arch "$PARCH" -e GRUPPI="$GRUPPI" -e ARCH="$ARC
       --exclude=etc/shadow
   chroot "$R" /bin/sh -c "adduser -D -h /home/nexus -s /bin/sh -u 1000 nexus 2>/dev/null || true
     for g in $GRUPPI; do addgroup nexus \$g 2>/dev/null || true; done
-    passwd -d root >/dev/null 2>&1 || true; passwd -d nexus >/dev/null 2>&1 || true"
+    passwd -l root >/dev/null 2>&1 || true; passwd -d nexus >/dev/null 2>&1 || true"
   # repository a runtime: tool on-demand da edge + repo nexussec locale
   cat > "$R"/etc/apk/repositories <<EOF
 http://dl-cdn.alpinelinux.org/alpine/edge/main

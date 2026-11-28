@@ -471,6 +471,16 @@ ricorrenti su **musl + gcc 15**:
   icone (`model.icon_theme_for_color`, tema NexusSec-Blu), sfondo dopo 2 s.
   Vince l'ultima scelta (`model._aspetto_segue_profilo` in activate_profile);
   `keep-look`/`look-profile` = "Mantieni il mio aspetto".
+- **Password utente sul sistema installato (passo 6a, 2026-11-28)**: l'installatore
+  (`--utentefile`, pagina "utente" della GUI) salva SOLO l'hash sha512-crypt
+  (`cryptpw -m sha512 -P 3`, busybox) in `NXSDATA:/nxs/utente.shadow` + il
+  segreto PBKDF2 del blocco schermo in `nxs-state/screensaver.secret`.
+  `nexussec.start` con `nxs_installed=1` fa `passwd -l nexus` (niente
+  nexus/nexus); `nxs_persist_password` (in `nxs_persist_setup`) lo applica con
+  `chpasswd -e` dopo lo sblocco; `nxs-users passwd` lo riscrive. **root e'
+  bloccato ovunque** (prima vuoto: login root da tty2 senza password). doas
+  resta nopass: con password le azioni grafiche senza terminale (spegni,
+  dischi, HORUS) fallirebbero -> serve prima un askpass grafico (passo 6a-bis).
 - Apkovl ARM/RPi: escludere `grub-disco`, `icons/NexusSec-Blu`, `splash/pulse.bin`
   (spazio della ISO aarch64: ~12,8 MB disponibili).
 

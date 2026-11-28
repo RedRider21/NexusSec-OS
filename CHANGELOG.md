@@ -5,6 +5,19 @@ dai vecchi `out/RELEASE_NOTES_AAMMGG.md`.)
 
 ---
 
+## Prossima versione (in preparazione)
+
+#### Sicurezza
+- **Password dell'utente scelta durante l'installazione su disco** (nuova pagina dell'installatore; di serie è la stessa passphrase dei dati). Sul sistema installato non c'è più `nexus/nexus`: la password vale per l'accesso, la console e il blocco schermo, ne viene salvato solo l'hash dentro la parte cifrata e si applica dopo lo sblocco. Cambiandola da *Gestione utenti* resta anche dopo il riavvio.
+- **Root bloccato**: prima aveva la password vuota e da Ctrl+Alt+F2 chiunque entrava come amministratore (live e installato). Si amministra con `doas`.
+
+#### Correzioni
+- Installazione su disco dopo la copia in RAM: l'installatore non trovava più il kernel ("manca …/vmlinuz-lts"). Ora la copia in RAM porta con sé anche kernel e initramfs, e si può installare anche dopo aver tolto la chiavetta.
+- Logo nel terminale (`nxs-fetch`): mostrava sempre «profilo base».
+- `nxs-editor --help` mostrava il nome interno del testo invece della frase.
+
+---
+
 ## v2026.11.23
 
 Correzioni e rifiniture della v2026.11.22 dopo le prove su chiavetta e in VirtualBox.
