@@ -82,7 +82,17 @@ fi
 # Serve per doas/blocco schermo/login se disattivi l'autologin. Modificabile da
 # Impostazioni > Gestione utenti (persistente solo se il sistema e' installato o
 # con persistenza; sulla live si riazzera al riavvio, come in Kali live).
-if command -v chpasswd >/dev/null 2>&1; then
+# root SENZA password (campo vuoto) = chiunque entra come root da tty2
+# (Ctrl+Alt+F2). Lo blocchiamo: per amministrare c'e' doas (2026-11-28).
+case "$(getent shadow root 2>/dev/null | cut -d: -f2)" in
+	"") passwd -l root >/dev/null 2>&1 || sed -i 's/^root::/root:!:/' /etc/shadow ;;
+esac
+if grep -qw nxs_installed=1 /proc/cmdline 2>/dev/null; then
+	# Sistema INSTALLATO: niente nexus/nexus. La password vera (scelta
+	# nell'installatore) sta nella parte cifrata e si applica dopo lo sblocco
+	# (nxs_persist_password); fino ad allora l'accesso con password e' chiuso.
+	passwd -l nexus >/dev/null 2>&1 || true
+elif command -v chpasswd >/dev/null 2>&1; then
 	cur="$(getent shadow nexus 2>/dev/null | cut -d: -f2)"
 	case "$cur" in
 		""|"!"|"*"|"!*") echo "nexus:nexus" | chpasswd 2>/dev/null && \

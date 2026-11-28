@@ -66,6 +66,7 @@ class Installatore:
         self.dischi = []
         self.proc = None
         self.passfile = None
+        self.userfile = None
         self.lavora = False
 
         self.stack = Gtk.Stack()
@@ -81,10 +82,11 @@ class Installatore:
         nav.pack_end(self.b_indietro, False, False, 0)
         body.pack_end(nav, False, False, 0)
 
-        self.pagine = ["benvenuto", "disco", "pass", "riepilogo", "lavoro"]
+        self.pagine = ["benvenuto", "disco", "pass", "utente", "riepilogo", "lavoro"]
         self._p_benvenuto()
         self._p_disco()
         self._p_pass()
+        self._p_utente()
         self._p_riepilogo()
         self._p_lavoro()
         self.i = 0
@@ -140,6 +142,37 @@ class Installatore:
         b.pack_start(self.pass_stato, False, False, 0)
         b.pack_start(_lbl(_t("inst.pass_warn")), False, False, 6)
         self.stack.add_named(b, "pass")
+
+    def _p_utente(self):
+        # password dell'utente 'nexus' sul sistema installato: accesso, console
+        # (Ctrl+Alt+F2) e blocco schermo. Di serie e' la stessa passphrase dei
+        # dati: una sola parola da ricordare.
+        b = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
+        b.pack_start(_titolo(_t("inst.user_h")), False, False, 0)
+        b.pack_start(_lbl(_t("inst.user_body")), False, False, 0)
+        self.u_stessa = Gtk.CheckButton(label=_t("inst.user_same"))
+        self.u_stessa.set_active(True)
+        b.pack_start(self.u_stessa, False, False, 0)
+        g = Gtk.Grid(column_spacing=10, row_spacing=8)
+        self.u1, self.u2 = Gtk.Entry(), Gtk.Entry()
+        for n, (e, k) in enumerate(((self.u1, "inst.user1"), (self.u2, "inst.user2"))):
+            e.set_visibility(False)
+            e.set_hexpand(True)
+            e.connect("changed", lambda *_: self._verifica_utente())
+            g.attach(_lbl(_t(k), wrap=False), 0, n, 1, 1)
+            g.attach(e, 1, n, 1, 1)
+        mostra = Gtk.CheckButton(label=_t("inst.show"))
+        mostra.connect("toggled", lambda c: [x.set_visibility(c.get_active())
+                                             for x in (self.u1, self.u2)])
+        g.attach(mostra, 1, 2, 1, 1)
+        self.u1.connect("activate", lambda *_: self.u2.grab_focus())
+        self.u2.connect("activate", lambda *_: self._utente_ok() and self._vai(+1))
+        self.u_griglia = g
+        b.pack_start(g, False, False, 0)
+        self.u_stato = _lbl("")
+        b.pack_start(self.u_stato, False, False, 0)
+        self.u_stessa.connect("toggled", lambda *_: self._verifica_utente())
+        self.stack.add_named(b, "utente")
 
     def _p_riepilogo(self):
         b = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
@@ -236,6 +269,27 @@ class Installatore:
         self.pass_stato.set_text(m if a or b else "")
         self._aggiorna_nav()
 
+    def _verifica_utente(self):
+        stessa = self.u_stessa.get_active()
+        self.u_griglia.set_sensitive(not stessa)
+        a, b = self.u1.get_text(), self.u2.get_text()
+        if stessa or not (a or b):
+            m = ""
+        elif len(a) < 6:
+            m = _t("inst.user_short")
+        elif a != b:
+            m = _t("inst.pass_diff")
+        else:
+            m = "✔ " + _t("inst.pass_ok")
+        self.u_stato.set_text(m)
+        self._aggiorna_nav()
+
+    def _utente_ok(self):
+        if self.u_stessa.get_active():
+            return True
+        a = self.u1.get_text()
+        return len(a) >= 6 and a == self.u2.get_text()
+
     def _pass_ok(self):
         a = self.e1.get_text()
         return len(a) >= 8 and a == self.e2.get_text()
@@ -263,6 +317,8 @@ class Installatore:
         self._mostra()
         if self.pagine[self.i] == "pass":
             self.e1.grab_focus()
+        if self.pagine[self.i] == "utente":
+            self._verifica_utente()
 
     def _mostra(self):
         self.stack.set_visible_child_name(self.pagine[self.i])
@@ -273,6 +329,7 @@ class Installatore:
         ok = {"benvenuto": getattr(self, "media_ok", False),
               "disco": bool(self.disco),
               "pass": self._pass_ok(),
+              "utente": self._utente_ok(),
               "riepilogo": self.capito.get_active(),
               "lavoro": not self.lavora}.get(nome, True)
         self.b_avanti.set_sensitive(ok)
@@ -293,10 +350,15 @@ class Installatore:
         os.write(fd, self.e1.get_text().encode())
         os.close(fd)
         os.chmod(self.passfile, 0o600)
-        self.e1.set_text("")
-        self.e2.set_text("")
+        upw = self.e1.get_text() if self.u_stessa.get_active() else self.u1.get_text()
+        fd, self.userfile = tempfile.mkstemp(prefix="nxs-up-")
+        os.write(fd, upw.encode())
+        os.close(fd)
+        os.chmod(self.userfile, 0o600)
+        for e in (self.e1, self.e2, self.u1, self.u2):
+            e.set_text("")
         cmd = ["doas", "-n", INSTALL, "--disco", self.disco, "--passfile",
-               self.passfile, "--si"]
+               self.passfile, "--utentefile", self.userfile, "--si"]
         threading.Thread(target=self._esegui, args=(cmd,), daemon=True).start()
 
     def _esegui(self, cmd):
@@ -313,10 +375,11 @@ class Installatore:
         except OSError as e:
             GLib.idle_add(self._riga, "ERRORE: %s" % e)
         finally:
-            try:
-                os.remove(self.passfile)
-            except OSError:
-                pass
+            for f in (self.passfile, self.userfile):
+                try:
+                    os.remove(f)
+                except (OSError, TypeError):
+                    pass
         GLib.idle_add(self._finito, rc == 0)
 
     def _riga(self, riga):

@@ -39,6 +39,23 @@ STOR
 	# Reinstalla i tool 'apk' registrati (vivono in /usr, cioe' in RAM): in
 	# background e offline dalla cache, cosi' il desktop non aspetta.
 	nxs_persist_reinstall_tools
+	# Password degli utenti salvate nella parte dati (installatore / nxs-users).
+	nxs_persist_password
+}
+
+# Applica le password salvate in /var/nxs-data/nxs/utente.shadow (righe
+# utente:hash, SOLO hash sha512-crypt). Le scrive l'installatore su disco e
+# nxs-users quando si cambia password; dopo un riavvio il sistema (in RAM)
+# tornerebbe senza, quindi le rimettiamo a ogni montaggio dei dati.
+nxs_persist_password() {
+	f=/var/nxs-data/nxs/utente.shadow
+	[ -f "$f" ] || return 0
+	while IFS= read -r riga; do
+		u="${riga%%:*}"
+		case "$riga" in *:'$'*) ;; *) continue ;; esac
+		getent passwd "$u" >/dev/null 2>&1 || continue
+		printf '%s\n' "$riga" | chpasswd -e >/dev/null 2>&1 || true
+	done < "$f"
 }
 
 # Reinstalla i pacchetti apk registrati da nxs-tool (lista su NXSDATA). I tool

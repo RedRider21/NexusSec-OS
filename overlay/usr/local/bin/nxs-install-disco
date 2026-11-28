@@ -15,15 +15,20 @@
 # chiavetta (ISO fast-boot) e il GRUB preparato in /usr/local/share/nexussec/
 # grub-disco (build/make-grub-disco.py).
 #
-# Uso:  nxs-install-disco --disco /dev/sdX [--passfile FILE] [--si] [--sys-mb N]
+# Uso:  nxs-install-disco --disco /dev/sdX [--passfile FILE] [--utentefile FILE]
+#                          [--si] [--sys-mb N]
 #       nxs-install-disco --dischi        (elenco dei dischi installabili)
+# --utentefile: password dell'utente 'nexus' sul sistema installato (accesso,
+# console, blocco schermo). Senza, la chiede qui (o usa la passphrase dei dati
+# se e' stata data con --passfile). Ne salviamo SOLO l'hash, dentro la parte
+# cifrata: si applica dopo lo sblocco (nxs_persist_password).
 # Le righe "PASSO n/7 ..." servono all'installatore grafico.
 set -eu
 export LC_ALL=C
 
 GRUBD=/usr/local/share/nexussec/grub-disco
 SYS_MB=1536
-DISCO="" PASSFILE="" SI="" CONTROLLA="" MNT=/run/nxs-install
+DISCO="" PASSFILE="" UTENTEFILE="" SI="" CONTROLLA="" MNT=/run/nxs-install
 
 die() { echo "ERRORE: $*" >&2; exit 1; }
 passo() { echo "PASSO $1/7 $2"; }
@@ -64,9 +69,11 @@ part() {
 
 pulisci() {
 	umount "$MNT/a" 2>/dev/null || true
+	umount "$MNT/d" 2>/dev/null || true
 	umount "$MNT/efi" 2>/dev/null || true
 	cryptsetup close nxsinst 2>/dev/null || true
 	[ -n "${KEYF:-}" ] && rm -f "$KEYF"
+	[ -n "${UPWF:-}" ] && rm -f "$UPWF"
 	return 0
 }
 
@@ -74,6 +81,7 @@ while [ $# -gt 0 ]; do
 	case "$1" in
 		--disco) DISCO="$2"; shift 2 ;;
 		--passfile) PASSFILE="$2"; shift 2 ;;
+		--utentefile) UTENTEFILE="$2"; shift 2 ;;
 		--si) SI=1; shift ;;
 		--sys-mb) SYS_MB="$2"; shift 2 ;;
 		--dischi) dischi; exit 0 ;;
@@ -98,8 +106,8 @@ controlla_media() {
 }
 if [ -n "$CONTROLLA" ]; then controlla_media; echo "PRONTO"; exit 0; fi
 
-[ "$(id -u)" = 0 ] || exec doas "$0" ${DISCO:+--disco "$DISCO"} ${PASSFILE:+--passfile "$PASSFILE"} ${SI:+--si} --sys-mb "$SYS_MB"
-for c in sfdisk mkfs.vfat mkfs.ext4 cryptsetup lsblk sha256sum; do
+[ "$(id -u)" = 0 ] || exec doas "$0" ${DISCO:+--disco "$DISCO"} ${PASSFILE:+--passfile "$PASSFILE"} ${UTENTEFILE:+--utentefile "$UTENTEFILE"} ${SI:+--si} --sys-mb "$SYS_MB"
+for c in sfdisk mkfs.vfat mkfs.ext4 cryptsetup lsblk sha256sum cryptpw; do
 	command -v "$c" >/dev/null 2>&1 || die "manca il comando $c"
 done
 
@@ -222,6 +230,46 @@ else
 	cryptsetup open "$(part 5)" nxsinst
 fi
 mkfs.ext4 -q -F -L NXSDATA /dev/mapper/nxsinst
+
+# password dell'utente: SOLO l'hash (sha512-crypt), dentro la parte cifrata.
+# Stessa password anche per il blocco schermo (hash PBKDF2 di nxs_screensaver).
+UPWF="$(mktemp)"; chmod 600 "$UPWF"
+if [ -n "$UTENTEFILE" ]; then
+	tr -d '\n' < "$UTENTEFILE" > "$UPWF"
+elif [ -n "$PASSFILE" ]; then
+	tr -d '\n' < "$PASSFILE" > "$UPWF"
+else
+	while :; do
+		printf "  Password dell'utente (accesso e blocco schermo): "
+		stty -echo 2>/dev/null; read -r p1; stty echo 2>/dev/null; echo
+		printf "  Ripetila: "
+		stty -echo 2>/dev/null; read -r p2; stty echo 2>/dev/null; echo
+		[ "${#p1}" -ge 6 ] && [ "$p1" = "$p2" ] && break
+		echo "  Troppo corta (minimo 6) o diverse: riprova."
+	done
+	printf '%s' "$p1" > "$UPWF"; p1=""; p2=""
+fi
+[ -s "$UPWF" ] || die "password dell'utente vuota."
+mkdir -p "$MNT/d"
+mount -t ext4 /dev/mapper/nxsinst "$MNT/d"
+install -d -m 700 "$MNT/d/nxs"
+HASH="$(cryptpw -m sha512 -P 3 3<"$UPWF")"
+case "$HASH" in '$6$'*) ;; *) die "calcolo dell'hash della password non riuscito." ;; esac
+printf 'nexus:%s\n' "$HASH" > "$MNT/d/nxs/utente.shadow"
+chmod 600 "$MNT/d/nxs/utente.shadow"
+install -d -o 1000 -g 1000 "$MNT/d/nxs-state"
+python3 - "$UPWF" "$MNT/d/nxs-state/screensaver.secret" <<'PY' || true
+import hashlib, os, sys
+pw = open(sys.argv[1], "rb").read()
+salt = os.urandom(16)
+dk = hashlib.pbkdf2_hmac("sha256", pw, salt, 120000)
+fd = os.open(sys.argv[2], os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+os.write(fd, ("pbkdf2_sha256$120000$%s$%s\n" % (salt.hex(), dk.hex())).encode())
+os.close(fd)
+os.chown(sys.argv[2], 1000, 1000)
+PY
+rm -f "$UPWF"; UPWF=""; HASH=""
+umount "$MNT/d"
 cryptsetup close nxsinst
 
 passo 7 "fatto"
