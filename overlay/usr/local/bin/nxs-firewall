@@ -80,6 +80,18 @@ fw_off() {
   echo "Firewall DISATTIVATO (tutto il traffico consentito)."
 }
 
+# Con la modalita' anonima attiva (nxs-anon) le regole sono le SUE (kill-switch):
+# un "flush ruleset" qui le cancellerebbe lasciando Tor acceso e il traffico in
+# chiaro (2026-11-28: all'avvio nxs-firewall boot gira DOPO la persistenza, che
+# puo' accendere l'anonimato). La modalita' anonima blocca gia' tutto l'ingresso.
+case "${1:-status}" in
+  on|off|allow|deny|boot)
+    if [ -e /run/nxs-anon.on ]; then
+      [ "$1" = boot ] || echo "Modalita' anonima attiva: il firewall resta quello del kill-switch (spegni prima l'anonimato)."
+      exit 0
+    fi ;;
+esac
+
 case "${1:-status}" in
   on)  fw_on ;;
   off) fw_off ;;

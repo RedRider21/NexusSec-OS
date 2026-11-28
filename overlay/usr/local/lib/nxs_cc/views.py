@@ -3148,6 +3148,38 @@ def _run_priv_term(inner: str, title: str = "NexusSec"):
     run_bg(["lxterminal", "--title=%s" % title, "-e", "sh -c \"%s\"" % cmd])
 
 
+def _anon_bridges_dialog():
+    """Bridge Tor (obfs4/webtunnel) per le reti che bloccano Tor: si incollano le
+    righe prese da bridges.torproject.org; le salva `nxs-anon bridges set`."""
+    dlg = Gtk.Dialog(title=_t("v.priv.bridges"), modal=True)
+    dlg.add_buttons(_t("v.cancel"), Gtk.ResponseType.CANCEL, "OK", Gtk.ResponseType.OK)
+    box = dlg.get_content_area(); box.set_spacing(8); box.set_border_width(12)
+    info = Gtk.Label(); info.set_xalign(0); info.set_line_wrap(True)
+    info.set_max_width_chars(70)
+    info.set_text(_t("v.priv.bridges_desc"))
+    box.pack_start(info, False, False, 0)
+    sw = Gtk.ScrolledWindow(); sw.set_min_content_height(160); sw.set_min_content_width(520)
+    tv = Gtk.TextView(); tv.set_monospace(True); tv.set_wrap_mode(Gtk.WrapMode.CHAR)
+    try:
+        cur = open(os.path.expanduser("~/.config/nxs/tor-bridges")).read()
+    except OSError:
+        cur = ""
+    tv.get_buffer().set_text(cur)
+    sw.add(tv); box.pack_start(sw, True, True, 0)
+    dlg.show_all()
+    if dlg.run() == Gtk.ResponseType.OK:
+        buf = tv.get_buffer()
+        txt = buf.get_text(buf.get_start_iter(), buf.get_end_iter(), False)
+        try:
+            if txt.strip():
+                subprocess.run(["nxs-anon", "bridges", "set"], input=txt, text=True, timeout=10)
+            else:
+                subprocess.run(["nxs-anon", "bridges", "clear"], timeout=10)
+        except (OSError, subprocess.SubprocessError):
+            pass
+    dlg.destroy()
+
+
 def _eye_entry(placeholder=_t("v.password")):
     e = Gtk.Entry(); e.set_visibility(False); e.set_hexpand(True)
     e.set_placeholder_text(placeholder)
@@ -3490,6 +3522,20 @@ def open_security(_btn=None):
     priv_switch(_t("v.priv.anon"),
                 ["nxs-anon", "status"], ["nxs-anon", "on"], ["nxs-anon", "off"],
                 _t("v.priv.anon_desc"))
+    # 2026-11-28 (confronto con AnonSurf 6): avvio automatico, nuova identita',
+    # verifica dell'anonimato e bridge per le reti che bloccano Tor
+    priv_switch(_t("v.priv.anon_boot"),
+                ["nxs-anon", "boot", "status"], ["nxs-anon", "boot", "on"],
+                ["nxs-anon", "boot", "off"], _t("v.priv.anon_boot_desc"))
+    anon_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+    for lbl, sub in ((_t("pn.sec.newnym"), "newnym"), (_t("pn.sec.anon_check"), "check")):
+        b_ = Gtk.Button(label=lbl)
+        b_.connect("clicked", lambda _w, c=sub: _run_priv_term("nxs-anon %s" % c, "NexusSec"))
+        anon_row.pack_start(b_, True, True, 0)
+    b_br = Gtk.Button(label=_t("v.priv.bridges"))
+    b_br.connect("clicked", lambda _w: _anon_bridges_dialog())
+    anon_row.pack_start(b_br, True, True, 0)
+    act.pack_start(anon_row, False, False, 0)
     priv_switch(_t("v.priv.mac"),
                 ["nxs-macspoof", "status"],
                 ["sh", "-c", "nxs-macspoof on; nxs-macspoof now"],

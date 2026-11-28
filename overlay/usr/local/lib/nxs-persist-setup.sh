@@ -41,6 +41,11 @@ STOR
 	nxs_persist_reinstall_tools
 	# Password degli utenti salvate nella parte dati (installatore / nxs-users).
 	nxs_persist_password
+	# Modalita' anonima a ogni avvio (nxs-anon boot on): la scelta sta nei dati,
+	# quindi si applica qui, appena montati (anche dopo lo sblocco LUKS)
+	if [ -f /var/nxs-data/nxs-state/anon-boot ] && command -v nxs-anon >/dev/null 2>&1; then
+		( NXS_CONF_DIR=/var/nxs-data/nxs-state nxs-anon on >/dev/null 2>&1 & )
+	fi
 }
 
 # Applica le password salvate in /var/nxs-data/nxs/utente.shadow (righe

@@ -15,6 +15,8 @@ Prove (ognuna con esito OK/KO):
   persist     da chiavetta USB virtuale: crea la persistenza dopo la distro,
               scrive un file, RIAVVIA, la ritrova montata e il file c'e'
   estranea    una seconda chiavetta con NXSDATA in chiaro viene IGNORATA
+  anon        modalita' anonima: connessioni aperte prima tagliate, uscita
+              Tor, DNS, IPv6, kill-switch, nuova identita', spegnimento
   arm         (solo con --arm) avvio aarch64 in UEFI (AAVMF), lento: ~15 min
 
 Come legge i risultati: la live, dal suo terminale, scrive le righe di esito
@@ -481,6 +483,70 @@ def prova_arm(iso, cartella):
     return {"arm": "DESKTOP-OK" in out and "aarch64" in out}, out
 
 
+def prova_anon(iso, cartella):
+    """Modalita' anonima (nxs-anon, 2026-11-28, confronto con AnonSurf 6): serve
+    la rete della VM (Tor scarica il consenso). Una connessione TCP aperta PRIMA
+    dell'attivazione verso il PC (10.0.2.2 = il PC visto dalla VM) manda un byte
+    al secondo: dopo `nxs-anon on` il PC non deve ricevere piu' nulla (prima
+    passava in chiaro). Poi `nxs-anon check` (uscita Tor, DNS, IPv6,
+    kill-switch), nuova identita' e spegnimento con ritorno al firewall normale."""
+    import threading
+    ricevuti = []                                  # istanti dei byte ricevuti
+    srv = socket.socket()
+    srv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    srv.bind(("127.0.0.1", 0))
+    porta = srv.getsockname()[1]
+    srv.listen(4)
+
+    def servi():
+        while True:
+            try:
+                c, _ = srv.accept()
+            except OSError:
+                return
+
+            def leggi(c=c):
+                while True:
+                    try:
+                        d = c.recv(64)
+                    except OSError:
+                        return
+                    if not d:
+                        return
+                    ricevuti.append(time.time())
+            threading.Thread(target=leggi, daemon=True).start()
+    threading.Thread(target=servi, daemon=True).start()
+
+    ris = _disco_risultati(cartella, "anon")
+    vm = VM("anon", _qemu_x86(iso, False, cartella, "anon", dischi=[ris]), cartella)
+    time.sleep(ATTESA_BOOT)
+    vm.terminale()
+    vm.scrivi("clear; while sleep 1; do echo x; done | nc 10.0.2.2 %d > /dev/null &\n" % porta)
+    time.sleep(8)
+    prima = len(ricevuti)
+    vm.scrivi("nxs-anon on; sleep 50; nxs-anon check > /tmp/anon.txt 2>&1; "
+              "nxs-anon newnym >> /tmp/anon.txt 2>&1; echo FATTO\n")
+    t_on = time.time()
+    time.sleep(150)
+    durante = [t for t in ricevuti if t > t_on + 25]   # margine per l'avvio di Tor
+    vm.scrivi(_cmd_esito("cat /tmp/anon.txt; nxs-anon off; echo STATO-$(nxs-anon status); "
+                         "doas nft list tables"), pausa=0.08)
+    time.sleep(15)
+    vm.schermata("anon-esito")
+    vm.chiudi()
+    srv.close()
+    out = _leggi_risultati(ris)
+    out += "\nbyte ricevuti dal PC prima dell'attivazione: %d, dopo: %d\n" % (prima, len(durante))
+    esiti = {
+        "anon-prec": prima > 0 and not durante,            # connessione vecchia tagliata
+        "anon-tor": "il traffico esce da Tor" in out,
+        "anon-check": "0 problemi" in out,
+        "anon-nym": "Nuova identita':" in out and "non riuscita" not in out,
+        "anon-off": "STATO-off" in out and "nxsfw" in out,
+    }
+    return esiti, out
+
+
 def main():
     ap = argparse.ArgumentParser(description="Collaudo automatico di una ISO NexusSec")
     ap.add_argument("iso", help="ISO x86_64 da collaudare")
@@ -506,6 +572,8 @@ def main():
         e, o = prova_usabilita(a.iso, cartella); esiti.update(e); log.append(("USABILITA", o))
     if "disco" in solo:
         e, o = prova_disco(a.iso, cartella); esiti.update(e); log.append(("DISCO", o))
+    if "anon" in solo:
+        e, o = prova_anon(a.iso, cartella); esiti.update(e); log.append(("ANONIMATO", o))
     if "installa" in solo:
         e, o = prova_installa(a.iso, cartella); esiti.update(e); log.append(("INSTALLA", o))
     if a.arm:

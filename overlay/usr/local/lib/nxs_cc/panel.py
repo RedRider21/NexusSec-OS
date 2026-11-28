@@ -2378,6 +2378,17 @@ class Panel(Gtk.Window):
         ah = Gtk.Label(); ah.set_xalign(0); ah.set_line_wrap(True)
         ah.set_markup(("<small>%s</small>" % _t("pn.sec.anon_desc")))
         box.pack_start(ah, False, False, 0)
+        # nuova identita' Tor e verifica dell'anonimato (in un terminale: doas
+        # puo' chiedere la password e l'esito resta leggibile)
+        rown = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=4)
+        for txt, sub in ((_t("pn.sec.newnym"), "newnym"), (_t("pn.sec.anon_check"), "check")):
+            bn = Gtk.Button(label=txt)
+            bn.get_style_context().add_class("nxs-menu-item")
+            bn.connect("clicked", lambda _w, c=sub: run_bg(
+                ["nxs-term", "sh", "-c",
+                 "nxs-anon %s; echo; printf '%s'; read x" % (c, _t("pn.sec.enter_close"))]))
+            rown.pack_start(bn, True, True, 0)
+        box.pack_start(rown, False, False, 0)
 
         # MAC casuale a ogni avvio (privacy: hardware non tracciabile fra reti)
         mac = self._sec_macspoof_state()
