@@ -895,6 +895,38 @@ apk add foremost medusa bulk-extractor</code></pre>
       (TransPort 9040 + DNSPort 5353) and enables an nftables <strong>kill-switch</strong>: anything not going through
       Tor is <strong>blocked</strong> (no leak if Tor drops); UDP and IPv6 disabled. The kill-switch applies only after
       Tor is up (fail-safe). AnonSurf/Tails style.</li>
+    <li data-lang="it"><strong>Novità della modalità anonima (dalla v2026.11.28.1)</strong>: le connessioni
+      aperte <em>prima</em> dell'attivazione non escono più in chiaro (vengono chiuse e le app si ricollegano via
+      Tor); <strong>Nuova identità</strong> (<code>nxs-anon newnym</code>) e <strong>Verifica anonimato</strong>
+      (<code>nxs-anon check</code>: uscita reale da Tor con l'IP visibile, DNS, IPv6, kill-switch) dal pannello;
+      <strong>Anonimo a ogni avvio</strong> (<code>nxs-anon boot on</code>, serve la persistenza);
+      <strong>bridge obfs4/webtunnel</strong> per le reti che bloccano Tor (Centro di Controllo → <em>Bridge Tor…</em>,
+      righe da bridges.torproject.org).</li>
+    <li data-lang="en"><strong>What's new in anonymous mode (since v2026.11.28.1)</strong>: connections opened
+      <em>before</em> activation no longer leave in clear (they are closed and apps reconnect through Tor);
+      <strong>New identity</strong> (<code>nxs-anon newnym</code>) and <strong>Check anonymity</strong>
+      (<code>nxs-anon check</code>: real Tor exit with the visible IP, DNS, IPv6, kill-switch) from the panel;
+      <strong>Anonymous at every boot</strong> (<code>nxs-anon boot on</code>, needs persistence);
+      <strong>obfs4/webtunnel bridges</strong> for networks that block Tor (Control Center → <em>Tor bridges…</em>,
+      lines from bridges.torproject.org).</li>
+    <li data-lang="it"><strong>Password di amministratore da una finestrella</strong> (dalla v2026.11.28.1): quando
+      <code>doas</code> richiede la password e l'azione parte dalla grafica, compare la finestrella
+      "Autorizzazione richiesta" con il comando da autorizzare. Sul sistema installato la password è quella
+      dell'utente; spegnere, Wi-Fi, luminosità ed elenco dischi restano immediati.</li>
+    <li data-lang="en"><strong>Administrator password from a small window</strong> (since v2026.11.28.1): when
+      <code>doas</code> needs the password and the action starts from the desktop, an "Authorization required" window
+      shows the command to authorize. On the installed system it is the user's password; shutdown, Wi-Fi,
+      brightness and the disk list stay immediate.</li>
+    <li data-lang="it"><strong>Verificare le immagini scaricate</strong>: dalla v2026.11.28.1 il file delle impronte è
+      firmato con la chiave <a href="nexussec-release-key.asc">NexusSec OS Release Signing Key</a>
+      (<code>AFA3 88D5 E411 BE57 5422 1E12 C3C4 D5BF A5DD A9BE</code>):
+      <code>gpg --import nexussec-release-key.asc</code>, poi
+      <code>gpg --verify SHA256SUMS-…txt.asc SHA256SUMS-…txt</code> e <code>sha256sum -c SHA256SUMS-…txt</code>.</li>
+    <li data-lang="en"><strong>Verifying downloaded images</strong>: since v2026.11.28.1 the checksum file is signed
+      with the <a href="nexussec-release-key.asc">NexusSec OS Release Signing Key</a>
+      (<code>AFA3 88D5 E411 BE57 5422 1E12 C3C4 D5BF A5DD A9BE</code>):
+      <code>gpg --import nexussec-release-key.asc</code>, then
+      <code>gpg --verify SHA256SUMS-…txt.asc SHA256SUMS-…txt</code> and <code>sha256sum -c SHA256SUMS-…txt</code>.</li>
     <li data-lang="it"><strong>Rimozione metadati (MAT2)</strong> (<code>nxs-metadata show|clean|gui</code>): ripulisce
       EXIF e metadati da immagini/PDF/documenti creando copie <code>*.cleaned</code> (gli originali non si toccano).
       Anche come azione <strong>tasto destro</strong> nel file manager.</li>
