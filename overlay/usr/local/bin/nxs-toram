@@ -70,7 +70,19 @@ def main():
     if not all(v[2] for v in voci):
         esito("no:loop-non-in-sola-lettura")
         return 0
-    tot = sum(os.path.getsize(v[1]) for v in voci)
+    # la RAM rispecchia la chiavetta (nxs-rootfs.squashfs + boot/...), e ci
+    # vanno anche kernel e initramfs: senza, l'installatore su disco (che cerca
+    # boot/vmlinuz-lts accanto al modloop) non funzionava piu' dopo la copia
+    radice = None
+    for _d, f, _r in voci:
+        if f.endswith("/boot/modloop-lts"):
+            radice = os.path.dirname(os.path.dirname(f))
+    extra = []
+    if radice:
+        for n in ("boot/vmlinuz-lts", "boot/initramfs-lts"):
+            if os.path.isfile(os.path.join(radice, n)):
+                extra.append(os.path.join(radice, n))
+    tot = sum(os.path.getsize(v[1]) for v in voci) + sum(os.path.getsize(f) for f in extra)
     if mem_disponibile() < tot + 1024 ** 3:
         esito("no:ram-insufficiente")
         return 0
@@ -87,9 +99,26 @@ def main():
         if r.returncode != 0:
             esito("no:tmpfs")
             return 0
+    def dest(f):
+        d = os.path.join(RAM, os.path.relpath(f, radice) if radice and f.startswith(radice + "/")
+                         else os.path.basename(f))
+        os.makedirs(os.path.dirname(d), exist_ok=True)
+        return d
+
+    for f in extra:                                    # prima i file piccoli
+        d = dest(f)
+        try:
+            shutil.copyfile(f, d)
+            if not filecmp.cmp(f, d, shallow=False):
+                raise OSError("copia diversa")
+        except OSError:
+            try:
+                os.remove(d)
+            except OSError:
+                pass
     fatti = 0
     for dev, f, _ro in voci:
-        dst = os.path.join(RAM, os.path.basename(f))
+        dst = dest(f)
         try:
             shutil.copyfile(f, dst)
             if not filecmp.cmp(f, dst, shallow=False):  # copia verificata

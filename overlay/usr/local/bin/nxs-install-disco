@@ -39,7 +39,7 @@ media_dir() {
 		esac
 	done
 	for _d in /media/*; do
-		[ -f "$_d/nxs-rootfs.squashfs" ] && { echo "$_d"; return 0; }
+		[ -f "$_d/nxs-rootfs.squashfs" ] && [ -f "$_d/boot/vmlinuz-lts" ] && { echo "$_d"; return 0; }
 	done
 	return 1
 }
