@@ -347,10 +347,13 @@ def prova_disco(iso, cartella):
         # dal 2026-11-28 sul sistema installato doas chiede la password
         # dell'utente (scelta nell'installatore): la scriviamo una volta, poi
         # doas la ricorda per la sessione del terminale (persist)
-        vm.scrivi("doas true\n")
-        time.sleep(3)
+        # doas di Alpine non ricorda la password fra un comando e l'altro:
+        # la usiamo una volta per tornare senza password (e se fosse sbagliata
+        # gli esiti non verrebbero scritti -> KO, che e' quello che vogliamo)
+        vm.scrivi("doas nxs-harden doas nopass\n")
+        time.sleep(4)
         vm.scrivi("utente99\n")
-        time.sleep(3)
+        time.sleep(4)
         vm.scrivi(_cmd_esito(_CONTROLLI_BASE + "; mountpoint -q /var/nxs-data && echo DATI-MONTATI; "
                              "findmnt -no SOURCE,FSTYPE,OPTIONS /media/root-ro; "
                              "doas touch /media/root-ro/x 2>/dev/null || echo SISTEMA-SOLA-LETTURA; "
@@ -532,10 +535,10 @@ def prova_anon(iso, cartella):
     vm.scrivi("clear; while sleep 1; do echo x; done | nc 10.0.2.2 %d > /dev/null &\n" % porta)
     time.sleep(8)
     prima = len(ricevuti)
-    vm.scrivi("nxs-anon on; sleep 50; nxs-anon check > /tmp/anon.txt 2>&1; "
+    vm.scrivi("nxs-anon on; sleep 90; nxs-anon check > /tmp/anon.txt 2>&1; "
               "nxs-anon newnym >> /tmp/anon.txt 2>&1; echo FATTO\n")
     t_on = time.time()
-    time.sleep(150)
+    time.sleep(190)
     durante = [t for t in ricevuti if t > t_on + 25]   # margine per l'avvio di Tor
     vm.scrivi(_cmd_esito("cat /tmp/anon.txt; nxs-anon off; echo STATO-$(nxs-anon status); "
                          "doas nft list tables"), pausa=0.08)
@@ -549,7 +552,7 @@ def prova_anon(iso, cartella):
         "anon-prec": prima > 0 and not durante,            # connessione vecchia tagliata
         "anon-tor": "il traffico esce da Tor" in out,
         "anon-check": "0 problemi" in out,
-        "anon-nym": "Nuova identita':" in out and "non riuscita" not in out,
+        "anon-nym": "Nuova identita': i prossimi" in out,
         "anon-off": "STATO-off" in out and "nxsfw" in out,
     }
     return esiti, out
