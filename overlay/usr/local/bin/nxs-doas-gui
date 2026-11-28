@@ -156,7 +156,10 @@ def esegui(doas, args, pw, dati):
                 if b"Authentication failed" in d or b"authentication failed" in d:
                     fallita = True
                     continue
-                out.write(d)
+                if fallita or d.strip() in (b"", b"doas:"):
+                    continue                   # resti del messaggio d'errore
+                out.write(d.lstrip(b"\r\n") if not getattr(esegui, "_scritto", False) else d)
+                esegui._scritto = True
                 out.flush()
         else:
             p, _st = os.waitpid(pid, os.WNOHANG)

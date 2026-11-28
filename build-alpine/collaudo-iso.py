@@ -344,6 +344,13 @@ def prova_disco(iso, cartella):
         time.sleep(ATTESA_BOOT - 60)
         vm.schermata("desktop")
         vm.terminale()
+        # dal 2026-11-28 sul sistema installato doas chiede la password
+        # dell'utente (scelta nell'installatore): la scriviamo una volta, poi
+        # doas la ricorda per la sessione del terminale (persist)
+        vm.scrivi("doas true\n")
+        time.sleep(3)
+        vm.scrivi("utente99\n")
+        time.sleep(3)
         vm.scrivi(_cmd_esito(_CONTROLLI_BASE + "; mountpoint -q /var/nxs-data && echo DATI-MONTATI; "
                              "findmnt -no SOURCE,FSTYPE,OPTIONS /media/root-ro; "
                              "doas touch /media/root-ro/x 2>/dev/null || echo SISTEMA-SOLA-LETTURA; "
