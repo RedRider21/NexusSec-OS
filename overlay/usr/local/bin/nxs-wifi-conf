@@ -1,0 +1,21 @@
+#!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
+# nxs-wifi-conf - (root) prepara /etc/wpa_supplicant/wpa_supplicant.conf con
+# GROUP=wheel, cosi' wpa_cli funziona anche da utente. Azione fissa, senza
+# argomenti: per questo puo' stare fra le eccezioni "senza password" di doas
+# (prima nxs-wifi lo faceva con "doas sh -c ...", che con la password attiva
+# avrebbe aperto la finestrella a ogni avvio).
+set -eu
+[ "$(id -u)" = 0 ] || { echo "nxs-wifi-conf: serve root" >&2; exit 1; }
+WPACONF=/etc/wpa_supplicant/wpa_supplicant.conf
+mkdir -p /etc/wpa_supplicant
+if [ ! -f "$WPACONF" ]; then
+  printf 'ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=wheel\nupdate_config=1\n' > "$WPACONF"
+elif ! grep -q '^ctrl_interface=.*GROUP=' "$WPACONF"; then
+  if grep -q '^ctrl_interface=' "$WPACONF"; then
+    sed -i 's|^ctrl_interface=.*|ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=wheel|' "$WPACONF"
+  else
+    sed -i '1i ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=wheel' "$WPACONF"
+  fi
+fi

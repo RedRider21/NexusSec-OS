@@ -1572,5 +1572,9 @@
   "wiz.web-scan.s.1.desc": "Rilevamento WAF",
   "wiz.web-scan.s.2.desc": "Scansione vulnerabilita' web server",
   "wiz.web-scan.s.3.desc": "Scanner basato su template",
-  "wiz.web-scan.s.4.desc": "Analisi SQL injection"
+  "wiz.web-scan.s.4.desc": "Analisi SQL injection",
+  "doas.title": "Autorizzazione richiesta",
+  "doas.body": "Questa operazione richiede i permessi di amministratore. Inserisci la tua password per continuare.",
+  "doas.ok": "Autorizza",
+  "doas.wrong": "Password errata, riprova."
 }

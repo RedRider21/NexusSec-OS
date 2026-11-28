@@ -44,6 +44,7 @@ _TASTI = {" ": "spc", "/": "shift-7", "-": "slash", ".": "dot", ";": "shift-comm
           "_": "shift-slash", "|": "shift-grave_accent", ">": "shift-less",
           "=": "shift-0", "$": "shift-4", "&": "shift-6", ",": "comma",
           ":": "shift-dot", "'": "minus", "(": "shift-8", ")": "shift-9",
+          "?": "shift-minus", "<": "less",
           "\n": "ret"}
 
 OVMF_CODE = "/usr/share/OVMF/OVMF_CODE_4M.fd"
@@ -547,6 +548,67 @@ def prova_anon(iso, cartella):
     return esiti, out
 
 
+def prova_doaspw(iso, cartella):
+    """Password di doas dalla grafica (finestrella nxs-doas-gui, 2026-11-28).
+    Nella live: password a nexus, regole "con password" (nxs-harden doas pass),
+    poi da un processo SENZA terminale (setsid) come fa la grafica:
+      1. comando che chiede la password -> finestrella, password giusta -> OK;
+      2. password sbagliata e poi giusta -> OK al secondo tentativo;
+      3. Annulla -> rifiutato, e per 30 s nessuna nuova finestrella;
+      4. azione di tutti i giorni (lsblk) -> nessuna domanda.
+    Da terminale vero doas resta quello di sempre."""
+    ris = _disco_risultati(cartella, "doaspw")
+    vm = VM("dpw", _qemu_x86(iso, False, cartella, "dpw", dischi=[ris]), cartella)
+    time.sleep(ATTESA_BOOT)
+    vm.terminale()
+    vm.scrivi("clear; echo nexus:prova99 | doas chpasswd; doas nxs-harden doas pass; "
+              "rm -f /tmp/r1 /tmp/r2 /tmp/r3 /tmp/r4; exit\n")
+    time.sleep(5)
+    # 1) finestrella, password giusta
+    vm.terminale()
+    vm.scrivi("setsid sh -c 'doas id -u > /tmp/r1 2>&1; echo RC=$? >> /tmp/r1' < /dev/null & exit\n")
+    time.sleep(6)
+    vm.schermata("finestrella")
+    vm.scrivi("prova99\n")
+    time.sleep(5)
+    # 2) sbagliata poi giusta
+    vm.terminale()
+    vm.scrivi("setsid sh -c 'doas id -u > /tmp/r2 2>&1; echo RC=$? >> /tmp/r2' < /dev/null & exit\n")
+    time.sleep(6)
+    vm.scrivi("sbagliata\n")
+    time.sleep(6)
+    vm.schermata("riprova")
+    vm.scrivi("prova99\n")
+    time.sleep(5)
+    # 3) Annulla (Esc), poi subito un'altra richiesta: nessuna finestrella
+    vm.terminale()
+    vm.scrivi("setsid sh -c 'doas id -u > /tmp/r3 2>&1; echo RC=$? >> /tmp/r3; "
+              "doas id -u >> /tmp/r3 2>&1; echo RC=$? >> /tmp/r3' < /dev/null & exit\n")
+    time.sleep(6)
+    vm.cmd("sendkey esc")
+    time.sleep(6)
+    vm.schermata("dopo-annulla")
+    # 4) eccezione senza password
+    vm.terminale()
+    vm.scrivi("setsid sh -c 'doas lsblk -d -o NAME > /tmp/r4 2>&1; echo RC=$? >> /tmp/r4' < /dev/null & exit\n")
+    time.sleep(6)
+    vm.terminale()
+    vm.scrivi(_cmd_esito("for f in 1 2 3 4; do echo == r$f; cat /tmp/r$f; done"), pausa=0.08)
+    time.sleep(8)
+    vm.chiudi()
+    out = _leggi_risultati(ris)
+    import re as _re
+    blocchi = dict(_re.findall(r"== r(\d)\n(.*?)(?=\n== r|\Z)", out, _re.S))
+    r3 = blocchi.get("3", "")
+    esiti = {
+        "dpw-giusta": "0\nRC=0" in blocchi.get("1", ""),
+        "dpw-riprova": "0\nRC=0" in blocchi.get("2", ""),
+        "dpw-annulla": r3.count("RC=1") == 2 and "annullata" in r3,
+        "dpw-libera": "RC=0" in blocchi.get("4", "") and "NAME" in blocchi.get("4", ""),
+    }
+    return esiti, out
+
+
 def main():
     ap = argparse.ArgumentParser(description="Collaudo automatico di una ISO NexusSec")
     ap.add_argument("iso", help="ISO x86_64 da collaudare")
@@ -572,6 +634,8 @@ def main():
         e, o = prova_usabilita(a.iso, cartella); esiti.update(e); log.append(("USABILITA", o))
     if "disco" in solo:
         e, o = prova_disco(a.iso, cartella); esiti.update(e); log.append(("DISCO", o))
+    if "doaspw" in solo:
+        e, o = prova_doaspw(a.iso, cartella); esiti.update(e); log.append(("DOAS-PASSWORD", o))
     if "anon" in solo:
         e, o = prova_anon(a.iso, cartella); esiti.update(e); log.append(("ANONIMATO", o))
     if "installa" in solo:

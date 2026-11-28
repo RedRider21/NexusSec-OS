@@ -1572,5 +1572,9 @@
   "wiz.web-scan.s.1.desc": "WAF-Erkennung",
   "wiz.web-scan.s.2.desc": "Schwachstellenscan des Webservers",
   "wiz.web-scan.s.3.desc": "Vorlagenbasierter Scanner",
-  "wiz.web-scan.s.4.desc": "SQL-Injection-Analyse"
+  "wiz.web-scan.s.4.desc": "SQL-Injection-Analyse",
+  "doas.title": "Autorisierung erforderlich",
+  "doas.body": "Für diesen Vorgang sind Administratorrechte nötig. Gib dein Passwort ein, um fortzufahren.",
+  "doas.ok": "Autorisieren",
+  "doas.wrong": "Falsches Passwort, bitte erneut versuchen."
 }

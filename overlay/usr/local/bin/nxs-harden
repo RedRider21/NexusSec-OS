@@ -33,7 +33,7 @@ is_live() { findmnt -no FSTYPE / 2>/dev/null | grep -qE 'tmpfs|overlay|ramfs'; }
 
 st_autologin() { grep -q 'agetty --autologin nexus' "$INITTAB" 2>/dev/null \
                  && echo on || echo off; }
-st_doas() { grep -q 'permit nopass :wheel' "$DOASCONF" 2>/dev/null \
+st_doas() { grep -qx 'permit nopass :wheel' "$DOASCONF" 2>/dev/null \
             && echo nopass || echo pass; }
 st_lockvt() { [ -f "$XCONF" ] && echo on || echo off; }
 st_greeter() { [ -f /etc/nxs/greeter.on ] && echo on || echo off; }
@@ -58,10 +58,31 @@ do_autologin() {
   priv kill -HUP 1 2>/dev/null || true
 }
 
+# Regole doas "con password" (2026-11-28): password per tutto, TRANNE le azioni
+# di tutti i giorni che la grafica fa da sola o di continuo (spegnere, Wi-Fi,
+# luminosita', leggere i dischi, stato del firewall, panico, login grafico).
+# Senza queste il pannello aprirebbe finestrelle a raffica (lo stato del
+# Wi-Fi si legge ogni pochi secondi con wpa_cli). In doas vince l'ULTIMA regola
+# che corrisponde: prima quella generale, poi le eccezioni.
+_doas_rules() {
+  echo "permit persist :wheel"
+  for c in poweroff reboot /sbin/poweroff /sbin/reboot lbu \
+           wpa_cli wpa_supplicant udhcpc dhcpcd ip iw rfkill dmesg \
+           lsblk brightnessctl \
+           /usr/local/bin/nxs-authcheck /usr/local/bin/nxs-partdev \
+           /usr/local/bin/nxs-wifi-conf; do
+    echo "permit nopass :wheel cmd $c"
+  done
+  echo "permit nopass :wheel cmd nft args list ruleset"
+  echo "permit nopass :wheel cmd nft args list tables"
+  echo "permit nopass :wheel cmd nft args list table inet nxsfw"
+  echo "permit nopass :wheel cmd /usr/local/bin/nxs-panic args wipe"
+}
+
 do_doas() {
   case "$1" in
-    pass)   priv sh -c "echo 'permit persist :wheel' > '$DOASCONF'"
-            echo "doas ora CHIEDE la password (cache per sessione)." ;;
+    pass)   _doas_rules | priv sh -c "cat > '$DOASCONF'; chmod 644 '$DOASCONF'"
+            echo "doas ora CHIEDE la password (finestrella nella grafica); le azioni di tutti i giorni restano libere." ;;
     nopass) priv sh -c "echo 'permit nopass :wheel' > '$DOASCONF'"
             echo "doas SENZA password (comodo per la live)." ;;
     *) echo "uso: nxs-harden doas pass|nopass"; return 1 ;;

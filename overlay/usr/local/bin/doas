@@ -1,0 +1,30 @@
+#!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
+# doas (intermediario NexusSec, 2026-11-28) - viene PRIMA di /usr/bin/doas nel
+# PATH. doas chiede la password solo su un terminale: le azioni lanciate dalla
+# grafica (pannello, Centro di Controllo, HORUS...) fallivano appena doas
+# richiedeva la password (sistema installato, nxs-harden). Qui:
+#   - opzioni (-n, -s, -u, -C, -L) o un terminale vero (/dev/pts/*) o niente
+#     grafica -> doas vero, invariato;
+#   - regola "permit nopass" per il comando -> doas vero (nessuna domanda);
+#   - regola "permit" (serve la password) e siamo nella grafica ->
+#     nxs-doas-gui: finestrella per la password, poi doas vero su un
+#     pseudo-terminale. La password non passa mai da argv ne' da file.
+# Non e' un programma privilegiato: decide solo COME chiamare il doas vero.
+REAL=/usr/bin/doas
+[ -x "$REAL" ] || REAL=/bin/doas
+CONF=/etc/doas.d/doas.conf
+[ -f "$CONF" ] || CONF=/etc/doas.conf
+
+case "${1:-}" in -*|"") exec "$REAL" "$@" ;; esac
+[ "$(id -u)" = 0 ] && exec "$REAL" "$@"
+[ -n "${DISPLAY:-}" ] || exec "$REAL" "$@"
+case "$(tty 2>/dev/null)" in /dev/pts/*) exec "$REAL" "$@" ;; esac
+
+azione="$("$REAL" -C "$CONF" "$@" 2>/dev/null || true)"
+case "$azione" in
+	"permit nopass"*) exec "$REAL" "$@" ;;
+	permit*) [ -x /usr/local/bin/nxs-doas-gui ] && exec /usr/local/bin/nxs-doas-gui "$REAL" "$@" ;;
+esac
+exec "$REAL" "$@"

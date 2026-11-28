@@ -1572,5 +1572,9 @@
   "wiz.web-scan.s.1.desc": "WAF detection",
   "wiz.web-scan.s.2.desc": "Web server vulnerability scan",
   "wiz.web-scan.s.3.desc": "Template-based scanner",
-  "wiz.web-scan.s.4.desc": "SQL injection analysis"
+  "wiz.web-scan.s.4.desc": "SQL injection analysis",
+  "doas.title": "Authorization required",
+  "doas.body": "This operation requires administrator rights. Enter your password to continue.",
+  "doas.ok": "Authorize",
+  "doas.wrong": "Wrong password, try again."
 }

@@ -36,16 +36,7 @@ ensure_up() {
   # fallisce SEMPRE. Sintomo classico: la rete si aggancia davvero ma il
   # pannello mostra "disconnesso" per sempre. Creiamo/ripariamo la conf con
   # GROUP=wheel (nexus e in wheel) e chiamiamo wpa_cli SEMPRE via priv.
-  priv sh -c "mkdir -p /etc/wpa_supplicant
-    if [ ! -f '$WPACONF' ]; then
-      printf 'ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=wheel\nupdate_config=1\n' > '$WPACONF'
-    elif ! grep -q '^ctrl_interface=.*GROUP=' '$WPACONF'; then
-      if grep -q '^ctrl_interface=' '$WPACONF'; then
-        sed -i 's|^ctrl_interface=.*|ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=wheel|' '$WPACONF'
-      else
-        sed -i '1i ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=wheel' '$WPACONF'
-      fi
-    fi" 2>/dev/null
+  priv /usr/local/bin/nxs-wifi-conf 2>/dev/null || true
   # wpa_supplicant attivo? altrimenti avvialo.
   if ! priv wpa_cli -i "$IFACE" ping >/dev/null 2>&1; then
     priv wpa_supplicant -B -i "$IFACE" -c "$WPACONF" >/dev/null 2>&1

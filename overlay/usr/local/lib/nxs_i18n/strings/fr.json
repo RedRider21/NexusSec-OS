@@ -1572,5 +1572,9 @@
   "wiz.web-scan.s.1.desc": "Détection WAF",
   "wiz.web-scan.s.2.desc": "Analyse des vulnérabilités du serveur Web",
   "wiz.web-scan.s.3.desc": "Scanner basé sur un modèle",
-  "wiz.web-scan.s.4.desc": "Analyse des injections SQL"
+  "wiz.web-scan.s.4.desc": "Analyse des injections SQL",
+  "doas.title": "Autorisation requise",
+  "doas.body": "Cette opération nécessite les droits d'administrateur. Saisissez votre mot de passe pour continuer.",
+  "doas.ok": "Autoriser",
+  "doas.wrong": "Mot de passe incorrect, réessayez."
 }

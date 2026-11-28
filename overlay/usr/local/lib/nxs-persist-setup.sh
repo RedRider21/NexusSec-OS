@@ -61,6 +61,13 @@ nxs_persist_password() {
 		getent passwd "$u" >/dev/null 2>&1 || continue
 		printf '%s\n' "$riga" | chpasswd -e >/dev/null 2>&1 || true
 	done < "$f"
+	# Sistema installato con la password applicata: d'ora in poi doas la chiede
+	# (finestrella nella grafica, vedi /usr/local/bin/doas), tranne le azioni
+	# di tutti i giorni (nxs-harden doas pass). Prima restava senza password.
+	if grep -qw nxs_installed=1 /proc/cmdline 2>/dev/null && \
+	   getent shadow nexus 2>/dev/null | cut -d: -f2 | grep -q '^\$'; then
+		/usr/local/bin/nxs-harden doas pass >/dev/null 2>&1 || true
+	fi
 }
 
 # Reinstalla i pacchetti apk registrati da nxs-tool (lista su NXSDATA). I tool

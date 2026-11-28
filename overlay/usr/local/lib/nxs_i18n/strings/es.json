@@ -1572,5 +1572,9 @@
   "wiz.web-scan.s.1.desc": "Detección WAF",
   "wiz.web-scan.s.2.desc": "Escaneo de vulnerabilidad del servidor web",
   "wiz.web-scan.s.3.desc": "Escáner basado en plantillas",
-  "wiz.web-scan.s.4.desc": "Análisis de inyección SQL"
+  "wiz.web-scan.s.4.desc": "Análisis de inyección SQL",
+  "doas.title": "Autorización necesaria",
+  "doas.body": "Esta operación requiere permisos de administrador. Introduce tu contraseña para continuar.",
+  "doas.ok": "Autorizar",
+  "doas.wrong": "Contraseña incorrecta, inténtalo de nuevo."
 }

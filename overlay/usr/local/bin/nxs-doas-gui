@@ -1,0 +1,205 @@
+#!/usr/bin/env python3
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Daniele Deplano (RedRider21). Parte di NexusSec OS.
+"""nxs-doas-gui DOAS COMANDO [ARG...] - password di doas da una finestrella.
+
+Chiamato dall'intermediario /usr/local/bin/doas quando un'azione lanciata
+dalla grafica richiede la password (regola "permit" senza nopass). Mostra una
+finestrella con il comando da autorizzare, poi esegue il doas VERO su uno
+pseudo-terminale e gli passa la password quando la chiede (doas legge la
+password solo da un terminale). L'uscita del comando va sullo stdout, il
+codice d'uscita e' quello del comando. Tre tentativi; con "Annulla" si
+risponde subito di no per 30 secondi alle richieste successive (niente
+raffiche di finestre da azioni ripetute).
+
+La password resta in memoria solo il tempo di scriverla nel pseudo-terminale:
+mai in argv, mai su file.
+"""
+import os
+import pty
+import select
+import sys
+import termios
+import time
+
+ANNULLATO = os.path.join(os.environ.get("XDG_RUNTIME_DIR", "/tmp"),
+                         "nxs-doas-annullato")
+PAUSA = 30          # secondi di "no" automatico dopo un Annulla
+TENTATIVI = 3
+
+
+def _t(chiave, testo):
+    try:
+        sys.path.insert(0, "/usr/local/lib")
+        from nxs_i18n import t
+        r = t(chiave)
+        return testo if r == chiave else r
+    except Exception:                                  # noqa: BLE001
+        return testo
+
+
+def chiedi_password(comando, errore=False):
+    """Finestrella GTK; None se annullata."""
+    import gi
+    gi.require_version("Gtk", "3.0")
+    from gi.repository import Gtk
+    try:
+        sys.path.insert(0, "/usr/local/lib")
+        from nxs_cc.common import apply_css
+        apply_css()
+    except Exception:                                  # noqa: BLE001
+        pass
+    dlg = Gtk.Dialog(title=_t("doas.title", "Autorizzazione richiesta"))
+    dlg.set_keep_above(True)
+    dlg.set_position(Gtk.WindowPosition.CENTER)
+    dlg.add_buttons(_t("v.cancel", "Annulla"), Gtk.ResponseType.CANCEL,
+                    _t("doas.ok", "Autorizza"), Gtk.ResponseType.OK)
+    dlg.set_default_response(Gtk.ResponseType.OK)
+    box = dlg.get_content_area()
+    box.set_spacing(8)
+    box.set_border_width(14)
+    lab = Gtk.Label()
+    lab.set_xalign(0)
+    lab.set_line_wrap(True)
+    lab.set_max_width_chars(60)
+    lab.set_text(_t("doas.body", "Questa operazione richiede i permessi di amministratore. "
+                    "Inserisci la tua password per continuare."))
+    box.pack_start(lab, False, False, 0)
+    cmd = Gtk.Label()
+    cmd.set_xalign(0)
+    cmd.set_line_wrap(True)
+    cmd.set_selectable(True)
+    testo = " ".join(comando)
+    if len(testo) > 160:
+        testo = testo[:157] + "..."
+    cmd.set_markup("<tt><small>%s</small></tt>" % (testo.replace("&", "&amp;")
+                                                     .replace("<", "&lt;")))
+    box.pack_start(cmd, False, False, 0)
+    if errore:
+        e = Gtk.Label()
+        e.set_xalign(0)
+        e.set_markup("<b>%s</b>" % _t("doas.wrong", "Password errata, riprova."))
+        box.pack_start(e, False, False, 0)
+    ent = Gtk.Entry()
+    ent.set_visibility(False)
+    ent.set_activates_default(True)
+    ent.set_placeholder_text(_t("v.password", "Password"))
+    box.pack_start(ent, False, False, 0)
+    dlg.show_all()
+    ent.grab_focus()
+    r = dlg.run()
+    pw = ent.get_text() if r == Gtk.ResponseType.OK else None
+    ent.set_text("")
+    dlg.destroy()
+    while Gtk.events_pending():
+        Gtk.main_iteration()
+    return pw
+
+
+def leggi_stdin():
+    """Dati in ingresso da passare al comando (es. `printf ... | doas chpasswd`):
+    solo se stdin e' una pipe/file con dati pronti; mai bloccarsi."""
+    try:
+        if os.isatty(0):
+            return None
+        r, _, _ = select.select([0], [], [], 0.5)
+        if not r:
+            return None
+        return sys.stdin.buffer.read()
+    except (OSError, ValueError):
+        return None
+
+
+def esegui(doas, args, pw, dati):
+    """doas vero su un pty. Ritorna (codice, autenticato)."""
+    pid, fd = pty.fork()
+    if pid == 0:
+        os.execv(doas, [doas] + args)
+    try:
+        a = termios.tcgetattr(fd)
+        a[3] &= ~termios.ECHO               # niente eco dei dati in ingresso
+        a[1] &= ~termios.OPOST              # uscita senza \r aggiunti
+        termios.tcsetattr(fd, termios.TCSANOW, a)
+    except termios.error:
+        pass
+    buf = b""
+    inviata = False
+    fallita = False
+    out = sys.stdout.buffer
+    scadenza = time.time() + 20
+    while True:
+        try:
+            r, _, _ = select.select([fd], [], [], 0.3)
+        except InterruptedError:
+            continue
+        if r:
+            try:
+                d = os.read(fd, 4096)
+            except OSError:
+                d = b""
+            if not d:
+                break
+            if not inviata:
+                buf += d
+                if b"assword" in buf:
+                    os.write(fd, pw.encode() + b"\n")
+                    inviata = True
+                    buf = b""
+                    if dati is not None:
+                        os.write(fd, dati)
+                        if not dati.endswith(b"\n"):
+                            os.write(fd, b"\x04")
+                    os.write(fd, b"\x04")
+                elif time.time() > scadenza:
+                    break
+            else:
+                if b"Authentication failed" in d or b"authentication failed" in d:
+                    fallita = True
+                    continue
+                out.write(d)
+                out.flush()
+        else:
+            p, _st = os.waitpid(pid, os.WNOHANG)
+            if p:
+                return (os.waitstatus_to_exitcode(_st), not fallita)
+    _p, st = os.waitpid(pid, 0)
+    try:
+        os.close(fd)
+    except OSError:
+        pass
+    return (os.waitstatus_to_exitcode(st), not fallita)
+
+
+def main():
+    if len(sys.argv) < 3:
+        print("uso: nxs-doas-gui DOAS COMANDO [ARG...]", file=sys.stderr)
+        return 2
+    doas, args = sys.argv[1], sys.argv[2:]
+    try:
+        if time.time() - os.path.getmtime(ANNULLATO) < PAUSA:
+            print("doas: autorizzazione annullata", file=sys.stderr)
+            return 1
+    except OSError:
+        pass
+    dati = leggi_stdin()
+    errore = False
+    for _ in range(TENTATIVI):
+        pw = chiedi_password(args, errore)
+        if pw is None:
+            try:
+                open(ANNULLATO, "w").close()
+            except OSError:
+                pass
+            print("doas: autorizzazione annullata", file=sys.stderr)
+            return 1
+        codice, ok = esegui(doas, args, pw, dati)
+        pw = None
+        if ok:
+            return codice
+        errore = True
+    print("doas: password errata", file=sys.stderr)
+    return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())
