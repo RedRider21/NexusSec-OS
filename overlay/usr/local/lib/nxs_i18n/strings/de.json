@@ -263,6 +263,7 @@
   "cli.screens.reverted": "Ein anderes Programm hat die Auflösung zurückgesetzt. In VirtualBox: Anzeige → Automatische Größenanpassung.",
   "cli.screens.rotate_usage": "Aufruf: nxs-screens rotate AUSGANG {normal|left|right|inverted}",
   "cli.screens.usage": "Aufruf: nxs-screens {outputs|modes NAME|mirror|extend|only NAME|mode NAME BxH|primary NAME|rotation [NAME]|rotate NAME ROT|autostart|policy|get-policy|set-policy mirror|extend|lid}",
+  "cli.editor.usage": "Aufruf: nxs-editor [+Zeile] [Datei ...]",
   "cli.shortcuts_hint": "Tastenkürzel: %s im Programm.",
   "cli.viewer.usage": "Aufruf: nxs-viewer [Datei oder Ordner]",
   "cs.acq_intro": "Wähle das zu erfassende Gerät. Es wird im E01-Format kopiert, das Falldaten und Hashes ins Abbild einbettet, und anschließend erneut verifiziert.",

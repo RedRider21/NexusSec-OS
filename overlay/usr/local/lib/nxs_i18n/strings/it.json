@@ -263,6 +263,7 @@
   "cli.screens.reverted": "La risoluzione è stata riportata indietro da un altro programma. In VirtualBox: Visualizza → Ridimensionamento automatico dello schermo.",
   "cli.screens.rotate_usage": "uso: nxs-screens rotate OUTPUT {normal|left|right|inverted}",
   "cli.screens.usage": "uso: nxs-screens {outputs|modes NOME|mirror|extend|only NOME|mode NOME WxH|primary NOME|rotation [NOME]|rotate NOME ROT|autostart|policy|get-policy|set-policy mirror|extend|lid}",
+  "cli.editor.usage": "uso: nxs-editor [+riga] [file ...]",
   "cli.shortcuts_hint": "Scorciatoie: %s dentro il programma.",
   "cli.viewer.usage": "uso: nxs-viewer [file o cartella]",
   "cs.acq_intro": "Scegli il dispositivo da acquisire. Viene copiato in formato E01, che incorpora nell'immagine i dati del caso e gli hash, e viene poi riverificato.",

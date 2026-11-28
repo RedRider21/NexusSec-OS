@@ -263,6 +263,7 @@
   "cli.screens.reverted": "Otro programa ha restaurado la resolución anterior. En VirtualBox: Ver → Ajustar tamaño automáticamente.",
   "cli.screens.rotate_usage": "uso: nxs-screens rotate SALIDA {normal|left|right|inverted}",
   "cli.screens.usage": "uso: nxs-screens {outputs|modes NOMBRE|mirror|extend|only NOMBRE|mode NOMBRE AnchoxAlto|primary NOMBRE|rotation [NOMBRE]|rotate NOMBRE ROT|autostart|policy|get-policy|set-policy mirror|extend|lid}",
+  "cli.editor.usage": "uso: nxs-editor [+línea] [archivo ...]",
   "cli.shortcuts_hint": "Atajos: %s dentro del programa.",
   "cli.viewer.usage": "uso: nxs-viewer [archivo o carpeta]",
   "cs.acq_intro": "Elige el dispositivo a adquirir. Se copia en formato E01, que incorpora en la imagen los datos del caso y los hashes, y luego se reverifica.",

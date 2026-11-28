@@ -263,6 +263,7 @@
   "cli.screens.reverted": "Another program put the resolution back. In VirtualBox: View → Auto-resize Guest Display.",
   "cli.screens.rotate_usage": "usage: nxs-screens rotate OUTPUT {normal|left|right|inverted}",
   "cli.screens.usage": "usage: nxs-screens {outputs|modes NAME|mirror|extend|only NAME|mode NAME WxH|primary NAME|rotation [NAME]|rotate NAME ROT|autostart|policy|get-policy|set-policy mirror|extend|lid}",
+  "cli.editor.usage": "usage: nxs-editor [+line] [file ...]",
   "cli.shortcuts_hint": "Shortcuts: %s inside the program.",
   "cli.viewer.usage": "usage: nxs-viewer [file or folder]",
   "cs.acq_intro": "Choose the device to acquire. It is copied in E01 format, which embeds the case data and hashes into the image, and is then re-verified.",
