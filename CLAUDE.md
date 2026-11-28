@@ -478,9 +478,20 @@ ricorrenti su **musl + gcc 15**:
   `nexussec.start` con `nxs_installed=1` fa `passwd -l nexus` (niente
   nexus/nexus); `nxs_persist_password` (in `nxs_persist_setup`) lo applica con
   `chpasswd -e` dopo lo sblocco; `nxs-users passwd` lo riscrive. **root e'
-  bloccato ovunque** (prima vuoto: login root da tty2 senza password). doas
-  resta nopass: con password le azioni grafiche senza terminale (spegni,
-  dischi, HORUS) fallirebbero -> serve prima un askpass grafico (passo 6a-bis).
+  bloccato ovunque** (prima vuoto: login root da tty2 senza password).
+- **Password di doas dalla grafica (6a-bis, 2026-11-28)**: `/usr/local/bin/doas`
+  e' un INTERMEDIARIO (prima di /usr/bin nel PATH): opzioni, terminale /dev/pts,
+  root o niente DISPLAY -> doas vero; `doas -C conf CMD` dice "permit nopass" ->
+  doas vero; "permit" -> `nxs-doas-gui` (finestrella GTK, doas vero su pty, pw
+  mai in argv/file, Annulla = no per 30 s). Regole: `nxs-harden doas pass`
+  (persist + eccezioni nopass: poweroff/reboot/lbu/wpa_cli/ip/iw/rfkill/
+  udhcpc/dhcpcd/lsblk/brightnessctl/nft list/nxs-panic wipe/nxs-authcheck/
+  nxs-partdev/nxs-wifi-conf). Sul sistema installato le applica
+  `nxs_persist_password` dopo lo sblocco. MAI piu' `doas sh -c` da azioni
+  automatiche (finestrella a ogni avvio): helper root dedicato + eccezione.
+  Collaudo: `--solo doaspw`.
+- **Firma release**: `build-alpine/firma-release.sh AAMMGG` (chiave in
+  privato/firma/gnupg, MAI in git).
 - **Modalita' anonima `nxs-anon` (2026-11-28, al livello di AnonSurf 6)**: in
   OUTPUT del kill-switch NIENTE `ct state established accept` (le connessioni
   aperte prima uscivano in chiaro): esce solo l'utente tor + loopback + DHCP,

@@ -5,7 +5,16 @@ dai vecchi `out/RELEASE_NOTES_AAMMGG.md`.)
 
 ---
 
-## Prossima versione (in preparazione)
+## v2026.11.28.1
+
+Seconda uscita del 28 novembre: anonimato al livello di AnonSurf 6 (e oltre), password di amministratore da una finestrella, immagini firmate.
+
+#### Immagini firmate (GPG)
+Il file delle impronte `SHA256SUMS-261128-2.txt` è firmato con la chiave **NexusSec OS Release Signing Key** (`AFA3 88D5 E411 BE57 5422  1E12 C3C4 D5BF A5DD A9BE`), pubblicata sul sito e allegata alla release. Verifica: `gpg --import nexussec-release-key.asc`, `gpg --verify SHA256SUMS-261128-2.txt.asc SHA256SUMS-261128-2.txt`, poi `sha256sum -c SHA256SUMS-261128-2.txt`.
+
+#### Password di amministratore da una finestrella
+`doas` chiedeva la password solo da terminale: le azioni lanciate dalla grafica (Centro di Controllo, dischi, HORUS…) fallivano quando la password era attiva. Ora compare una finestrella "Autorizzazione richiesta" con il comando da autorizzare (tre tentativi; con *Annulla* niente altre finestrelle per 30 secondi). Sul sistema installato, dopo lo sblocco dei dati, `doas` chiede la password dell'utente; restano senza domande solo le azioni di tutti i giorni (spegnere, Wi-Fi, luminosità, elenco dischi, stato del firewall, panico). Collaudo: password giusta, sbagliata poi giusta, annulla e azione libera tutti OK.
+
 
 #### Modalità anonima (confronto con AnonSurf 6 di Parrot)
 - **Le connessioni aperte prima dell'attivazione non escono più in chiaro**: fuori da Tor non passa nulla (resta solo il rinnovo DHCP); le vecchie connessioni TCP ricevono un reset e le app si ricollegano via Tor. Collaudo: una connessione aperta prima mandava 8 byte al PC, dopo l'attivazione 0.

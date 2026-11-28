@@ -16,6 +16,29 @@ Dimensioni: **ISO ~0.7 GB** (kernel linux-lts + desktop GTK + Podman + browser
 webkit2gtk preinstallato); a regime con un profilo attivo ~400-600 MB in RAM
 (contro i ~4 GB di Kali, ~2.2 GB di Parrot).
 
+## Novità — v2026.11.28.1
+
+- **Immagini firmate (GPG).** Il file delle impronte è firmato con la chiave
+  **NexusSec OS Release Signing Key**
+  (`AFA3 88D5 E411 BE57 5422  1E12 C3C4 D5BF A5DD A9BE`). Per verificare:
+  ```sh
+  gpg --import nexussec-release-key.asc
+  gpg --verify SHA256SUMS-261128-2.txt.asc SHA256SUMS-261128-2.txt
+  sha256sum -c SHA256SUMS-261128-2.txt
+  ```
+- **Modalità anonima al livello di AnonSurf 6 (Parrot) e oltre**: le
+  connessioni aperte prima dell'attivazione non escono più in chiaro;
+  **nuova identità** e **verifica anonimato** dal pannello (uscita Tor, DNS,
+  IPv6, kill-switch); **anonimo a ogni avvio**; **bridge obfs4/webtunnel** per
+  le reti che bloccano Tor. IPv6 e UDP restano bloccati e, se Tor cade, la rete
+  si chiude.
+- **Password di amministratore da una finestrella**: le azioni lanciate dalla
+  grafica chiedono la password in una finestrella invece di fallire. Sul
+  sistema installato `doas` chiede la password dell'utente; le azioni di tutti
+  i giorni (spegnere, Wi-Fi, luminosità, dischi) restano immediate.
+- Corretto: il firewall all'avvio poteva cancellare le regole della modalità
+  anonima.
+
 ## Novità — v2026.11.28
 
 - **Password dell'utente scelta durante l'installazione su disco.** Nuova
